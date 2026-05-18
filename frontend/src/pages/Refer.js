@@ -35,7 +35,7 @@ export default function Refer() {
   }, []);
 
   const load = async () => {
-    const res = await fetchWithAuth("http://localhost:5000/my-referrals", {
+    const res = await fetchWithAuth(`${process.env.REACT_APP_API}/my-referrals`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email })
