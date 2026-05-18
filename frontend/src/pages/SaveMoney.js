@@ -24,7 +24,7 @@ export default function SaveMoney() {
   const totalReturn = totalInvest + interest;
 
   const load = async () => {
-    const planRes = await fetch("http://localhost:5000/my-plan", {
+    const planRes = await fetch(`${process.env.REACT_APP_API}/my-plan`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -36,7 +36,7 @@ export default function SaveMoney() {
     const planData = await planRes.json();
     setMyPlan(planData && planData._id ? planData : null);
 
-    const dashRes = await fetch("http://localhost:5000/dashboard", {
+    const dashRes = await fetch(`${process.env.REACT_APP_API}/dashboard`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -67,7 +67,7 @@ if (!riskAccepted) {
       return;
     }
 
-    const res = await fetch("http://localhost:5000/start-invest", {
+    const res = await fetch(`${process.env.REACT_APP_API}/start-invest`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -104,7 +104,7 @@ if (!riskAccepted) {
 
     if (!ok) return;
 
-    const res = await fetch("http://localhost:5000/renew-invest", {
+    const res = await fetch(`${process.env.REACT_APP_API}/renew-invest`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -230,7 +230,7 @@ if (!riskAccepted) {
             style={styles.downloadBtn}
             onClick={() =>
               window.open(
-                `http://localhost:5000/investment-certificate/${myPlan._id}`
+                `${process.env.REACT_APP_API}/investment-certificate/${myPlan._id}`
               )
             }
           >
@@ -262,7 +262,7 @@ if (!riskAccepted) {
                 style={styles.smallSlipBtn}
                 onClick={() =>
                   window.open(
-                    `http://localhost:5000/investment-slip/${myPlan._id}/${h._id}`
+                    `${process.env.REACT_APP_API}/investment-slip/${myPlan._id}/${h._id}`
                   )
                 }
               >

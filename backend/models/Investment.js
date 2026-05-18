@@ -16,7 +16,14 @@ const schema = new mongoose.Schema({
     default: 1
   },
 
-  nextRenewDate:{type: Date},
+nextRenewDate: Date,
+
+lastRenewDate: Date,
+
+renewStatus: {
+  type: String,
+  default: "Waiting" // Waiting / Open / Overdue / Completed
+},
 
   history: [
     {

@@ -30,7 +30,7 @@ try {
 
   const loadUser = async () => {
     try {
-      const res = await fetch("http://localhost:5000/user-data", {
+      const res = await fetch(`${process.env.REACT_APP_API}/user-data`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -52,7 +52,7 @@ try {
 
   const loadNotifications = async () => {
     try {
-      const res = await fetch("http://localhost:5000/notifications", {
+      const res = await fetch(`${process.env.REACT_APP_API}/notifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,7 +72,7 @@ try {
 
   const checkKYC = async () => {
     try {
-      const res = await fetch("http://localhost:5000/user-data", {
+      const res = await fetch(`${process.env.REACT_APP_API}/user-data`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

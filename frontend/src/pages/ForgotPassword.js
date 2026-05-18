@@ -21,7 +21,7 @@ export default function ForgotPassword() {
 
     setLoading(true);
 
-    const res = await fetch("http://localhost:5000/send-email-otp", {
+    const res = await fetch(`${process.env.REACT_APP_API}/send-email-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email })
@@ -47,7 +47,7 @@ export default function ForgotPassword() {
 
     setLoading(true);
 
-    const res = await fetch("http://localhost:5000/reset-password", {
+    const res = await fetch(`${process.env.REACT_APP_API}/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otp, newPassword })

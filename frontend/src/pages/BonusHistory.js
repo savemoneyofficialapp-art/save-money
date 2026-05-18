@@ -11,7 +11,7 @@ export default function BonusHistory() {
   }, []);
 
   const load = async () => {
-    const res = await fetch("http://localhost:5000/my-bonus-ledger", {
+    const res = await fetch(`${process.env.REACT_APP_API}/my-bonus-ledger`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

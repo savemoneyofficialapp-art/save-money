@@ -11,7 +11,7 @@ export default function AdminSupport() {
   }, []);
 
   const load = async () => {
-    const res = await fetch("http://localhost:5000/admin-tickets", {
+    const res = await fetch(`${process.env.REACT_APP_API}/admin-tickets`, {
       headers: {
         authorization: token
       }
@@ -21,7 +21,7 @@ export default function AdminSupport() {
   };
 
   const reply = async (id) => {
-    const res = await fetch("http://localhost:5000/reply-ticket", {
+    const res = await fetch(`${process.env.REACT_APP_API}/reply-ticket`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

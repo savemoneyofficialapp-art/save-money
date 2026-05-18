@@ -39,6 +39,36 @@ banned: {
   default: false
 },
 
+banned: {
+  type: Boolean,
+  default: false
+},
+
+freezeWallet: {
+  type: Boolean,
+  default: false
+},
+
+disableInvestment: {
+  type: Boolean,
+  default: false
+},
+
+disableWithdrawal: {
+  type: Boolean,
+  default: false
+},
+
+disableBonus: {
+  type: Boolean,
+  default: false
+},
+
+banReason: {
+  type: String,
+  default: ""
+},
+
   // 🔹 DOCUMENT INFO
   pan: {
     type: String,

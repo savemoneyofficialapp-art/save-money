@@ -9,14 +9,14 @@ export default function AdminKYC() {
   }, []);
 
   const fetchUsers = async () => {
-    const res = await fetch("http://localhost:5000/all-users");
+    const res = await fetch(`${process.env.REACT_APP_API}/all-users`);
     const data = await res.json();
     setUsers(data);
   };
 
   const approveKYC = async (email) => {
 
-    const res = await fetch("http://localhost:5000/approve-kyc", {
+    const res = await fetch(`${process.env.REACT_APP_API}/approve-kyc`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -55,15 +55,15 @@ export default function AdminKYC() {
 
           {/* FILE PREVIEW */}
           {u.aadhaarFile && (
-            <img src={`http://localhost:5000/uploads/${u.aadhaarFile}`} width="80" />
+            <img src={`${process.env.REACT_APP_API}/uploads/${u.aadhaarFile}`} width="80" />
           )}
 
           {u.panFile && (
-            <img src={`http://localhost:5000/uploads/${u.panFile}`} width="80" />
+            <img src={`${process.env.REACT_APP_API}/uploads/${u.panFile}`} width="80" />
           )}
 
           {u.photo && (
-            <img src={`http://localhost:5000/uploads/${u.photo}`} width="80" />
+            <img src={`${process.env.REACT_APP_API}/uploads/${u.photo}`} width="80" />
           )}
 
           {/* APPROVE BUTTON */}

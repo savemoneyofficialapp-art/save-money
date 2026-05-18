@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 
 const socket = io(
-  "http://localhost:5000"
+  `${process.env.REACT_APP_API}`
 );
 
 export default socket;

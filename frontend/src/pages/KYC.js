@@ -24,7 +24,7 @@ export default function KYC() {
   // 🔹 FETCH USER
   const fetchUser = async () => {
     try {
-      const res = await fetchWithAuth("http://localhost:5000/user/" + email);
+      const res = await fetchWithAuth(`${process.env.REACT_APP_API}/user/` + email);
       const data = await res.json();
       setUser(data);
       setNewMobile(data.mobile);
@@ -41,7 +41,7 @@ export default function KYC() {
       return;
     }
 
-    const res = await fetchWithAuth("http://localhost:5000/update-mobile", {
+    const res = await fetchWithAuth(`${process.env.REACT_APP_API}/update-mobile`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ email, mobile: newMobile })
@@ -68,7 +68,7 @@ export default function KYC() {
     formData.append("panFile", panFile);
     formData.append("photo", photo);
 
-    const res = await fetchWithAuth("http://localhost:5000/submit-kyc", {
+    const res = await fetchWithAuth(`${process.env.REACT_APP_API}/submit-kyc`, {
       method: "POST",
       body: formData
     });

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
+import { fetchWithAuth }
+from "../utils/fetchWithAuth";
+
 
 export default function Admin() {
 
   const [data, setData] = useState([]);
 
   const load = async () => {
-    const res = await fetch("http://localhost:5000/admin/transactions");
+    const res = await fetchWithAuth(`${process.env.REACT_APP_API}/admin/transactions`);
     const d = await res.json();
     setData(d);
   };
@@ -15,7 +18,7 @@ export default function Admin() {
   }, []);
 
   const approve = async (id) => {
-    await fetch("http://localhost:5000/admin/approve", {
+    await fetchWithAuth(`${process.env.REACT_APP_API}/admin/approve`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ id })
@@ -43,7 +46,7 @@ export default function Admin() {
 
 {t.screenshot && (
   <img
-    src={`http://localhost:5000/uploads/${t.screenshot}`}
+    src={`${process.env.REACT_APP_API}/uploads/${t.screenshot}`}
     alt="payment"
     style={{ width: "200px", marginTop: "10px" }}
   />

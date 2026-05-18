@@ -7,7 +7,7 @@ export default function AdminNotification() {
 
   const send = async () => {
 
-    const res = await fetch("http://localhost:5000/send-notification", {
+    const res = await fetch(`${process.env.REACT_APP_API}/send-notification`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ email, text })

@@ -11,7 +11,7 @@ export default function Leaderboard() {
   const load = async () => {
 
     const res = await fetch(
-      "http://localhost:5000/leaderboard"
+      `${process.env.REACT_APP_API}/leaderboard`
     );
 
     const data = await res.json();

@@ -38,7 +38,7 @@ const io = new Server(server, {
 });
 
 
-app.use(cors());
+app.use(cors({origin: "*"}));
 app.use(express.json());
 
 const auth = async (req, res, next) => {
@@ -732,7 +732,12 @@ io.on("connection", (socket) => {
 });
 
 app.use(express.json());
-app.use(cors());
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "authorization"]
+}));
 
 // 👉 static folder (image দেখার জন্য)
 app.use("/uploads", express.static("uploads"));
@@ -779,6 +784,10 @@ const Txn = mongoose.model("Txn", {
 
 // helper
 const makeCode = () => Math.random().toString(36).substring(2, 8);
+
+app.get("/", (req, res) => {
+  res.send("Save Money Backend Live");
+});
 
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
@@ -3582,10 +3591,6 @@ app.get("/investment-slip/:investmentId/:paymentId", async (req, res) => {
 
 
 
-server.listen(5000, () => {
-  console.log("Server running on port 5000");
-});
-
 // ================= AUTO MONTH RESET =================
 
 cron.schedule("0 0 1 * *", async () => {
@@ -3730,5 +3735,11 @@ io.on("connection", (socket) => {
     }
 
   });
+
+  const PORT = process.env.PORT || 5000;
+
+server.listen(5000, () => {
+  console.log("Server running on port 5000");
+});
 
 });

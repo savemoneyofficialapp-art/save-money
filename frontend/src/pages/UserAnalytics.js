@@ -28,7 +28,7 @@ export default function UserAnalytics() {
   const load = async () => {
 
     const res = await fetch(
-      "http://localhost:5000/user-dashboard-chart",
+      `${process.env.REACT_APP_API}/user-dashboard-chart`,
       {
         method: "POST",
         headers: {

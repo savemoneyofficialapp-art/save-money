@@ -8,7 +8,7 @@ export default function AdminUserControl() {
   const [reason, setReason] = useState("");
 
   const searchUsers = async () => {
-    const res = await fetch("http://localhost:5000/admin-search-users", {
+    const res = await fetch(`${process.env.REACT_APP_API}/admin-search-users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -25,7 +25,7 @@ export default function AdminUserControl() {
   };
 
   const action = async (url, body) => {
-    const res = await fetch("http://localhost:5000/" + url, {
+    const res = await fetch(`${process.env.REACT_APP_API}/` + url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

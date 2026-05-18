@@ -10,7 +10,7 @@ export default function DailyReward() {
   const claim = async () => {
     setLoading(true);
 
-    const res = await fetch("http://localhost:5000/daily-reward", {
+    const res = await fetch(`${process.env.REACT_APP_API}/daily-reward`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

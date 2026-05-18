@@ -6,7 +6,7 @@ export default function InvestHistory() {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/my-investments", {
+    fetch(`${process.env.REACT_APP_API}/my-investments`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

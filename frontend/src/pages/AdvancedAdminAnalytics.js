@@ -24,7 +24,7 @@ export default function AdvancedAdminAnalytics() {
   }, []);
 
   const loadAnalytics = async () => {
-    const res = await fetch("http://localhost:5000/admin-advanced-analytics", {
+    const res = await fetch(`${process.env.REACT_APP_API}/admin-advanced-analytics`, {
       headers: {
         authorization: token
       }
@@ -35,7 +35,7 @@ export default function AdvancedAdminAnalytics() {
   };
 
   const searchUsers = async () => {
-    const res = await fetch("http://localhost:5000/admin-search-users", {
+    const res = await fetch(`${process.env.REACT_APP_API}/admin-search-users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -54,7 +54,7 @@ export default function AdvancedAdminAnalytics() {
   const changeFilter = async (value) => {
     setFilter(value);
 
-    const res = await fetch("http://localhost:5000/admin-search-users", {
+    const res = await fetch(`${process.env.REACT_APP_API}/admin-search-users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

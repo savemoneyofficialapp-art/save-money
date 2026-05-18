@@ -27,7 +27,7 @@ export default function Wallet() {
   const load = async () => {
 
     const res = await fetchWithAuth(
-      "http://localhost:5000/wallet-data",
+      `${process.env.REACT_APP_API}/wallet-data`,
       {
         method: "POST",
         headers: {
@@ -66,7 +66,7 @@ export default function Wallet() {
   }
 
   const res = await fetchWithAuth(
-    "http://localhost:5000/add-cash",
+    `${process.env.REACT_APP_API}/add-cash`,
     {
       method:"POST",
       body: formData
@@ -86,7 +86,7 @@ export default function Wallet() {
   const transfer = async () => {
 
     const res = await fetchWithAuth(
-      "http://localhost:5000/wallet-transfer",
+      `${process.env.REACT_APP_API}/wallet-transfer`,
       {
         method:"POST",
         headers:{

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const socket = io(`${process.env.REACT_APP_API}`);
 
 export default function Notifications() {
 
@@ -68,7 +68,7 @@ export default function Notifications() {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:5000/get-notifications", {
+      const res = await fetch(`${process.env.REACT_APP_API}/get-notifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,7 +94,7 @@ export default function Notifications() {
 
   const markRead = async (id) => {
     try {
-      await fetch("http://localhost:5000/read-notification", {
+      await fetch(`${process.env.REACT_APP_API}/read-notification`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

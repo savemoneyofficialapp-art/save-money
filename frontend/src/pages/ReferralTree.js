@@ -19,7 +19,7 @@ export default function ReferralTree() {
   const loadTree = async () => {
 
     const res = await fetch(
-      "http://localhost:5000/referral-tree",
+      `${process.env.REACT_APP_API}/referral-tree`,
       {
         method: "POST",
         headers: {

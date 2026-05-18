@@ -34,7 +34,7 @@ const [message,setMessage] = useState("");
 
     // analytics
     const a = await fetch(
-      "http://localhost:5000/admin-analytics",
+      `${process.env.REACT_APP_API}/admin-analytics`,
       {
         headers:{
           authorization: token
@@ -48,7 +48,7 @@ const [message,setMessage] = useState("");
 
     // kyc
     const k = await fetch(
-      "http://localhost:5000/pending-kyc",
+      `${process.env.REACT_APP_API}/pending-kyc`,
       {
         headers:{
           authorization: token
@@ -64,7 +64,7 @@ setKyc(Array.isArray(kData) ? kData : []);
 
     // cash
     const c = await fetch(
-      "http://localhost:5000/cash-requests",
+      `${process.env.REACT_APP_API}/cash-requests`,
       {
         headers:{
           authorization: token
@@ -78,7 +78,7 @@ setCash(Array.isArray(cData) ? cData : []);
 
     // users
     const u = await fetch(
-      "http://localhost:5000/all-users",
+      `${process.env.REACT_APP_API}/all-users`,
       {
         headers:{
           authorization: token
@@ -92,7 +92,7 @@ setUsers(Array.isArray(uData) ? uData : []);  };
 
   // approve kyc
   const approveKYC = async (id) => {
-  const res = await fetch("http://localhost:5000/approve-kyc", {
+  const res = await fetch(`${process.env.REACT_APP_API}/approve-kyc`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -113,7 +113,7 @@ setUsers(Array.isArray(uData) ? uData : []);  };
   const approveCash = async(id)=>{
 
     await fetch(
-      "http://localhost:5000/approve-cash",
+      `${process.env.REACT_APP_API}/approve-cash`,
       {
         method:"POST",
         headers:{
@@ -133,7 +133,7 @@ setUsers(Array.isArray(uData) ? uData : []);  };
   const banUser = async(id)=>{
 
     await fetch(
-      "http://localhost:5000/ban-user",
+      `${process.env.REACT_APP_API}/ban-user`,
       {
         method:"POST",
         headers:{
@@ -156,7 +156,7 @@ setUsers(Array.isArray(uData) ? uData : []);  };
   const broadcast = async ()=>{
 
   await fetch(
-    "http://localhost:5000/broadcast",
+    `${process.env.REACT_APP_API}/broadcast`,
     {
 
       method:"POST",
@@ -331,6 +331,13 @@ setUsers(Array.isArray(uData) ? uData : []);  };
   onClick={() => window.location.href = "/admin-analytics"}
 >
   Advanced Analytics
+</button>
+
+<button
+  style={styles.green}
+  onClick={() => window.location.href = "/admin-user-control"}
+>
+  User Control
 </button>
 
           </div>
