@@ -38,12 +38,6 @@ const io = require("socket.io")(server, {
   }
 });
 
-const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on ${PORT}`);
-});
-
 
 app.use(cors({origin: "*"}));
 app.use(express.json());
@@ -748,8 +742,6 @@ app.use(cors({
 
 // 👉 static folder (image দেখার জন্য)
 app.use("/uploads", express.static("uploads"));
-
-
 
 // ================= STORAGE =================
 
@@ -2941,7 +2933,7 @@ app.post("/get-notifications", async (req, res) => {
   res.json(data);
 });
 
-app.use("/uploads", express.static("uploads"));
+
 
 app.post("/my-referrals", async (req, res) => {
   try {
