@@ -27,14 +27,21 @@ const SupportTicket = require("./models/SupportTicket");
 const BonusLedger = require("./models/BonusLedger");
 
 
+
 const app = express();
 
 const server = http.createServer(app);
 
-const io = new Server(server, {
+const io = require("socket.io")(server, {
   cors: {
     origin: "*"
   }
+});
+
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on ${PORT}`);
 });
 
 
@@ -3738,8 +3745,8 @@ io.on("connection", (socket) => {
 
   const PORT = process.env.PORT || 5000;
 
-server.listen(5000, () => {
-  console.log("Server running on port 5000");
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 });
