@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 import Footer from "../components/Footer";
 
+import { BRAND } from "../brand";
+
 export default function Home() {
   const navigate = useNavigate();
 
@@ -41,6 +43,19 @@ try {
 
       const data = await res.json();
 
+      if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
       if (data && data.email) {
         setUser(data);
         localStorage.setItem("user", JSON.stringify(data));
@@ -62,6 +77,20 @@ try {
       });
 
       const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
       if (Array.isArray(data)) {
         setNotificationCount(data.filter((n) => !n.read).length);
       }
@@ -169,6 +198,30 @@ const getRankIcon = (rank) => {
     <div style={styles.container}>
 
       <div style={styles.header}>
+        <div style={styles.brandHeader}>
+
+  <img
+    src={BRAND.logo}
+    alt="logo"
+    style={styles.brandLogo}
+    onError={(e) => {
+      e.currentTarget.style.display = "none";
+    }}
+  />
+
+  <div>
+
+    <h2 style={styles.brandName}>
+      {BRAND.appName}
+    </h2>
+
+    <p style={styles.brandSlogan}>
+      {BRAND.slogan}
+    </p>
+
+  </div>
+
+</div>
         <div>
           <h2 style={styles.welcome}>
             Welcome {user?.name || savedUser?.name || "User"}
@@ -277,6 +330,13 @@ const getRankIcon = (rank) => {
   📊 My Analytics
 </button>
 
+<button
+  style={styles.aboutBtn}
+  onClick={() => navigate("/about")}
+>
+  🏢 About Save Money
+</button>
+
       <div style={styles.bottomNav}>
         <button style={styles.homeNav} onClick={() => navigate("/home")}>
           🏠 HOME
@@ -311,6 +371,40 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center"
   },
+
+brandHeader:{
+  display:"flex",
+  alignItems:"center",
+  gap:"12px",
+  marginBottom:"18px",
+  background:"#1e293b",
+  padding:"14px",
+  borderRadius:"18px",
+  border:"1px solid #334155"
+},
+
+brandLogo:{
+  width:"55px",
+  height:"55px",
+  borderRadius:"14px",
+  objectFit:"cover",
+  background:"#0f172a"
+},
+
+brandName:{
+  margin:0,
+  color:"#22c55e",
+  fontSize:"22px",
+  fontWeight:"bold"
+},
+
+brandSlogan:{
+  margin:0,
+  color:"#38bdf8",
+  fontSize:"13px",
+  fontWeight:"bold"
+},
+
   welcome: {
     margin: 0,
     fontSize: "24px"
@@ -515,6 +609,18 @@ analyticsBtn:{
   color:"white",
   fontWeight:"bold",
   fontSize:"15px"
+},
+
+aboutBtn: {
+  width: "100%",
+  padding: "15px",
+  marginTop: "12px",
+  border: "none",
+  borderRadius: "15px",
+  background: "linear-gradient(135deg,#14b8a6,#0f766e)",
+  color: "white",
+  fontWeight: "bold",
+  fontSize: "15px"
 },
 
   bottomNav: {
