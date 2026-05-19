@@ -26,6 +26,13 @@ const DailyReward = require("./models/DailyReward");
 const SupportTicket = require("./models/SupportTicket");
 const BonusLedger = require("./models/BonusLedger");
 
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss-clean");
+
+const validator = require("validator");
+
 
 
 const app = express();
@@ -38,9 +45,33 @@ const io = require("socket.io")(server, {
   }
 });
 
+app.use(helmet());
 
-app.use(cors({origin: "*"}));
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+
+app.use(mongoSanitize());
+app.use(xss());
+
+
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://YOUR-VERCEL-URL.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "authorization"]
+}));
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  message: {
+    msg: "Too many requests. Please try again later."
+  }
+});
+
+app.use(apiLimiter);
 
 const auth = async (req, res, next) => {
   try {
@@ -48,7 +79,7 @@ const auth = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({
-        msg: "No token"
+        msg: "No token provided"
       });
     }
 
@@ -75,21 +106,45 @@ const auth = async (req, res, next) => {
 
   } catch (err) {
     return res.status(401).json({
-      msg: "Invalid token"
+      msg: "Token expired or invalid"
     });
   }
 };
 
 const adminAuth = async (req, res, next) => {
-  const user = await User.findById(req.user.id);
 
-  if (!user || user.role !== "admin") {
-    return res.status(403).json({
-      msg: "Admin only"
+  try {
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(401).json({
+        msg: "User not found"
+      });
+    }
+
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        msg: "Admin access only"
+      });
+    }
+
+    if (user.banned) {
+      return res.status(403).json({
+        msg: "Admin banned"
+      });
+    }
+
+    next();
+
+  } catch (err) {
+
+    return res.status(500).json({
+      msg: "Admin auth failed"
     });
+
   }
 
-  next();
 };
 
 console.log("Mongo URL:",process.env.MONGO_URL);
@@ -747,21 +802,70 @@ app.use("/uploads", express.static("uploads"));
 
 const storage = multer.diskStorage({
 
-  destination: function (req, file, cb) {
+  destination: function(req, file, cb) {
+
     cb(null, "uploads/");
+
   },
 
-  filename: function (req, file, cb) {
+  filename: function(req, file, cb) {
 
-    const unique =
-      Date.now() + "-" + file.originalname;
+    cb(
+      null,
+      Date.now() + "-" + file.originalname
+    );
 
-    cb(null, unique);
   }
 
 });
 
-const upload = multer({ storage });
+app.use((err, req, res, next) => {
+
+  console.log("GLOBAL ERROR:", err);
+
+  res.status(500).json({
+    msg: "Internal server error"
+  });
+
+});
+
+const upload = multer({
+
+  storage: storage,
+
+  limits: {
+
+    fileSize: 2 * 1024 * 1024
+
+  },
+
+  fileFilter: function(req, file, cb) {
+
+    const allowedTypes = [
+
+      "image/png",
+      "image/jpeg",
+      "image/jpg"
+
+    ];
+
+    if (
+      !allowedTypes.includes(file.mimetype)
+    ) {
+
+      return cb(
+        new Error(
+          "Only PNG JPG JPEG allowed"
+        )
+      );
+
+    }
+
+    cb(null, true);
+
+  }
+
+});
 
 // ================= MODELS =================
 
@@ -788,10 +892,45 @@ app.get("/", (req, res) => {
   res.send("Save Money Backend Live");
 });
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: {
+    msg: "Too many login/register attempts. Try later."
+  }
+});
+
 // ================= REGISTER =================
-app.post("/register", async (req, res) => {
+app.post("/register", authLimiter, async (req, res) => {
   try {
     const { name, email, mobile, password, pan, aadhaar, referCode } = req.body;
+    
+    if (!validator.isEmail(email)) {
+  return res.json({
+    msg: "Invalid email format"
+  });
+}
+
+if (!validator.isMobilePhone(mobile + "", "any")) {
+  return res.json({
+    msg: "Invalid mobile number"
+  });
+}
+
+if (!validator.isStrongPassword(password, {
+  minLength: 6,
+  minNumbers: 1
+})) {
+  return res.json({
+    msg: "Password must contain letters and numbers"
+  });
+}
+
+if (name.length < 3) {
+  return res.json({
+    msg: "Name too short"
+  });
+}
 
     if (!name || !email || !mobile || !password || !pan || !aadhaar) {
       return res.json({ msg: "All fields required" });
@@ -844,9 +983,15 @@ app.post("/register", async (req, res) => {
 
 // ================= LOGIN =================
 
-app.post("/login", async (req, res) => {
+app.post("/login", authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!validator.isEmail(email)) {
+  return res.json({
+    msg: "Invalid email"
+  });
+}
 
     const user = await User.findOne({ email });
 
@@ -873,7 +1018,7 @@ app.post("/login", async (req, res) => {
         role: user.role || "user"
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "7d" }
     );
 
     const refreshToken = jwt.sign(
@@ -1622,7 +1767,7 @@ app.post("/refresh-token", async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "1d"
+        expiresIn: "7d"
       }
     );
 
@@ -2058,32 +2203,7 @@ app.post(
   }
 );
 
-app.post("/approve-kyc", auth, adminAuth, async (req, res) => {
-  try {
-    const { userId } = req.body;
 
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.json({ msg: "User not found" });
-    }
-
-    user.kycStatus = "approved";
-    await user.save();
-
-    await sendEmail(
-  user.email,
-  "KYC Approved",
-  `Hello ${user.name}, your KYC has been approved successfully. You can now use Save Money, Refer & Earn, and Wallet services.`
-);
-
-    res.json({ msg: "KYC Approved" });
-
-  } catch (err) {
-    console.log("KYC APPROVE ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
-  }
-});
 
 app.get("/kyc-list", async (req, res) => {
 
@@ -2092,10 +2212,7 @@ app.get("/kyc-list", async (req, res) => {
   res.json(users);
 });
 
-app.get("/all-users",auth, adminAuth, async (req, res) => {
-  const data = await User.find();
-  res.json(data);
-});
+
 
 app.post("/reject-kyc", async (req, res) => {
 
@@ -2147,6 +2264,14 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   await txn.save();
 
   res.json({ msg: "Uploaded" });
+});
+
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    msg: "Too many admin requests."
+  }
 });
 
 // ================= ADMIN =================
@@ -2218,7 +2343,8 @@ app.post("/add-cash", async (req, res) => {
   res.json({ msg: "Request Submitted" });
 });
 
-app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
+
+app.get("/admin-analytics", auth, adminAuth, adminLimiter, async (req, res) => {
 
   const totalUsers = await User.countDocuments();
 
@@ -2307,6 +2433,11 @@ app.get("/all-users", auth, adminAuth, async (req, res) => {
 
 });
 
+app.get("/all-users",auth, adminAuth, async (req, res) => {
+  const data = await User.find();
+  res.json(data);
+});
+
 app.get("/pending-kyc", auth, adminAuth, async (req, res) => {
 
   const users = await User.find({
@@ -2315,6 +2446,33 @@ app.get("/pending-kyc", auth, adminAuth, async (req, res) => {
 
   res.json(users);
 
+});
+
+app.post("/approve-kyc", auth, adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.json({ msg: "User not found" });
+    }
+
+    user.kycStatus = "approved";
+    await user.save();
+
+    await sendEmail(
+  user.email,
+  "KYC Approved",
+  `Hello ${user.name}, your KYC has been approved successfully. You can now use Save Money, Refer & Earn, and Wallet services.`
+);
+
+    res.json({ msg: "KYC Approved" });
+
+  } catch (err) {
+    console.log("KYC APPROVE ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
 });
 
 app.post("/reply-ticket", auth, adminAuth, async (req, res) => {
@@ -2552,7 +2710,7 @@ app.post("/admin-search-users", auth, adminAuth, async (req, res) => {
     if (filter === "inactive") query.activeStatus = "Inactive";
     if (filter === "banned") query.banned = true;
 
-    const users = await User.find(query)
+    const users = await User.find(query).select("-password")
       .sort({ createdAt: -1 })
       .limit(100);
 
@@ -2566,7 +2724,7 @@ app.post("/admin-search-users", auth, adminAuth, async (req, res) => {
 
 app.get("/admin-advanced-analytics", auth, adminAuth, async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find().select("-password");
 
     const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ activeStatus: "Active" });
