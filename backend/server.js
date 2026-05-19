@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
 const nodemailer = require("nodemailer");
 const http = require("http");
-const Server  = http.createServer(app);
+const { Server } = require("socket.io");
 const User = require("./models/User");
 const Notification = require("./models/Notification");
 const Investment = require("./models/Investment");
@@ -3712,33 +3712,27 @@ cron.schedule("0 0 5 * *", async () => {
 const onlineUsers = {};
 
 io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
 
   socket.on("join", (email) => {
-
     onlineUsers[email] = socket.id;
-
-    console.log("User Online:", email);
-
+    console.log("User joined:", email);
   });
 
   socket.on("disconnect", () => {
-
     for (let email in onlineUsers) {
-
       if (onlineUsers[email] === socket.id) {
-
         delete onlineUsers[email];
-
       }
-
     }
 
+    console.log("User disconnected");
   });
-
-  const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
 });
 
+// ✅ server.listen MUST be outside io.on
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
