@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
+import API from "../api";
 
 export default function InvestHistory() {
 
@@ -6,7 +8,7 @@ export default function InvestHistory() {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_API}/my-investments`, {
+    fetch(`${API}/my-investments`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

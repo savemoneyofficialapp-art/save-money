@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
+import API from "../api";
 
 export default function SaveMoney() {
   const email = localStorage.getItem("email");
@@ -24,7 +26,7 @@ export default function SaveMoney() {
   const totalReturn = totalInvest + interest;
 
   const load = async () => {
-    const planRes = await fetch(`${process.env.REACT_APP_API}/my-plan`, {
+    const planRes = await fetch(`${API}/my-plan`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -36,7 +38,7 @@ export default function SaveMoney() {
     const planData = await planRes.json();
     setMyPlan(planData && planData._id ? planData : null);
 
-    const dashRes = await fetch(`${process.env.REACT_APP_API}/dashboard`, {
+    const dashRes = await fetch(`${API}/dashboard`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -67,7 +69,7 @@ if (!riskAccepted) {
       return;
     }
 
-    const res = await fetch(`${process.env.REACT_APP_API}/start-invest`, {
+    const res = await fetch(`${API}/start-invest`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -81,6 +83,20 @@ if (!riskAccepted) {
     });
 
     const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     alert(data.msg);
     load();
   };
@@ -104,7 +120,7 @@ if (!riskAccepted) {
 
     if (!ok) return;
 
-    const res = await fetch(`${process.env.REACT_APP_API}/renew-invest`, {
+    const res = await fetch(`${API}/renew-invest`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -114,6 +130,20 @@ if (!riskAccepted) {
     });
 
     const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     alert(data.msg);
     load();
   };
@@ -230,7 +260,7 @@ if (!riskAccepted) {
             style={styles.downloadBtn}
             onClick={() =>
               window.open(
-                `${process.env.REACT_APP_API}/investment-certificate/${myPlan._id}`
+                `${API}/investment-certificate/${myPlan._id}`
               )
             }
           >
@@ -262,7 +292,7 @@ if (!riskAccepted) {
                 style={styles.smallSlipBtn}
                 onClick={() =>
                   window.open(
-                    `${process.env.REACT_APP_API}/investment-slip/${myPlan._id}/${h._id}`
+                    `${API}/investment-slip/${myPlan._id}/${h._id}`
                   )
                 }
               >

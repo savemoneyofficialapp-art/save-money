@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
+import axios from "axios";
+import API from "../api";
 
 export default function Wallet() {
   const navigate = useNavigate();
@@ -27,7 +29,7 @@ export default function Wallet() {
   const load = async () => {
 
     const res = await fetchWithAuth(
-      `${process.env.REACT_APP_API}/wallet-data`,
+      `${API}/wallet-data`,
       {
         method: "POST",
         headers: {
@@ -38,6 +40,19 @@ export default function Wallet() {
     );
 
     const d = await res.json();
+
+    if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
 
     setData(d);
   };
@@ -66,7 +81,7 @@ export default function Wallet() {
   }
 
   const res = await fetchWithAuth(
-    `${process.env.REACT_APP_API}/add-cash`,
+    `${API}/add-cash`,
     {
       method:"POST",
       body: formData
@@ -74,6 +89,19 @@ export default function Wallet() {
   );
 
   const d = await res.json();
+
+  if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
 
   toast.info(d.msg);
 
@@ -86,7 +114,7 @@ export default function Wallet() {
   const transfer = async () => {
 
     const res = await fetchWithAuth(
-      `${process.env.REACT_APP_API}/wallet-transfer`,
+      `${API}/wallet-transfer`,
       {
         method:"POST",
         headers:{
@@ -101,6 +129,19 @@ export default function Wallet() {
     );
 
     const d = await res.json();
+
+    if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
 
     toast.info(d.msg);
 

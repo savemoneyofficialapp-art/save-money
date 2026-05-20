@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 
 import { BRAND } from "../brand";
+import axios from "axios";
+import API from "../api";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -32,7 +34,7 @@ try {
 
   const loadUser = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API}/user-data`, {
+      const res = await fetch(`${API}/user-data`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,7 +69,7 @@ try {
 
   const loadNotifications = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API}/notifications`, {
+      const res = await fetch(`${API}/notifications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,7 +103,7 @@ if (
 
   const checkKYC = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API}/user-data`, {
+      const res = await fetch(`${API}/user-data`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

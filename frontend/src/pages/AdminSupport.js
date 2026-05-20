@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
+
+import API from "../api";
 
 export default function AdminSupport() {
   const token = localStorage.getItem("token");
@@ -11,7 +14,7 @@ export default function AdminSupport() {
   }, []);
 
   const load = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API}/admin-tickets`, {
+    const res = await fetch(`${API}/admin-tickets`, {
       headers: {
         authorization: token
       }
@@ -21,7 +24,7 @@ export default function AdminSupport() {
   };
 
   const reply = async (id) => {
-    const res = await fetch(`${process.env.REACT_APP_API}/reply-ticket`, {
+    const res = await fetch(`${API}/reply-ticket`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -34,6 +37,20 @@ export default function AdminSupport() {
     });
 
     const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     alert(data.msg);
 
     setReplyText({

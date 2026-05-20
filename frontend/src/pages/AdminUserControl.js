@@ -1,4 +1,7 @@
 import { useState } from "react";
+import axios from "axios";
+
+import API from "../api";
 
 export default function AdminUserControl() {
   const token = localStorage.getItem("token");
@@ -8,7 +11,7 @@ export default function AdminUserControl() {
   const [reason, setReason] = useState("");
 
   const searchUsers = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API}/admin-search-users`, {
+    const res = await fetch(`${API}/admin-search-users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -21,11 +24,25 @@ export default function AdminUserControl() {
     });
 
     const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     setUsers(data);
   };
 
   const action = async (url, body) => {
-    const res = await fetch(`${process.env.REACT_APP_API}/` + url, {
+    const res = await fetch(`${API}/` + url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -35,6 +52,20 @@ export default function AdminUserControl() {
     });
 
     const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     alert(data.msg);
     searchUsers();
   };

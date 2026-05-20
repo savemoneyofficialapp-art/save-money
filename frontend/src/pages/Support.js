@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
+import API from "../api";
 
 export default function Support() {
   const email = localStorage.getItem("email");
@@ -13,7 +15,7 @@ export default function Support() {
   }, []);
 
   const load = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API}/my-tickets`, {
+    const res = await fetch(`${API}/my-tickets`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -26,7 +28,7 @@ export default function Support() {
   };
 
   const createTicket = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API}/create-ticket`, {
+    const res = await fetch(`${API}/create-ticket`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -49,7 +51,7 @@ export default function Support() {
   };
 
   const closeTicket = async (id) => {
-    const res = await fetch(`${process.env.REACT_APP_API}/close-ticket`, {
+    const res = await fetch(`${API}/close-ticket`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

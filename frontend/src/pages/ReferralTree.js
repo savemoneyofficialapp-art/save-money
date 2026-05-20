@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
+import API from "../api";
 
 export default function ReferralTree() {
 
@@ -19,7 +21,7 @@ export default function ReferralTree() {
   const loadTree = async () => {
 
     const res = await fetch(
-      `${process.env.REACT_APP_API}/referral-tree`,
+      `${API}/referral-tree`,
       {
         method: "POST",
         headers: {

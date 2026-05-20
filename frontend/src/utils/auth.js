@@ -1,3 +1,6 @@
+import axios from "axios";
+import API from "../api";
+
 export async function refreshAccessToken() {
 
   try {
@@ -8,7 +11,7 @@ export async function refreshAccessToken() {
 
     // backend এ request পাঠাচ্ছে
     const res = await fetch(
-      `${process.env.REACT_APP_API}/refresh-token`,
+      `${API}/refresh-token`,
       {
         method: "POST",
 

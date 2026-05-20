@@ -14,6 +14,9 @@ import {
   Tooltip
 } from "recharts";
 
+import axios from "axios";
+import API from "../api";
+
 export default function UserAnalytics() {
 
   const token = localStorage.getItem("token");
@@ -28,7 +31,7 @@ export default function UserAnalytics() {
   const load = async () => {
 
     const res = await fetch(
-      `${process.env.REACT_APP_API}/user-dashboard-chart`,
+      `${API}/user-dashboard-chart`,
       {
         method: "POST",
         headers: {

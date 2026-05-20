@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
+import API from "../api";
 
 export default function Leaderboard() {
 
@@ -11,7 +13,7 @@ export default function Leaderboard() {
   const load = async () => {
 
     const res = await fetch(
-      `${process.env.REACT_APP_API}/leaderboard`
+      `${API}/leaderboard`
     );
 
     const data = await res.json();

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
+import axios from "axios";
+import API from "../api";
 
 
 export default function PerformanceBonus() {
@@ -18,7 +20,7 @@ export default function PerformanceBonus() {
 
   const load = async () => {
     try {
-      const res = await fetchWithAuth(`${process.env.REACT_APP_API}/performance-data`, {
+      const res = await fetchWithAuth(`${API}/performance-data`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import axios from "axios";
+import API from "../api";
 
 export default function DailyReward() {
   const email = localStorage.getItem("email");
@@ -10,7 +12,7 @@ export default function DailyReward() {
   const claim = async () => {
     setLoading(true);
 
-    const res = await fetch(`${process.env.REACT_APP_API}/daily-reward`, {
+    const res = await fetch(`${API}/daily-reward`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

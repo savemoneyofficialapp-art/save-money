@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
+import axios from "axios";
+import API from "../api";
 
 
 export default function Refer() {
@@ -35,18 +37,32 @@ export default function Refer() {
   }, []);
 
   const load = async () => {
-    const res = await fetchWithAuth(`${process.env.REACT_APP_API}/my-referrals`, {
+    const res = await fetchWithAuth(`${API}/my-referrals`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email })
     });
 
     const d = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     setCode(d.myCode  || "NO CODE");
     setTeam(d.team || []);
   };
 
-  const referLink = `http://localhost:3000/register?ref=${code}`;
+const referLink = `${window.location.origin}/register?ref=${code}`;
 
   const copyText = (text, msg) => {
     navigator.clipboard.writeText(text);

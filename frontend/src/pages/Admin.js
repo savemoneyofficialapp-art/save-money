@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
+import axios from "axios";
+
+import API from "../api";
 
 
 export default function Admin() {
@@ -8,8 +11,22 @@ export default function Admin() {
   const [data, setData] = useState([]);
 
   const load = async () => {
-    const res = await fetchWithAuth(`${process.env.REACT_APP_API}/admin/transactions`);
+    const res = await fetchWithAuth(`${API}/admin/transactions`);
     const d = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     setData(d);
   };
 
@@ -18,7 +35,7 @@ export default function Admin() {
   }, []);
 
   const approve = async (id) => {
-    await fetchWithAuth(`${process.env.REACT_APP_API}/admin/approve`, {
+    await fetchWithAuth(`${API}/admin/approve`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ id })
@@ -46,7 +63,7 @@ export default function Admin() {
 
 {t.screenshot && (
   <img
-    src={`${process.env.REACT_APP_API}/uploads/${t.screenshot}`}
+    src={`${API}/uploads/${t.screenshot}`}
     alt="payment"
     style={{ width: "200px", marginTop: "10px" }}
   />

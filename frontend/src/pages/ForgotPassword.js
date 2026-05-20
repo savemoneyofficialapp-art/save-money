@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import API from "../api";
 
 export default function ForgotPassword() {
 
@@ -21,7 +23,7 @@ export default function ForgotPassword() {
 
     setLoading(true);
 
-    const res = await fetch(`${process.env.REACT_APP_API}/send-email-otp`, {
+    const res = await fetch(`${API}/send-email-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email })
@@ -47,13 +49,14 @@ export default function ForgotPassword() {
 
     setLoading(true);
 
-    const res = await fetch(`${process.env.REACT_APP_API}/reset-password`, {
+    const res = await fetch(`${API}/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otp, newPassword })
     });
 
     const data = await res.json();
+    
     setLoading(false);
 
     alert(data.msg);

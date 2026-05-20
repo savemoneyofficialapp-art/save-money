@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
+import axios from "axios";
+import API from "../api";
 
 
 export default function TeamBonus() {
@@ -15,7 +17,7 @@ export default function TeamBonus() {
   }, []);
 
   const load = async () => {
-    const res = await fetchWithAuth(`${process.env.REACT_APP_API}/team-bonus-data`, {
+    const res = await fetchWithAuth(`${API}/team-bonus-data`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email })

@@ -9,6 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer
 } from "recharts";
+import axios from "axios";
+
+import API from "../api";
 
 export default function AdvancedAdminAnalytics() {
   const token = localStorage.getItem("token");
@@ -24,7 +27,7 @@ export default function AdvancedAdminAnalytics() {
   }, []);
 
   const loadAnalytics = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API}/admin-advanced-analytics`, {
+    const res = await fetch(`${API}/admin-advanced-analytics`, {
       headers: {
         authorization: token
       }
@@ -35,7 +38,7 @@ export default function AdvancedAdminAnalytics() {
   };
 
   const searchUsers = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API}/admin-search-users`, {
+    const res = await fetch(`${API}/admin-search-users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -54,7 +57,7 @@ export default function AdvancedAdminAnalytics() {
   const changeFilter = async (value) => {
     setFilter(value);
 
-    const res = await fetch(`${process.env.REACT_APP_API}/admin-search-users`, {
+    const res = await fetch(`${API}/admin-search-users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

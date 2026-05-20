@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
+import axios from "axios";
+import API from "../api";
 
 
 export default function RoyaltyBonus() {
@@ -22,7 +24,7 @@ export default function RoyaltyBonus() {
 
     try {
 
-      const res = await fetchWithAuth(`${process.env.REACT_APP_API}/royalty-data`, {
+      const res = await fetchWithAuth(`${API}/royalty-data`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

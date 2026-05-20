@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import axios from "axios";
+import API from "../api";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -39,7 +41,7 @@ export default function Register() {
 }
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API}/register`, {
+      const res = await fetch(`${API}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

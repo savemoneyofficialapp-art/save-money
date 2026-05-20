@@ -1,4 +1,7 @@
 import { useState } from "react";
+import axios from "axios";
+
+import API from "../api";
 
 export default function AdminNotification() {
 
@@ -7,13 +10,27 @@ export default function AdminNotification() {
 
   const send = async () => {
 
-    const res = await fetch(`${process.env.REACT_APP_API}/send-notification`, {
+    const res = await fetch(`${API}/send-notification`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ email, text })
     });
 
     const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     alert(data.msg);
   };
 

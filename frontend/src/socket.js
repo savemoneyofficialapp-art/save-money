@@ -1,7 +1,9 @@
 import { io } from "socket.io-client";
+import axios from "axios";
+import API from "../api";
 
 const socket = io(
-  `${process.env.REACT_APP_API}`
+  `${API}`
 );
 
 export default socket;

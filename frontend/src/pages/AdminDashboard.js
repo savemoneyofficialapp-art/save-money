@@ -8,6 +8,10 @@ import {
   Tooltip,
   ResponsiveContainer
 } from "recharts";
+import axios from "axios";
+
+
+import API from "../api";
 
 export default function AdminDashboard(){
 
@@ -34,7 +38,7 @@ const [message,setMessage] = useState("");
 
     // analytics
     const a = await fetch(
-      `${process.env.REACT_APP_API}/admin-analytics`,
+      `${API}/admin-analytics`,
       {
         headers:{
           authorization: token
@@ -48,7 +52,7 @@ const [message,setMessage] = useState("");
 
     // kyc
     const k = await fetch(
-      `${process.env.REACT_APP_API}/pending-kyc`,
+      `${API}/pending-kyc`,
       {
         headers:{
           authorization: token
@@ -64,7 +68,7 @@ setKyc(Array.isArray(kData) ? kData : []);
 
     // cash
     const c = await fetch(
-      `${process.env.REACT_APP_API}/cash-requests`,
+      `${API}/cash-requests`,
       {
         headers:{
           authorization: token
@@ -78,7 +82,7 @@ setCash(Array.isArray(cData) ? cData : []);
 
     // users
     const u = await fetch(
-      `${process.env.REACT_APP_API}/all-users`,
+      `${API}/all-users`,
       {
         headers:{
           authorization: token
@@ -92,7 +96,7 @@ setUsers(Array.isArray(uData) ? uData : []);  };
 
   // approve kyc
   const approveKYC = async (id) => {
-  const res = await fetch(`${process.env.REACT_APP_API}/approve-kyc`, {
+  const res = await fetch(`${API}/approve-kyc`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -102,6 +106,20 @@ setUsers(Array.isArray(uData) ? uData : []);  };
   });
 
   const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
   alert(data.msg);
 
   load();
@@ -113,7 +131,7 @@ setUsers(Array.isArray(uData) ? uData : []);  };
   const approveCash = async(id)=>{
 
     await fetch(
-      `${process.env.REACT_APP_API}/approve-cash`,
+      `${API}/approve-cash`,
       {
         method:"POST",
         headers:{
@@ -133,7 +151,7 @@ setUsers(Array.isArray(uData) ? uData : []);  };
   const banUser = async(id)=>{
 
     await fetch(
-      `${process.env.REACT_APP_API}/ban-user`,
+      `${API}/ban-user`,
       {
         method:"POST",
         headers:{
@@ -156,7 +174,7 @@ setUsers(Array.isArray(uData) ? uData : []);  };
   const broadcast = async ()=>{
 
   await fetch(
-    `${process.env.REACT_APP_API}/broadcast`,
+    `${API}/broadcast`,
     {
 
       method:"POST",

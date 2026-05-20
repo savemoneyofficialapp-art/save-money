@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
+
+import API from "../api";
 
 export default function AdminKYC() {
 
@@ -9,14 +12,28 @@ export default function AdminKYC() {
   }, []);
 
   const fetchUsers = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API}/all-users`);
+    const res = await fetch(`${API}/all-users`);
     const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     setUsers(data);
   };
 
   const approveKYC = async (email) => {
 
-    const res = await fetch(`${process.env.REACT_APP_API}/approve-kyc`, {
+    const res = await fetch(`${API}/approve-kyc`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -25,6 +42,20 @@ export default function AdminKYC() {
     });
 
     const data = await res.json();
+
+if (
+  data.msg === "Token expired or invalid"
+) {
+
+  localStorage.clear();
+
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
     alert(data.msg);
 
     fetchUsers(); // refresh list
@@ -55,15 +86,15 @@ export default function AdminKYC() {
 
           {/* FILE PREVIEW */}
           {u.aadhaarFile && (
-            <img src={`${process.env.REACT_APP_API}/uploads/${u.aadhaarFile}`} width="80" />
+            <img src={`${API}/uploads/${u.aadhaarFile}`} width="80" />
           )}
 
           {u.panFile && (
-            <img src={`${process.env.REACT_APP_API}/uploads/${u.panFile}`} width="80" />
+            <img src={`${API}/uploads/${u.panFile}`} width="80" />
           )}
 
           {u.photo && (
-            <img src={`${process.env.REACT_APP_API}/uploads/${u.photo}`} width="80" />
+            <img src={`${API}/uploads/${u.photo}`} width="80" />
           )}
 
           {/* APPROVE BUTTON */}

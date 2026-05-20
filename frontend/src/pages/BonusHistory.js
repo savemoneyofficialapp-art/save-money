@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
+
+import API from "../api";
 
 export default function BonusHistory() {
   const email = localStorage.getItem("email");
@@ -11,7 +14,7 @@ export default function BonusHistory() {
   }, []);
 
   const load = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API}/my-bonus-ledger`, {
+    const res = await fetch(`${API}/my-bonus-ledger`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

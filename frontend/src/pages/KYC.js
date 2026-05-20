@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
+import axios from "axios";
+import API from "../api";
 
 
 export default function KYC() {
@@ -24,7 +26,7 @@ export default function KYC() {
   // 🔹 FETCH USER
   const fetchUser = async () => {
     try {
-      const res = await fetchWithAuth(`${process.env.REACT_APP_API}/user/` + email);
+      const res = await fetchWithAuth(`${API}/user/` + email);
       const data = await res.json();
       setUser(data);
       setNewMobile(data.mobile);
@@ -41,7 +43,7 @@ export default function KYC() {
       return;
     }
 
-    const res = await fetchWithAuth(`${process.env.REACT_APP_API}/update-mobile`, {
+    const res = await fetchWithAuth(`${API}/update-mobile`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ email, mobile: newMobile })
@@ -68,7 +70,7 @@ export default function KYC() {
     formData.append("panFile", panFile);
     formData.append("photo", photo);
 
-    const res = await fetchWithAuth(`${process.env.REACT_APP_API}/submit-kyc`, {
+    const res = await fetchWithAuth(`${API}/submit-kyc`, {
       method: "POST",
       body: formData
     });
