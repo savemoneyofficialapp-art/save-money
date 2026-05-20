@@ -35,6 +35,21 @@ const sanitize = require("mongo-sanitize");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://save-money-indol.vercel.app"
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "authorization"],
+  credentials: true
+}));
+
+
+app.use(express.json());
+
 app.get("/", (req, res) => {
   res.send("Save Money Backend Live");
 });
@@ -85,12 +100,14 @@ app.use(apiLimiter);
 
 const auth = async (req, res, next) => {
   try {
-    const token = req.headers.authorization;
+    let token = req.headers.authorization;
 
     if (!token) {
-      return res.status(401).json({
-        msg: "No token provided"
-      });
+      return res.status(401).json({ msg: "No token" });
+    }
+
+    if (token.startsWith("Bearer ")) {
+      token = token.split(" ")[1];
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -98,20 +115,17 @@ const auth = async (req, res, next) => {
     const user = await User.findById(decoded.id);
 
     if (!user) {
-      return res.status(401).json({
-        msg: "User not found"
-      });
+      return res.status(401).json({ msg: "User not found" });
     }
 
     if (user.banned) {
       return res.status(403).json({
         msg: "Your account is banned",
-        reason: user.banReason
+        reason: user.banReason || ""
       });
     }
 
     req.user = decoded;
-
     next();
 
   } catch (err) {
@@ -120,36 +134,6 @@ const auth = async (req, res, next) => {
     });
   }
 };
-
-function auth(req, res, next) {
-  try {
-    let token = req.headers.authorization;
-
-    if (!token) {
-      return res.status(401).json({
-        msg: "No token"
-      });
-    }
-
-    if (token.startsWith("Bearer ")) {
-      token = token.split(" ")[1];
-    }
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    req.user = decoded;
-
-    next();
-
-  } catch (err) {
-    return res.status(401).json({
-      msg: "Token expired or invalid"
-    });
-  }
-}
 
 const adminAuth = async (req, res, next) => {
 
@@ -827,36 +811,6 @@ io.on("connection", (socket) => {
 
 });
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://save-money-indol.vercel.app"
-];
-
-const cors = require("cors");
-
-app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://save-money-indol.vercel.app"
-  ],
-
-  methods: ["GET", "POST", "PUT", "DELETE"],
-
-  allowedHeaders: [
-    "Content-Type",
-    "authorization"
-  ],
-
-  credentials: true
-}));
-
-app.options("*", cors({
-  origin: [
-    "http://localhost:3000",
-    "https://save-money-indol.vercel.app"
-  ],
-  credentials: true
-}));
 
 app.use(express.json());
 // 👉 static folder (image দেখার জন্য)
@@ -1718,27 +1672,26 @@ app.post("/royalty-data", async (req, res) => {
   }
 });
 
-app.post("/wallet-data", async (req, res) => {
-
+app.post("/wallet-data", auth, async (req, res) => {
   const { email } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select("-password");
 
-  const history = await WalletHistory.find({ email })
-    .sort({ date: -1 });
+  if (!user) {
+    return res.json({ msg: "User not found" });
+  }
+
+  const history = await WalletHistory.find({ email }).sort({ date: -1 });
 
   res.json({
-    walletId: user.walletId,
-    wallet: user.wallet,
-
-    referralIncome: user.referralIncome,
-    performanceIncome: user.performanceIncome,
-    teamIncome: user.teamIncome,
-    royaltyIncome: user.royaltyIncome,
-
+    walletId: user.walletId || "",
+    wallet: user.wallet || 0,
+    referralIncome: user.referralIncome || 0,
+    performanceIncome: user.performanceIncome || 0,
+    teamIncome: user.teamIncome || 0,
+    royaltyIncome: user.royaltyIncome || 0,
     history
   });
-
 });
 
 app.post(
@@ -3036,31 +2989,65 @@ async (req, res) => {
 
 });
 
-app.post(
-  "/admin-user-tree",
-  auth,
-  adminAuth,
-  async (req, res) => {
+app.post("/admin-user-tree", auth, adminAuth, async (req, res) => {
+  try {
+    const { email, filter } = req.body;
 
-    const { email } = req.body;
+    const rootUser = await User.findOne({ email });
 
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.json({
-        msg: "User not found"
-      });
+    if (!rootUser) {
+      return res.json({ msg: "User not found" });
     }
 
-    req.body.email = email;
+    async function buildTree(user, level) {
+      if (level > 7) return [];
 
-    app._router.handle(
-      req,
-      res,
-      require("express/lib/router/layer")
-    );
+      let query = { referredBy: user.referCode };
+
+      if (filter === "active") {
+        query.kycStatus = "approved";
+      }
+
+      if (filter === "pending") {
+        query.kycStatus = { $ne: "approved" };
+      }
+
+      const children = await User.find(query)
+        .select("name email referCode kycStatus createdAt");
+
+      const result = [];
+
+      for (let child of children) {
+        result.push({
+          name: child.name,
+          email: child.email,
+          referCode: child.referCode,
+          kycStatus: child.kycStatus,
+          joinDate: child.createdAt,
+          level,
+          children: await buildTree(child, level + 1)
+        });
+      }
+
+      return result;
+    }
+
+    const tree = {
+      name: rootUser.name,
+      email: rootUser.email,
+      referCode: rootUser.referCode,
+      kycStatus: rootUser.kycStatus,
+      level: 0,
+      children: await buildTree(rootUser, 1)
+    };
+
+    res.json({ tree });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ msg: "Server error" });
   }
-);
+});
 
 app.post("/ban-user",
 auth,
@@ -3274,18 +3261,16 @@ async (req, res) => {
 
 });
 
-app.post("/user-data",
-auth,
-async (req, res) => {
-
+app.post("/user-data", auth, async (req, res) => {
   const { email } = req.body;
 
-  const user = await User.findOne({
-    email
-  });
+  const user = await User.findOne({ email }).select("-password");
+
+  if (!user) {
+    return res.json({ msg: "User not found" });
+  }
 
   res.json(user);
-
 });
 
 app.post("/read-notification",
