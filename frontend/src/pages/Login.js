@@ -13,16 +13,19 @@ export default function Login() {
 
   const login = async () => {
     try {
-      const res = await fetch(`${API}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email,
-          password
-        })
-      });
+      const res = await fetch(
+  `${process.env.REACT_APP_API}/login`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      email,
+      password
+    })
+  }
+);
 
       const data = await res.json();
 
@@ -56,8 +59,14 @@ export default function Login() {
         setPopup(data.msg || "Login failed");
       }
     } catch (err) {
-      setPopup("Backend server not running");
-    }
+
+  console.log(err);
+
+  setPopup(
+    err.message || "Network error"
+  );
+
+}
   };
 
   return (
