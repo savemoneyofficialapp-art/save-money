@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
-const API = "https://save-money-yyv1.onrender.com";
+const API =
+  process.env.REACT_APP_API ||
+  "https://save-money-yyv1.onrender.com";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,63 +11,59 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [popup, setPopup] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const login = async () => {
+    if (!email || !password) {
+      setPopup("Please enter email and password");
+      return;
+    }
+
     try {
-      const res = await fetch(
-  `${process.env.REACT_APP_API}/login`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      email,
-      password
-    })
-  }
-);
+      setLoading(true);
+      setPopup("");
+
+      const res = await fetch(`${API}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
+      });
 
       const data = await res.json();
 
       if (data.msg === "Login success") {
-        localStorage.setItem("token", data.token || data.accessToken);
-        localStorage.setItem("accessToken", data.token || data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        localStorage.setItem("email", data.user.email);
-        localStorage.setItem("role", data.user.role);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        const token = data.accessToken || data.token;
 
-        navigate("/home");
+        localStorage.setItem("token", token);
+        localStorage.setItem("accessToken", token);
+        localStorage.setItem("refreshToken", data.refreshToken || "");
+        localStorage.setItem("email", data.user.email);
+        localStorage.setItem("role", data.user.role || "user");
+        localStorage.setItem("user", JSON.stringify(data.user));
 
         setPopup("Login Successful");
 
-       setTimeout(() => {
-
-  if (data.user.role === "admin") {
-    navigate("/admin-user-control", {
-      replace: true
-    });
-  } else {
-    navigate("/home", {
-      replace: true
-    });
-  }
-
-}, 1000);
-
+        setTimeout(() => {
+          if (data.user.role === "admin") {
+            navigate("/admin-user-control", { replace: true });
+          } else {
+            navigate("/home", { replace: true });
+          }
+        }, 800);
       } else {
         setPopup(data.msg || "Login failed");
       }
     } catch (err) {
-
-  console.log(err);
-
-  setPopup(
-    err.message || "Network error"
-  );
-
-}
+      console.log("LOGIN ERROR:", err);
+      setPopup("Backend connection failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,8 +88,12 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button style={styles.btn} onClick={login}>
-          Login
+        <button
+          style={styles.btn}
+          onClick={login}
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         <p style={styles.link} onClick={() => navigate("/forgot")}>
@@ -144,7 +145,8 @@ const styles = {
     border: "none",
     borderRadius: "12px",
     background: "#22c55e",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    cursor: "pointer"
   },
 
   link: {
