@@ -103,6 +103,14 @@ app.use(cors({
   credentials: true
 }));
 
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  message: {
+    msg: "Too many requests. Please try again later."
+  }
+});
+
 app.use(apiLimiter);
 
 const auth = async (req, res, next) => {
