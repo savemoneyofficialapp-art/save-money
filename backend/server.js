@@ -49,9 +49,14 @@ app.get("/health", (req, res) => {
 
 const server = http.createServer(app);
 
-const io = require("socket.io")(server, {
+const io = new Server(server, {
   cors: {
-    origin: "*"
+    origin: [
+      "http://localhost:3000",
+      "https://save-money-indol.vercel.app"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -70,14 +75,25 @@ app.use((req, res, next) => {
 
 
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://save-money-indol.vercel.app"
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://save-money-indol.vercel.app/"
-  ],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "authorization"]
+  allowedHeaders: ["Content-Type", "authorization"],
+  credentials: true
 }));
+
+app.options("*", cors());
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
