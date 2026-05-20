@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { fetchWithAuth }
-from "../utils/fetchWithAuth";
-import axios from "axios";
+import { fetchWithAuth } from "../utils/fetchWithAuth";
 
 const API = "https://save-money-yyv1.onrender.com";
 
 export default function Wallet() {
   const navigate = useNavigate();
-
   const email = localStorage.getItem("email");
 
   const [data, setData] = useState(null);
+  const [error, setError] = useState("");
 
   const [showCash, setShowCash] = useState(false);
 
@@ -27,158 +25,169 @@ export default function Wallet() {
     load();
   }, []);
 
-  const load = async () => {
-
-    const res = await fetchWithAuth(
-      `${API}/wallet-data`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":"application/json"
-        },
-        body: JSON.stringify({ email })
-      }
-    );
-
-    const d = await res.json();
-
+  const handleSession = (d) => {
     if (
-  data.msg === "Token expired or invalid"
-) {
-
-  localStorage.clear();
-
-  alert("Session expired. Please login again.");
-
-  window.location.href = "/login";
-
-  return;
-}
-
-    setData(d);
+      d?.msg === "Token expired or invalid" ||
+      d?.msg === "No token" ||
+      d?.msg === "Invalid token"
+    ) {
+      localStorage.clear();
+      alert("Session expired. Please login again.");
+      window.location.href = "/login";
+      return true;
+    }
+    return false;
   };
 
-  // COPY ADDRESS
-  const copyAddress = () => {
-    navigator.clipboard.writeText(
-      "TRX89SHSHD7SHS7SHS7"
-    );
+  const load = async () => {
+    try {
+      const res = await fetchWithAuth(`${API}/wallet-data`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email })
+      });
 
+      if (!res) {
+        setError("Server not responding");
+        return;
+      }
+
+      const d = await res.json();
+
+      if (handleSession(d)) return;
+
+      if (d.msg) {
+        setError(d.msg);
+        return;
+      }
+
+      setData(d);
+    } catch (err) {
+      console.log(err);
+      setError("Wallet data not loading. Please check backend/API.");
+    }
+  };
+
+  const copyAddress = () => {
+    navigator.clipboard.writeText("TRX89SHSHD7SHS7SHS7");
     toast.success("Wallet Address Copied");
   };
 
-  // ADD CASH
   const addCash = async () => {
+    try {
+      if (!cashAmount || !utr) {
+        toast.error("Amount and UTR required");
+        return;
+      }
 
-  const formData = new FormData();
+      const formData = new FormData();
 
-  formData.append("email", email);
-  formData.append("amount", cashAmount);
-  formData.append("utr", utr);
+      formData.append("email", email);
+      formData.append("amount", cashAmount);
+      formData.append("utr", utr);
 
-  if (screenshot) {
-    formData.append("screenshot", screenshot);
+      if (screenshot) {
+        formData.append("screenshot", screenshot);
+      }
 
-  }
+      const res = await fetchWithAuth(`${API}/add-cash`, {
+        method: "POST",
+        body: formData
+      });
 
-  const res = await fetchWithAuth(
-    `${API}/add-cash`,
-    {
-      method:"POST",
-      body: formData
+      if (!res) return;
+
+      const d = await res.json();
+
+      if (handleSession(d)) return;
+
+      toast.info(d.msg);
+
+      setShowCash(false);
+      setCashAmount("");
+      setUtr("");
+      setScreenshot(null);
+
+      load();
+    } catch (err) {
+      console.log(err);
+      toast.error("Add cash failed");
     }
-  );
+  };
 
-  const d = await res.json();
-
-  if (
-  data.msg === "Token expired or invalid"
-) {
-
-  localStorage.clear();
-
-  alert("Session expired. Please login again.");
-
-  window.location.href = "/login";
-
-  return;
-}
-
-  toast.info(d.msg);
-
-  setShowCash(false);
-
-  load();
-};
-
-  // TRANSFER
   const transfer = async () => {
+    try {
+      if (!walletId || !amount) {
+        toast.error("Wallet ID and amount required");
+        return;
+      }
 
-    const res = await fetchWithAuth(
-      `${API}/wallet-transfer`,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
+      const res = await fetchWithAuth(`${API}/wallet-transfer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           senderEmail: email,
           walletId,
-          amount
+          amount: Number(amount)
         })
-      }
-    );
+      });
 
-    const d = await res.json();
+      if (!res) return;
 
-    if (
-  data.msg === "Token expired or invalid"
-) {
+      const d = await res.json();
 
-  localStorage.clear();
+      if (handleSession(d)) return;
 
-  alert("Session expired. Please login again.");
+      toast.info(d.msg);
 
-  window.location.href = "/login";
+      setWalletId("");
+      setAmount("");
 
-  return;
-}
-
-    toast.info(d.msg);
-
-    load();
+      load();
+    } catch (err) {
+      console.log(err);
+      toast.error("Transfer failed");
+    }
   };
 
-  if(!data){
-    return <div>Loading...</div>
+  if (error) {
+    return (
+      <div style={styles.loading}>
+        <div style={styles.errorBox}>
+          <h3>{error}</h3>
+          <button style={styles.mainBtn} onClick={load}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div style={styles.loading}>
+        Loading Wallet...
+      </div>
+    );
   }
 
   return (
     <div style={styles.container}>
 
-      {/* HEADER */}
       <div style={styles.topCard}>
-
-        <p style={{opacity:0.8}}>
-          Wallet ID
-        </p>
-
-        <h3>
-          {data.walletId}
-        </h3>
-
-        <h1>
-          ₹ {data.wallet}
-        </h1>
-
+        <p style={{ opacity: 0.8 }}>Wallet ID</p>
+        <h3>{data.walletId || "Not Available"}</h3>
+        <h1>₹ {data.wallet || 0}</h1>
       </div>
 
-      {/* BUTTONS */}
       <div style={styles.btnRow}>
-
         <button
           style={styles.addBtn}
-          onClick={()=>setShowCash(true)}
+          onClick={() => setShowCash(true)}
         >
           Add Cash
         </button>
@@ -186,137 +195,98 @@ export default function Wallet() {
         <button style={styles.transferBtn}>
           Withdraw
         </button>
-
       </div>
 
-       <div style={styles.notice}>
+      <div style={styles.notice}>
+        <h2 style={{ marginBottom: "10px" }}>
+          Auto Withdrawal System
+        </h2>
 
-  <h2 style={{marginBottom:"10px"}}>
-  Auto Withdrawal System
-</h2>
+        <p>
+          Every month auto withdrawal will be processed on the 5th date if your Save Money investment is renewed on time.
+        </p>
+      </div>
 
-  <p>
-    Every month auto withdrawal will be processed on 5th date if your Save Money investment is renewed between 1st to 3rd.
-  </p>
-
-</div>
-
-      {/* INCOME */}
       <div style={styles.grid}>
-
         <div style={styles.incomeCard}>
           <p>Referral</p>
-          <h3>₹{data.referralIncome}</h3>
+          <h3>₹{data.referralIncome || 0}</h3>
         </div>
 
         <div style={styles.incomeCard}>
           <p>Performance</p>
-          <h3>₹{data.performanceIncome}</h3>
+          <h3>₹{data.performanceIncome || 0}</h3>
         </div>
 
         <div style={styles.incomeCard}>
           <p>Team</p>
-          <h3>₹{data.teamIncome}</h3>
+          <h3>₹{data.teamIncome || 0}</h3>
         </div>
 
         <div style={styles.incomeCard}>
           <p>Royalty</p>
-          <h3>₹{data.royaltyIncome}</h3>
+          <h3>₹{data.royaltyIncome || 0}</h3>
         </div>
-
       </div>
 
-
-      {/* TRANSFER */}
       <div style={styles.card}>
-
-        <h3>
-          Wallet Transfer
-        </h3>
+        <h3>Wallet Transfer</h3>
 
         <input
           style={styles.input}
           placeholder="Receiver Wallet ID"
           value={walletId}
-          onChange={(e)=>setWalletId(e.target.value)}
+          onChange={(e) => setWalletId(e.target.value)}
         />
 
         <input
           style={styles.input}
           placeholder="Amount"
           value={amount}
-          onChange={(e)=>setAmount(e.target.value)}
+          onChange={(e) => setAmount(e.target.value)}
         />
 
-        <button
-          style={styles.mainBtn}
-          onClick={transfer}
-        >
+        <button style={styles.mainBtn} onClick={transfer}>
           Transfer
         </button>
 
         <button
-  style={styles.btn}
-  onClick={() => navigate("/bonus-history")}
->
-  Bonus History
-</button>
-
+          style={styles.bonusBtn}
+          onClick={() => navigate("/bonus-history")}
+        >
+          Bonus History
+        </button>
       </div>
 
-      {/* HISTORY */}
-      <h3 style={{marginTop:"20px"}}>
+      <h3 style={{ marginTop: "20px" }}>
         Wallet History
       </h3>
 
-      {data.history.map((h,i)=>(
-
+      {(data.history || []).map((h, i) => (
         <div key={i} style={styles.history}>
-
           <div>
-
             <b>{h.type}</b>
-
-            <p style={{opacity:0.7}}>
-              {h.note}
-            </p>
-
+            <p style={{ opacity: 0.7 }}>{h.note}</p>
           </div>
 
           <div>
-
-            <b>
-              ₹{h.amount}
-            </b>
-
-            <p style={{opacity:0.7}}>
+            <b>₹{h.amount}</b>
+            <p style={{ opacity: 0.7 }}>
               {new Date(h.date).toLocaleDateString()}
             </p>
-
           </div>
-
         </div>
-
       ))}
 
-      {/* ADD CASH POPUP */}
       {showCash && (
-
         <div style={styles.popupBg}>
-
           <div style={styles.popup}>
-
             <h2>Add Cash</h2>
 
             <div style={styles.addressBox}>
+              <p>USDT Wallet Address</p>
 
-              <p>
-                USDT Wallet Address
-              </p>
-
-              <h4>
-                TRX89SHSHD7SHS7SHS7
-              </h4>
+              <h4>TRX89SHSHD7SHS7SHS7</h4>
 
               <button
                 style={styles.copyBtn}
@@ -324,30 +294,27 @@ export default function Wallet() {
               >
                 Copy Address
               </button>
-
             </div>
 
             <input
               style={styles.input}
               placeholder="Amount"
               value={cashAmount}
-              onChange={(e)=>setCashAmount(e.target.value)}
+              onChange={(e) => setCashAmount(e.target.value)}
             />
 
             <input
               style={styles.input}
               placeholder="UTR Number"
               value={utr}
-              onChange={(e)=>setUtr(e.target.value)}
+              onChange={(e) => setUtr(e.target.value)}
             />
 
             <input
-  type="file"
-  style={styles.input}
-  onChange={(e)=>
-    setScreenshot(e.target.files[0])
-  }
-/>
+              type="file"
+              style={styles.input}
+              onChange={(e) => setScreenshot(e.target.files[0])}
+            />
 
             <button
               style={styles.mainBtn}
@@ -358,15 +325,12 @@ export default function Wallet() {
 
             <button
               style={styles.closeBtn}
-              onClick={()=>setShowCash(false)}
+              onClick={() => setShowCash(false)}
             >
               Close
             </button>
-
           </div>
-
         </div>
-
       )}
 
     </div>
@@ -374,156 +338,178 @@ export default function Wallet() {
 }
 
 const styles = {
-
-  notice:{
-    background:"linear-gradient(135deg,#3b82f6,#2563eb)",
-    padding:"18px",
-    borderRadius:"15px",
-    marginTop:"15px",
-    color:"white",
-    boxShadow:"0 0 15px rgba(0,0,0,0.3)",
-    textAlign:"center"
+  loading: {
+    minHeight: "100vh",
+    background: "#020617",
+    color: "white",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
   },
 
-
-  container:{
-    minHeight:"100vh",
-    background:"linear-gradient(135deg,#020617,#0f172a)",
-    padding:"20px",
-    color:"white"
+  errorBox: {
+    background: "#1e293b",
+    padding: "20px",
+    borderRadius: "16px",
+    textAlign: "center"
   },
 
-  topCard:{
-    background:"linear-gradient(135deg,#22c55e,#16a34a)",
-    borderRadius:"20px",
-    padding:"25px",
-    textAlign:"center",
-    color:"#020617",
-    boxShadow:"0 0 20px rgba(0,0,0,0.4)"
+  notice: {
+    background: "linear-gradient(135deg,#3b82f6,#2563eb)",
+    padding: "18px",
+    borderRadius: "15px",
+    marginTop: "15px",
+    color: "white",
+    boxShadow: "0 0 15px rgba(0,0,0,0.3)",
+    textAlign: "center"
   },
 
-  btnRow:{
-    display:"flex",
-    gap:"10px",
-    marginTop:"15px"
+  container: {
+    minHeight: "100vh",
+    background: "linear-gradient(135deg,#020617,#0f172a)",
+    padding: "20px",
+    color: "white"
   },
 
-  addBtn:{
-    flex:1,
-    padding:"14px",
-    border:"none",
-    borderRadius:"12px",
-    background:"#3b82f6",
-    color:"white",
-    fontWeight:"bold"
+  topCard: {
+    background: "linear-gradient(135deg,#22c55e,#16a34a)",
+    borderRadius: "20px",
+    padding: "25px",
+    textAlign: "center",
+    color: "#020617",
+    boxShadow: "0 0 20px rgba(0,0,0,0.4)"
   },
 
-  transferBtn:{
-    flex:1,
-    padding:"14px",
-    border:"none",
-    borderRadius:"12px",
-    background:"#f59e0b",
-    color:"white",
-    fontWeight:"bold"
+  btnRow: {
+    display: "flex",
+    gap: "10px",
+    marginTop: "15px"
   },
 
-  grid:{
-    display:"grid",
-    gridTemplateColumns:"1fr 1fr",
-    gap:"10px",
-    marginTop:"15px"
+  addBtn: {
+    flex: 1,
+    padding: "14px",
+    border: "none",
+    borderRadius: "12px",
+    background: "#3b82f6",
+    color: "white",
+    fontWeight: "bold"
   },
 
-  incomeCard:{
-    background:"#1e293b",
-    padding:"15px",
-    borderRadius:"15px",
-    textAlign:"center"
+  transferBtn: {
+    flex: 1,
+    padding: "14px",
+    border: "none",
+    borderRadius: "12px",
+    background: "#f59e0b",
+    color: "white",
+    fontWeight: "bold"
   },
 
-  card:{
-    background:"#1e293b",
-    padding:"15px",
-    borderRadius:"15px",
-    marginTop:"15px"
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+    marginTop: "15px"
   },
 
-  input:{
-    width:"100%",
-    padding:"12px",
-    borderRadius:"10px",
-    border:"none",
-    marginTop:"10px"
+  incomeCard: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "15px",
+    textAlign: "center"
   },
 
-  mainBtn:{
-    width:"100%",
-    padding:"12px",
-    border:"none",
-    borderRadius:"10px",
-    background:"#22c55e",
-    color:"white",
-    fontWeight:"bold",
-    marginTop:"12px"
+  card: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "15px",
+    marginTop: "15px"
   },
 
-  history:{
-    background:"#1e293b",
-    padding:"12px",
-    borderRadius:"12px",
-    marginTop:"10px",
-    display:"flex",
-    justifyContent:"space-between"
+  input: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "10px",
+    border: "none",
+    marginTop: "10px"
   },
 
-  popupBg:{
-    position:"fixed",
-    top:0,
-    left:0,
-    width:"100%",
-    height:"100%",
-    background:"rgba(0,0,0,0.6)",
-    display:"flex",
-    justifyContent:"center",
-    alignItems:"center"
+  mainBtn: {
+    width: "100%",
+    padding: "12px",
+    border: "none",
+    borderRadius: "10px",
+    background: "#22c55e",
+    color: "white",
+    fontWeight: "bold",
+    marginTop: "12px"
   },
 
-  popup:{
-    background:"#0f172a",
-    padding:"20px",
-    borderRadius:"20px",
-    width:"90%",
-    maxWidth:"400px"
+  bonusBtn: {
+    width: "100%",
+    padding: "12px",
+    border: "none",
+    borderRadius: "10px",
+    background: "#8b5cf6",
+    color: "white",
+    fontWeight: "bold",
+    marginTop: "12px"
   },
 
-  addressBox:{
-    background:"#1e293b",
-    padding:"15px",
-    borderRadius:"12px",
-    textAlign:"center",
-    marginTop:"10px"
+  history: {
+    background: "#1e293b",
+    padding: "12px",
+    borderRadius: "12px",
+    marginTop: "10px",
+    display: "flex",
+    justifyContent: "space-between"
   },
 
-  copyBtn:{
-    marginTop:"10px",
-    padding:"10px",
-    border:"none",
-    borderRadius:"10px",
-    background:"#3b82f6",
-    color:"white"
+  popupBg: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.6)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
   },
 
-  closeBtn:{
-    width:"100%",
-    padding:"12px",
-    border:"none",
-    borderRadius:"10px",
-    background:"#ef4444",
-    color:"white",
-    marginTop:"10px"
+  popup: {
+    background: "#0f172a",
+    padding: "20px",
+    borderRadius: "20px",
+    width: "90%",
+    maxWidth: "400px"
+  },
+
+  addressBox: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "12px",
+    textAlign: "center",
+    marginTop: "10px"
+  },
+
+  copyBtn: {
+    marginTop: "10px",
+    padding: "10px",
+    border: "none",
+    borderRadius: "10px",
+    background: "#3b82f6",
+    color: "white"
+  },
+
+  closeBtn: {
+    width: "100%",
+    padding: "12px",
+    border: "none",
+    borderRadius: "10px",
+    background: "#ef4444",
+    color: "white",
+    marginTop: "10px"
   }
-
-  
-
 };
