@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-"https://save-money-yyv1.onrender.com";
-
+const API = "https://save-money-yyv1.onrender.com";
 export default function Leaderboard() {
 
   const [users, setUsers] = useState([]);

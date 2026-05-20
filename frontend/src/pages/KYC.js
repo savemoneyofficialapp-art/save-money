@@ -4,8 +4,7 @@ import { toast } from "react-toastify";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
 import axios from "axios";
-"https://save-money-yyv1.onrender.com";
-
+const API = "https://save-money-yyv1.onrender.com";
 
 export default function KYC() {
 

@@ -15,8 +15,7 @@ import {
 } from "recharts";
 
 import axios from "axios";
-"https://save-money-yyv1.onrender.com";
-
+const API = "https://save-money-yyv1.onrender.com";
 export default function UserAnalytics() {
 
   const token = localStorage.getItem("token");
