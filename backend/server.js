@@ -29,10 +29,8 @@ const BonusLedger = require("./models/BonusLedger");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
-const xss = require("xss-clean");
-
 const validator = require("validator");
-
+const sanitize = require("mongo-sanitize");
 
 
 const app = express();
@@ -50,8 +48,14 @@ app.use(helmet());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
+app.use((req, res, next) => {
+  if (req.body) req.body = sanitize(req.body);
+  if (req.params) req.params = sanitize(req.params);
 
-app.use(xss());
+  // req.query sanitize করবে না, Render/Express এ query read-only
+  next();
+});
+
 
 
 app.use(cors({
@@ -2235,7 +2239,7 @@ app.post("/reject-kyc", async (req, res) => {
 app.post("/dashboard", async (req, res) => {
   const { email } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select("-password");
 
   res.json({
   name: user?.name || "",
@@ -3157,7 +3161,7 @@ app.post("/my-rank", auth, async (req, res) => {
   await updateUserRank(email);
 
   const user = await User.findOne({ email }).select(
-    "name rank rankPoints totalEarning totalDirect kycStatus"
+    "-password name rank rankPoints totalEarning totalDirect kycStatus"
   );
 
   res.json(user);
@@ -3318,7 +3322,7 @@ app.post("/referral-tree", auth, async (req, res) => {
 
       const children = await User.find(query)
         .select(
-          "name email referCode kycStatus createdAt wallet"
+          "-password name email referCode kycStatus createdAt wallet"
         );
 
       const result = [];
