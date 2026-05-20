@@ -2153,6 +2153,35 @@ app.post("/get-user", async (req, res) => {
   res.json(user);
 });
 
+app.post("/get-user-data", auth, async (req, res) => {
+
+  try {
+
+    const { email } = req.body;
+
+    const user = await User.findOne({ email })
+      .select("-password");
+
+    if (!user) {
+      return res.json({
+        msg: "User not found"
+      });
+    }
+
+    res.json(user);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      msg: "Server error"
+    });
+
+  }
+
+});
+
 app.post("/check-kyc", async (req, res) => {
 
   const { email } = req.body;
