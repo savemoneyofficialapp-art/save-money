@@ -8,6 +8,12 @@ import axios from "axios";
 
 const API = "https://save-money-yyv1.onrender.com";
 
+const SAFE_BRAND = BRAND || {
+  appName: "Save Money",
+  slogan: "Save & Earn",
+  logo: "/logo.png"
+};
+
 export default function Home() {
   const navigate = useNavigate();
 
@@ -204,7 +210,7 @@ const getRankIcon = (rank) => {
         <div style={styles.brandHeader}>
 
   <img
-    src={BRAND.logo}
+    src={SAFE_BRAND.logo}
     alt="logo"
     style={styles.brandLogo}
     onError={(e) => {
@@ -215,11 +221,11 @@ const getRankIcon = (rank) => {
   <div>
 
     <h2 style={styles.brandName}>
-      {BRAND.appName}
+      {SAFE_BRAND.appName}
     </h2>
 
     <p style={styles.brandSlogan}>
-      {BRAND.slogan}
+      {SAFE_BRAND.slogan}
     </p>
 
   </div>
