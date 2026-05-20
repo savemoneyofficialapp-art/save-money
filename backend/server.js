@@ -93,15 +93,15 @@ app.use(cors({
   credentials: true
 }));
 
-app.options("*", cors());
-
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  message: {
-    msg: "Too many requests. Please try again later."
-  }
-});
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://save-money-indol.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "authorization"],
+  credentials: true
+}));
 
 app.use(apiLimiter);
 
