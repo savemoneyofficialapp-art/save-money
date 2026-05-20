@@ -75,7 +75,7 @@ app.use(cors({
     "http://localhost:3000",
     "https://save-money-indol.vercel.app/"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "authorization"]
 }));
 
