@@ -28,7 +28,7 @@ const BonusLedger = require("./models/BonusLedger");
 
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const mongoSanitize = require("express-mongo-sanitize");
+
 const xss = require("xss-clean");
 
 const validator = require("validator");
@@ -50,7 +50,7 @@ app.use(helmet());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
-app.use(mongoSanitize());
+
 app.use(xss());
 
 
