@@ -832,20 +832,31 @@ const allowedOrigins = [
   "https://save-money-indol.vercel.app"
 ];
 
+const cors = require("cors");
+
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "authorization"],
+  origin: [
+    "http://localhost:3000",
+    "https://save-money-indol.vercel.app"
+  ],
+
+  methods: ["GET", "POST", "PUT", "DELETE"],
+
+  allowedHeaders: [
+    "Content-Type",
+    "authorization"
+  ],
+
   credentials: true
 }));
 
-app.options("*", cors());
+app.options("*", cors({
+  origin: [
+    "http://localhost:3000",
+    "https://save-money-indol.vercel.app"
+  ],
+  credentials: true
+}));
 
 app.use(express.json());
 // 👉 static folder (image দেখার জন্য)
