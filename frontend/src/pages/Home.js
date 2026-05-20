@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 
 import { BRAND } from "../brand";
 import axios from "axios";
-import API from "../api";
+import API from "../api.js";
 
 export default function Home() {
   const navigate = useNavigate();

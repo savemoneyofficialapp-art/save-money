@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import API from "../api";
+import API from "../api.js";
 
 export default function Leaderboard() {
 

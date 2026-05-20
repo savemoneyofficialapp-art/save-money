@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import axios from "axios";
 
-import API from "../api";
+import API from "../api.js";
 
 export default function AdvancedAdminAnalytics() {
   const token = localStorage.getItem("token");

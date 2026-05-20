@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
-import API from "../api";
+import API from "../api.js";
 
 export default function Register() {
   const navigate = useNavigate();

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 import axios from "axios";
-import API from "../api";
+import API from "../api.js";
 
 const socket = io(`${API}`);
 

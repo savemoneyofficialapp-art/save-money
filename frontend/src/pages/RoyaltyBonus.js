@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
 import axios from "axios";
-import API from "../api";
+import API from "../api.js";
 
 
 export default function RoyaltyBonus() {

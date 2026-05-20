@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
 import axios from "axios";
-import API from "../api";
+import API from "../api.js";
 
 export default function Wallet() {
   const navigate = useNavigate();
