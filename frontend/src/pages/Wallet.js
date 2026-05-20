@@ -22,7 +22,7 @@ export default function Wallet() {
   const [screenshot, setScreenshot] = useState(null);
 
   useEffect(() => {
-    load();
+    loadWallet();
   }, []);
 
   const handleSession = (d) => {
@@ -39,37 +39,48 @@ export default function Wallet() {
     return false;
   };
 
-  const load = async () => {
-    try {
-      const res = await fetchWithAuth(`${API}/wallet-data`, {
+  const loadWallet = async () => {
+
+  try {
+
+    const res = await fetch(
+      `${process.env.REACT_APP_API}/wallet-data`,
+      {
         method: "POST",
+
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type":"application/json",
+          authorization: token
         },
-        body: JSON.stringify({ email })
-      });
 
-      if (!res) {
-        setError("Server not responding");
-        return;
+        body: JSON.stringify({
+          email
+        })
       }
+    );
 
-      const d = await res.json();
+    const data = await res.json();
 
-      if (handleSession(d)) return;
+    if (data.msg === "Token expired or invalid") {
 
-      if (d.msg) {
-        setError(d.msg);
-        return;
-      }
+      localStorage.clear();
 
-      setData(d);
-    } catch (err) {
-      console.log(err);
-      setError("Wallet data not loading. Please check backend/API.");
+      window.location.href = "/login";
+
+      return;
     }
-  };
 
+    setWallet(data);
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Wallet data not loading");
+
+  }
+
+};
   const copyAddress = () => {
     navigator.clipboard.writeText("TRX89SHSHD7SHS7SHS7");
     toast.success("Wallet Address Copied");

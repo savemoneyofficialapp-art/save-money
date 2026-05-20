@@ -1,25 +1,25 @@
 const mongoose = require("mongoose");
 
-const schema = new mongoose.Schema({
+const walletHistorySchema =
+  new mongoose.Schema({
 
-  email: String,
+    email: String,
 
-  type: String,
-
-  amount: Number,
-
-  status: {
     type: String,
-    default: "Success"
-  },
 
-  note: String,
+    amount: Number,
 
-  date: {
-    type: Date,
-    default: Date.now
-  }
+    note: String,
 
-});
+    date: {
+      type: Date,
+      default: Date.now
+    }
 
-module.exports = mongoose.model("WalletHistory", schema);
+  });
+
+module.exports =
+  mongoose.model(
+    "WalletHistory",
+    walletHistorySchema
+  );
