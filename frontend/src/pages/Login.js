@@ -56,7 +56,7 @@ export default function Login() {
         setPopup(data.msg || "Login failed");
       }
     } catch (err) {
-      setPopup("");
+      setPopup("Backend server not running");
     }
   };
 
