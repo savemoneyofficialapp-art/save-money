@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
+
 const API = "https://save-money-yyv1.onrender.com";
+
 export default function Register() {
   const navigate = useNavigate();
 

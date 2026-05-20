@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 const API = "https://save-money-yyv1.onrender.com";
+
 export default function BonusHistory() {
   const email = localStorage.getItem("email");
   const token = localStorage.getItem("token");

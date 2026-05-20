@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 const API = "https://save-money-yyv1.onrender.com";
+
 export default function DailyReward() {
   const email = localStorage.getItem("email");
   const token = localStorage.getItem("token");

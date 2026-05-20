@@ -12,6 +12,7 @@ import {
 import axios from "axios";
 
 const API = "https://save-money-yyv1.onrender.com";
+
 export default function AdvancedAdminAnalytics() {
   const token = localStorage.getItem("token");
 

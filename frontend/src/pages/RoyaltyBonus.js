@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
 import axios from "axios";
+
 const API = "https://save-money-yyv1.onrender.com";
 
 export default function RoyaltyBonus() {

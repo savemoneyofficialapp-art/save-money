@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+
 const API = "https://save-money-yyv1.onrender.com";
+
 export default function InvestHistory() {
 
   const email = localStorage.getItem("email");
