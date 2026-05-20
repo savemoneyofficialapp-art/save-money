@@ -35,6 +35,18 @@ const sanitize = require("mongo-sanitize");
 
 const app = express();
 
+app.get("/", (req, res) => {
+  res.send("Save Money Backend Live");
+});
+
+app.get("/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "Backend running",
+    time: new Date()
+  });
+});
+
 const server = http.createServer(app);
 
 const io = require("socket.io")(server, {
@@ -892,9 +904,7 @@ const Txn = mongoose.model("Txn", {
 // helper
 const makeCode = () => Math.random().toString(36).substring(2, 8);
 
-app.get("/", (req, res) => {
-  res.send("Save Money Backend Live");
-});
+
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -3750,13 +3760,7 @@ app.get("/investment-slip/:investmentId/:paymentId", async (req, res) => {
   doc.end();
 });
 
-app.get("/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "Backend running",
-    time: new Date()
-  });
-});
+
 
 
 
