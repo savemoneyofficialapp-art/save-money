@@ -3750,6 +3750,14 @@ app.get("/investment-slip/:investmentId/:paymentId", async (req, res) => {
   doc.end();
 });
 
+app.get("/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "Backend running",
+    time: new Date()
+  });
+});
+
 
 
 // ================= AUTO MONTH RESET =================
