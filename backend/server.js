@@ -61,7 +61,7 @@ app.use((req, res, next) => {
 app.use(cors({
   origin: [
     "http://localhost:3000",
-    "https://YOUR-VERCEL-URL.vercel.app"
+    "https://save-money-indol.vercel.app/"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "authorization"]
