@@ -73,36 +73,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://save-money-indol.vercel.app"
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "authorization"],
-  credentials: true
-}));
-
-app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://save-money-indol.vercel.app"
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "authorization"],
-  credentials: true
-}));
-
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -150,6 +120,36 @@ const auth = async (req, res, next) => {
     });
   }
 };
+
+function auth(req, res, next) {
+  try {
+    let token = req.headers.authorization;
+
+    if (!token) {
+      return res.status(401).json({
+        msg: "No token"
+      });
+    }
+
+    if (token.startsWith("Bearer ")) {
+      token = token.split(" ")[1];
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    req.user = decoded;
+
+    next();
+
+  } catch (err) {
+    return res.status(401).json({
+      msg: "Token expired or invalid"
+    });
+  }
+}
 
 const adminAuth = async (req, res, next) => {
 
@@ -827,14 +827,27 @@ io.on("connection", (socket) => {
 
 });
 
-app.use(express.json());
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://save-money-indol.vercel.app"
+];
 
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "authorization"]
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "authorization"],
+  credentials: true
 }));
 
+app.options("*", cors());
+
+app.use(express.json());
 // 👉 static folder (image দেখার জন্য)
 app.use("/uploads", express.static("uploads"));
 
