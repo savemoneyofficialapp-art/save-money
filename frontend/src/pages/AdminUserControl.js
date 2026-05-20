@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-import API from "../api.js";
+"https://save-money-yyv1.onrender.com";
 
 export default function AdminUserControl() {
   const token = localStorage.getItem("token");

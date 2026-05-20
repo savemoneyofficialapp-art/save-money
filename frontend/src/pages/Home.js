@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 
 import { BRAND } from "../brand";
 import axios from "axios";
-import API from "../api.js";
+"https://save-money-yyv1.onrender.com";
 
 export default function Home() {
   const navigate = useNavigate();

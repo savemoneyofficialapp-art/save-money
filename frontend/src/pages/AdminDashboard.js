@@ -11,7 +11,7 @@ import {
 import axios from "axios";
 
 
-import API from "../api.js";
+"https://save-money-yyv1.onrender.com";
 
 export default function AdminDashboard(){
 

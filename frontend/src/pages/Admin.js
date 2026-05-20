@@ -3,7 +3,7 @@ import { fetchWithAuth }
 from "../utils/fetchWithAuth";
 import axios from "axios";
 
-import API from "../api.js";
+"https://save-money-yyv1.onrender.com";
 
 
 export default function Admin() {
