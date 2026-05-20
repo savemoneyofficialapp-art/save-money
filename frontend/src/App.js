@@ -40,6 +40,7 @@ import ReferralTree from "./pages/ReferralTree";
 import LegalPages from "./pages/LegalPages";
 import AdvancedAdminAnalytics from "./pages/AdvancedAdminAnalytics";
 import AdminUserControl from "./pages/AdminUserControl";
+import AboutCompany from "./pages/AboutCompany";
 
 
 
@@ -101,6 +102,8 @@ function App() {
     </ProtectedRoute>
   }
 />
+
+<Route path="/about" element={<AboutCompany />} />
 
         <Route
           path="/home"
