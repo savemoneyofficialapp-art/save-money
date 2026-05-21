@@ -372,317 +372,358 @@ const getRankIcon = (rank) => {
 
 const styles = {
   container:{
-  minHeight:"100vh",
-
-  backgroundImage:
-    "linear-gradient(rgba(2,6,23,0.88), rgba(15,23,42,0.92)), url('/network-bg.jpg')",
-
-  backgroundSize:"cover",
-
-  backgroundPosition:"center",
-
-  backgroundRepeat:"no-repeat",
-
-  backgroundAttachment:"fixed",
-
-  color:"white",
-
-  padding:"20px"
-  
-},
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
+    minHeight:"100vh",
+    backgroundImage:
+      "linear-gradient(rgba(2,6,23,0.88), rgba(15,23,42,0.92)), url('/network-bg.jpg')",
+    backgroundSize:"cover",
+    backgroundPosition:"center",
+    backgroundRepeat:"no-repeat",
+    backgroundAttachment:"fixed",
+    color:"white",
+    padding:"20px",
+    paddingBottom:"95px"
   },
 
-brandHeader:{
-  display:"flex",
-  alignItems:"center",
-  gap:"12px",
-  marginBottom:"18px",
-  background:"#1e293b",
-  padding:"14px",
-  borderRadius:"18px",
-  border:"1px solid #334155"
-},
-
-brandLogo:{
-  width:"55px",
-  height:"55px",
-  borderRadius:"14px",
-  objectFit:"cover",
-  background:"#0f172a"
-},
-
-brandName:{
-  margin:0,
-  color:"#22c55e",
-  fontSize:"22px",
-  fontWeight:"bold"
-},
-
-brandSlogan:{
-  margin:0,
-  color:"#38bdf8",
-  fontSize:"13px",
-  fontWeight:"bold"
-},
-
-  welcome: {
-    margin: 0,
-    fontSize: "24px"
+  header:{
+    display:"flex",
+    flexDirection:"column",
+    gap:"14px"
   },
-  slogan: {
-    marginTop: "5px",
-    color: "#22c55e",
-    fontWeight: "bold"
+
+  brandHeader:{
+    display:"flex",
+    alignItems:"center",
+    gap:"12px",
+    background:"linear-gradient(135deg,#0f172a,#1e293b)",
+    padding:"14px",
+    borderRadius:"20px",
+    border:"1px solid #334155",
+    boxShadow:"0 0 20px rgba(34,197,94,0.15)"
+  },
+
+  brandLogo:{
+    width:"55px",
+    height:"55px",
+    borderRadius:"16px",
+    objectFit:"cover",
+    background:"#0f172a",
+    border:"2px solid #22c55e"
+  },
+
+  brandName:{
+    margin:0,
+    color:"#22c55e",
+    fontSize:"23px",
+    fontWeight:"900"
+  },
+
+  brandSlogan:{
+    margin:0,
+    color:"#38bdf8",
+    fontSize:"13px",
+    fontWeight:"bold"
+  },
+
+  welcome:{
+    margin:0,
+    fontSize:"25px",
+    fontWeight:"900"
+  },
+
+  slogan:{
+    marginTop:"5px",
+    color:"#22c55e",
+    fontWeight:"bold"
+  },
+
+  badge:{
+    background:"linear-gradient(135deg,#2563eb,#38bdf8)",
+    color:"white",
+    borderRadius:"50%",
+    padding:"3px 8px",
+    marginLeft:"8px",
+    fontSize:"13px",
+    boxShadow:"0 0 12px rgba(59,130,246,0.8)"
   },
 
   rankCard:{
-  marginTop:"20px",
-  background:"linear-gradient(135deg,#1e293b,#020617)",
-  border:"1px solid #334155",
-  borderRadius:"20px",
-  padding:"18px",
-  display:"flex",
-  justifyContent:"space-between",
-  alignItems:"center",
-  boxShadow:"0 0 20px rgba(0,0,0,0.35)"
-},
-
-rankLabel:{
-  color:"#94a3b8",
-  fontSize:"12px",
-  marginBottom:"5px"
-},
-
-rankName:{
-  margin:0,
-  fontSize:"24px",
-  fontWeight:"bold"
-},
-
-rankRight:{
-  textAlign:"center",
-  fontWeight:"bold"
-},
-
-  badge: {
-    background: "#2563eb",
-    color: "white",
-    borderRadius: "50%",
-    padding: "3px 8px",
-    marginLeft: "8px",
-    fontSize: "13px"
-  },
-  headerBtns: {
-    display: "flex",
-    gap: "10px"
-  },
-  iconBtn: {
-    position: "relative",
-    background: "#1e293b",
-    color: "white",
-    border: "1px solid #334155",
-    borderRadius: "14px",
-    padding: "11px",
-    fontSize: "18px"
-  },
-  count: {
-    position: "absolute",
-    top: "-6px",
-    right: "-6px",
-    background: "#ef4444",
-    color: "white",
-    borderRadius: "50%",
-    padding: "2px 6px",
-    fontSize: "10px"
-  },
-  kycBtn: {
-    background: "linear-gradient(135deg,#3b82f6,#2563eb)",
-    color: "white",
-    border: "none",
-    borderRadius: "14px",
-    padding: "11px 15px",
-    fontWeight: "bold"
-  },
-  hero: {
-    marginTop: "25px",
-    padding: "22px",
-    borderRadius: "22px",
-    background: "linear-gradient(135deg,#22c55e,#3b82f6)",
-    color: "#020617",
-    textAlign: "center",
-    fontWeight: "bold"
-  },
-  mainCard: {
-    background: "rgba(30,41,59,0.95)",
-    marginTop: "22px",
-    padding: "18px",
-    borderRadius: "22px",
-    boxShadow: "0 0 20px rgba(0,0,0,0.35)"
-  },
-  sectionTitle: {
-    textAlign: "center",
-    color: "#22c55e"
-  },
-  saveBtn: {
-    width: "100%",
-    padding: "16px",
-    marginTop: "12px",
-    border: "none",
-    borderRadius: "16px",
-    background: "linear-gradient(135deg,#22c55e,#16a34a)",
-    color: "#020617",
-    fontWeight: "bold",
-    fontSize: "16px"
-  },
-  oneTimeBtn: {
-    width: "100%",
-    padding: "16px",
-    marginTop: "12px",
-    border: "none",
-    borderRadius: "16px",
-    background: "linear-gradient(135deg,#06b6d4,#2563eb)",
-    color: "white",
-    fontWeight: "bold",
-    fontSize: "16px"
-  },
-  coming: {
-    textAlign: "center",
-    color: "#94a3b8"
-  },
-  goldBtn: {
-    width: "100%",
-    padding: "15px",
-    marginTop: "10px",
-    border: "none",
-    borderRadius: "15px",
-    background: "linear-gradient(135deg,#facc15,#f59e0b)",
-    fontWeight: "bold"
-  },
-  silverBtn: {
-    width: "100%",
-    padding: "15px",
-    marginTop: "10px",
-    border: "none",
-    borderRadius: "15px",
-    background: "linear-gradient(135deg,#cbd5e1,#64748b)",
-    color: "white",
-    fontWeight: "bold"
-  },
-  rdBtn: {
-    width: "100%",
-    padding: "15px",
-    marginTop: "10px",
-    border: "none",
-    borderRadius: "15px",
-    background: "linear-gradient(135deg,#a855f7,#7c3aed)",
-    color: "white",
-    fontWeight: "bold"
-  },
-  help: {
-    textAlign: "center",
-    color: "#22c55e",
-    marginTop: "25px"
-  },
-  logoutBtn: {
-    width: "100%",
-    padding: "14px",
-    marginTop: "15px",
-    border: "none",
-    borderRadius: "15px",
-    background: "linear-gradient(135deg,#ef4444,#b91c1c)",
-    color: "white",
-    fontWeight: "bold"
+    background:"linear-gradient(135deg,#1e293b,#020617)",
+    border:"1px solid #334155",
+    borderRadius:"22px",
+    padding:"18px",
+    display:"flex",
+    justifyContent:"space-between",
+    alignItems:"center",
+    boxShadow:"0 0 24px rgba(168,85,247,0.2)"
   },
 
-  supportBtn: {
-  width: "100%",
-  padding: "15px",
-  marginTop: "12px",
-  border: "none",
-  borderRadius: "15px",
-  background: "linear-gradient(135deg,#06b6d4,#2563eb)",
-  color: "white",
-  fontWeight: "bold",
-  fontSize: "15px"
-},
-
-leaderBtn:{
-  width:"100%",
-  padding:"15px",
-  marginTop:"12px",
-  border:"none",
-  borderRadius:"15px",
-  background:
-  "linear-gradient(135deg,#facc15,#f59e0b)",
-  color:"#020617",
-  fontWeight:"bold"
-},
-
-analyticsBtn:{
-  width:"100%",
-  padding:"15px",
-  marginTop:"12px",
-  border:"none",
-  borderRadius:"15px",
-  background:
-    "linear-gradient(135deg,#8b5cf6,#7c3aed)",
-  color:"white",
-  fontWeight:"bold",
-  fontSize:"15px"
-},
-
-aboutBtn: {
-  width: "100%",
-  padding: "15px",
-  marginTop: "12px",
-  border: "none",
-  borderRadius: "15px",
-  background: "linear-gradient(135deg,#14b8a6,#0f766e)",
-  color: "white",
-  fontWeight: "bold",
-  fontSize: "15px"
-},
-
-  bottomNav: {
-    position: "fixed",
-    bottom: 0,
-    left: 0,
-    width: "100%",
-    background: "#020617",
-    borderTop: "1px solid #334155",
-    display: "flex",
-    gap: "8px",
-    padding: "10px"
+  rankLabel:{
+    color:"#94a3b8",
+    fontSize:"12px",
+    marginBottom:"5px",
+    letterSpacing:"1px"
   },
-  homeNav: {
-    flex: 1,
-    padding: "12px",
-    border: "none",
-    borderRadius: "14px",
-    background: "#22c55e",
-    color: "#020617",
-    fontWeight: "bold"
+
+  rankName:{
+    margin:0,
+    fontSize:"25px",
+    fontWeight:"900"
   },
-  walletNav: {
-    flex: 1,
-    padding: "12px",
-    border: "none",
-    borderRadius: "14px",
-    background: "#3b82f6",
-    color: "white",
-    fontWeight: "bold"
+
+  rankRight:{
+    textAlign:"center",
+    fontWeight:"bold",
+    background:"#0f172a",
+    padding:"12px",
+    borderRadius:"16px"
   },
-  referNav: {
-    flex: 1,
-    padding: "12px",
-    border: "none",
-    borderRadius: "14px",
-    background: "#f59e0b",
-    color: "#020617",
-    fontWeight: "bold"
+
+  headerBtns:{
+    display:"grid",
+    gridTemplateColumns:"1fr 1fr 1fr",
+    gap:"10px"
+  },
+
+  iconBtn:{
+    position:"relative",
+    background:"linear-gradient(135deg,#f59e0b,#facc15)",
+    color:"#020617",
+    border:"none",
+    borderRadius:"16px",
+    padding:"13px",
+    fontSize:"18px",
+    fontWeight:"bold",
+    boxShadow:"0 8px 18px rgba(245,158,11,0.35)"
+  },
+
+  count:{
+    position:"absolute",
+    top:"-6px",
+    right:"-6px",
+    background:"#ef4444",
+    color:"white",
+    borderRadius:"50%",
+    padding:"3px 7px",
+    fontSize:"10px"
+  },
+
+  kycBtn:{
+    background:"linear-gradient(135deg,#3b82f6,#2563eb)",
+    color:"white",
+    border:"none",
+    borderRadius:"16px",
+    padding:"13px",
+    fontWeight:"900",
+    boxShadow:"0 8px 18px rgba(59,130,246,0.35)"
+  },
+
+  logoutBtn:{
+    padding:"13px",
+    border:"none",
+    borderRadius:"16px",
+    background:"linear-gradient(135deg,#ef4444,#b91c1c)",
+    color:"white",
+    fontWeight:"900",
+    boxShadow:"0 8px 18px rgba(239,68,68,0.35)"
+  },
+
+  hero:{
+    marginTop:"25px",
+    padding:"24px",
+    borderRadius:"26px",
+    background:"linear-gradient(135deg,#22c55e,#38bdf8,#3b82f6)",
+    color:"#020617",
+    textAlign:"center",
+    fontWeight:"900",
+    boxShadow:"0 0 28px rgba(34,197,94,0.35)"
+  },
+
+  mainCard:{
+    background:"rgba(15,23,42,0.92)",
+    marginTop:"22px",
+    padding:"20px",
+    borderRadius:"24px",
+    border:"1px solid #334155",
+    boxShadow:"0 0 25px rgba(0,0,0,0.45)"
+  },
+
+  sectionTitle:{
+    textAlign:"center",
+    color:"#22c55e",
+    letterSpacing:"2px",
+    fontWeight:"900"
+  },
+
+  saveBtn:{
+    width:"100%",
+    padding:"17px",
+    marginTop:"12px",
+    border:"none",
+    borderRadius:"18px",
+    background:"linear-gradient(135deg,#22c55e,#16a34a)",
+    color:"#020617",
+    fontWeight:"900",
+    fontSize:"16px",
+    boxShadow:"0 10px 22px rgba(34,197,94,0.35)"
+  },
+
+  oneTimeBtn:{
+    width:"100%",
+    padding:"17px",
+    marginTop:"12px",
+    border:"none",
+    borderRadius:"18px",
+    background:"linear-gradient(135deg,#06b6d4,#2563eb)",
+    color:"white",
+    fontWeight:"900",
+    fontSize:"16px",
+    boxShadow:"0 10px 22px rgba(37,99,235,0.35)"
+  },
+
+  coming:{
+    textAlign:"center",
+    color:"#facc15",
+    fontWeight:"900",
+    letterSpacing:"1px"
+  },
+
+  goldBtn:{
+    width:"100%",
+    padding:"16px",
+    marginTop:"10px",
+    border:"none",
+    borderRadius:"18px",
+    background:"linear-gradient(135deg,#facc15,#f59e0b)",
+    color:"#020617",
+    fontWeight:"900",
+    boxShadow:"0 8px 18px rgba(250,204,21,0.35)"
+  },
+
+  silverBtn:{
+    width:"100%",
+    padding:"16px",
+    marginTop:"10px",
+    border:"none",
+    borderRadius:"18px",
+    background:"linear-gradient(135deg,#e5e7eb,#64748b)",
+    color:"#020617",
+    fontWeight:"900",
+    boxShadow:"0 8px 18px rgba(203,213,225,0.25)"
+  },
+
+  rdBtn:{
+    width:"100%",
+    padding:"16px",
+    marginTop:"10px",
+    border:"none",
+    borderRadius:"18px",
+    background:"linear-gradient(135deg,#a855f7,#7c3aed)",
+    color:"white",
+    fontWeight:"900",
+    boxShadow:"0 8px 18px rgba(168,85,247,0.35)"
+  },
+
+  leaderBtn:{
+    width:"100%",
+    padding:"16px",
+    marginTop:"13px",
+    border:"none",
+    borderRadius:"18px",
+    background:"linear-gradient(135deg,#facc15,#f97316)",
+    color:"#020617",
+    fontWeight:"900",
+    fontSize:"15px",
+    boxShadow:"0 8px 18px rgba(249,115,22,0.35)"
+  },
+
+  supportBtn:{
+    width:"100%",
+    padding:"16px",
+    marginTop:"13px",
+    border:"none",
+    borderRadius:"18px",
+    background:"linear-gradient(135deg,#06b6d4,#0ea5e9)",
+    color:"white",
+    fontWeight:"900",
+    fontSize:"15px",
+    boxShadow:"0 8px 18px rgba(14,165,233,0.35)"
+  },
+
+  analyticsBtn:{
+    width:"100%",
+    padding:"16px",
+    marginTop:"13px",
+    border:"none",
+    borderRadius:"18px",
+    background:"linear-gradient(135deg,#8b5cf6,#ec4899)",
+    color:"white",
+    fontWeight:"900",
+    fontSize:"15px",
+    boxShadow:"0 8px 18px rgba(236,72,153,0.35)"
+  },
+
+  aboutBtn:{
+    width:"100%",
+    padding:"16px",
+    marginTop:"13px",
+    border:"none",
+    borderRadius:"18px",
+    background:"linear-gradient(135deg,#14b8a6,#0f766e)",
+    color:"white",
+    fontWeight:"900",
+    fontSize:"15px",
+    boxShadow:"0 8px 18px rgba(20,184,166,0.35)"
+  },
+
+  help:{
+    textAlign:"center",
+    color:"#22c55e",
+    marginTop:"26px",
+    fontWeight:"900",
+    textShadow:"0 0 15px rgba(34,197,94,0.6)"
+  },
+
+  bottomNav:{
+    position:"fixed",
+    bottom:0,
+    left:0,
+    width:"100%",
+    background:"rgba(2,6,23,0.96)",
+    borderTop:"1px solid #334155",
+    display:"flex",
+    gap:"8px",
+    padding:"10px",
+    boxShadow:"0 -8px 25px rgba(0,0,0,0.5)",
+    zIndex:999
+  },
+
+  homeNav:{
+    flex:1,
+    padding:"13px",
+    border:"none",
+    borderRadius:"16px",
+    background:"linear-gradient(135deg,#22c55e,#16a34a)",
+    color:"#020617",
+    fontWeight:"900"
+  },
+
+  walletNav:{
+    flex:1,
+    padding:"13px",
+    border:"none",
+    borderRadius:"16px",
+    background:"linear-gradient(135deg,#3b82f6,#1d4ed8)",
+    color:"white",
+    fontWeight:"900"
+  },
+
+  referNav:{
+    flex:1,
+    padding:"13px",
+    border:"none",
+    borderRadius:"16px",
+    background:"linear-gradient(135deg,#f59e0b,#f97316)",
+    color:"#020617",
+    fontWeight:"900"
   }
 };
