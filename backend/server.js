@@ -35,16 +35,13 @@ const sanitize = require("mongo-sanitize");
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://save-money-indol.vercel.app"
-];
-
 app.use(cors({
-  origin: allowedOrigins,
+  origin: [
+    "http://localhost:3000",
+    "https://save-money-indol.vercel.app"
+  ],
   methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "authorization"],
-  credentials: true
+  allowedHeaders: ["Content-Type", "authorization"]
 }));
 
 
@@ -71,7 +68,6 @@ const io = new Server(server, {
       "https://save-money-indol.vercel.app"
     ],
     methods: ["GET", "POST"],
-    credentials: true
   }
 });
 
@@ -1673,25 +1669,59 @@ app.post("/royalty-data", async (req, res) => {
 });
 
 app.post("/wallet-data", auth, async (req, res) => {
-  const { email } = req.body;
 
-  const user = await User.findOne({ email }).select("-password");
+  try {
 
-  if (!user) {
-    return res.json({ msg: "User not found" });
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        msg: "User not found"
+      });
+    }
+
+    const history = await WalletHistory.find({
+      email
+    }).sort({ date: -1 });
+
+    res.json({
+
+      wallet: user.wallet || 0,
+
+      referralIncome:
+        user.referralIncome || 0,
+
+      performanceIncome:
+        user.performanceIncome || 0,
+
+      teamIncome:
+        user.teamIncome || 0,
+
+      royaltyIncome:
+        user.royaltyIncome || 0,
+
+      totalEarning:
+        user.totalEarning || 0,
+
+      walletId:
+        user.walletId || "",
+
+      history
+
+    });
+
+  } catch (err) {
+
+    console.log("WALLET DATA ERROR:", err);
+
+    res.status(500).json({
+      msg: "Wallet data loading failed"
+    });
+
   }
 
-  const history = await WalletHistory.find({ email }).sort({ date: -1 });
-
-  res.json({
-    walletId: user.walletId || "",
-    wallet: user.wallet || 0,
-    referralIncome: user.referralIncome || 0,
-    performanceIncome: user.performanceIncome || 0,
-    teamIncome: user.teamIncome || 0,
-    royaltyIncome: user.royaltyIncome || 0,
-    history
-  });
 });
 
 app.post(

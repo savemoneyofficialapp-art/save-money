@@ -240,7 +240,7 @@ const getRankIcon = (rank) => {
             )}
           </h2>
 
-          <p style={styles.slogan}>Save & Earn</p>
+          <p style={styles.slogan}></p>
         </div>
 
         <div style={styles.rankCard}>
