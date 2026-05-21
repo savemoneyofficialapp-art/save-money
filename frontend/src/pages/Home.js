@@ -362,6 +362,8 @@ const getRankIcon = (rank) => {
         </button>
       </div>
 
+      
+      
       <Footer />
 
     </div>
