@@ -42,47 +42,41 @@ const token = localStorage.getItem("token");
   };
 
   const loadWallet = async () => {
-
   try {
+    const api = process.env.REACT_APP_API;
 
-    const res = await fetch(
-      `${process.env.REACT_APP_API}/wallet-data`,
-      {
-        method: "POST",
+    if (!api) {
+      throw new Error("REACT_APP_API missing");
+    }
 
-        headers: {
-          "Content-Type":"application/json",
-          authorization: token
-        },
-
-        body: JSON.stringify({
-          email
-        })
-      }
-    );
+    const res = await fetch(`${api}/wallet-data`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: token
+      },
+      body: JSON.stringify({ email })
+    });
 
     const data = await res.json();
 
-    if (data.msg === "Token expired or invalid") {
-
-      localStorage.clear();
-
-      window.location.href = "/login";
-
-      return;
+    if (!res.ok) {
+      throw new Error(data.msg || "API failed");
     }
 
-    setWallet(data);
+    if (data.msg) {
+      throw new Error(data.msg);
+    }
+
+    setData(data);
 
   } catch (err) {
-
-    console.log(err);
-
-    alert("Wallet data not loading");
-
+    console.log("Wallet load error:", err);
+    alert("Wallet error: " + err.message);
   }
-
 };
+
+
   const copyAddress = () => {
     navigator.clipboard.writeText("TRX89SHSHD7SHS7SHS7");
     toast.success("Wallet Address Copied");
