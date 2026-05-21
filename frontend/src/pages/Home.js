@@ -266,6 +266,9 @@ const getRankIcon = (rank) => {
 </div>
 
         <div style={styles.headerBtns}>
+          <button style={styles.logoutBtn} onClick={logout}>
+        Logout
+      </button>
           <button style={styles.iconBtn} onClick={() => navigate("/notifications")}>
             🔔
             {notificationCount > 0 && (
@@ -321,9 +324,7 @@ const getRankIcon = (rank) => {
 
       <h2 style={styles.help}>HELP OTHER FOR EARN</h2>
 
-      <button style={styles.logoutBtn} onClick={logout}>
-        Logout
-      </button>
+      
      
       <button
   style={styles.leaderBtn}
