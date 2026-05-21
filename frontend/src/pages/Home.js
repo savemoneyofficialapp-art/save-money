@@ -367,14 +367,25 @@ const getRankIcon = (rank) => {
 }
 
 const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg,#020617,#0f172a,#1e293b)",
-    color: "white",
-    padding: "18px",
-    paddingBottom: "95px",
-    fontFamily: "Arial"
-  },
+  container:{
+  minHeight:"100vh",
+
+  backgroundImage:
+    "linear-gradient(rgba(2,6,23,0.88), rgba(15,23,42,0.92)), url('/network-bg.jpg')",
+
+  backgroundSize:"cover",
+
+  backgroundPosition:"center",
+
+  backgroundRepeat:"no-repeat",
+
+  backgroundAttachment:"fixed",
+
+  color:"white",
+
+  padding:"20px"
+  
+},
   header: {
     display: "flex",
     justifyContent: "space-between",
