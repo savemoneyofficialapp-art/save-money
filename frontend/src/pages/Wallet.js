@@ -8,9 +8,7 @@ const API = "https://save-money-yyv1.onrender.com";
 export default function Wallet() {
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
-const email = localStorage.getItem("email");
-
+const token = localStorage.getItem("token");
   const email = localStorage.getItem("email");
 
   const [data, setData] = useState(null);
