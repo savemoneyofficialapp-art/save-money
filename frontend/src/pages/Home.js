@@ -266,9 +266,7 @@ const getRankIcon = (rank) => {
 </div>
 
         <div style={styles.headerBtns}>
-          <button style={styles.logoutBtn} onClick={logout}>
-        Logout
-      </button>
+          
           <button style={styles.iconBtn} onClick={() => navigate("/notifications")}>
             🔔
             {notificationCount > 0 && (
@@ -279,6 +277,9 @@ const getRankIcon = (rank) => {
           <button style={styles.kycBtn} onClick={() => navigate("/kyc")}>
             KYC
           </button>
+          <button style={styles.logoutBtn} onClick={logout}>
+        Logout
+      </button>
         </div>
       </div>
 
@@ -322,10 +323,6 @@ const getRankIcon = (rank) => {
   💬 Live Support
 </button>
 
-      <h2 style={styles.help}>HELP OTHER FOR EARN</h2>
-
-      
-     
       <button
   style={styles.leaderBtn}
   onClick={() => navigate("/leaderboard")}
@@ -346,6 +343,8 @@ const getRankIcon = (rank) => {
 >
   🏢 About Save Money
 </button>
+
+<h2 style={styles.help}>HELP OTHER FOR EARN</h2>
 
       <div style={styles.bottomNav}>
         <button style={styles.homeNav} onClick={() => navigate("/home")}>
