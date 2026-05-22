@@ -45,6 +45,8 @@ app.use(cors({
   credentials: true
 }));
 
+app.set("trust proxy", 1);
+
 app.options("*", cors());
 app.use(express.json());
 
@@ -86,11 +88,15 @@ app.use((req, res, next) => {
 });
 
 const apiLimiter = rateLimit({
+
   windowMs: 15 * 60 * 1000,
+
   max: 300,
-  message: {
-    msg: "Too many requests. Please try again later."
-  }
+
+  standardHeaders: true,
+
+  legacyHeaders: false
+
 });
 
 app.use(apiLimiter);
