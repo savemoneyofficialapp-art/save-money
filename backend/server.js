@@ -864,77 +864,192 @@ const authLimiter = rateLimit({
 
 // ================= REGISTER =================
 app.post("/register", authLimiter, async (req, res) => {
-  try {
-    const { name, email, mobile, password, referCode } = req.body;
 
-    if (!name || !email || !mobile || !password) {
-      return res.json({ msg: "All fields required" });
+  try {
+
+    let {
+      name,
+      mobile,
+      email,
+      password,
+      referCode
+    } = req.body;
+
+    // CLEAN DATA
+
+    name = name?.trim();
+    mobile = mobile?.trim();
+    email = email?.trim().toLowerCase();
+    password = password?.trim();
+    referCode = referCode?.trim();
+
+    // REQUIRED CHECK
+
+    if (
+      !name ||
+      !mobile ||
+      !email ||
+      !password
+    ) {
+      return res.json({
+        success: false,
+        msg: "Please fill all fields"
+      });
     }
+
+    // EMAIL VALIDATION
 
     if (!validator.isEmail(email)) {
-      return res.json({ msg: "Invalid email format" });
+      return res.json({
+        success: false,
+        msg: "Invalid email"
+      });
     }
 
-    if (name.length < 3) {
-      return res.json({ msg: "Name too short" });
-    }
+    // PASSWORD VALIDATION
 
     if (password.length < 6) {
-      return res.json({ msg: "Password minimum 6 characters required" });
+      return res.json({
+        success: false,
+        msg: "Password minimum 6 characters"
+      });
     }
 
-    const exist = await User.findOne({ email });
+    // DUPLICATE EMAIL
 
-    if (exist) {
-      return res.json({ msg: "User already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const walletId =
-      "WAL" + Math.floor(100000 + Math.random() * 900000);
-
-    const myReferCode =
-      "REF" + Math.floor(100000 + Math.random() * 900000);
-
-    await User.create({
-      name,
-      email,
-      mobile,
-      password: hashedPassword,
-      pan: "",
-      aadhaar: "",
-      referCode: myReferCode,
-      referredBy: referCode || "",
-      walletId,
-      wallet: 0,
-      kycStatus: "not submitted",
-      role: "user"
+    const existingEmail = await User.findOne({
+      email
     });
 
-    try {
-      await sendEmail(
-        email,
-        "Welcome to Save Money",
-        `Hello ${name}, your account has been created successfully.`
-      );
-    } catch (mailErr) {
-      console.log("WELCOME EMAIL FAILED");
+    if (existingEmail) {
+      return res.json({
+        success: false,
+        msg: "Email already registered"
+      });
     }
+
+    // DUPLICATE MOBILE
+
+    const existingMobile = await User.findOne({
+      mobile
+    });
+
+    if (existingMobile) {
+      return res.json({
+        success: false,
+        msg: "Mobile already registered"
+      });
+    }
+
+    // REFER CODE CHECK
+
+    let sponsor = null;
 
     if (referCode) {
-      const refUser = await User.findOne({ referCode });
-      if (refUser) {
-        await updateUserRank(refUser.email);
+
+      sponsor = await User.findOne({
+        referCode
+      });
+
+      if (!sponsor) {
+
+        return res.json({
+          success: false,
+          msg: "Invalid refer code"
+        });
+
       }
+
     }
 
-    res.json({ msg: "Registered Successfully" });
+    // HASH PASSWORD
+
+    const hashedPassword =
+      await bcrypt.hash(password, 10);
+
+    // GENERATE USER REFER CODE
+
+    const myReferCode =
+      "SM" +
+      Math.floor(
+        100000 + Math.random() * 900000
+      );
+
+    // CREATE USER
+
+    const user = await User.create({
+
+      name,
+
+      mobile,
+
+      email,
+
+      password: hashedPassword,
+
+      referCode: myReferCode,
+
+      referredBy:
+        sponsor?.referCode || "",
+
+      wallet: 0,
+
+      role: "user",
+
+      activeStatus: "Inactive",
+
+      kycStatus: "pending"
+
+    });
+
+    // TOKEN
+
+    const token = jwt.sign(
+
+      {
+        id: user._id,
+        role: user.role
+      },
+
+      process.env.JWT_SECRET,
+
+      {
+        expiresIn: "7d"
+      }
+
+    );
+
+    res.json({
+
+      success: true,
+
+      msg: "Register success",
+
+      token,
+
+      user: {
+
+        name: user.name,
+
+        email: user.email,
+
+        referCode: user.referCode
+
+      }
+
+    });
 
   } catch (err) {
-    console.log("REGISTER ERROR:", err.message);
-    res.status(500).json({ msg: err.message || "Server error" });
+
+    console.log("REGISTER ERROR:", err);
+
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+
   }
+
 });
 
 // ================= LOGIN =================
