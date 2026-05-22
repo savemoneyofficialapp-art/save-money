@@ -42,8 +42,17 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "authorization", "Authorization"]
 };
 
-app.use(cors(corsOptions));
+const corsOptions = {
+  origin: [
+    "http://localhost:3000",
+    "https://save-money-indol.vercel.app"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "authorization", "Authorization"]
+};
 
+app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
