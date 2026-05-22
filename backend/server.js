@@ -34,73 +34,37 @@ const sanitize = require("mongo-sanitize");
 
 
 const app = express();
+const server = http.createServer(app);
 
 const allowedOrigins = [
   "http://localhost:3000",
   "https://save-money-indol.vercel.app"
 ];
 
-app.use(cors({
-  origin: function(origin, callback) {
-
+const corsOptions = {
+  origin: function (origin, callback) {
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.indexOf(origin) === -1) {
-
-      return callback(
-        new Error("CORS blocked")
-      );
-
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
 
-    return callback(null, true);
-
+    return callback(null, false);
   },
-
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "authorization", "Authorization"]
+};
 
-  methods: [
-    "GET",
-    "POST",
-    "PUT",
-    "DELETE"
-  ],
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
-  allowedHeaders: [
-    "Content-Type",
-    "authorization"
-  ]
-}));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-app.get("/", (req, res) => {
-  res.send("Save Money Backend Live");
-});
-
-app.get("/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "Backend running",
-    time: new Date()
-  });
-});
-
-const server = http.createServer(app);
-
-const io = require("socket.io")(server, {
-
-  cors: {
-
-    origin: [
-      "http://localhost:3000",
-      "https://save-money-indol.vercel.app"
-    ],
-
-    methods: ["GET", "POST"],
-
-    credentials: true
-
-  }
-
+const io = new Server(server, {
+  cors: corsOptions,
+  transports: ["websocket", "polling"]
 });
 
 app.use(helmet());
@@ -799,7 +763,6 @@ async function sendEmail(to, subject, message) {
   }
 }
 
-require("dotenv").config();
 
 const twilio = require("twilio");
 
@@ -815,33 +778,6 @@ const getRate = (y) => {
 };
 
 
-
-let users = {};
-
-io.on("connection", (socket) => {
-
-  console.log("User connected:", socket.id);
-
-  // 🔥 user login করলে frontend থেকে email পাঠাবে
-  socket.on("register", (email) => {
-    users[email] = socket.id;
-    console.log("Registered user:", email);
-  });
-
-  // 🔥 user disconnect হলে remove
-  socket.on("disconnect", () => {
-
-    console.log("User disconnected:", socket.id);
-
-    for (let email in users) {
-      if (users[email] === socket.id) {
-        delete users[email];
-      }
-    }
-
-  });
-
-});
 
 
 app.use(express.json());
@@ -869,15 +805,7 @@ const storage = multer.diskStorage({
 
 });
 
-app.use((err, req, res, next) => {
 
-  console.log("GLOBAL ERROR:", err);
-
-  res.status(500).json({
-    msg: "Internal server error"
-  });
-
-});
 
 const upload = multer({
 
@@ -951,7 +879,7 @@ const authLimiter = rateLimit({
 // ================= REGISTER =================
 app.post("/register", authLimiter, async (req, res) => {
   try {
-    const { name, email, mobile, password, pan, aadhaar, referCode } = req.body;
+    const { name, email, mobile, password, pan, aadhar, referCode } = req.body;
     
     if (!validator.isEmail(email)) {
   return res.json({
@@ -980,7 +908,7 @@ if (name.length < 3) {
   });
 }
 
-    if (!name || !email || !mobile || !password || !pan || !aadhaar) {
+    if (!name || !email || !mobile || !password ) {
       return res.json({ msg: "All fields required" });
     }
 
@@ -997,8 +925,8 @@ if (name.length < 3) {
       email,
       mobile,
       password: hashedPassword,
-      pan,
-      aadhaar,
+      pan: pan || "",
+      aadhaar: aadhar || "",
       referCode: myReferCode,
       referredBy: referCode || "",
       walletId,
@@ -3172,7 +3100,7 @@ async (req, res) => {
 
   const users = await User.find();
 
-  for (let u of users) {
+  for (let u of team) {
 
     await Notification.create({
 
@@ -4039,6 +3967,16 @@ io.on("connection", (socket) => {
 
     console.log("User disconnected");
   });
+});
+
+app.use((err, req, res, next) => {
+
+  console.log("GLOBAL ERROR:", err);
+
+  res.status(500).json({
+    msg: "Internal server error"
+  });
+
 });
 
 // ✅ server.listen MUST be outside io.on
