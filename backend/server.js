@@ -27,7 +27,6 @@ const SupportTicket = require("./models/SupportTicket");
 const BonusLedger = require("./models/BonusLedger");
 
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
 
 const validator = require("validator");
 const sanitize = require("mongo-sanitize");
@@ -66,19 +65,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const apiLimiter = rateLimit({
-
-  windowMs: 15 * 60 * 1000,
-
-  max: 300,
-
-  standardHeaders: true,
-
-  legacyHeaders: false
-
-});
-
-app.use(apiLimiter);
 
 const auth = async (req, res, next) => {
   try {
@@ -852,18 +838,8 @@ const Txn = mongoose.model("Txn", {
 // helper
 const makeCode = () => Math.random().toString(36).substring(2, 8);
 
-
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: {
-    msg: "Too many login/register attempts. Try later."
-  }
-});
-
 // ================= REGISTER =================
-app.post("/register", authLimiter, async (req, res) => {
+app.post("/register", async (req, res) => {
 
   try {
 
@@ -1054,7 +1030,7 @@ app.post("/register", authLimiter, async (req, res) => {
 
 // ================= LOGIN =================
 
-app.post("/login", authLimiter, async (req, res) => {
+app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
