@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
 const nodemailer = require("nodemailer");
 const http = require("http");
+const { Server } = require("socket.io");
 const User = require("./models/User");
 const Notification = require("./models/Notification");
 const Investment = require("./models/Investment");
