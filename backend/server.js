@@ -40,11 +40,12 @@ app.use(cors({
     "http://localhost:3000",
     "https://save-money-indol.vercel.app"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "authorization"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "authorization", "Authorization"],
+  credentials: true
 }));
 
-
+app.options("*", cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {

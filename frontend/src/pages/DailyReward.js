@@ -33,7 +33,8 @@ export default function DailyReward() {
 
       setLoading(false);
 
-    } catch {
+    } catch (err) {
+  console.log("Daily reward fetch error:", err);
       setLoading(false);
       alert("Backend connection failed.");
     }
