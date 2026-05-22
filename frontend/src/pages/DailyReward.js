@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+
 const API = "https://save-money-yyv1.onrender.com";
 
 export default function DailyReward() {
@@ -7,30 +7,44 @@ export default function DailyReward() {
   const token = localStorage.getItem("token");
 
   const [result, setResult] = useState("");
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const claim = async () => {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await fetch(`${API}/daily-reward`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: token
-      },
-      body: JSON.stringify({ email })
-    });
+      const res = await fetch(`${API}/daily-reward`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({ email })
+      });
 
-    const data = await res.json();
-    setResult(data.msg);
-    setLoading(false);
+      const data = await res.json();
+
+      setResult(data.msg || "Reward claimed");
+
+      if (data.reward?.history) {
+        setHistory(data.reward.history.reverse());
+      }
+
+      setLoading(false);
+
+    } catch (err) {
+      setLoading(false);
+      alert("Backend not connected. Please start backend server.");
+    }
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
         <h1>Daily Reward</h1>
-        <p>Claim your daily bonus and grow your wallet.</p>
+        <p>Daily reward ₹1 to ₹10</p>
+        <p>Every 10th claim special reward ₹11 to ₹20</p>
 
         <div style={styles.gift}>🎁</div>
 
@@ -40,6 +54,15 @@ export default function DailyReward() {
 
         {result && <h3 style={styles.result}>{result}</h3>}
       </div>
+
+      <h3 style={styles.historyTitle}>Reward History</h3>
+
+      {history.map((h, i) => (
+        <div key={i} style={styles.history}>
+          <b>₹{h.amount}</b>
+          <span>{new Date(h.date).toLocaleDateString()}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -49,34 +72,48 @@ const styles = {
     minHeight: "100vh",
     background: "linear-gradient(135deg,#020617,#0f172a)",
     color: "white",
-    padding: "20px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
+    padding: "20px"
   },
+
   card: {
     background: "#1e293b",
     padding: "25px",
     borderRadius: "22px",
     textAlign: "center",
-    width: "90%",
-    maxWidth: "380px",
-    border: "2px solid #22c55e"
+    border: "2px solid #facc15"
   },
+
   gift: {
-    fontSize: "70px",
+    fontSize: "80px",
     margin: "20px"
   },
+
   btn: {
     width: "100%",
     padding: "14px",
     border: "none",
     borderRadius: "14px",
-    background: "#22c55e",
+    background: "linear-gradient(135deg,#facc15,#f59e0b)",
     color: "#020617",
     fontWeight: "bold"
   },
+
   result: {
-    color: "#22c55e"
+    color: "#22c55e",
+    marginTop: "18px"
+  },
+
+  historyTitle: {
+    marginTop: "25px",
+    color: "#facc15"
+  },
+
+  history: {
+    background: "#1e293b",
+    padding: "14px",
+    borderRadius: "14px",
+    marginTop: "10px",
+    display: "flex",
+    justifyContent: "space-between"
   }
 };

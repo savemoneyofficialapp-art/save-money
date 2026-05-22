@@ -3521,7 +3521,11 @@ app.post("/daily-reward", auth, async (req, res) => {
     let reward = await DailyReward.findOne({ email });
 
     if (!reward) {
-      reward = await DailyReward.create({ email });
+      reward = await DailyReward.create({
+        email,
+        totalReward: 0,
+        history: []
+      });
     }
 
     const today = new Date().toDateString();
@@ -3536,7 +3540,15 @@ app.post("/daily-reward", auth, async (req, res) => {
       });
     }
 
-    const amount = Math.floor(Math.random() * 21) + 10; // ₹10-₹30
+    const claimCount = reward.history.length + 1;
+
+    let amount;
+
+    if (claimCount % 10 === 0) {
+      amount = Math.floor(Math.random() * 10) + 11; // 11-20
+    } else {
+      amount = Math.floor(Math.random() * 10) + 1; // 1-10
+    }
 
     user.wallet += amount;
     await user.save();
@@ -3565,7 +3577,7 @@ app.post("/daily-reward", auth, async (req, res) => {
     });
 
   } catch (err) {
-    console.log(err);
+    console.log("DAILY REWARD ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
