@@ -3535,20 +3535,17 @@ app.post("/daily-reward", auth, async (req, res) => {
       new Date(reward.lastClaimDate).toDateString() === today
     ) {
       return res.json({
-        msg: "Already claimed today",
+        msg: "Today reward already claimed",
         reward
       });
     }
 
     const claimCount = reward.history.length + 1;
 
-    let amount;
-
-    if (claimCount % 10 === 0) {
-      amount = Math.floor(Math.random() * 10) + 11; // 11-20
-    } else {
-      amount = Math.floor(Math.random() * 10) + 1; // 1-10
-    }
+    let amount =
+      claimCount % 10 === 0
+        ? Math.floor(Math.random() * 10) + 11
+        : Math.floor(Math.random() * 10) + 1;
 
     user.wallet += amount;
     await user.save();
@@ -3572,7 +3569,7 @@ app.post("/daily-reward", auth, async (req, res) => {
     });
 
     res.json({
-      msg: `You received ₹${amount}`,
+      msg: "Daily reward claimed successfully",
       reward
     });
 

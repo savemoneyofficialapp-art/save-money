@@ -25,17 +25,17 @@ export default function DailyReward() {
 
       const data = await res.json();
 
-      setResult(data.msg || "Reward claimed");
+      setResult(data.msg || "Reward updated");
 
       if (data.reward?.history) {
-        setHistory(data.reward.history.reverse());
+        setHistory([...data.reward.history].reverse());
       }
 
       setLoading(false);
 
-    } catch (err) {
+    } catch {
       setLoading(false);
-      alert("Backend not connected. Please start backend server.");
+      alert("Backend connection failed.");
     }
   };
 
@@ -43,8 +43,14 @@ export default function DailyReward() {
     <div style={styles.container}>
       <div style={styles.card}>
         <h1>Daily Reward</h1>
-        <p>Daily reward ₹1 to ₹10</p>
-        <p>Every 10th claim special reward ₹11 to ₹20</p>
+
+        <p style={styles.sub}>
+          Claim your daily surprise reward
+        </p>
+
+        <p style={styles.small}>
+          Special surprise unlocks on every 10th claim
+        </p>
 
         <div style={styles.gift}>🎁</div>
 
@@ -59,7 +65,7 @@ export default function DailyReward() {
 
       {history.map((h, i) => (
         <div key={i} style={styles.history}>
-          <b>₹{h.amount}</b>
+          <b>Reward Claimed</b>
           <span>{new Date(h.date).toLocaleDateString()}</span>
         </div>
       ))}
@@ -76,23 +82,34 @@ const styles = {
   },
 
   card: {
-    background: "#1e293b",
+    background: "linear-gradient(145deg,#1e293b,#020617)",
     padding: "25px",
-    borderRadius: "22px",
+    borderRadius: "24px",
     textAlign: "center",
-    border: "2px solid #facc15"
+    border: "2px solid #facc15",
+    boxShadow: "0 0 25px rgba(250,204,21,0.25)"
+  },
+
+  sub: {
+    color: "#e2e8f0",
+    fontWeight: "bold"
+  },
+
+  small: {
+    color: "#94a3b8",
+    fontSize: "13px"
   },
 
   gift: {
-    fontSize: "80px",
+    fontSize: "90px",
     margin: "20px"
   },
 
   btn: {
     width: "100%",
-    padding: "14px",
+    padding: "15px",
     border: "none",
-    borderRadius: "14px",
+    borderRadius: "15px",
     background: "linear-gradient(135deg,#facc15,#f59e0b)",
     color: "#020617",
     fontWeight: "bold"
