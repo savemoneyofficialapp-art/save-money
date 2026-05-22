@@ -36,13 +36,6 @@ const app = express();
 const server = http.createServer(app);
 
 const corsOptions = {
-  origin: true,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "authorization", "Authorization"]
-};
-
-const corsOptions = {
   origin: [
     "http://localhost:3000",
     "https://save-money-indol.vercel.app"
