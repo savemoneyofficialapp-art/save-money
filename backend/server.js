@@ -31,40 +31,133 @@ const helmet = require("helmet");
 const validator = require("validator");
 const sanitize = require("mongo-sanitize");
 
-
 const app = express();
 const server = http.createServer(app);
 
+// ================= CORS =================
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://save-money-indol.vercel.app"
+];
+
 const corsOptions = {
-  origin: [
-    "http://localhost:3000",
-    "https://save-money-indol.vercel.app"
+
+  origin: function(origin, callback) {
+
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(null, true);
+  },
+
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE",
+    "OPTIONS"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "authorization", "Authorization"],
-  credentials: true
+
+  credentials: true,
+
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "authorization"
+  ]
 };
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
+// ================= SOCKET =================
+
 const io = new Server(server, {
-  cors: corsOptions,
+
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  },
+
   transports: ["websocket", "polling"]
+
 });
+
+// ================= SECURITY =================
 
 app.use(helmet());
 
-app.use(express.json({ limit: "2mb" }));
-app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+app.use(express.json({
+  limit: "10mb"
+}));
+
+app.use(express.urlencoded({
+  extended: true,
+  limit: "10mb"
+}));
+
+// ================= SANITIZE =================
 
 app.use((req, res, next) => {
-  if (req.body) req.body = sanitize(req.body);
-  if (req.params) req.params = sanitize(req.params);
 
-  // req.query sanitize করবে না, Render/Express এ query read-only
+  if (req.body) {
+    req.body = sanitize(req.body);
+  }
+
+  if (req.params) {
+    req.params = sanitize(req.params);
+  }
+
   next();
 });
+
+// ================= ROOT =================
+
+app.get("/", (req, res) => {
+
+  res.send("Save Money Backend Live");
+
+});
+
+// ================= SOCKET USERS =================
+
+const onlineUsers = {};
+
+io.on("connection", (socket) => {
+
+  console.log("User Connected");
+
+  socket.on("join", (email) => {
+
+    onlineUsers[email] = socket.id;
+
+  });
+
+  socket.on("disconnect", () => {
+
+    for (let email in onlineUsers) {
+
+      if (onlineUsers[email] === socket.id) {
+
+        delete onlineUsers[email];
+
+      }
+
+    }
+
+  });
+
+});
+
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+
+
 
 
 const auth = async (req, res, next) => {
@@ -753,7 +846,6 @@ const getRate = (y) => {
 
 
 
-app.use(express.json());
 // 👉 static folder (image দেখার জন্য)
 app.use("/uploads", express.static("uploads"));
 
@@ -3922,27 +4014,6 @@ cron.schedule("0 0 5 * *", async () => {
 
 });
 
-const onlineUsers = {};
-
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
-  socket.on("join", (email) => {
-    onlineUsers[email] = socket.id;
-    console.log("User joined:", email);
-  });
-
-  socket.on("disconnect", () => {
-    for (let email in onlineUsers) {
-      if (onlineUsers[email] === socket.id) {
-        delete onlineUsers[email];
-      }
-    }
-
-    console.log("User disconnected");
-  });
-});
-
 app.use((err, req, res, next) => {
 
   console.log("GLOBAL ERROR:", err);
@@ -3951,10 +4022,6 @@ app.use((err, req, res, next) => {
     msg: "Internal server error"
   });
 
-});
-
-app.get("/", (req, res) => {
-  res.send("Save Money Backend Live");
 });
 
 // ✅ server.listen MUST be outside io.on
