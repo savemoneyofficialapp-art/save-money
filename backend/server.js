@@ -879,54 +879,45 @@ const authLimiter = rateLimit({
 // ================= REGISTER =================
 app.post("/register", authLimiter, async (req, res) => {
   try {
-    const { name, email, mobile, password, pan, aadhar, referCode } = req.body;
-    
-    if (!validator.isEmail(email)) {
-  return res.json({
-    msg: "Invalid email format"
-  });
-}
+    const { name, email, mobile, password, referCode } = req.body;
 
-if (!validator.isMobilePhone(mobile + "", "any")) {
-  return res.json({
-    msg: "Invalid mobile number"
-  });
-}
-
-if (!validator.isStrongPassword(password, {
-  minLength: 6,
-  minNumbers: 1
-})) {
-  return res.json({
-    msg: "Password must contain letters and numbers"
-  });
-}
-
-if (name.length < 3) {
-  return res.json({
-    msg: "Name too short"
-  });
-}
-
-    if (!name || !email || !mobile || !password ) {
+    if (!name || !email || !mobile || !password) {
       return res.json({ msg: "All fields required" });
     }
 
+    if (!validator.isEmail(email)) {
+      return res.json({ msg: "Invalid email format" });
+    }
+
+    if (name.length < 3) {
+      return res.json({ msg: "Name too short" });
+    }
+
+    if (password.length < 6) {
+      return res.json({ msg: "Password minimum 6 characters required" });
+    }
+
     const exist = await User.findOne({ email });
-    if (exist) return res.json({ msg: "User already exists" });
+
+    if (exist) {
+      return res.json({ msg: "User already exists" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const walletId = "WAL" + Math.floor(100000 + Math.random() * 900000);
-    const myReferCode = "REF" + Math.floor(100000 + Math.random() * 900000);
+    const walletId =
+      "WAL" + Math.floor(100000 + Math.random() * 900000);
 
-    const user = await User.create({
+    const myReferCode =
+      "REF" + Math.floor(100000 + Math.random() * 900000);
+
+    await User.create({
       name,
       email,
       mobile,
       password: hashedPassword,
-      pan: pan || "",
-      aadhaar: aadhar || "",
+      pan: "",
+      aadhaar: "",
       referCode: myReferCode,
       referredBy: referCode || "",
       walletId,
@@ -935,25 +926,28 @@ if (name.length < 3) {
       role: "user"
     });
 
-     await sendEmail(
-  email,
-  "Welcome to Save Money",
-  `Hello ${name}, your account has been created successfully. Please complete your KYC to start using Save Money.`
-);
+    try {
+      await sendEmail(
+        email,
+        "Welcome to Save Money",
+        `Hello ${name}, your account has been created successfully.`
+      );
+    } catch (mailErr) {
+      console.log("WELCOME EMAIL FAILED");
+    }
+
+    if (referCode) {
+      const refUser = await User.findOne({ referCode });
+      if (refUser) {
+        await updateUserRank(refUser.email);
+      }
+    }
 
     res.json({ msg: "Registered Successfully" });
 
-    if (referCode) {
-  const refUser = await User.findOne({ referCode });
-
-  if (refUser) {
-    await updateUserRank(refUser.email);
-  }
-}
-
   } catch (err) {
-    console.log("REGISTER ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    console.log("REGISTER ERROR:", err.message);
+    res.status(500).json({ msg: err.message || "Server error" });
   }
 });
 
