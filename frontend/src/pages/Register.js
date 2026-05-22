@@ -1,247 +1,513 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API = "https://save-money-yyv1.onrender.com";
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  ArrowRight
+} from "lucide-react";
 
 export default function Register() {
+
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [referCode, setReferCode] = useState("");
-  const [showPass, setShowPass] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    mobile: "",
+    password: "",
+    referCode: ""
+  });
+
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [agree, setAgree] = useState(false);
+
+  // ================= INPUT =================
+
+  const handleChange = (e) => {
+
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+
+  };
+
+  // ================= REGISTER =================
 
   const register = async () => {
-    if (!name || !mobile || !email || !password) {
-      alert("Please fill all required fields");
+
+    if (
+      !form.name ||
+      !form.email ||
+      !form.mobile ||
+      !form.password
+    ) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    if (!agree) {
+      alert("Please accept Terms & Conditions");
       return;
     }
 
     try {
+
       setLoading(true);
 
-      const res = await fetch(`${API}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          mobile,
-          email,
-          password,
-          referCode
-        })
-      });
+      const res = await fetch(
+        `${process.env.REACT_APP_API}/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":"application/json"
+          },
+          body: JSON.stringify(form)
+        }
+      );
 
       const data = await res.json();
-      setLoading(false);
 
-      alert(data.msg || "Registration response");
+      alert(data.msg);
 
-      if (
-        data.msg === "Register success" ||
-        data.msg === "Registration successful" ||
-        data.success
-      ) {
+      if (data.msg === "Registration successful") {
+
         navigate("/login");
+
       }
 
     } catch (err) {
+
+      console.log(err);
+
+      alert("Server error");
+
+    } finally {
+
       setLoading(false);
-      alert("Backend connection failed.");
+
     }
+
   };
 
   return (
     <div style={styles.container}>
+
+      {/* BG GLOW */}
+
+      <div style={styles.glow1}></div>
+      <div style={styles.glow2}></div>
+
+      {/* CARD */}
+
       <div style={styles.card}>
 
-        <div style={styles.logo}>₹</div>
+        {/* LOGO */}
 
-        <h1 style={styles.title}>Create Account</h1>
-        <p style={styles.sub}>Join Save Money & start your journey</p>
+        <div style={styles.logoBox}>
 
-        <input style={styles.input} placeholder="Full Name" value={name}
-          onChange={(e) => setName(e.target.value)} />
+          <div style={styles.logoCircle}>
+            💰
+          </div>
 
-        <input style={styles.input} placeholder="Mobile Number" value={mobile}
-          onChange={(e) => setMobile(e.target.value)} />
+          <h1 style={styles.logoText}>
+            Save Money
+          </h1>
 
-        <input style={styles.input} placeholder="Email Address" value={email}
-          onChange={(e) => setEmail(e.target.value)} />
+          <p style={styles.slogan}>
+            Save & Earn
+          </p>
 
-        <div style={styles.passBox}>
-          <input
-            style={styles.passInput}
-            type={showPass ? "text" : "password"}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <button
-            style={styles.eyeBtn}
-            onClick={() => setShowPass(!showPass)}
-            type="button"
-          >
-            {showPass ? "🙈" : "👁️"}
-          </button>
         </div>
 
-        <input style={styles.input} placeholder="Refer Code (Optional)" value={referCode}
-          onChange={(e) => setReferCode(e.target.value)} />
+        {/* TITLE */}
 
-        <button style={styles.registerBtn} onClick={register} disabled={loading}>
-          {loading ? "Creating Account..." : "Register"}
+        <h2 style={styles.title}>
+          Create Account
+        </h2>
+
+        <p style={styles.subtitle}>
+          Join the future investment platform
+        </p>
+
+        {/* NAME */}
+
+        <div style={styles.inputBox}>
+
+          <User size={18} color="#94a3b8" />
+
+          <input
+            style={styles.input}
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            value={form.name}
+            onChange={handleChange}
+          />
+
+        </div>
+
+        {/* EMAIL */}
+
+        <div style={styles.inputBox}>
+
+          <Mail size={18} color="#94a3b8" />
+
+          <input
+            style={styles.input}
+            type="email"
+            name="email"
+            placeholder="Email Address"
+            value={form.email}
+            onChange={handleChange}
+          />
+
+        </div>
+
+        {/* MOBILE */}
+
+        <div style={styles.inputBox}>
+
+          <Phone size={18} color="#94a3b8" />
+
+          <input
+            style={styles.input}
+            type="number"
+            name="mobile"
+            placeholder="Mobile Number"
+            value={form.mobile}
+            onChange={handleChange}
+          />
+
+        </div>
+
+        {/* PASSWORD */}
+
+        <div style={styles.inputBox}>
+
+          <Lock size={18} color="#94a3b8" />
+
+          <input
+            style={styles.input}
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Create Password"
+            value={form.password}
+            onChange={handleChange}
+          />
+
+          <div
+            style={styles.eye}
+            onClick={() =>
+              setShowPassword(!showPassword)
+            }
+          >
+
+            {
+              showPassword
+                ? <EyeOff size={18} />
+                : <Eye size={18} />
+            }
+
+          </div>
+
+        </div>
+
+        {/* REFER CODE */}
+
+        <div style={styles.inputBox}>
+
+          <ShieldCheck size={18} color="#94a3b8" />
+
+          <input
+            style={styles.input}
+            type="text"
+            name="referCode"
+            placeholder="Referral Code (Optional)"
+            value={form.referCode}
+            onChange={handleChange}
+          />
+
+        </div>
+
+        {/* PASSWORD RULE */}
+
+        <div style={styles.passwordInfo}>
+          Password should contain letters & numbers
+        </div>
+
+        {/* TERMS */}
+
+        <div style={styles.termsBox}>
+
+          <input
+            type="checkbox"
+            checked={agree}
+            onChange={() => setAgree(!agree)}
+          />
+
+          <p style={styles.termsText}>
+            I agree to the
+            <span
+              style={styles.link}
+              onClick={() => navigate("/legal/terms")}
+            >
+              {" "}Terms & Conditions
+            </span>
+            {" "}and
+            <span
+              style={styles.link}
+              onClick={() => navigate("/legal/privacy")}
+            >
+              {" "}Privacy Policy
+            </span>
+          </p>
+
+        </div>
+
+        {/* REGISTER BTN */}
+
+        <button
+          style={
+            loading
+              ? styles.disabledBtn
+              : styles.registerBtn
+          }
+          onClick={register}
+          disabled={loading}
+        >
+
+          {
+            loading
+              ? "Creating Account..."
+              : (
+                <>
+                  Register
+                  <ArrowRight size={18} />
+                </>
+              )
+          }
+
         </button>
 
-        <p style={styles.kycNote}>
-          Aadhaar / PAN / Photo upload will be done from KYC page after login.
-        </p>
+        {/* LOGIN */}
 
-        <p style={styles.legalText}>
-          By creating an account, you agree to our
-          <span style={styles.link} onClick={() => navigate("/legal/terms")}> Terms </span>
-          and
-          <span style={styles.link} onClick={() => navigate("/legal/privacy")}> Privacy Policy</span>
-        </p>
+        <div style={styles.bottom}>
 
-        <p style={styles.loginText}>
-          Already have account?
-          <span style={styles.link} onClick={() => navigate("/login")}> Go for Login</span>
-        </p>
+          Already have an account?
+
+          <span
+            style={styles.loginLink}
+            onClick={() => navigate("/login")}
+          >
+            {" "}Go for Login
+          </span>
+
+        </div>
 
       </div>
+
     </div>
   );
 }
 
+// ================= STYLES =================
+
 const styles = {
-  container: {
-    minHeight: "100vh",
+
+  container:{
+    minHeight:"100vh",
     background:
-      "linear-gradient(rgba(2,6,23,0.88), rgba(15,23,42,0.94)), url('/network-bg.jpg')",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "20px",
-    color: "white"
+      "linear-gradient(135deg,#020617,#0f172a,#111827)",
+    display:"flex",
+    justifyContent:"center",
+    alignItems:"center",
+    padding:"20px",
+    overflow:"hidden",
+    position:"relative"
   },
 
-  card: {
-    width: "100%",
-    maxWidth: "430px",
-    background: "rgba(15,23,42,0.94)",
-    borderRadius: "28px",
-    padding: "26px",
-    border: "1px solid rgba(34,197,94,0.35)",
-    boxShadow: "0 0 40px rgba(34,197,94,0.25)",
-    backdropFilter: "blur(14px)"
+  glow1:{
+    width:"250px",
+    height:"250px",
+    borderRadius:"50%",
+    background:"#22c55e",
+    filter:"blur(120px)",
+    opacity:0.25,
+    position:"absolute",
+    top:"-60px",
+    left:"-60px"
   },
 
-  logo: {
-    width: "72px",
-    height: "72px",
-    margin: "auto",
-    borderRadius: "22px",
-    background: "linear-gradient(135deg,#22c55e,#38bdf8)",
-    color: "#020617",
-    fontSize: "40px",
-    fontWeight: "900",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
+  glow2:{
+    width:"250px",
+    height:"250px",
+    borderRadius:"50%",
+    background:"#3b82f6",
+    filter:"blur(120px)",
+    opacity:0.2,
+    position:"absolute",
+    bottom:"-60px",
+    right:"-60px"
   },
 
-  title: {
-    textAlign: "center",
-    color: "#22c55e",
-    marginBottom: "5px"
+  card:{
+    width:"100%",
+    maxWidth:"430px",
+    background:"rgba(30,41,59,0.92)",
+    backdropFilter:"blur(15px)",
+    border:"1px solid rgba(255,255,255,0.08)",
+    borderRadius:"28px",
+    padding:"28px",
+    zIndex:10,
+    boxShadow:"0 0 35px rgba(0,0,0,0.45)"
   },
 
-  sub: {
-    textAlign: "center",
-    color: "#94a3b8",
-    fontSize: "13px"
+  logoBox:{
+    textAlign:"center",
+    marginBottom:"20px"
   },
 
-  input: {
-    width: "100%",
-    padding: "14px",
-    marginTop: "12px",
-    border: "none",
-    borderRadius: "16px",
-    background: "#e2e8f0",
-    color: "#020617",
-    fontWeight: "bold",
-    outline: "none"
+  logoCircle:{
+    width:"70px",
+    height:"70px",
+    borderRadius:"20px",
+    background:
+      "linear-gradient(135deg,#22c55e,#16a34a)",
+    display:"flex",
+    justifyContent:"center",
+    alignItems:"center",
+    fontSize:"34px",
+    margin:"auto",
+    boxShadow:"0 0 25px rgba(34,197,94,0.45)"
   },
 
-  passBox: {
-    display: "flex",
-    alignItems: "center",
-    background: "#e2e8f0",
-    borderRadius: "16px",
-    marginTop: "12px"
+  logoText:{
+    color:"white",
+    marginTop:"14px",
+    marginBottom:"2px",
+    fontSize:"30px"
   },
 
-  passInput: {
-    flex: 1,
-    padding: "14px",
-    border: "none",
-    background: "transparent",
-    outline: "none",
-    color: "#020617",
-    fontWeight: "bold"
+  slogan:{
+    color:"#38bdf8",
+    margin:0,
+    fontWeight:"bold",
+    letterSpacing:"1px"
   },
 
-  eyeBtn: {
-    padding: "12px",
-    border: "none",
-    background: "transparent",
-    fontSize: "18px",
-    cursor: "pointer"
+  title:{
+    color:"white",
+    textAlign:"center",
+    marginBottom:"5px"
   },
 
-  registerBtn: {
-    width: "100%",
-    padding: "15px",
-    marginTop: "18px",
-    border: "none",
-    borderRadius: "16px",
-    background: "linear-gradient(135deg,#22c55e,#16a34a)",
-    color: "#020617",
-    fontWeight: "900",
-    fontSize: "16px"
+  subtitle:{
+    color:"#94a3b8",
+    textAlign:"center",
+    marginBottom:"25px",
+    fontSize:"14px"
   },
 
-  kycNote: {
-    textAlign: "center",
-    color: "#facc15",
-    fontSize: "12px",
-    marginTop: "12px"
+  inputBox:{
+    background:"#0f172a",
+    border:"1px solid #334155",
+    borderRadius:"16px",
+    padding:"0 14px",
+    display:"flex",
+    alignItems:"center",
+    marginTop:"14px",
+    height:"56px"
   },
 
-  legalText: {
-    color: "#cbd5e1",
-    fontSize: "12px",
-    marginTop: "12px",
-    textAlign: "center"
+  input:{
+    flex:1,
+    background:"transparent",
+    border:"none",
+    outline:"none",
+    color:"white",
+    fontSize:"15px",
+    marginLeft:"10px"
   },
 
-  loginText: {
-    textAlign: "center",
-    color: "#94a3b8",
-    marginTop: "16px"
+  eye:{
+    cursor:"pointer",
+    color:"#94a3b8"
   },
 
-  link: {
-    color: "#38bdf8",
-    fontWeight: "900",
-    cursor: "pointer"
+  passwordInfo:{
+    color:"#94a3b8",
+    fontSize:"12px",
+    marginTop:"10px"
+  },
+
+  termsBox:{
+    display:"flex",
+    alignItems:"flex-start",
+    gap:"10px",
+    marginTop:"18px"
+  },
+
+  termsText:{
+    color:"#cbd5e1",
+    fontSize:"13px",
+    lineHeight:"22px",
+    margin:0
+  },
+
+  link:{
+    color:"#38bdf8",
+    cursor:"pointer",
+    fontWeight:"bold"
+  },
+
+  registerBtn:{
+    width:"100%",
+    height:"56px",
+    border:"none",
+    borderRadius:"18px",
+    marginTop:"22px",
+    background:
+      "linear-gradient(135deg,#22c55e,#16a34a)",
+    color:"white",
+    fontSize:"16px",
+    fontWeight:"bold",
+    display:"flex",
+    justifyContent:"center",
+    alignItems:"center",
+    gap:"8px",
+    boxShadow:"0 0 25px rgba(34,197,94,0.35)"
+  },
+
+  disabledBtn:{
+    width:"100%",
+    height:"56px",
+    border:"none",
+    borderRadius:"18px",
+    marginTop:"22px",
+    background:"#334155",
+    color:"#94a3b8",
+    fontSize:"16px",
+    fontWeight:"bold"
+  },
+
+  bottom:{
+    textAlign:"center",
+    color:"#cbd5e1",
+    marginTop:"22px",
+    fontSize:"14px"
+  },
+
+  loginLink:{
+    color:"#38bdf8",
+    fontWeight:"bold",
+    cursor:"pointer"
   }
+
 };
