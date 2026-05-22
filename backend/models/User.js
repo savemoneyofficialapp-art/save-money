@@ -23,6 +23,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+
+  walletAddress: {
+  type: String,
+  default: ""
+},
+
+termsAccepted: {
+  type: Boolean,
+  default: false
+},
   
   role: {
   type: String,

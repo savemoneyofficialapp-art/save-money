@@ -840,192 +840,102 @@ const makeCode = () => Math.random().toString(36).substring(2, 8);
 
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
-
   try {
-
-    let {
+    const {
       name,
       mobile,
       email,
       password,
-      referCode
+      walletAddress,
+      referCode,
+      termsAccepted
     } = req.body;
 
-    // CLEAN DATA
-
-    name = name?.trim();
-    mobile = mobile?.trim();
-    email = email?.trim().toLowerCase();
-    password = password?.trim();
-    referCode = referCode?.trim();
-
-    // REQUIRED CHECK
-
-    if (
-      !name ||
-      !mobile ||
-      !email ||
-      !password
-    ) {
-      return res.json({
-        success: false,
-        msg: "Please fill all fields"
-      });
+    if (!name || !mobile || !email || !password || !walletAddress) {
+      return res.json({ msg: "All fields required" });
     }
 
-    // EMAIL VALIDATION
-
-    if (!validator.isEmail(email)) {
-      return res.json({
-        success: false,
-        msg: "Invalid email"
-      });
+    if (!termsAccepted) {
+      return res.json({ msg: "Please accept Terms & Conditions" });
     }
 
-    // PASSWORD VALIDATION
+    const exist = await User.findOne({ email });
 
-    if (password.length < 6) {
-      return res.json({
-        success: false,
-        msg: "Password minimum 6 characters"
-      });
+    if (exist) {
+      return res.json({ msg: "User already exists" });
     }
 
-    // DUPLICATE EMAIL
-
-    const existingEmail = await User.findOne({
-      email
-    });
-
-    if (existingEmail) {
-      return res.json({
-        success: false,
-        msg: "Email already registered"
-      });
-    }
-
-    // DUPLICATE MOBILE
-
-    const existingMobile = await User.findOne({
-      mobile
-    });
-
-    if (existingMobile) {
-      return res.json({
-        success: false,
-        msg: "Mobile already registered"
-      });
-    }
-
-    // REFER CODE CHECK
-
-    let sponsor = null;
-
-    if (referCode) {
-
-      sponsor = await User.findOne({
-        referCode
-      });
-
-      if (!sponsor) {
-
-        return res.json({
-          success: false,
-          msg: "Invalid refer code"
-        });
-
-      }
-
-    }
-
-    // HASH PASSWORD
-
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
-
-    // GENERATE USER REFER CODE
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const myReferCode =
-      "SM" +
-      Math.floor(
-        100000 + Math.random() * 900000
-      );
+      "REF" + Math.floor(100000 + Math.random() * 900000);
 
-    // CREATE USER
+    const walletId =
+      "WAL" + Math.floor(100000 + Math.random() * 900000);
 
-    const user = await User.create({
-
+    const newUser = await User.create({
       name,
-
       mobile,
-
       email,
-
       password: hashedPassword,
 
+      walletAddress,
       referCode: myReferCode,
+      referredBy: referCode || "",
 
-      referredBy:
-        sponsor?.referCode || "",
-
+      walletId,
       wallet: 0,
 
-      role: "user",
+      referralIncome: 0,
+      performanceIncome: 0,
+      teamIncome: 0,
+      royaltyIncome: 0,
 
+      kycStatus: "not submitted",
+      termsAccepted: true,
+
+      role: "user",
+      banned: false,
+      freezeWallet: false,
+      disableInvestment: false,
+      disableWithdrawal: false,
+      disableBonus: false,
+
+      rank: "Starter",
+      rankPoints: 0,
+      totalEarning: 0,
+      totalDirect: 0,
+
+      accountActive: false,
       activeStatus: "Inactive",
 
-      kycStatus: "pending"
-
+      createdAt: new Date()
     });
 
-    // TOKEN
+    if (referCode) {
+      const refUser = await User.findOne({ referCode });
 
-    const token = jwt.sign(
-
-      {
-        id: user._id,
-        role: user.role
-      },
-
-      process.env.JWT_SECRET,
-
-      {
-        expiresIn: "7d"
+      if (refUser) {
+        await updateUserRank(refUser.email);
       }
-
-    );
+    }
 
     res.json({
-
-      success: true,
-
-      msg: "Register success",
-
-      token,
-
+      msg: "Registered Successfully",
       user: {
-
-        name: user.name,
-
-        email: user.email,
-
-        referCode: user.referCode
-
+        name: newUser.name,
+        email: newUser.email,
+        mobile: newUser.mobile,
+        referCode: newUser.referCode,
+        walletId: newUser.walletId,
+        kycStatus: newUser.kycStatus
       }
-
     });
 
   } catch (err) {
-
     console.log("REGISTER ERROR:", err);
-
-    res.status(500).json({
-      success: false,
-      msg: "Server error"
-    });
-
+    res.status(500).json({ msg: "Server error" });
   }
-
 });
 
 // ================= LOGIN =================
@@ -2445,7 +2355,7 @@ app.post("/add-cash", async (req, res) => {
 });
 
 
-app.get("/admin-analytics", auth, adminAuth, adminLimiter, async (req, res) => {
+app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
 
   const totalUsers = await User.countDocuments();
 
