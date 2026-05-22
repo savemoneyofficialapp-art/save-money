@@ -7,7 +7,6 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
 const nodemailer = require("nodemailer");
 const http = require("http");
-const { Server } = require("socket.io");
 const User = require("./models/User");
 const Notification = require("./models/Notification");
 const Investment = require("./models/Investment");
@@ -35,22 +34,42 @@ const sanitize = require("mongo-sanitize");
 
 const app = express();
 
-app.set("trust proxy", 1);
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://save-money-indol.vercel.app"
+];
 
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://save-money-indol.vercel.app"
+  origin: function(origin, callback) {
+
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+
+      return callback(
+        new Error("CORS blocked")
+      );
+
+    }
+
+    return callback(null, true);
+
+  },
+
+  credentials: true,
+
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "authorization", "Authorization"],
-  credentials: true
+
+  allowedHeaders: [
+    "Content-Type",
+    "authorization"
+  ]
 }));
-
-app.options("*", cors());
-
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 app.get("/", (req, res) => {
   res.send("Save Money Backend Live");
@@ -66,14 +85,21 @@ app.get("/health", (req, res) => {
 
 const server = http.createServer(app);
 
-const io = new Server(server, {
+const io = require("socket.io")(server, {
+
   cors: {
+
     origin: [
       "http://localhost:3000",
       "https://save-money-indol.vercel.app"
     ],
+
     methods: ["GET", "POST"],
+
+    credentials: true
+
   }
+
 });
 
 app.use(helmet());
