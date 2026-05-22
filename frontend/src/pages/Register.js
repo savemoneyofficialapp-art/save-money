@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
-import axios from "axios";
 
 const API = "https://save-money-yyv1.onrender.com";
 
@@ -12,36 +10,19 @@ export default function Register() {
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [pan, setPan] = useState("");
-  const [aadhaar, setAadhaar] = useState("");
   const [referCode, setReferCode] = useState("");
-  const [agree, setAgree] = useState(false);
 
-  const showPopup = (icon, title, text) => {
-    Swal.fire({
-      icon,
-      title,
-      text,
-      background: "#1e293b",
-      color: "white",
-      confirmButtonColor: icon === "success" ? "#22c55e" : "#ef4444"
-    });
-  };
+  const [loading, setLoading] = useState(false);
 
   const register = async () => {
-   
-    if (!name || !mobile || !email || !password || !pan || !aadhaar) {
-      showPopup("warning", "Oops...", "Please fill all fields");
+    if (!name || !mobile || !email || !password) {
+      alert("Please fill all required fields");
       return;
     }
 
-    if (!agree) {
-  return alert(
-    "Please accept Terms & Conditions"
-  );
-}
-
     try {
+      setLoading(true);
+
       const res = await fetch(`${API}/register`, {
         method: "POST",
         headers: {
@@ -52,189 +33,222 @@ export default function Register() {
           mobile,
           email,
           password,
-          pan,
-          aadhaar,
           referCode
         })
       });
 
       const data = await res.json();
 
-      if (data.msg === "Registered Successfully") {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: "Registered Successfully",
-          background: "#1e293b",
-          color: "white",
-          confirmButtonColor: "#22c55e"
-        }).then(() => {
-          navigate("/login");
-        });
-      } else {
-        showPopup("error", "Registration Failed", data.msg);
+      setLoading(false);
+
+      alert(data.msg || "Registration response received");
+
+      if (
+        data.msg === "Register success" ||
+        data.msg === "Registration successful" ||
+        data.success
+      ) {
+        navigate("/login");
       }
 
     } catch (err) {
-      showPopup("error", "Server Error", "Something went wrong");
-      console.log(err);
+      setLoading(false);
+      console.log("REGISTER ERROR:", err);
+      alert("Server Error: Backend not connected or API failed");
     }
   };
 
   return (
     <div style={styles.container}>
+
       <div style={styles.card}>
 
-        <h2 style={styles.title}>Create Account</h2>
+        <div style={styles.logoBox}>
+          <div style={styles.logo}>₹</div>
+          <h1 style={styles.title}>Create Account</h1>
+          <p style={styles.sub}>Join Save Money & start your journey</p>
+        </div>
 
-        <input style={styles.input} placeholder="Full Name" value={name} onChange={(e)=>setName(e.target.value)} />
-        <input style={styles.input} placeholder="Mobile Number" value={mobile} onChange={(e)=>setMobile(e.target.value)} />
-        <input style={styles.input} placeholder="Email ID" value={email} onChange={(e)=>setEmail(e.target.value)} />
-        <input style={styles.input} type="password" placeholder="Password" value={password} onChange={(e)=>setPassword(e.target.value)} />
-        <input style={styles.input} placeholder="PAN Number" value={pan} onChange={(e)=>setPan(e.target.value)} />
-        <input style={styles.input} placeholder="Aadhaar Number" value={aadhaar} onChange={(e)=>setAadhaar(e.target.value)} />
-        <input style={styles.input} placeholder="Refer Code (Optional)" value={referCode} onChange={(e)=>setReferCode(e.target.value)} />
+        <input
+          style={styles.input}
+          placeholder="Full Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-<div style={styles.checkRow}>
+        <input
+          style={styles.input}
+          placeholder="Mobile Number"
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+        />
 
-  <input
-    type="checkbox"
-    checked={agree}
-    onChange={(e) => setAgree(e.target.checked)}
-  />
+        <input
+          style={styles.input}
+          placeholder="Email Address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-  <p style={styles.checkText}>
-    I agree to the
-    <span
-      style={styles.link}
-      onClick={() => navigate("/legal/terms")}
-    >
-      {" "}Terms & Conditions
-    </span>
-    {" "}and
-    <span
-      style={styles.link}
-      onClick={() => navigate("/legal/privacy")}
-    >
-      {" "}Privacy Policy
-    </span>
-  </p>
+        <input
+          style={styles.input}
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-</div>
+        <input
+          style={styles.input}
+          placeholder="Refer Code (Optional)"
+          value={referCode}
+          onChange={(e) => setReferCode(e.target.value)}
+        />
 
-        <button style={styles.btn} onClick={register}>
-          Register
+        <button
+          style={styles.registerBtn}
+          onClick={register}
+          disabled={loading}
+        >
+          {loading ? "Creating Account..." : "Register"}
         </button>
 
         <p style={styles.legalText}>
-  By creating an account, you agree to our
-  <span
-    style={styles.legalLink}
-    onClick={() => navigate("/legal/terms")}
-  >
-    {" "}Terms
-  </span>
-  {" "}and
-  <span
-    style={styles.legalLink}
-    onClick={() => navigate("/legal/privacy")}
-  >
-    {" "}Privacy Policy
-  </span>
-</p>
+          By creating an account, you agree to our
+          <span
+            style={styles.legalLink}
+            onClick={() => navigate("/legal/terms")}
+          >
+            {" "}Terms
+          </span>
+          {" "}and
+          <span
+            style={styles.legalLink}
+            onClick={() => navigate("/legal/privacy")}
+          >
+            {" "}Privacy Policy
+          </span>
+        </p>
 
         <p style={styles.loginText}>
-          Already have account?{" "}
-          <span style={styles.link} onClick={()=>navigate("/login")}>
-            Go for Login
+          Already have account?
+          <span
+            style={styles.loginLink}
+            onClick={() => navigate("/login")}
+          >
+            {" "}Go for Login
           </span>
         </p>
 
       </div>
+
     </div>
   );
 }
 
 const styles = {
-  container:{
-    minHeight:"100vh",
-    background:"linear-gradient(135deg,#020617,#0f172a)",
-    display:"flex",
-    justifyContent:"center",
-    alignItems:"center"
+  container: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(rgba(2,6,23,0.88), rgba(15,23,42,0.94)), url('/network-bg.jpg')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px"
   },
 
-  card:{
-    background:"#1e293b",
-    padding:"25px",
-    borderRadius:"15px",
-    width:"320px",
-    boxShadow:"0 0 20px rgba(0,0,0,0.4)"
+  card: {
+    width: "100%",
+    maxWidth: "420px",
+    background: "rgba(15,23,42,0.92)",
+    borderRadius: "26px",
+    padding: "25px",
+    border: "1px solid rgba(34,197,94,0.35)",
+    boxShadow: "0 0 35px rgba(34,197,94,0.22)",
+    backdropFilter: "blur(14px)"
   },
 
-  title:{
-    textAlign:"center",
-    marginBottom:"15px",
-    color:"#22c55e"
+  logoBox: {
+    textAlign: "center",
+    marginBottom: "20px"
   },
 
-  input:{
-    width:"100%",
-    padding:"12px",
-    marginTop:"10px",
-    borderRadius:"8px",
-    border:"none"
+  logo: {
+    width: "70px",
+    height: "70px",
+    margin: "auto",
+    borderRadius: "22px",
+    background: "linear-gradient(135deg,#22c55e,#3b82f6)",
+    color: "#020617",
+    fontSize: "38px",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 0 25px rgba(34,197,94,0.45)"
   },
 
-  checkRow:{
-  display:"flex",
-  alignItems:"center",
-  gap:"10px",
-  marginTop:"15px"
-},
-
-checkText:{
-  color:"#cbd5e1",
-  fontSize:"12px"
-},
-
-link:{
-  color:"#38bdf8",
-  cursor:"pointer"
-},
-
-  btn:{
-    marginTop:"15px",
-    width:"100%",
-    padding:"12px",
-    background:"#22c55e",
-    border:"none",
-    borderRadius:"10px",
-    fontWeight:"bold",
-    cursor:"pointer"
+  title: {
+    color: "#22c55e",
+    marginBottom: "5px"
   },
 
-  legalText:{
-  color:"#cbd5e1",
-  fontSize:"12px",
-  marginTop:"12px",
-  textAlign:"center"
-},
-
-legalLink:{
-  color:"#38bdf8",
-  cursor:"pointer"
-},
-
-  loginText:{
-    marginTop:"15px",
-    textAlign:"center",
-    color:"#94a3b8"
+  sub: {
+    color: "#94a3b8",
+    fontSize: "13px"
   },
 
-  link:{
-    color:"#3b82f6",
-    cursor:"pointer",
-    fontWeight:"bold"
+  input: {
+    width: "100%",
+    padding: "14px",
+    marginTop: "12px",
+    border: "1px solid #334155",
+    borderRadius: "15px",
+    outline: "none",
+    background: "#e2e8f0",
+    color: "#020617",
+    fontWeight: "bold"
+  },
+
+  registerBtn: {
+    width: "100%",
+    padding: "15px",
+    marginTop: "18px",
+    border: "none",
+    borderRadius: "16px",
+    background: "linear-gradient(135deg,#22c55e,#16a34a)",
+    color: "#020617",
+    fontWeight: "900",
+    fontSize: "16px",
+    boxShadow: "0 12px 25px rgba(34,197,94,0.35)"
+  },
+
+  legalText: {
+    color: "#cbd5e1",
+    fontSize: "12px",
+    marginTop: "14px",
+    textAlign: "center",
+    lineHeight: "20px"
+  },
+
+  legalLink: {
+    color: "#38bdf8",
+    cursor: "pointer",
+    fontWeight: "bold"
+  },
+
+  loginText: {
+    textAlign: "center",
+    marginTop: "18px",
+    color: "#94a3b8"
+  },
+
+  loginLink: {
+    color: "#38bdf8",
+    fontWeight: "900",
+    cursor: "pointer"
   }
 };
