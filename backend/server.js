@@ -2375,14 +2375,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   res.json({ msg: "Uploaded" });
 });
 
-const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: {
-    msg: "Too many admin requests."
-  }
-});
-
 // ================= ADMIN =================
 app.post("/admin/approve", async (req, res) => {
 
