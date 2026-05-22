@@ -11,7 +11,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [referCode, setReferCode] = useState("");
-
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const register = async () => {
@@ -25,9 +25,7 @@ export default function Register() {
 
       const res = await fetch(`${API}/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
           mobile,
@@ -38,10 +36,9 @@ export default function Register() {
       });
 
       const data = await res.json();
-
       setLoading(false);
 
-      alert(data.msg || "Registration response received");
+      alert(data.msg || "Registration response");
 
       if (
         data.msg === "Register success" ||
@@ -53,95 +50,70 @@ export default function Register() {
 
     } catch (err) {
       setLoading(false);
-      console.log("REGISTER ERROR:", err);
-      alert("Server Error: Backend not connected or API failed");
+      alert("Backend connection failed.");
     }
   };
 
   return (
     <div style={styles.container}>
-
       <div style={styles.card}>
 
-        <div style={styles.logoBox}>
-          <div style={styles.logo}>₹</div>
-          <h1 style={styles.title}>Create Account</h1>
-          <p style={styles.sub}>Join Save Money & start your journey</p>
+        <div style={styles.logo}>₹</div>
+
+        <h1 style={styles.title}>Create Account</h1>
+        <p style={styles.sub}>Join Save Money & start your journey</p>
+
+        <input style={styles.input} placeholder="Full Name" value={name}
+          onChange={(e) => setName(e.target.value)} />
+
+        <input style={styles.input} placeholder="Mobile Number" value={mobile}
+          onChange={(e) => setMobile(e.target.value)} />
+
+        <input style={styles.input} placeholder="Email Address" value={email}
+          onChange={(e) => setEmail(e.target.value)} />
+
+        <div style={styles.passBox}>
+          <input
+            style={styles.passInput}
+            type={showPass ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button
+            style={styles.eyeBtn}
+            onClick={() => setShowPass(!showPass)}
+            type="button"
+          >
+            {showPass ? "🙈" : "👁️"}
+          </button>
         </div>
 
-        <input
-          style={styles.input}
-          placeholder="Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <input style={styles.input} placeholder="Refer Code (Optional)" value={referCode}
+          onChange={(e) => setReferCode(e.target.value)} />
 
-        <input
-          style={styles.input}
-          placeholder="Mobile Number"
-          value={mobile}
-          onChange={(e) => setMobile(e.target.value)}
-        />
-
-        <input
-          style={styles.input}
-          placeholder="Email Address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          style={styles.input}
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <input
-          style={styles.input}
-          placeholder="Refer Code (Optional)"
-          value={referCode}
-          onChange={(e) => setReferCode(e.target.value)}
-        />
-
-        <button
-          style={styles.registerBtn}
-          onClick={register}
-          disabled={loading}
-        >
+        <button style={styles.registerBtn} onClick={register} disabled={loading}>
           {loading ? "Creating Account..." : "Register"}
         </button>
 
+        <p style={styles.kycNote}>
+          Aadhaar / PAN / Photo upload will be done from KYC page after login.
+        </p>
+
         <p style={styles.legalText}>
           By creating an account, you agree to our
-          <span
-            style={styles.legalLink}
-            onClick={() => navigate("/legal/terms")}
-          >
-            {" "}Terms
-          </span>
-          {" "}and
-          <span
-            style={styles.legalLink}
-            onClick={() => navigate("/legal/privacy")}
-          >
-            {" "}Privacy Policy
-          </span>
+          <span style={styles.link} onClick={() => navigate("/legal/terms")}> Terms </span>
+          and
+          <span style={styles.link} onClick={() => navigate("/legal/privacy")}> Privacy Policy</span>
         </p>
 
         <p style={styles.loginText}>
           Already have account?
-          <span
-            style={styles.loginLink}
-            onClick={() => navigate("/login")}
-          >
-            {" "}Go for Login
-          </span>
+          <span style={styles.link} onClick={() => navigate("/login")}> Go for Login</span>
         </p>
 
       </div>
-
     </div>
   );
 }
@@ -153,50 +125,46 @@ const styles = {
       "linear-gradient(rgba(2,6,23,0.88), rgba(15,23,42,0.94)), url('/network-bg.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
-    color: "white",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "20px"
+    padding: "20px",
+    color: "white"
   },
 
   card: {
     width: "100%",
-    maxWidth: "420px",
-    background: "rgba(15,23,42,0.92)",
-    borderRadius: "26px",
-    padding: "25px",
+    maxWidth: "430px",
+    background: "rgba(15,23,42,0.94)",
+    borderRadius: "28px",
+    padding: "26px",
     border: "1px solid rgba(34,197,94,0.35)",
-    boxShadow: "0 0 35px rgba(34,197,94,0.22)",
+    boxShadow: "0 0 40px rgba(34,197,94,0.25)",
     backdropFilter: "blur(14px)"
   },
 
-  logoBox: {
-    textAlign: "center",
-    marginBottom: "20px"
-  },
-
   logo: {
-    width: "70px",
-    height: "70px",
+    width: "72px",
+    height: "72px",
     margin: "auto",
     borderRadius: "22px",
-    background: "linear-gradient(135deg,#22c55e,#3b82f6)",
+    background: "linear-gradient(135deg,#22c55e,#38bdf8)",
     color: "#020617",
-    fontSize: "38px",
+    fontSize: "40px",
     fontWeight: "900",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 0 25px rgba(34,197,94,0.45)"
+    justifyContent: "center"
   },
 
   title: {
+    textAlign: "center",
     color: "#22c55e",
     marginBottom: "5px"
   },
 
   sub: {
+    textAlign: "center",
     color: "#94a3b8",
     fontSize: "13px"
   },
@@ -205,12 +173,38 @@ const styles = {
     width: "100%",
     padding: "14px",
     marginTop: "12px",
-    border: "1px solid #334155",
-    borderRadius: "15px",
-    outline: "none",
+    border: "none",
+    borderRadius: "16px",
     background: "#e2e8f0",
     color: "#020617",
+    fontWeight: "bold",
+    outline: "none"
+  },
+
+  passBox: {
+    display: "flex",
+    alignItems: "center",
+    background: "#e2e8f0",
+    borderRadius: "16px",
+    marginTop: "12px"
+  },
+
+  passInput: {
+    flex: 1,
+    padding: "14px",
+    border: "none",
+    background: "transparent",
+    outline: "none",
+    color: "#020617",
     fontWeight: "bold"
+  },
+
+  eyeBtn: {
+    padding: "12px",
+    border: "none",
+    background: "transparent",
+    fontSize: "18px",
+    cursor: "pointer"
   },
 
   registerBtn: {
@@ -222,31 +216,30 @@ const styles = {
     background: "linear-gradient(135deg,#22c55e,#16a34a)",
     color: "#020617",
     fontWeight: "900",
-    fontSize: "16px",
-    boxShadow: "0 12px 25px rgba(34,197,94,0.35)"
+    fontSize: "16px"
+  },
+
+  kycNote: {
+    textAlign: "center",
+    color: "#facc15",
+    fontSize: "12px",
+    marginTop: "12px"
   },
 
   legalText: {
     color: "#cbd5e1",
     fontSize: "12px",
-    marginTop: "14px",
-    textAlign: "center",
-    lineHeight: "20px"
-  },
-
-  legalLink: {
-    color: "#38bdf8",
-    cursor: "pointer",
-    fontWeight: "bold"
+    marginTop: "12px",
+    textAlign: "center"
   },
 
   loginText: {
     textAlign: "center",
-    marginTop: "18px",
-    color: "#94a3b8"
+    color: "#94a3b8",
+    marginTop: "16px"
   },
 
-  loginLink: {
+  link: {
     color: "#38bdf8",
     fontWeight: "900",
     cursor: "pointer"

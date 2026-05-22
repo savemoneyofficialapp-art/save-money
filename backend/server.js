@@ -35,17 +35,16 @@ const sanitize = require("mongo-sanitize");
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(cors({
   origin: [
     "http://localhost:3000",
     "https://save-money-indol.vercel.app"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "authorization", "Authorization"],
-  credentials: true
+  allowedHeaders: ["Content-Type", "authorization", "Authorization"]
 }));
-
-app.set("trust proxy", 1);
 
 app.options("*", cors());
 app.use(express.json());
