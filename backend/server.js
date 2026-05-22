@@ -3979,6 +3979,10 @@ app.use((err, req, res, next) => {
 
 });
 
+app.get("/", (req, res) => {
+  res.send("Save Money Backend Live");
+});
+
 // ✅ server.listen MUST be outside io.on
 const PORT = process.env.PORT || 5000;
 
