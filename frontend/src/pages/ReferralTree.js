@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API } from "../config";
+import fetchWithAuth from "../utils/fetchWithAuth";
+
 
 
 
@@ -8,16 +10,23 @@ export default function ReferralTree() {
 
   const email = localStorage.getItem("email");
   const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
 
   const [tree, setTree] = useState(null);
-  const [analytics, setAnalytics] = useState(null);
+
+const [analytics, setAnalytics] = useState({
+  totalUsers: 0,
+  activeUsers: 0,
+  totalBusiness: 0,
+  levels: {}
+});
 
   const [filter, setFilter] = useState("all");
 
   const [openNodes, setOpenNodes] = useState({});
 
   useEffect(() => {
-    loadTree();
+    load();
   }, [filter]);
 
   const load = async () => {
@@ -70,16 +79,7 @@ export default function ReferralTree() {
       openNodes[indexPath] ||
       indexPath === "root";
 
-      if (loading) {
-  return (
-    <div style={styles.loading}>
-      <div style={styles.loadingCard}>
-        <h2>Loading Referral Tree</h2>
-        <p>Please wait...</p>
-      </div>
-    </div>
-  );
-}
+      
 
     return (
       <div
@@ -201,6 +201,14 @@ export default function ReferralTree() {
       </div>
     );
   };
+
+  if (loading) {
+  return (
+    <div style={styles.container}>
+      Loading Referral Tree...
+    </div>
+  );
+}
 
   if (!tree) {
     return (

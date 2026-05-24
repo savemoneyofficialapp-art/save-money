@@ -3496,53 +3496,114 @@ app.post("/my-tickets", auth, async (req, res) => {
   res.json(tickets);
 });
 
-app.get("/referral-tree", auth, async (req, res) => {
+app.post("/referral-tree", auth, async (req, res) => {
   try {
-    const me = await User.findById(req.user.id);
 
-    if (!me) {
-      return res.status(404).json({ msg: "User not found" });
+    const { email, filter } = req.body;
+
+    const rootUser = await User.findOne({ email });
+
+    if (!rootUser) {
+      return res.json({ msg: "User not found" });
     }
 
-    if (!me.referCode) {
-      me.referCode =
-        "SM" + Math.floor(100000 + Math.random() * 900000);
-      await me.save();
-    }
+    let analytics = {
+      totalUsers: 0,
+      activeUsers: 0,
+      totalBusiness: 0,
+      levels: {}
+    };
 
-    const buildLevel = async (code, level) => {
+    async function buildTree(user, level) {
+
       if (level > 7) return [];
 
-      const users = await User.find({ referredBy: code }).select(
-        "name email referCode activeStatus createdAt"
-      );
+      let query = {
+        referredBy: user.referCode
+      };
+
+      if (filter === "active") {
+        query.kycStatus = "approved";
+      }
+
+      if (filter === "pending") {
+        query.kycStatus = { $ne: "approved" };
+      }
+
+      const children = await User.find(query)
+        .select(
+          "-password name email referCode kycStatus createdAt wallet"
+        );
 
       const result = [];
 
-      for (const u of users) {
+      if (!analytics.levels[level]) {
+        analytics.levels[level] = {
+          users: 0,
+          active: 0,
+          income: 0
+        };
+      }
+
+      for (let child of children) {
+
+        analytics.totalUsers += 1;
+
+        analytics.levels[level].users += 1;
+
+        if (child.kycStatus === "approved") {
+          analytics.activeUsers += 1;
+          analytics.levels[level].active += 1;
+        }
+
+        const investment = await Investment.findOne({
+          email: child.email,
+          status: "Active"
+        });
+
+        let business = 0;
+
+        if (investment) {
+          business = investment.monthlyAmount || 0;
+          analytics.totalBusiness += business;
+          analytics.levels[level].income += business;
+        }
+
         result.push({
-          name: u.name,
-          email: u.email,
+          _id: child._id,
+          name: child.name,
+          email: child.email,
+          referCode: child.referCode,
+          kycStatus: child.kycStatus,
+          joinDate: child.createdAt,
           level,
-          status: u.activeStatus || "Inactive",
-          joinDate: u.createdAt,
-          children: await buildLevel(u.referCode, level + 1)
+          business,
+          children: await buildTree(child, level + 1)
         });
       }
 
       return result;
+    }
+
+    const tree = {
+      name: rootUser.name,
+      email: rootUser.email,
+      referCode: rootUser.referCode,
+      kycStatus: rootUser.kycStatus,
+      level: 0,
+      children: await buildTree(rootUser, 1)
     };
 
-    const tree = await buildLevel(me.referCode, 1);
-
     res.json({
-      myCode: me.referCode,
-      tree
+      tree,
+      analytics
     });
 
   } catch (err) {
-    console.log("REFERRAL TREE ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    console.log(err);
+    res.status(500).json({
+      msg: "Server error"
+    });
   }
 });
 
