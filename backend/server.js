@@ -1130,77 +1130,79 @@ app.post("/register", async (req, res) => {
 
 // ================= LOGIN =================
 
-app.post("/login", async (req, res) => {
+app.post("/login", authLimiter, async (req, res) => {
   try {
+    console.log("LOGIN BODY:", req.body);
+
     const { email, password } = req.body;
 
-    if (!validator.isEmail(email)) {
-  return res.json({
-    msg: "Invalid email"
-  });
-}
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.json({ msg: "User not found" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.json({ msg: "Wrong password" });
-    }
-
-    if (user.banned) {
-      return res.json({
-        msg: "Account Suspended"
+    if (!email || !password) {
+      return res.status(400).json({
+        msg: "Email and password required"
       });
     }
 
-    const accessToken = jwt.sign(
+    const user = await User.findOne({
+      email: email.toLowerCase()
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        msg: "User not found"
+      });
+    }
+
+    if (user.banned) {
+      return res.status(403).json({
+        msg: "Your account is banned"
+      });
+    }
+
+    let isMatch = false;
+
+    // hashed password check
+    if (user.password && user.password.startsWith("$2")) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      // old plain password support
+      isMatch = user.password === password;
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({
+        msg: "Wrong password"
+      });
+    }
+
+    const token = jwt.sign(
       {
         id: user._id,
-        email: user.email,
-        role: user.role || "user"
+        role: user.role
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    const refreshToken = jwt.sign(
       {
-        id: user._id
-      },
-      process.env.REFRESH_SECRET,
-      { expiresIn: "30d" }
+        expiresIn: "7d"
+      }
     );
 
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    res.json({
-      msg: "Login success",
-      accessToken,
-      refreshToken,
-      token: accessToken,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        mobile: user.mobile,
-        role: user.role || "user",
-        kycStatus: user.kycStatus,
-        activeStatus: user.activeStatus,
-        accountActive: user.accountActive,
-        walletId: user.walletId,
-        wallet: user.wallet
-      }
+    return res.json({
+      success: true,
+      msg: "Login Successful",
+      token,
+      role: user.role || "user",
+      email: user.email,
+      name: user.name,
+      kycStatus: user.kycStatus,
+      walletId: user.walletId
     });
 
   } catch (err) {
-    console.log("LOGIN ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    console.log("LOGIN ERROR:", err.message);
+    console.log(err);
+
+    return res.status(500).json({
+      msg: err.message || "Server error"
+    });
   }
 });
 
