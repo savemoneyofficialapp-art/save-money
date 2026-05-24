@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 import axios from "axios";
 
-const API = "https://save-money-yyv1.onrender.com";
-
+const API =
+  process.env.REACT_APP_API ||
+  "https://save-money-yyv1.onrender.com";
+  
 const socket = io(`${API}`);
 
 export default function Notifications() {

@@ -1,7 +1,9 @@
 import { useState } from "react";
 
-const API = "https://save-money-yyv1.onrender.com";
-
+const API =
+  process.env.REACT_APP_API ||
+  "https://save-money-yyv1.onrender.com";
+  
 export default function DailyReward() {
   const email = localStorage.getItem("email");
   const token = localStorage.getItem("token");

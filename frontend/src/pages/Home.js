@@ -4,8 +4,10 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import { BRAND } from "../brand";
 
-const API = "https://save-money-yyv1.onrender.com";
-
+const API =
+  process.env.REACT_APP_API ||
+  "https://save-money-yyv1.onrender.com";
+  
 const SAFE_BRAND = BRAND || {
   appName: "Save Money",
   slogan: "Save & Earn",

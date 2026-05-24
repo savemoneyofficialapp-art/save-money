@@ -5,8 +5,10 @@ import { fetchWithAuth }
 from "../utils/fetchWithAuth";
 import axios from "axios";
 
-const API = "https://save-money-yyv1.onrender.com";
-
+const API =
+  process.env.REACT_APP_API ||
+  "https://save-money-yyv1.onrender.com";
+  
 export default function Refer() {
   const email = localStorage.getItem("email");
   const navigate = useNavigate();
