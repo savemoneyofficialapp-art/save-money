@@ -75,12 +75,17 @@ export default function AdvancedAdminAnalytics() {
   };
 
   if (!data) {
-    return (
-      <div style={styles.container}>
-        Loading Advanced Analytics...
+  return (
+    <div style={styles.loadingPage}>
+      <div style={styles.loaderCard}>
+        <h1 style={styles.loaderLogo}>Save Money</h1>
+        <div style={styles.spinner}></div>
+        <h2>Loading Admin Analytics</h2>
+        <p>Please wait, fetching live admin data...</p>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div style={styles.container}>
@@ -332,5 +337,41 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     gap: "10px"
-  }
+  },
+
+  loadingPage: {
+  minHeight: "100vh",
+  background: "linear-gradient(135deg,#020617,#0f172a)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "white"
+},
+
+loaderCard: {
+  width: "90%",
+  maxWidth: "380px",
+  background: "#1e293b",
+  padding: "30px",
+  borderRadius: "26px",
+  textAlign: "center",
+  border: "1px solid #334155",
+  boxShadow: "0 0 35px rgba(34,197,94,0.25)"
+},
+
+loaderLogo: {
+  color: "#22c55e",
+  marginBottom: "18px"
+},
+
+spinner: {
+  width: "55px",
+  height: "55px",
+  border: "6px solid #334155",
+  borderTop: "6px solid #22c55e",
+  borderRadius: "50%",
+  margin: "0 auto 18px",
+  animation: "spin 1s linear infinite"
+}
+
 };

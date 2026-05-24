@@ -2932,7 +2932,7 @@ app.get("/admin-advanced-analytics", auth, adminAuth, async (req, res) => {
     ]);
 
     const totalInvestment = await Investment.aggregate([
-      { $group: { _id: null, total: { $sum: "$totalPlanAmount" } } }
+      { $group: { _id: null, total: { $sum: "$monthlyAmount" } } }
     ]);
 
     const topEarners = await User.find()
