@@ -1,7 +1,8 @@
 import { useState } from "react";
-import axios from "axios";
 
-const API = "https://save-money-yyv1.onrender.com";
+const API =
+  process.env.REACT_APP_API ||
+  "https://save-money-yyv1.onrender.com";
 
 export default function AdminUserControl() {
   const token = localStorage.getItem("token");
@@ -9,65 +10,94 @@ export default function AdminUserControl() {
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
   const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const handleAuthError = (data) => {
+    if (
+      data?.msg === "Token expired or invalid" ||
+      data?.msg === "No token" ||
+      data?.msg === "Invalid token" ||
+      data?.msg === "Admin access only" ||
+      data?.msg === "Admin only"
+    ) {
+      localStorage.clear();
+      alert("Session expired or admin access missing. Please login again.");
+      window.location.href = "/login";
+      return true;
+    }
+
+    return false;
+  };
 
   const searchUsers = async () => {
-    const res = await fetch(`${API}/admin-search-users`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: token
-      },
-      body: JSON.stringify({
-        search,
-        filter: "all"
-      })
-    });
+    try {
+      setLoading(true);
+      setMsg("");
 
-    const data = await res.json();
+      const res = await fetch(`${API}/admin-search-users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({
+          search,
+          filter: "all"
+        })
+      });
 
-if (
-  data.msg === "Token expired or invalid"
-) {
+      const data = await res.json();
 
-  localStorage.clear();
+      if (handleAuthError(data)) return;
 
-  alert("Session expired. Please login again.");
+      if (!Array.isArray(data)) {
+        setUsers([]);
+        setMsg(data?.msg || "No users found");
+        return;
+      }
 
-  window.location.href = "/login";
+      setUsers(data);
 
-  return;
-}
+      if (data.length === 0) {
+        setMsg("No users found");
+      }
 
-    setUsers(data);
+    } catch (err) {
+      console.log(err);
+      setMsg("Backend API not connected or CORS error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const action = async (url, body) => {
-    const res = await fetch(`${API}/` + url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: token
-      },
-      body: JSON.stringify(body)
-    });
+    try {
+      setLoading(true);
+      setMsg("");
 
-    const data = await res.json();
+      const res = await fetch(`${API}/${url}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify(body)
+      });
 
-if (
-  data.msg === "Token expired or invalid"
-) {
+      const data = await res.json();
 
-  localStorage.clear();
+      if (handleAuthError(data)) return;
 
-  alert("Session expired. Please login again.");
+      alert(data.msg || "Action completed");
+      searchUsers();
 
-  window.location.href = "/login";
-
-  return;
-}
-
-    alert(data.msg);
-    searchUsers();
+    } catch (err) {
+      console.log(err);
+      setMsg("Action failed. Backend API not connected.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -83,21 +113,26 @@ if (
         />
 
         <button style={styles.searchBtn} onClick={searchUsers}>
-          Search User
+          {loading ? "Searching..." : "Search User"}
         </button>
+
+        {msg && <p style={styles.msg}>{msg}</p>}
       </div>
 
       {users.map((u) => (
         <div key={u._id} style={styles.userCard}>
           <div style={styles.userTop}>
             <div>
-              <h3>{u.name}</h3>
+              <h3>{u.name || "No Name"}</h3>
               <p>{u.email}</p>
-              <p>Mobile: {u.mobile}</p>
-              <p>Wallet ID: {u.walletId}</p>
-              <p>Wallet: ₹{u.wallet}</p>
-              <p>KYC: {u.kycStatus}</p>
-              <p>Status: {u.activeStatus}</p>
+              <p>Mobile: {u.mobile || "N/A"}</p>
+              <p>Wallet ID: {u.walletId || "N/A"}</p>
+              <p>Wallet: ₹{u.wallet || 0}</p>
+              <p>KYC: {u.kycStatus || "not submitted"}</p>
+              <p>Status: {u.activeStatus || "Inactive"}</p>
+              <p>Investment Disabled: {u.disableInvestment ? "Yes" : "No"}</p>
+              <p>Withdrawal Disabled: {u.disableWithdrawal ? "Yes" : "No"}</p>
+              <p>Bonus Disabled: {u.disableBonus ? "Yes" : "No"}</p>
             </div>
 
             <div style={styles.badges}>
@@ -124,7 +159,7 @@ if (
               onClick={() =>
                 action("admin-ban-user", {
                   email: u.email,
-                  reason
+                  reason: reason || "Violation detected"
                 })
               }
             >
@@ -232,6 +267,12 @@ const styles = {
     background: "#22c55e",
     color: "#020617",
     fontWeight: "bold",
+    marginTop: "12px"
+  },
+
+  msg: {
+    color: "#facc15",
+    textAlign: "center",
     marginTop: "12px"
   },
 
