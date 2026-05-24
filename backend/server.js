@@ -3260,14 +3260,11 @@ async (req, res) => {
   for (let u of team) {
 
     await Notification.create({
-
-      email: u.email,
-
-      title,
-
-      message
-
-    });
+  email: "all",
+  title,
+  message,
+  read: false
+});
 
     const socketId =
       onlineUsers[u.email];
@@ -3309,15 +3306,26 @@ app.post("/send-notification", async (req, res) => {
   res.json({ msg: "Notification sent" });
 });
 
-app.post("/get-notifications", async (req, res) => {
+app.post("/get-notifications", auth, async (req, res) => {
+  try {
+    const { email } = req.body;
 
-  const { email } = req.body;
+    const notifications = await Notification.find({
+      $or: [
+        { email: email },
+        { email: "all" },
+        { email: "ALL" },
+        { sendTo: "all" },
+        { type: "broadcast" }
+      ]
+    }).sort({ createdAt: -1 });
 
-  // DB থেকে ওই user এর সব notification আনবে
-  const data = await Notification.find({ email })
-    .sort({ createdAt: -1 }); // নতুনটা আগে
+    res.json(notifications);
 
-  res.json(data);
+  } catch (err) {
+    console.log("GET NOTIFICATION ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
 });
 
 

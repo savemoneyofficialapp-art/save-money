@@ -64,6 +64,7 @@ export default function Notifications() {
       title: n.title || "Notification",
       message: n.message || n.text || "",
       date: n.date || n.createdAt || new Date(),
+      createdAt: n.createdAt || n.date || new Date(),
       read: n.read || false
     };
   };
@@ -84,9 +85,14 @@ export default function Notifications() {
       const result = await res.json();
 
       const finalData = Array.isArray(result)
-        ? result.map(normalizeNotification)
-        : [];
-
+  ? result
+      .map(normalizeNotification)
+      .sort(
+        (a, b) =>
+          new Date(b.date) - new Date(a.date)
+      )
+  : [];
+  
       setData(finalData);
 
     } catch (err) {
