@@ -80,15 +80,15 @@ banReason: {
 },
 
   // 🔹 DOCUMENT INFO
-  pan: {
-    type: String,
-    required: true
-  },
+  aadhaar:{
+  type:String,
+  default:""
+},
 
-  aadhaar: {
-    type: String,
-    required: true
-  },
+pan:{
+  type:String,
+  default:""
+},
 
   referralIncome: {
   type: Number,
@@ -145,12 +145,11 @@ activeStatus: {
 },
 
   // 🔹 KYC STATUS
-  kycStatus: {
-    type: String,
-    enum: ["not submitted", "pending", "approved"],
-    default: "not submitted"
-  },
-
+  kycStatus:{
+  type:String,
+  enum:["Pending","Approved","Rejected"],
+  default:"Pending"
+},
   // 🔹 FILE UPLOAD PATHS
   aadhaarFile: {
     type: String,
