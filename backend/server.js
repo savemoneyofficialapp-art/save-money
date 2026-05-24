@@ -2566,7 +2566,7 @@ app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
       $group: {
         _id: null,
         total: {
-          $sum: "$totalPlanAmount"
+          $sum: "$monthlyAmount"
         }
       }
     }
