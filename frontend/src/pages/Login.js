@@ -13,58 +13,73 @@ export default function Login() {
   const [popup, setPopup] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const login = async () => {
-    if (!email || !password) {
-      setPopup("Please enter email and password");
+const login = async () => {
+  if (!email || !password) {
+    setPopup("Please enter email and password");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setPopup("");
+
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        password
+      })
+    });
+
+    const text = await res.text();
+    console.log("LOGIN STATUS:", res.status);
+    console.log("LOGIN RESPONSE:", text);
+
+    let data = {};
+    try {
+      data = JSON.parse(text);
+    } catch {
+      setPopup("Invalid backend response");
       return;
     }
 
-    try {
-      setLoading(true);
-      setPopup("");
-
-      const res = await fetch(`${API}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email,
-          password
-        })
-      });
-
-      const data = await res.json();
-
-if (data.msg === "Login Successful" || data.success === true) {
-          const token = data.accessToken || data.token;
-
-        localStorage.setItem("token", token);
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("refreshToken", data.refreshToken || "");
-        localStorage.setItem("email", data.user.email);
-        localStorage.setItem("role", data.user.role || "user");
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        setPopup("Login Successful");
-
-        setTimeout(() => {
-          if (data.role === "admin") {
-  navigate("/admin", { replace: true });
-} else {
-  navigate("/home", { replace: true });
-}
-        }, 800);
-      } else {
-        setPopup(data.msg || "Login failed");
-      }
-    } catch (err) {
-      console.log("LOGIN ERROR:", err);
-      setPopup("Backend connection failed");
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      setPopup(data.msg || "Login failed");
+      return;
     }
-  };
+
+    if (data.success === true || data.msg === "Login Successful") {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("accessToken", data.token);
+      localStorage.setItem("email", data.email);
+      localStorage.setItem("name", data.name || "");
+      localStorage.setItem("role", data.role || "user");
+
+      setPopup("Login Successful");
+
+      setTimeout(() => {
+        if ((data.role || "").toLowerCase() === "admin") {
+          navigate("/admin", { replace: true });
+        } else {
+          navigate("/home", { replace: true });
+        }
+      }, 500);
+
+      return;
+    }
+
+    setPopup(data.msg || "Login failed");
+
+  } catch (err) {
+    console.log("LOGIN FETCH ERROR:", err);
+    setPopup("Backend connection failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={styles.container}>
