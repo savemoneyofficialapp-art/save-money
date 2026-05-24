@@ -147,7 +147,14 @@ activeStatus: {
   // 🔹 KYC STATUS
   kycStatus:{
   type:String,
-  enum:["Pending","Approved","Rejected"],
+  enum:[
+    "Pending",
+    "Approved",
+    "Rejected",
+    "approved",
+    "pending",
+    "rejected"
+  ],
   default:"Pending"
 },
   // 🔹 FILE UPLOAD PATHS
