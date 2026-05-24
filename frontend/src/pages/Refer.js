@@ -21,7 +21,7 @@ export default function Refer() {
 
   if (user?.kycStatus !== "approved") {
 
-    alert("Please Complete Your KYC First");
+    toast.info("Please Complete Your KYC First");
 
     navigate("/kyc");
 
@@ -39,30 +39,27 @@ export default function Refer() {
   }, []);
 
   const load = async () => {
-    const res = await fetchWithAuth(`${API}/my-referrals`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
+  const res = await fetchWithAuth(`${API}/my-referrals`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({})
+  });
 
-    const d = await res.json();
+  const d = await res.json();
 
-if (
-  d.msg === "Token expired or invalid"
-) {
+  if (d.msg === "Token expired or invalid") {
+    localStorage.clear();
+    alert("Session expired. Please login again.");
+    window.location.href = "/login";
+    return;
+  }
 
-  localStorage.clear();
-
-  alert("Session expired. Please login again.");
-
-  window.location.href = "/login";
-
-  return;
-}
-
-setCode(d.myCode || d.referCode || "NO CODE");
-    setTeam(d.team || []);
-  };
+  setCode(d.myCode || d.referCode || "NO CODE");
+  setTeam(d.team || []);
+};
+  
 
 const referLink = `${window.location.origin}/register?ref=${code}`;
 
@@ -147,7 +144,9 @@ const referLink = `${window.location.origin}/register?ref=${code}`;
 
 <button
   style={styles.treeBtn}
-  onClick={() => navigate("/referral-tree")}
+  onClick={() =>{toast.success("Open Referral tree");
+   navigate("/referral-tree");
+  }}
 >
   🌳 View 7 Level Referral Tree
 </button>

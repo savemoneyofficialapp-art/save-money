@@ -3322,52 +3322,36 @@ app.post("/get-notifications", async (req, res) => {
 
 
 
-app.post("/my-referrals", async (req, res) => {
+app.post("/my-referrals", auth, async (req, res) => {
   try {
-    const { email } = req.body;
-
-    const me = await User.findOne({ email });
+    const me = await User.findById(req.user.id);
 
     if (!me) {
-      return res.json({
+      return res.status(404).json({
         myCode: "NO CODE",
         team: []
       });
     }
 
-    // 🔥 যদি referCode না থাকে, auto generate করে save করবে
     if (!me.referCode) {
-      me.referCode = "REF" + Math.floor(100000 + Math.random() * 900000);
+      me.referCode =
+        "SM" + Math.floor(100000 + Math.random() * 900000);
       await me.save();
     }
 
-    const team = await User.find({ referredBy: me.referCode });
+    const team = await User.find({
+      referredBy: me.referCode
+    });
 
     const result = [];
 
-for (let u of team) {
-
-  // auto active/inactive check
-  await updateInvestmentStatus(u.email);
-
-  // fresh updated user
-  const freshUser = await User.findOne({
-    email: u.email
-  });
-
-  let status =
-    freshUser.activeStatus || "Inactive";
-
-  result.push({
-
-    name: u.name,
-
-    joinDate: u.createdAt,
-
-    status
-
-  });
-}
+    for (let u of team) {
+      result.push({
+        name: u.name,
+        joinDate: u.createdAt,
+        status: u.activeStatus || "Inactive"
+      });
+    }
 
     res.json({
       myCode: me.referCode,
@@ -3377,7 +3361,9 @@ for (let u of team) {
 
   } catch (err) {
     console.log("REFERRAL ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({
+      msg: "Server error"
+    });
   }
 });
 
