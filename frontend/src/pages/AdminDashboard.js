@@ -149,13 +149,14 @@ export default function AdminDashboard() {
     setMessage("");
   };
 
-  if (!data) {
+   if (!data) {
   return (
     <div style={styles.loadingPage}>
       <div style={styles.loaderCard}>
+        <h1 style={styles.loaderLogo}>Save Money</h1>
         <div style={styles.spinner}></div>
-        <h2>Loading Analytics</h2>
-        <p>Please wait while admin data is loading...</p>
+        <h2>Loading Admin Dashboard</h2>
+        <p>Please wait, fetching live admin data...</p>
       </div>
     </div>
   );
