@@ -1,55 +1,69 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { fetchWithAuth } from "../utils/fetchWithAuth";
+import { fetchWithAuth }
+from "../utils/fetchWithAuth";
+import axios from "axios";
 import { API } from "../config";
+
+
 
 export default function Refer() {
   const email = localStorage.getItem("email");
   const navigate = useNavigate();
 
+  useEffect(() => {
+
+  const user = JSON.parse(
+    localStorage.getItem("user")
+  );
+
+  if (user?.kycStatus !== "approved") {
+
+    alert("Please Complete Your KYC First");
+
+    navigate("/kyc");
+
+  }
+
+}, []);
+
   const [code, setCode] = useState("");
   const [team, setTeam] = useState([]);
+  const [history, setHistory] = useState([]);
+
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (user?.kycStatus !== "approved") {
-      alert("Please Complete Your KYC First");
-      navigate("/kyc");
-      return;
-    }
-
     load();
   }, []);
 
   const load = async () => {
-    try {
-      const res = await fetchWithAuth(`${API}/my-referrals`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
+    const res = await fetchWithAuth(`${API}/my-referrals`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
 
-      const d = await res.json();
+    const d = await res.json();
 
-      if (d.msg === "Token expired or invalid") {
-        localStorage.clear();
-        alert("Session expired. Please login again.");
-        window.location.href = "/login";
-        return;
-      }
+if (
+  data.msg === "Token expired or invalid"
+) {
 
-      setCode(d.myCode || d.referCode || "NO CODE");
-      setTeam(Array.isArray(d.team) ? d.team : []);
+  localStorage.clear();
 
-    } catch (err) {
-      console.log("REFER ERROR:", err);
-      toast.error("Failed to load referral data");
-    }
+  alert("Session expired. Please login again.");
+
+  window.location.href = "/login";
+
+  return;
+}
+
+    setCode(d.myCode  || "NO CODE");
+    setTeam(d.team || []);
   };
 
-  const referLink = `${window.location.origin}/register?ref=${code}`;
+const referLink = `${window.location.origin}/register?ref=${code}`;
 
   const copyText = (text, msg) => {
     navigator.clipboard.writeText(text);
@@ -59,96 +73,126 @@ export default function Refer() {
   return (
     <div style={styles.container}>
 
-      <div style={styles.overlay}>
+      <h1 style={styles.title}>Refer & Earn</h1>
+      <p style={styles.subtitle}>Share your code and grow your team</p>
 
-        <h1 style={styles.title}>Refer & Earn</h1>
-        <p style={styles.subtitle}>Share your code and grow your team</p>
+      {/* REF CODE */}
+      <div style={styles.card}>
+        <p style={styles.label}>UNIQUE REFER CODE</p>
 
-        <div style={styles.card}>
-          <p style={styles.label}>UNIQUE REFER CODE</p>
+        <div style={styles.copyBox}>
+          <span style={styles.codeText}>{code || "----"}</span>
 
-          <div style={styles.copyBox}>
-            <span style={styles.codeText}>{code || "----"}</span>
-
-            <button
-              style={styles.copyBtn}
-              onClick={() => copyText(code, "Refer code copied")}
-            >
-              Copy
-            </button>
-          </div>
-        </div>
-
-        <div style={styles.card}>
-          <p style={styles.label}>REFER LINK WITH CODE</p>
-
-          <div style={styles.linkBox}>
-            <p style={styles.linkText}>{referLink}</p>
-
-            <button
-              style={styles.copyBtnBlue}
-              onClick={() => copyText(referLink, "Refer link copied")}
-            >
-              Copy Link
-            </button>
-          </div>
-        </div>
-
-        <div style={styles.socialRow}>
-          <button style={styles.whatsapp}>WhatsApp</button>
-          <button style={styles.telegram}>Telegram</button>
-        </div>
-
-        <div style={styles.bonusGrid}>
-          <button style={styles.bonus} onClick={() => navigate("/performance-bonus")}>
-            Performance Bonus
-          </button>
-
-          <button style={styles.bonus} onClick={() => navigate("/team-bonus")}>
-            Team Bonus
-          </button>
-
-          <button style={styles.bonus} onClick={() => navigate("/royalty-bonus")}>
-            Royalty Bonus
-          </button>
-
-          <button style={styles.treeBtn} onClick={() => navigate("/referral-tree")}>
-            🌳 View 7 Level Referral Tree
+          <button
+            style={styles.copyBtn}
+            onClick={() => copyText(code, "Refer code copied")}
+          >
+            Copy
           </button>
         </div>
-
-        <h3 style={styles.historyTitle}>Referral History</h3>
-
-        {team.length === 0 && (
-          <div style={styles.empty}>No referrals yet</div>
-        )}
-
-        {team.map((u, i) => (
-          <div key={i} style={styles.historyCard}>
-            <div>
-              <p style={styles.name}>{u.name}</p>
-              <p style={styles.date}>
-                Joined: {new Date(u.date).toLocaleDateString()}
-              </p>
-            </div>
-
-            <span
-              style={{
-                ...styles.status,
-                background: u.status === "Active" ? "#14532d" : "#7f1d1d",
-                color: u.status === "Active" ? "#22c55e" : "#ef4444",
-                border:
-                  u.status === "Active"
-                    ? "1px solid #22c55e"
-                    : "1px solid #ef4444"
-              }}
-            >
-              {u.status}
-            </span>
-          </div>
-        ))}
-
       </div>
+
+      {/* REF LINK */}
+      <div style={styles.card}>
+        <p style={styles.label}>REFER LINK WITH CODE</p>
+
+        <div style={styles.linkBox}>
+          <p style={styles.linkText}>{referLink}</p>
+
+          <button
+            style={styles.copyBtnBlue}
+            onClick={() => copyText(referLink, "Refer link copied")}
+          >
+            Copy Link
+          </button>
+        </div>
+      </div>
+
+      {/* SOCIAL BUTTONS */}
+      <div style={styles.socialRow}>
+        <button style={styles.whatsapp}>WhatsApp</button>
+        <button style={styles.telegram}>Telegram</button>
+      </div>
+
+      {/* BONUS BUTTONS */}
+      <div style={styles.bonusGrid}>
+        <button
+  style={styles.bonus}
+  onClick={() => {
+    toast.success("Open Performance Bonus");
+        navigate("/performance-bonus");
+  }}
+>
+  Performance Bonus
+</button>
+        <button
+  style={styles.bonus}
+  onClick={() => {
+    toast.success("Open Team Bonus");
+         navigate("/team-bonus");
+  }}
+>
+  Team Bonus
+</button>
+        <button
+  style={styles.bonus}
+  onClick={() => {
+    toast.success("Open Royalty Bonus");
+        navigate("/royalty-bonus");
+  }}
+>
+  Royality Bonus
+</button>
+
+<button
+  style={styles.treeBtn}
+  onClick={() => navigate("/referral-tree")}
+>
+  🌳 View 7 Level Referral Tree
+</button>
+      </div>
+
+      {/* HISTORY */}
+      <h3 style={styles.historyTitle}>Referral History</h3>
+
+      {team.length === 0 && (
+        <div style={styles.empty}>No referrals yet</div>
+      )}
+
+      {team.map((u, i) => (
+        <div key={i} style={styles.historyCard}>
+          <div>
+            <p style={styles.name}>{u.name}</p>
+            <p style={styles.date}>
+              Joined: {new Date(u.date).toLocaleDateString()}
+            </p>
+          </div>
+
+          <span
+  style={{
+    ...styles.status,
+
+    background:
+      u.status === "Active"
+        ? "#14532d"
+        : "#7f1d1d",
+
+    color:
+      u.status === "Active"
+        ? "#22c55e"
+        : "#ef4444",
+
+    border:
+      u.status === "Active"
+        ? "1px solid #22c55e"
+        : "1px solid #ef4444"
+  }}
+>
+            {u.status}
+          </span>
+        </div>
+      ))}
+
     </div>
   );
 }
@@ -156,43 +200,44 @@ export default function Refer() {
 const styles = {
   container: {
     minHeight: "100vh",
-    backgroundImage:
-      "linear-gradient(rgba(2,6,23,0.82),rgba(2,6,23,0.95)), url('/network-bg.jpg')",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundAttachment: "fixed",
+    background: "linear-gradient(135deg,#020617,#0f172a,#111827)",
     color: "white",
     padding: "20px",
     fontFamily: "Arial"
   },
 
-  overlay: {
-    maxWidth: "900px",
-    margin: "auto"
-  },
-
   title: {
     textAlign: "center",
     color: "#22c55e",
-    fontSize: "34px",
+    fontSize: "32px",
     marginBottom: "5px"
   },
 
   subtitle: {
     textAlign: "center",
-    color: "#cbd5e1",
+    color: "#94a3b8",
     marginBottom: "25px"
   },
 
   card: {
-    background: "rgba(30,41,59,0.88)",
+    background: "linear-gradient(135deg,#1e293b,#0f172a)",
     padding: "16px",
-    borderRadius: "18px",
+    borderRadius: "16px",
     marginTop: "14px",
     boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
-    border: "1px solid #334155",
-    backdropFilter: "blur(10px)"
+    border: "1px solid #334155"
   },
+
+  bonus:{
+  flex:1,
+  padding:"12px",
+  borderRadius:"10px",
+  background:"#3b82f6",
+  color:"white",
+  border:"none",
+  fontWeight:"bold",
+  cursor:"pointer"
+},
 
   label: {
     fontSize: "12px",
@@ -212,7 +257,7 @@ const styles = {
   },
 
   codeText: {
-    fontSize: "24px",
+    fontSize: "22px",
     fontWeight: "bold",
     color: "#facc15"
   },
@@ -264,7 +309,8 @@ const styles = {
     borderRadius: "12px",
     background: "#25D366",
     color: "white",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    fontSize: "15px"
   },
 
   telegram: {
@@ -274,7 +320,8 @@ const styles = {
     borderRadius: "12px",
     background: "#229ED9",
     color: "white",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    fontSize: "15px"
   },
 
   bonusGrid: {
@@ -284,26 +331,45 @@ const styles = {
     marginTop: "18px"
   },
 
-  bonus: {
+  
+
+  bonusPurple: {
     padding: "14px",
     borderRadius: "14px",
-    background: "linear-gradient(135deg,#0ea5e9,#2563eb)",
-    color: "white",
     border: "none",
-    fontWeight: "bold",
-    cursor: "pointer"
+    background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+    color: "white",
+    fontWeight: "bold"
+  },
+
+  bonusGreen: {
+    padding: "14px",
+    borderRadius: "14px",
+    border: "none",
+    background: "linear-gradient(135deg,#16a34a,#22c55e)",
+    color: "white",
+    fontWeight: "bold"
+  },
+
+  bonusGold: {
+    padding: "14px",
+    borderRadius: "14px",
+    border: "none",
+    background: "linear-gradient(135deg,#ca8a04,#facc15)",
+    color: "#1c1917",
+    fontWeight: "bold"
   },
 
   treeBtn: {
-    width: "100%",
-    padding: "15px",
-    marginTop: "5px",
-    border: "none",
-    borderRadius: "15px",
-    background: "linear-gradient(135deg,#22c55e,#16a34a)",
-    color: "#020617",
-    fontWeight: "bold"
-  },
+  width: "100%",
+  padding: "15px",
+  marginTop: "15px",
+  border: "none",
+  borderRadius: "15px",
+  background: "linear-gradient(135deg,#22c55e,#16a34a)",
+  color: "#020617",
+  fontWeight: "bold"
+},
 
   historyTitle: {
     marginTop: "25px",
@@ -311,7 +377,7 @@ const styles = {
   },
 
   empty: {
-    background: "rgba(30,41,59,0.88)",
+    background: "#1e293b",
     padding: "14px",
     borderRadius: "12px",
     color: "#94a3b8",
@@ -319,7 +385,7 @@ const styles = {
   },
 
   historyCard: {
-    background: "rgba(30,41,59,0.9)",
+    background: "#1e293b",
     padding: "14px",
     marginTop: "10px",
     borderRadius: "14px",
@@ -340,10 +406,10 @@ const styles = {
     color: "#94a3b8"
   },
 
-  status: {
-    padding: "6px 12px",
-    borderRadius: "20px",
-    fontWeight: "bold",
-    fontSize: "12px"
-  }
+  status:{
+  padding:"6px 12px",
+  borderRadius:"20px",
+  fontWeight:"bold",
+  fontSize:"12px"
+},
 };
