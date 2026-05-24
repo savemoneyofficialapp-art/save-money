@@ -3,7 +3,7 @@
 const DEV_API = "http://localhost:5000";
 
 const PROD_API =
-  "https://save-money-yyv1.onrender.com";
+  "https://save-money-vyv1.onrender.com";
 
 // Auto detect environment
 export const API =
