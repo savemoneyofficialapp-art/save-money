@@ -107,7 +107,7 @@ royaltyIncome: {
 
   referCode: {
     type: String,
-    unique: true
+    default:""
   },
   
 

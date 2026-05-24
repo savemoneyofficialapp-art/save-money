@@ -56,6 +56,7 @@ const login = async () => {
       localStorage.setItem("accessToken", data.token);
       localStorage.setItem("email", data.email);
       localStorage.setItem("name", data.name || "");
+      localStorage.setItem("referCode",data.referCode ||"");
       localStorage.setItem("role", data.role || "user");
 
       setPopup("Login Successful");

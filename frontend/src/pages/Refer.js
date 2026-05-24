@@ -10,6 +10,7 @@ import { API } from "../config";
 
 export default function Refer() {
   const email = localStorage.getItem("email");
+  const referCode = localStorage.getItem("referCode") || "----";
   const navigate = useNavigate();
 
   useEffect(() => {

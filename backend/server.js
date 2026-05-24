@@ -1193,6 +1193,7 @@ app.post("/login", async (req, res) => {
       token,
       role: user.role || "user",
       email: user.email,
+      referCode: user.referCode,
       name: user.name,
       kycStatus: user.kycStatus,
       walletId: user.walletId
