@@ -1,8 +1,7 @@
 import { useState } from "react";
+import { API } from "../config";
 
-const API =
-  process.env.REACT_APP_API ||
-  "https://save-money-yyv1.onrender.com";
+
 
 export default function AdminUserControl() {
   const token = localStorage.getItem("token");

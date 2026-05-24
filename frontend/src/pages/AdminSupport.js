@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API } from "../config";
 
-const API =
-  process.env.REACT_APP_API ||
-  "https://save-money-yyv1.onrender.com";
-  
+
 export default function AdminSupport() {
   const token = localStorage.getItem("token");
 

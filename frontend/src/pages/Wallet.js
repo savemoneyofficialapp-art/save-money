@@ -2,11 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
+import { API } from "../config";
 
-const API =
-  process.env.REACT_APP_API ||
-  "https://save-money-yyv1.onrender.com";
-  
+
+
 export default function Wallet() {
   const navigate = useNavigate();
 

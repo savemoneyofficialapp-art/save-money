@@ -2,11 +2,9 @@ import { useEffect, useState } from "react";
 import { fetchWithAuth }
 from "../utils/fetchWithAuth";
 import axios from "axios";
+import { API } from "../config";
 
-const API =
-  process.env.REACT_APP_API ||
-  "https://save-money-yyv1.onrender.com";
-  
+
 export default function Admin() {
 
   const [data, setData] = useState([]);

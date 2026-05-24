@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API } from "../config";
 
-const API =
-  process.env.REACT_APP_API ||
-  "https://save-money-yyv1.onrender.com";
-  
 export default function Register() {
   const navigate = useNavigate();
 
@@ -24,6 +21,11 @@ export default function Register() {
       return;
     }
 
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters");
+      return;
+    }
+
     if (!terms) {
       alert("Please accept Terms & Conditions");
       return;
@@ -38,25 +40,36 @@ export default function Register() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          name,
-          mobile,
-          email,
+          name: name.trim(),
+          mobile: mobile.trim(),
+          email: email.trim().toLowerCase(),
           password,
-          walletAddress,
-          referCode,
+          walletAddress: walletAddress.trim(),
+          usdtWallet: walletAddress.trim(),
+          referCode: referCode.trim(),
           termsAccepted: true
         })
       });
 
       const data = await res.json();
-      alert(data.msg);
 
-      if (data.msg === "Registered Successfully") {
+      if (!res.ok) {
+        alert(data.msg || "Server error");
+        return;
+      }
+
+      alert(data.msg || "Registered Successfully");
+
+      if (
+        data.msg === "Registered Successfully" ||
+        data.success === true
+      ) {
         navigate("/login");
       }
 
     } catch (err) {
-      alert("Server error");
+      console.log("REGISTER ERROR:", err);
+      alert("Server error. Backend API not connected.");
     } finally {
       setLoading(false);
     }
@@ -66,10 +79,11 @@ export default function Register() {
     <div style={styles.container}>
       <div style={styles.card}>
 
-        <h1 style={styles.title}>Create Account</h1>
-        <p style={styles.slogan}>
-          Join Save Money & start your journey
-        </p>
+        <div style={styles.logoBox}>
+          <div style={styles.logo}>₹</div>
+          <h1 style={styles.title}>Create Account</h1>
+          <p style={styles.slogan}>Join Save Money & start your journey</p>
+        </div>
 
         <input
           style={styles.input}
@@ -119,7 +133,7 @@ export default function Register() {
 
         <input
           style={styles.input}
-          placeholder="Refer Code (Optional)"
+          placeholder="Refer Code Optional"
           value={referCode}
           onChange={(e) => setReferCode(e.target.value)}
         />
@@ -130,22 +144,23 @@ export default function Register() {
             checked={terms}
             onChange={(e) => setTerms(e.target.checked)}
           />
-
-          <span>
-            I accept the Terms & Conditions
-          </span>
+          <span>I accept the Terms & Conditions</span>
         </label>
 
-        <button style={styles.btn} onClick={register}>
+        <button
+          style={{
+            ...styles.btn,
+            opacity: loading ? 0.7 : 1
+          }}
+          onClick={register}
+          disabled={loading}
+        >
           {loading ? "Creating Account..." : "Register"}
         </button>
 
         <p style={styles.loginText}>
           Already have account?{" "}
-          <span
-            style={styles.link}
-            onClick={() => navigate("/login")}
-          >
+          <span style={styles.link} onClick={() => navigate("/login")}>
             Go for Login
           </span>
         </p>
@@ -158,7 +173,7 @@ export default function Register() {
 const styles = {
   container: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg,#020617,#0f172a,#1e293b)",
+    background: "radial-gradient(circle at top,#14532d,#020617 45%,#020617)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -168,34 +183,50 @@ const styles = {
 
   card: {
     width: "100%",
-    maxWidth: "390px",
-    background: "rgba(30,41,59,0.95)",
+    maxWidth: "410px",
+    background: "rgba(15,23,42,0.96)",
     padding: "26px",
-    borderRadius: "26px",
-    boxShadow: "0 0 35px rgba(34,197,94,0.20)",
-    border: "1px solid #334155"
+    borderRadius: "28px",
+    boxShadow: "0 0 40px rgba(34,197,94,0.28)",
+    border: "1px solid rgba(34,197,94,0.35)"
+  },
+
+  logoBox: {
+    textAlign: "center",
+    marginBottom: "18px"
+  },
+
+  logo: {
+    width: "65px",
+    height: "65px",
+    margin: "0 auto 12px",
+    borderRadius: "20px",
+    background: "linear-gradient(135deg,#22c55e,#3b82f6)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    color: "#020617",
+    fontSize: "34px",
+    fontWeight: "bold"
   },
 
   title: {
-    textAlign: "center",
     color: "#22c55e",
-    fontSize: "32px",
+    fontSize: "31px",
     margin: 0
   },
 
   slogan: {
-    textAlign: "center",
     color: "#38bdf8",
     marginTop: "8px",
-    marginBottom: "20px",
     fontWeight: "bold"
   },
 
   input: {
     width: "100%",
-    padding: "14px",
+    padding: "15px",
     marginTop: "12px",
-    borderRadius: "14px",
+    borderRadius: "15px",
     border: "1px solid #334155",
     background: "#020617",
     color: "white",
@@ -204,17 +235,16 @@ const styles = {
 
   passwordBox: {
     display: "flex",
-    alignItems: "center",
     background: "#020617",
     border: "1px solid #334155",
-    borderRadius: "14px",
+    borderRadius: "15px",
     marginTop: "12px",
     overflow: "hidden"
   },
 
   passInput: {
     flex: 1,
-    padding: "14px",
+    padding: "15px",
     border: "none",
     background: "transparent",
     color: "white",
@@ -222,9 +252,9 @@ const styles = {
   },
 
   eyeBtn: {
-    padding: "14px",
+    padding: "0 15px",
     border: "none",
-    background: "#3b82f6",
+    background: "#2563eb",
     color: "white",
     fontWeight: "bold"
   },

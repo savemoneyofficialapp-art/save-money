@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-const API =
-  process.env.REACT_APP_API ||
-  "https://save-money-yyv1.onrender.com";
-  
+import { API } from "../config";
+
+
 export default function ForgotPassword() {
 
   const navigate = useNavigate();
