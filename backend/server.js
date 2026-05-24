@@ -106,9 +106,13 @@ app.use((req, res, next) => {
 // ================= ROOT =================
 
 app.get("/", (req, res) => {
-
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.send("Save Money Backend Live");
+});
 
+app.get("/cors-test", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.json({ msg: "CORS OK" });
 });
 
 // ================= SOCKET USERS =================
