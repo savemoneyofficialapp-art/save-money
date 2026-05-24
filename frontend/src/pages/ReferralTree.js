@@ -20,28 +20,38 @@ export default function ReferralTree() {
     loadTree();
   }, [filter]);
 
-  const loadTree = async () => {
+  const load = async () => {
+  try {
+    setLoading(true);
 
-    const res = await fetch(
-      `${API}/referral-tree`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token
-        },
-        body: JSON.stringify({
-          email,
-          filter
-        })
-      }
-    );
+    const res = await fetchWithAuth(`${API}/referral-tree`, {
+      method: "GET"
+    });
 
     const data = await res.json();
 
-    setTree(data.tree);
-    setAnalytics(data.analytics);
-  };
+    if (data.msg === "Token expired or invalid") {
+      localStorage.clear();
+      window.location.href = "/login";
+      return;
+    }
+
+    if (!res.ok) {
+      alert(data.msg || "Referral tree load failed");
+      setTree([]);
+      return;
+    }
+
+    setTree(data.tree || []);
+
+  } catch (err) {
+    console.log("TREE ERROR:", err);
+    alert("Backend error while loading referral tree");
+    setTree([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const toggleNode = (key) => {
 
@@ -59,6 +69,17 @@ export default function ReferralTree() {
     const isOpen =
       openNodes[indexPath] ||
       indexPath === "root";
+
+      if (loading) {
+  return (
+    <div style={styles.loading}>
+      <div style={styles.loadingCard}>
+        <h2>Loading Referral Tree</h2>
+        <p>Please wait...</p>
+      </div>
+    </div>
+  );
+}
 
     return (
       <div
