@@ -33,6 +33,8 @@ const sanitize = require("mongo-sanitize");
 
 const app = express();
 
+console.log("SERVER VERSION: CORS TEST ACTIVE");
+
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
