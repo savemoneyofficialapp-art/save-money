@@ -36,8 +36,8 @@ export default function Login() {
 
       const data = await res.json();
 
-      if (data.msg === "Login success") {
-        const token = data.accessToken || data.token;
+if (data.msg === "Login Successful" || data.success === true) {
+          const token = data.accessToken || data.token;
 
         localStorage.setItem("token", token);
         localStorage.setItem("accessToken", token);
@@ -49,11 +49,11 @@ export default function Login() {
         setPopup("Login Successful");
 
         setTimeout(() => {
-          if (data.user.role === "admin") {
-            navigate("/admin-user-control", { replace: true });
-          } else {
-            navigate("/home", { replace: true });
-          }
+          if (data.role === "admin") {
+  navigate("/admin", { replace: true });
+} else {
+  navigate("/home", { replace: true });
+}
         }, 800);
       } else {
         setPopup(data.msg || "Login failed");
