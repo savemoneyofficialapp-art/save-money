@@ -933,102 +933,207 @@ const makeCode = () => Math.random().toString(36).substring(2, 8);
 
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
+
   try {
+
+    console.log("REGISTER BODY:", req.body);
+
     const {
       name,
       mobile,
       email,
       password,
       walletAddress,
-      referCode,
-      termsAccepted
+      referCode
     } = req.body;
 
-    if (!name || !mobile || !email || !password || !walletAddress) {
-      return res.json({ msg: "All fields required" });
+    // validation
+    if (
+      !name ||
+      !mobile ||
+      !email ||
+      !password ||
+      !walletAddress
+    ) {
+      return res.status(400).json({
+        msg: "Please fill all required fields"
+      });
     }
 
-    if (!termsAccepted) {
-      return res.json({ msg: "Please accept Terms & Conditions" });
+    // email validate
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({
+        msg: "Invalid email"
+      });
     }
 
-    const exist = await User.findOne({ email });
-
-    if (exist) {
-      return res.json({ msg: "User already exists" });
+    // password validate
+    if (
+      !validator.isStrongPassword(password, {
+        minLength: 6,
+        minNumbers: 1,
+        minLowercase: 1,
+        minUppercase: 0,
+        minSymbols: 0
+      })
+    ) {
+      return res.status(400).json({
+        msg: "Password must contain letters and numbers"
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // existing email
+    const existingUser =
+      await User.findOne({
+        email: email.toLowerCase()
+      });
 
+    if (existingUser) {
+      return res.status(400).json({
+        msg: "Email already registered"
+      });
+    }
+
+    // existing mobile
+    const existingMobile =
+      await User.findOne({
+        mobile
+      });
+
+    if (existingMobile) {
+      return res.status(400).json({
+        msg: "Mobile already registered"
+      });
+    }
+
+    // hash password
+    const hashedPassword =
+      await bcrypt.hash(password, 10);
+
+    // generate refer code
     const myReferCode =
-      "REF" + Math.floor(100000 + Math.random() * 900000);
+      "SM" +
+      Math.floor(
+        100000 + Math.random() * 900000
+      );
 
+    // create wallet id
     const walletId =
-      "WAL" + Math.floor(100000 + Math.random() * 900000);
+      "WLT" +
+      Date.now();
 
-    const newUser = await User.create({
+    // referred by user
+    let referredBy = "";
+
+    if (referCode) {
+
+      const refUser =
+        await User.findOne({
+          referCode
+        });
+
+      if (refUser) {
+        referredBy = referCode;
+      }
+
+    }
+
+    // create user
+    const newUser = new User({
+
       name,
+
       mobile,
-      email,
+
+      email: email.toLowerCase(),
+
       password: hashedPassword,
 
       walletAddress,
+
       referCode: myReferCode,
-      referredBy: referCode || "",
+
+      referredBy,
 
       walletId,
-      wallet: 0,
-
-      referralIncome: 0,
-      performanceIncome: 0,
-      teamIncome: 0,
-      royaltyIncome: 0,
-
-      kycStatus: "not submitted",
-      termsAccepted: true,
 
       role: "user",
-      banned: false,
-      freezeWallet: false,
-      disableInvestment: false,
-      disableWithdrawal: false,
-      disableBonus: false,
 
-      rank: "Starter",
-      rankPoints: 0,
-      totalEarning: 0,
-      totalDirect: 0,
+      wallet: 0,
 
-      accountActive: false,
+      totalIncome: 0,
+
+      referralIncome: 0,
+
+      performanceIncome: 0,
+
+      teamIncome: 0,
+
+      royaltyIncome: 0,
+
       activeStatus: "Inactive",
 
-      createdAt: new Date()
+      kycStatus: "Pending",
+
+      banned: false,
+
+      freezeWallet: false,
+
+      disableInvestment: false,
+
+      disableWithdrawal: false,
+
+      disableBonus: false,
+
+      termsAccepted: true
+
     });
 
-    if (referCode) {
-      const refUser = await User.findOne({ referCode });
+    await newUser.save();
 
-      if (refUser) {
-        await updateUserRank(refUser.email);
-      }
+    // notification
+    try {
+
+      await Notification.create({
+
+        email: newUser.email,
+
+        title: "Welcome",
+
+        message:
+          "Welcome to Save Money platform"
+
+      });
+
+    } catch (e) {
+      console.log("Notification error");
     }
 
-    res.json({
-      msg: "Registered Successfully",
-      user: {
-        name: newUser.name,
-        email: newUser.email,
-        mobile: newUser.mobile,
-        referCode: newUser.referCode,
-        walletId: newUser.walletId,
-        kycStatus: newUser.kycStatus
-      }
+    return res.status(201).json({
+
+      success: true,
+
+      msg: "Registered Successfully"
+
     });
 
   } catch (err) {
+
     console.log("REGISTER ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+
+    return res.status(500).json({
+
+      msg: "Server error",
+
+      error:
+        process.env.NODE_ENV === "development"
+          ? err.message
+          : undefined
+
+    });
+
   }
+
 });
 
 // ================= LOGIN =================
