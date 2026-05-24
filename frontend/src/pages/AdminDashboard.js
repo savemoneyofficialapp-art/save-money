@@ -110,11 +110,16 @@ export default function AdminDashboard() {
   };
 
   const approveKYC = async (id) => {
-    const d = await apiPost("/approve-kyc", { userId: id });
-    if (!d) return;
-    alert(d.msg || "Done");
-    load();
-  };
+  const d = await apiPost("/approve-kyc", { userId: id });
+
+  if (!d) return;
+
+  alert(d.msg || "KYC Approved");
+
+  setKyc((prev) => prev.filter((u) => u._id !== id));
+
+  load();
+};
 
   const approveCash = async (id) => {
     const d = await apiPost("/approve-cash", { requestId: id });
@@ -145,8 +150,16 @@ export default function AdminDashboard() {
   };
 
   if (!data) {
-    return <div style={styles.loading}>Loading Admin Dashboard...</div>;
-  }
+  return (
+    <div style={styles.loadingPage}>
+      <div style={styles.loaderCard}>
+        <div style={styles.spinner}></div>
+        <h2>Loading Analytics</h2>
+        <p>Please wait while admin data is loading...</p>
+      </div>
+    </div>
+  );
+}
 
   const chartData = [
     { name: "Users", value: data.totalUsers || 0 },
@@ -242,20 +255,71 @@ export default function AdminDashboard() {
       <div style={styles.section}>
         <h2>Pending KYC</h2>
 
-        {kyc.length === 0 && <p>No pending KYC</p>}
+       {kyc.length === 0 && (
+  <p style={{ color: "white" }}>No pending KYC</p>
+)}
 
-        {kyc.map((u) => (
-          <div key={u._id} style={styles.row}>
-            <div>
-              <b>{u.name}</b>
-              <p>{u.email}</p>
-            </div>
+{kyc.map((u) => (
+  <div key={u._id} style={styles.kycCard}>
 
-            <button style={styles.green} onClick={() => approveKYC(u._id)}>
-              Approve
-            </button>
-          </div>
-        ))}
+    <div>
+      <h3 style={{ color: "white" }}>{u.name}</h3>
+
+      <p style={{ color: "#cbd5e1" }}>
+        {u.email}
+      </p>
+
+      <p style={{ color: "#94a3b8" }}>
+        Mobile: {u.mobile}
+      </p>
+    </div>
+
+    <div style={styles.docGrid}>
+
+      {u.aadhaarFile && (
+  <a
+    href={`${API}/uploads/${u.aadhaarFile}`}
+    target="_blank"
+    rel="noreferrer"
+    style={styles.docBtn}
+  >
+    View Aadhaar
+  </a>
+)}
+
+{u.panFile && (
+  <a
+    href={`${API}/uploads/${u.panFile}`}
+    target="_blank"
+    rel="noreferrer"
+    style={styles.docBtn}
+  >
+    View PAN
+  </a>
+)}
+
+{u.photo && (
+  <a
+    href={`${API}/uploads/${u.photo}`}
+    target="_blank"
+    rel="noreferrer"
+    style={styles.docBtn}
+  >
+    View Photo
+  </a>
+)}
+
+    </div>
+
+    <button
+      style={styles.greenFull}
+      onClick={() => approveKYC(u._id)}
+    >
+      Approve KYC
+    </button>
+
+  </div>
+))}
       </div>
 
       <div style={styles.section}>
@@ -407,5 +471,60 @@ const styles = {
     padding: "10px",
     borderRadius: "8px",
     color: "white"
-  }
+  },
+
+  kycCard: {
+  background: "#0f172a",
+  marginTop: "12px",
+  padding: "14px",
+  borderRadius: "16px",
+  border: "1px solid #334155"
+},
+
+docGrid: {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr 1fr",
+  gap: "8px",
+  marginTop: "12px"
+},
+
+docBtn: {
+  background: "#2563eb",
+  color: "white",
+  padding: "10px",
+  borderRadius: "10px",
+  textAlign: "center",
+  textDecoration: "none",
+  fontSize: "12px",
+  fontWeight: "bold"
+},
+
+loadingPage: {
+  minHeight: "100vh",
+  background: "linear-gradient(135deg,#020617,#0f172a)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "white"
+},
+
+loaderCard: {
+  background: "#1e293b",
+  padding: "30px",
+  borderRadius: "24px",
+  textAlign: "center",
+  border: "1px solid #334155",
+  boxShadow: "0 0 30px rgba(34,197,94,0.25)"
+},
+
+spinner: {
+  width: "55px",
+  height: "55px",
+  border: "5px solid #334155",
+  borderTop: "5px solid #22c55e",
+  borderRadius: "50%",
+  margin: "0 auto 18px",
+  animation: "spin 1s linear infinite"
+}
+
 };

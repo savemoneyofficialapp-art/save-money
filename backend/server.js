@@ -56,6 +56,8 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use("/uploads", express.static("uploads"));
+
 const server = http.createServer(app);
 
 // ================= CORS =================
@@ -2642,42 +2644,31 @@ app.get("/all-users",auth, adminAuth, async (req, res) => {
 });
 
 app.get("/pending-kyc", auth, adminAuth, async (req, res) => {
+  try {
+    const users = await User.find({
+      kycStatus: { $in: ["Pending", "pending"] }
+    }).select("-password");
 
-  const users = await User.find({
-    kycStatus: "pending"
-  });
-
-  res.json(users);
-
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ msg: "Server error" });
+  }
 });
 
 app.post("/approve-kyc", auth, adminAuth, async (req, res) => {
   try {
     const { userId } = req.body;
 
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.json({ msg: "User not found" });
-    }
-
-    user.kycStatus = "approved";
-    await user.save();
-
-    await sendEmail(
-  user.email,
-  "KYC Approved",
-  `Hello ${user.name}, your KYC has been approved successfully. You can now use Save Money, Refer & Earn, and Wallet services.`
-);
+    await User.findByIdAndUpdate(userId, {
+      kycStatus: "approved"
+    });
 
     res.json({ msg: "KYC Approved" });
 
   } catch (err) {
-    console.log("KYC APPROVE ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
-
 app.post("/reply-ticket", auth, adminAuth, async (req, res) => {
   try {
     const { ticketId, message } = req.body;
