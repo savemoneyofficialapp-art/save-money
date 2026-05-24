@@ -48,7 +48,7 @@ export default function Refer() {
     const d = await res.json();
 
 if (
-  data.msg === "Token expired or invalid"
+  d.msg === "Token expired or invalid"
 ) {
 
   localStorage.clear();
