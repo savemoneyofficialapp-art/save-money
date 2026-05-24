@@ -17,65 +17,66 @@ export default function Register() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const register = async () => {
-    if (!name || !mobile || !email || !password || !walletAddress) {
-      alert("Please fill all required fields");
-      return;
-    }
+  
+const register = async () => {
+  if (!name || !mobile || !email || !password || !walletAddress) {
+    alert("Please fill all required fields");
+    return;
+  }
 
-    if (password.length < 6) {
-      alert("Password must be at least 6 characters");
-      return;
-    }
+  if (!terms) {
+    alert("Please accept Terms & Conditions");
+    return;
+  }
 
-    if (!terms) {
-      alert("Please accept Terms & Conditions");
-      return;
-    }
+  try {
+    setLoading(true);
 
+    console.log("API:", API);
+    console.log("Register clicked");
+
+    const res = await fetch(`${API}/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: name.trim(),
+        mobile: mobile.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        walletAddress: walletAddress.trim(),
+        usdtWallet: walletAddress.trim(),
+        referCode: referCode.trim(),
+        termsAccepted: true
+      })
+    });
+
+    const text = await res.text();
+    console.log("REGISTER STATUS:", res.status);
+    console.log("REGISTER RESPONSE:", text);
+
+    let data = {};
     try {
-      setLoading(true);
-
-      const res = await fetch(`${API}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          mobile: mobile.trim(),
-          email: email.trim().toLowerCase(),
-          password,
-          walletAddress: walletAddress.trim(),
-          usdtWallet: walletAddress.trim(),
-          referCode: referCode.trim(),
-          termsAccepted: true
-        })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.msg || "Server error");
-        return;
-      }
-
-      alert(data.msg || "Registered Successfully");
-
-      if (
-        data.msg === "Registered Successfully" ||
-        data.success === true
-      ) {
-        navigate("/login");
-      }
-
-    } catch (err) {
-      console.log("REGISTER ERROR:", err);
-      alert("Server error. Backend API not connected.");
-    } finally {
-      setLoading(false);
+      data = JSON.parse(text);
+    } catch {
+      alert("Backend returned invalid response: " + text);
+      return;
     }
-  };
+
+    alert(data.msg);
+
+    if (data.msg === "Registered Successfully" || data.success === true) {
+      navigate("/login");
+    }
+
+  } catch (err) {
+    console.log("REGISTER FETCH ERROR:", err);
+    alert("Fetch failed: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={styles.container}>
