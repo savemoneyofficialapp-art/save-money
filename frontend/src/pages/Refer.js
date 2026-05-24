@@ -5,31 +5,26 @@ import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { API } from "../config";
 
 export default function Refer() {
-  const navigate = useNavigate();
   const email = localStorage.getItem("email");
+  const navigate = useNavigate();
 
   const [code, setCode] = useState("");
   const [team, setTeam] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const kyc = (user?.kycStatus || localStorage.getItem("kycStatus") || "").toLowerCase();
+    const user = JSON.parse(localStorage.getItem("user"));
 
-    if (kyc !== "approved") {
+    if (user?.kycStatus !== "approved") {
       alert("Please Complete Your KYC First");
       navigate("/kyc");
+      return;
     }
-  }, [navigate]);
 
-  useEffect(() => {
     load();
   }, []);
 
   const load = async () => {
     try {
-      setLoading(true);
-
       const res = await fetchWithAuth(`${API}/my-referrals`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,77 +40,47 @@ export default function Refer() {
         return;
       }
 
-      setCode(d.myCode || d.referCode || "");
+      setCode(d.myCode || d.referCode || "NO CODE");
       setTeam(Array.isArray(d.team) ? d.team : []);
+
     } catch (err) {
-      console.log("REFER LOAD ERROR:", err);
-      toast.error("Refer data loading failed");
-    } finally {
-      setLoading(false);
+      console.log("REFER ERROR:", err);
+      toast.error("Failed to load referral data");
     }
   };
 
   const referLink = `${window.location.origin}/register?ref=${code}`;
 
   const copyText = (text, msg) => {
-    if (!text) {
-      toast.error("No code found");
-      return;
-    }
     navigator.clipboard.writeText(text);
     toast.success(msg);
   };
 
-  const shareWhatsApp = () => {
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent("Join Save Money using my refer link: " + referLink)}`,
-      "_blank"
-    );
-  };
-
-  const shareTelegram = () => {
-    window.open(
-      `https://t.me/share/url?url=${encodeURIComponent(referLink)}&text=${encodeURIComponent("Join Save Money")}`,
-      "_blank"
-    );
-  };
-
-  if (loading) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.loaderCard}>
-          <div style={styles.logo}>🔗</div>
-          <h2>Loading Refer System</h2>
-          <p>Please wait...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={styles.container}>
+
       <div style={styles.overlay}>
 
-        <h1 style={styles.title}>💎 Refer & Earn</h1>
-        <p style={styles.subtitle}>Share your code and grow your income network</p>
+        <h1 style={styles.title}>Refer & Earn</h1>
+        <p style={styles.subtitle}>Share your code and grow your team</p>
 
-        <div style={styles.glowCard}>
-          <p style={styles.label}>🎟 UNIQUE REFER CODE</p>
+        <div style={styles.card}>
+          <p style={styles.label}>UNIQUE REFER CODE</p>
 
-          <div style={styles.codeBox}>
-            <span style={styles.codeText}>{code || "NO CODE"}</span>
+          <div style={styles.copyBox}>
+            <span style={styles.codeText}>{code || "----"}</span>
 
             <button
               style={styles.copyBtn}
               onClick={() => copyText(code, "Refer code copied")}
             >
-              📋 Copy
+              Copy
             </button>
           </div>
         </div>
 
         <div style={styles.card}>
-          <p style={styles.label}>🔗 REFER LINK WITH CODE</p>
+          <p style={styles.label}>REFER LINK WITH CODE</p>
 
           <div style={styles.linkBox}>
             <p style={styles.linkText}>{referLink}</p>
@@ -124,52 +89,35 @@ export default function Refer() {
               style={styles.copyBtnBlue}
               onClick={() => copyText(referLink, "Refer link copied")}
             >
-              📎 Copy Link
+              Copy Link
             </button>
           </div>
         </div>
 
         <div style={styles.socialRow}>
-          <button style={styles.whatsapp} onClick={shareWhatsApp}>
-            🟢 WhatsApp
-          </button>
-
-          <button style={styles.telegram} onClick={shareTelegram}>
-            🔵 Telegram
-          </button>
+          <button style={styles.whatsapp}>WhatsApp</button>
+          <button style={styles.telegram}>Telegram</button>
         </div>
 
         <div style={styles.bonusGrid}>
-          <button
-            style={styles.performance}
-            onClick={() => navigate("/performance-bonus")}
-          >
-            🚀 Performance Bonus
+          <button style={styles.bonus} onClick={() => navigate("/performance-bonus")}>
+            Performance Bonus
           </button>
 
-          <button
-            style={styles.team}
-            onClick={() => navigate("/team-bonus")}
-          >
-            👥 Team Bonus
+          <button style={styles.bonus} onClick={() => navigate("/team-bonus")}>
+            Team Bonus
           </button>
 
-          <button
-            style={styles.royalty}
-            onClick={() => navigate("/royalty-bonus")}
-          >
-            👑 Royalty Bonus
+          <button style={styles.bonus} onClick={() => navigate("/royalty-bonus")}>
+            Royalty Bonus
           </button>
 
-          <button
-            style={styles.treeBtn}
-            onClick={() => navigate("/referral-tree")}
-          >
+          <button style={styles.treeBtn} onClick={() => navigate("/referral-tree")}>
             🌳 View 7 Level Referral Tree
           </button>
         </div>
 
-        <h3 style={styles.historyTitle}>📜 Referral History</h3>
+        <h3 style={styles.historyTitle}>Referral History</h3>
 
         {team.length === 0 && (
           <div style={styles.empty}>No referrals yet</div>
@@ -178,26 +126,24 @@ export default function Refer() {
         {team.map((u, i) => (
           <div key={i} style={styles.historyCard}>
             <div>
-              <p style={styles.name}>👤 {u.name}</p>
+              <p style={styles.name}>{u.name}</p>
               <p style={styles.date}>
-                Joined: {u.date ? new Date(u.date).toLocaleDateString() : "N/A"}
+                Joined: {new Date(u.date).toLocaleDateString()}
               </p>
             </div>
 
             <span
               style={{
                 ...styles.status,
-                background:
-                  u.status === "Active" ? "#14532d" : "#7f1d1d",
-                color:
-                  u.status === "Active" ? "#22c55e" : "#ef4444",
+                background: u.status === "Active" ? "#14532d" : "#7f1d1d",
+                color: u.status === "Active" ? "#22c55e" : "#ef4444",
                 border:
                   u.status === "Active"
                     ? "1px solid #22c55e"
                     : "1px solid #ef4444"
               }}
             >
-              {u.status || "Inactive"}
+              {u.status}
             </span>
           </div>
         ))}
@@ -211,178 +157,172 @@ const styles = {
   container: {
     minHeight: "100vh",
     backgroundImage:
-      "linear-gradient(rgba(2,6,23,0.88), rgba(2,6,23,0.94)), url('/network-bg.jpg')",
+      "linear-gradient(rgba(2,6,23,0.82),rgba(2,6,23,0.95)), url('/network-bg.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
+    backgroundAttachment: "fixed",
     color: "white",
-    padding: "18px",
+    padding: "20px",
     fontFamily: "Arial"
   },
 
   overlay: {
-    maxWidth: "850px",
+    maxWidth: "900px",
     margin: "auto"
   },
 
   title: {
     textAlign: "center",
     color: "#22c55e",
-    fontSize: "36px",
-    marginBottom: "6px"
+    fontSize: "34px",
+    marginBottom: "5px"
   },
 
   subtitle: {
     textAlign: "center",
-    color: "#93c5fd",
-    marginBottom: "25px",
-    fontWeight: "bold"
+    color: "#cbd5e1",
+    marginBottom: "25px"
   },
 
   card: {
-    background: "rgba(15,23,42,0.92)",
-    padding: "18px",
-    borderRadius: "20px",
-    marginTop: "16px",
-    border: "1px solid rgba(56,189,248,0.25)",
-    boxShadow: "0 12px 35px rgba(0,0,0,0.45)"
-  },
-
-  glowCard: {
-    background: "linear-gradient(135deg,rgba(30,41,59,0.96),rgba(2,6,23,0.96))",
-    padding: "20px",
-    borderRadius: "22px",
-    marginTop: "16px",
-    border: "1px solid rgba(34,197,94,0.45)",
-    boxShadow: "0 0 35px rgba(34,197,94,0.25)"
+    background: "rgba(30,41,59,0.88)",
+    padding: "16px",
+    borderRadius: "18px",
+    marginTop: "14px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
+    border: "1px solid #334155",
+    backdropFilter: "blur(10px)"
   },
 
   label: {
-    fontSize: "13px",
+    fontSize: "12px",
     letterSpacing: "1px",
-    color: "#cbd5e1",
-    marginBottom: "12px",
+    color: "#94a3b8",
+    marginBottom: "10px",
     fontWeight: "bold"
   },
 
-  codeBox: {
+  copyBox: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     background: "#020617",
-    padding: "15px",
-    borderRadius: "16px",
-    border: "1px solid #334155"
+    padding: "12px",
+    borderRadius: "12px"
   },
 
   codeText: {
-    fontSize: "26px",
+    fontSize: "24px",
     fontWeight: "bold",
     color: "#facc15"
   },
 
   linkBox: {
     background: "#020617",
-    padding: "14px",
-    borderRadius: "16px",
-    border: "1px solid #334155"
+    padding: "12px",
+    borderRadius: "12px"
   },
 
   linkText: {
-    fontSize: "13px",
-    color: "#e2e8f0",
+    fontSize: "12px",
+    color: "#cbd5e1",
     wordBreak: "break-all",
-    marginBottom: "12px"
+    marginBottom: "10px"
   },
 
   copyBtn: {
-    padding: "10px 16px",
+    padding: "9px 14px",
     border: "none",
-    borderRadius: "12px",
-    background: "linear-gradient(135deg,#22c55e,#16a34a)",
-    color: "#020617",
+    borderRadius: "10px",
+    background: "#22c55e",
+    color: "#02130a",
     fontWeight: "bold",
     cursor: "pointer"
   },
 
   copyBtnBlue: {
     width: "100%",
-    padding: "12px",
+    padding: "10px",
     border: "none",
-    borderRadius: "12px",
-    background: "linear-gradient(135deg,#38bdf8,#0284c7)",
-    color: "#020617",
+    borderRadius: "10px",
+    background: "#38bdf8",
+    color: "#082f49",
     fontWeight: "bold",
     cursor: "pointer"
   },
 
   socialRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    display: "flex",
     gap: "12px",
-    marginTop: "16px"
+    marginTop: "14px"
   },
 
   whatsapp: {
-    padding: "15px",
+    flex: 1,
+    padding: "13px",
     border: "none",
-    borderRadius: "16px",
-    background: "linear-gradient(135deg,#25D366,#16a34a)",
+    borderRadius: "12px",
+    background: "#25D366",
     color: "white",
-    fontWeight: "bold",
-    fontSize: "15px"
+    fontWeight: "bold"
   },
 
   telegram: {
-    padding: "15px",
+    flex: 1,
+    padding: "13px",
     border: "none",
-    borderRadius: "16px",
-    background: "linear-gradient(135deg,#38bdf8,#2563eb)",
+    borderRadius: "12px",
+    background: "#229ED9",
     color: "white",
-    fontWeight: "bold",
-    fontSize: "15px"
+    fontWeight: "bold"
   },
 
   bonusGrid: {
     display: "grid",
     gridTemplateColumns: "1fr",
-    gap: "12px",
-    marginTop: "20px"
+    gap: "10px",
+    marginTop: "18px"
   },
 
-  performance: btn("linear-gradient(135deg,#2563eb,#38bdf8)"),
-  team: btn("linear-gradient(135deg,#7c3aed,#a855f7)"),
-  royalty: btn("linear-gradient(135deg,#ca8a04,#facc15)", "#1c1917"),
+  bonus: {
+    padding: "14px",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg,#0ea5e9,#2563eb)",
+    color: "white",
+    border: "none",
+    fontWeight: "bold",
+    cursor: "pointer"
+  },
 
   treeBtn: {
     width: "100%",
-    padding: "16px",
+    padding: "15px",
+    marginTop: "5px",
     border: "none",
-    borderRadius: "18px",
+    borderRadius: "15px",
     background: "linear-gradient(135deg,#22c55e,#16a34a)",
     color: "#020617",
-    fontWeight: "bold",
-    fontSize: "15px"
+    fontWeight: "bold"
   },
 
   historyTitle: {
-    marginTop: "28px",
+    marginTop: "25px",
     color: "#e2e8f0"
   },
 
   empty: {
-    background: "rgba(30,41,59,0.9)",
-    padding: "16px",
-    borderRadius: "14px",
+    background: "rgba(30,41,59,0.88)",
+    padding: "14px",
+    borderRadius: "12px",
     color: "#94a3b8",
-    textAlign: "center",
-    border: "1px solid #334155"
+    textAlign: "center"
   },
 
   historyCard: {
-    background: "rgba(30,41,59,0.95)",
-    padding: "15px",
-    marginTop: "12px",
-    borderRadius: "16px",
+    background: "rgba(30,41,59,0.9)",
+    padding: "14px",
+    marginTop: "10px",
+    borderRadius: "14px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -395,42 +335,15 @@ const styles = {
   },
 
   date: {
-    margin: "6px 0 0",
+    margin: "5px 0 0",
     fontSize: "12px",
     color: "#94a3b8"
   },
 
   status: {
-    padding: "7px 13px",
+    padding: "6px 12px",
     borderRadius: "20px",
     fontWeight: "bold",
     fontSize: "12px"
-  },
-
-  loaderCard: {
-    background: "rgba(30,41,59,0.94)",
-    padding: "28px",
-    borderRadius: "22px",
-    textAlign: "center",
-    marginTop: "120px",
-    border: "1px solid #334155"
-  },
-
-  logo: {
-    fontSize: "38px"
   }
 };
-
-function btn(bg, color = "white") {
-  return {
-    width: "100%",
-    padding: "15px",
-    borderRadius: "16px",
-    border: "none",
-    background: bg,
-    color,
-    fontWeight: "bold",
-    fontSize: "15px",
-    cursor: "pointer"
-  };
-}
