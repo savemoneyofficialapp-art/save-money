@@ -60,7 +60,7 @@ if (
   return;
 }
 
-    setCode(d.myCode  || "NO CODE");
+setCode(d.myCode || d.referCode || d.code || "NO CODE");
     setTeam(d.team || []);
   };
 
