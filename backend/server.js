@@ -32,6 +32,28 @@ const validator = require("validator");
 const sanitize = require("mongo-sanitize");
 
 const app = express();
+
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "authorization"]
+}));
+
+app.use(express.json());
+
 const server = http.createServer(app);
 
 // ================= CORS =================
@@ -41,41 +63,8 @@ const allowedOrigins = [
   "https://save-money-indol.vercel.app"
 ];
 
-const corsOptions = {
 
-  origin: function(origin, callback) {
-
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(null, true);
-  },
-
-  methods: [
-    "GET",
-    "POST",
-    "PUT",
-    "DELETE",
-    "OPTIONS"
-  ],
-
-  credentials: true,
-
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "authorization"
-  ]
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-
+  
 // ================= SOCKET =================
 
 const io = new Server(server, {
@@ -84,9 +73,6 @@ const io = new Server(server, {
     origin: "*",
     methods: ["GET", "POST"]
   },
-
-  transports: ["websocket", "polling"]
-
 });
 
 // ================= SECURITY =================
