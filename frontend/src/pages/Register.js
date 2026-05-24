@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API } from "../config";
+
+const API =
+  process.env.REACT_APP_API ||
+  "https://save-money-yyv1.onrender.com";
 
 export default function Register() {
   const navigate = useNavigate();
