@@ -1130,7 +1130,7 @@ app.post("/register", async (req, res) => {
 
 // ================= LOGIN =================
 
-app.post("/login", authLimiter, async (req, res) => {
+app.post("/login", async (req, res) => {
   try {
     console.log("LOGIN BODY:", req.body);
 
