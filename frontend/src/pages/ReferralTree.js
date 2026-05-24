@@ -34,8 +34,15 @@ const [analytics, setAnalytics] = useState({
     setLoading(true);
 
     const res = await fetchWithAuth(`${API}/referral-tree`, {
-      method: "GET"
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    email,
+    filter
+  })
+});
 
     const data = await res.json();
 
@@ -52,6 +59,13 @@ const [analytics, setAnalytics] = useState({
     }
 
     setTree(data.tree || []);
+
+    setAnalytics(data.analytics || {
+  totalUsers: 0,
+  activeUsers: 0,
+  totalBusiness: 0,
+  levels: {}
+});
 
   } catch (err) {
     console.log("TREE ERROR:", err);

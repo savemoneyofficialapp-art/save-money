@@ -3532,8 +3532,8 @@ app.post("/referral-tree", auth, async (req, res) => {
 
       const children = await User.find(query)
         .select(
-          "-password name email referCode kycStatus createdAt wallet"
-        );
+  "name email referCode kycStatus createdAt wallet"
+);
 
       const result = [];
 
@@ -3564,7 +3564,7 @@ app.post("/referral-tree", auth, async (req, res) => {
         let business = 0;
 
         if (investment) {
-          business = investment.monthlyAmount || 0;
+          business = investment.Amount || 0;
           analytics.totalBusiness += business;
           analytics.levels[level].income += business;
         }
