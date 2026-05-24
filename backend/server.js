@@ -3345,7 +3345,7 @@ app.post("/my-referrals", async (req, res) => {
 
     const result = [];
 
-for (let u of users) {
+for (let u of team) {
 
   // auto active/inactive check
   await updateInvestmentStatus(u.email);
@@ -3371,6 +3371,7 @@ for (let u of users) {
 
     res.json({
       myCode: me.referCode,
+      referCode: me.referCode,
       team: result
     });
 
