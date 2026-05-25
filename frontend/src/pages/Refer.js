@@ -21,9 +21,9 @@ export default function Refer() {
 
   if (user?.SaveMoney !== "activete") {
 
-    toast.info("Please Invest SaveMoney First");
+    toast.error("Please Invest SaveMoney First");
 
-    navigate("/SaveMoney");
+    navigate("/SAVE MONEY");
 
   }
 
@@ -51,7 +51,7 @@ export default function Refer() {
 
   if (d.msg === "Token expired or invalid") {
     localStorage.clear();
-    alert("Session expired. Please login again.");
+    toast.error("Session expired. Please login again.");
     window.location.href = "/login";
     return;
   }

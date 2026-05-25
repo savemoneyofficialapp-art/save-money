@@ -3697,9 +3697,11 @@ app.post("/daily-reward", auth, async (req, res) => {
     });
 
     res.json({
-      msg: "Daily reward claimed successfully",
-      reward
-    });
+  msg: "Reward Claimed Successfully",
+  amount: rewardAmount,
+  special: isSpecial,
+  reward
+});
 
   } catch (err) {
     console.log("DAILY REWARD ERROR:", err);

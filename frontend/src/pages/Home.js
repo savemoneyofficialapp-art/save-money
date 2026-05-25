@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-toastify";
 import Footer from "../components/Footer";
 import { BRAND } from "../brand";
 import { API } from "../config";
@@ -40,7 +40,7 @@ export default function Home() {
 
   const sessionExpired = () => {
     localStorage.clear();
-    alert("Session expired. Please login again.");
+    toast.error("Session expired. Please login again.");
     window.location.href = "/login";
   };
 
@@ -119,13 +119,13 @@ export default function Home() {
         }
       }
 
-      alert("Please Complete Your KYC First");
+      toast.info("Please Complete Your KYC First");
       navigate("/kyc");
       return false;
     } catch {
       if (user?.kycStatus === "approved") return true;
 
-      alert("Please Complete Your KYC First");
+      toast.info("Please Complete Your KYC First");
       navigate("/kyc");
       return false;
     }
@@ -143,7 +143,7 @@ export default function Home() {
 
   const goOneTime = async () => {
     const ok = await checkKYC();
-    if (ok) alert("One Time Coming Soon");
+    if (ok) toast.info("One Time Coming Soon");
   };
 
   const logout = () => {

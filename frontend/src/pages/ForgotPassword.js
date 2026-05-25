@@ -18,7 +18,7 @@ export default function ForgotPassword() {
   const sendOtp = async () => {
 
     if (!email) {
-      alert("Enter your email");
+      toast.error("Enter your email");
       return;
     }
 
@@ -33,7 +33,7 @@ export default function ForgotPassword() {
     const data = await res.json();
     setLoading(false);
 
-    alert(data.msg);
+    toast.success(data.msg);
 
     if (data.msg === "OTP sent to email") {
       setStep(2);
@@ -44,7 +44,7 @@ export default function ForgotPassword() {
   const resetPassword = async () => {
 
     if (!otp || !newPassword) {
-      alert("Enter OTP & new password");
+      toast.info("Enter OTP & new password");
       return;
     }
 
@@ -60,7 +60,7 @@ export default function ForgotPassword() {
     
     setLoading(false);
 
-    alert(data.msg);
+    toast.success(data.msg);
 
     if (data.msg === "Password updated successfully") {
       navigate("/");
