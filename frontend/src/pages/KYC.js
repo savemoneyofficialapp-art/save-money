@@ -192,6 +192,12 @@ if (!aadhaarFile || !panFile || !photo) {
         <Info label="Aadhaar Number" value={user?.aadhaar || user?.aadhaarNumber || "N/A"} />
         <Info label="Refer Code" value={user?.referCode || user?.referralCode || "N/A"} />
         <Info label="Wallet ID" value={user?.walletId || "N/A"} />
+        {user?.kycStatus === "rejected" && (
+  <div style={styles.rejectBox}>
+    <b>KYC Rejected</b>
+    <p>{user?.kycRejectReason || "No reason provided"}</p>
+  </div>
+)}
       </div>
 
       <div style={styles.card}>
@@ -256,12 +262,7 @@ if (!aadhaarFile || !panFile || !photo) {
   );
 }
 
-{user?.kycStatus === "rejected" && (
-  <div style={styles.rejectBox}>
-    <b>KYC Rejected</b>
-    <p>{user?.kycRejectReason || "No reason provided"}</p>
-  </div>
-)}
+
 
 function Info({ label, value, verified }) {
   return (
@@ -488,7 +489,7 @@ const styles = {
     color: "#cbd5e1",
     lineHeight: "24px"
   },
-  
+
 rejectBox: {
   background: "#7f1d1d",
   color: "white",
