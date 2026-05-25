@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API } from "../config";
-import fetchWithAuth from "../utils/fetchWithAuth";
+import {fetchWithAuth} from "../utils/fetchWithAuth";
 
 
 
