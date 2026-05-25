@@ -23,7 +23,7 @@ export default function Refer() {
 
     toast.error("Please Invest SaveMoney First");
 
-    navigate("/SAVE MONEY");
+    navigate("/save-money");
 
   }
 
