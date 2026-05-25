@@ -18,6 +18,7 @@ export default function KYC() {
   const [photo, setPhoto] = useState(null);
   const [aadhaar, setAadhaar] = useState("");
   const [pan, setPan] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchUser();
@@ -78,6 +79,7 @@ export default function KYC() {
   };
 
   const submitKYC = async () => {
+    setSubmitting(true);
     if (user?.kycStatus === "approved") {
       toast.info("Your KYC is already approved");
       return;
@@ -116,9 +118,11 @@ if (!aadhaarFile || !panFile || !photo) {
 
       fetchUser();
     } catch (err) {
-      console.log(err);
-      toast.error("KYC submit failed");
-    }
+  console.log(err);
+  toast.error("KYC submit failed");
+} finally {
+  setSubmitting(false);
+}
   };
 
   if (loading) {
@@ -234,8 +238,13 @@ if (!aadhaarFile || !panFile || !photo) {
             background: user?.kycStatus === "approved" ? "#64748b" : "#22c55e"
           }}
           onClick={submitKYC}
+          disabled={submitting}
         >
-          {user?.kycStatus === "approved" ? "KYC Already Approved" : "Submit KYC"}
+         {submitting
+  ? "Submitting KYC..."
+  : user?.kycStatus === "approved"
+  ? "KYC Already Approved"
+  : "Submit KYC"}
         </button>
       </div>
 
