@@ -6,6 +6,45 @@ import { API } from "../config";
 
 export default function Leaderboard() {
 
+  return (
+  <div style={{
+    minHeight: "100vh",
+    background: "#020617",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    color: "white",
+    flexDirection: "column",
+    padding: "20px",
+    textAlign: "center"
+  }}>
+
+    <h1 style={{
+      color: "#22c55e",
+      fontSize: "32px"
+    }}>
+      Leaderboard
+    </h1>
+
+    <p style={{
+      marginTop: "15px",
+      color: "#facc15",
+      fontSize: "22px",
+      fontWeight: "bold"
+    }}>
+      Temporary Unavailable
+    </p>
+
+    <p style={{
+      marginTop: "10px",
+      color: "#cbd5e1"
+    }}>
+      This feature is under maintenance
+    </p>
+
+  </div>
+);
+
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
