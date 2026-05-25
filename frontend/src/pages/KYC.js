@@ -256,6 +256,13 @@ if (!aadhaarFile || !panFile || !photo) {
   );
 }
 
+{user?.kycStatus === "rejected" && (
+  <div style={styles.rejectBox}>
+    <b>KYC Rejected</b>
+    <p>{user?.kycRejectReason || "No reason provided"}</p>
+  </div>
+)}
+
 function Info({ label, value, verified }) {
   return (
     <div style={styles.infoBox}>
@@ -480,5 +487,14 @@ const styles = {
     borderRadius: "14px",
     color: "#cbd5e1",
     lineHeight: "24px"
-  }
+  },
+  
+rejectBox: {
+  background: "#7f1d1d",
+  color: "white",
+  padding: "14px",
+  borderRadius: "14px",
+  marginTop: "15px",
+  border: "1px solid #ef4444"
+}
 };

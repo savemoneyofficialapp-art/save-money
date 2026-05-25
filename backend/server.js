@@ -2396,9 +2396,9 @@ app.post(
         { aadhaar, 
           pan,
 
-          aadhaarFile: req.files.aadhaarFile[0].filename,
-          panFile: req.files.panFile[0].filename,
-          photo: req.files.photo[0].filename,
+          aadhaarFile: req.files.aadhaarFile[0].path,
+          panFile: req.files.panFile[0].path,
+          photo: req.files.photo[0].path,
           kycStatus: "pending"
         }
       );
@@ -2424,19 +2424,35 @@ app.get("/kyc-list", async (req, res) => {
 
 
 
-app.post("/reject-kyc", async (req, res) => {
+app.post("/reject-kyc", auth, adminAuth, async (req, res) => {
+  try {
+    const { userId, reason } = req.body;
 
-  const { email, reason } = req.body;
-
-  await User.updateOne(
-    { email },
-    {
-      kycStatus: "rejected",
-      kycReason: reason
+    if (!reason) {
+      return res.status(400).json({ msg: "Reject reason required" });
     }
-  );
 
-  res.json({ msg: "KYC rejected" });
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        kycStatus: "rejected",
+        kycRejectReason: reason
+      },
+      { new: true }
+    );
+
+    await Notification.create({
+      email: user.email,
+      title: "KYC Rejected",
+      message: `Your KYC was rejected. Reason: ${reason}`,
+      read: false
+    });
+
+    res.json({ msg: "KYC Rejected" });
+
+  } catch (err) {
+    res.status(500).json({ msg: "Server error" });
+  }
 });
 
 

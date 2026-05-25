@@ -123,6 +123,34 @@ export default function AdminDashboard() {
   load();
 };
 
+const rejectKYC = async (id) => {
+  const reason = prompt("Why are you rejecting this KYC?");
+
+  if (!reason) {
+    alert("Reject reason required");
+    return;
+  }
+
+  const res = await fetch(`${API}/reject-kyc`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: token
+    },
+    body: JSON.stringify({
+      userId: id,
+      reason
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.msg);
+
+  setKyc((prev) => prev.filter((u) => u._id !== id));
+  load();
+};
+
 const fileUrl = (file) => {
 
   if (!file) return "#";
@@ -331,6 +359,13 @@ const fileUrl = (file) => {
     >
       Approve KYC
     </button>
+
+    <button
+  style={styles.red}
+  onClick={() => rejectKYC(u._id)}
+>
+  Reject KYC
+</button>
 
   </div>
 ))}

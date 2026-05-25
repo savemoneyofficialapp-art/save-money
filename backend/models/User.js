@@ -157,6 +157,12 @@ activeStatus: {
   ],
   default:"Pending"
 },
+
+kycRejectReason: {
+  type: String,
+  default: ""
+},
+
   // 🔹 FILE UPLOAD PATHS
   aadhaarFile: {
     type: String,
