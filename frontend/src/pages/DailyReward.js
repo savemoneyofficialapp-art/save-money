@@ -96,18 +96,6 @@ export default function DailyReward() {
           <div style={styles.gift}>🎁</div>
         </div>
 
-        <div style={styles.rewardInfo}>
-          <div style={styles.infoCard}>
-            <h3>₹1 - ₹10</h3>
-            <p>Daily Reward</p>
-          </div>
-
-          <div style={styles.infoCard}>
-            <h3>₹10 - ₹20</h3>
-            <p>10th Day Special</p>
-          </div>
-        </div>
-
         <button
           style={{
             ...styles.btn,
