@@ -361,7 +361,7 @@ const fileUrl = (file) => {
     </button>
 
     <button
-  style={styles.red}
+  style={styles.redFull}
   onClick={() => rejectKYC(u._id)}
 >
   Reject KYC
@@ -514,12 +514,15 @@ const styles = {
     marginTop: "12px"
   },
 
-  red: {
-    background: "#ef4444",
+  redFull: {
+    width: "100%",
+    background: "#ed1206",
     border: "none",
-    padding: "10px",
-    borderRadius: "8px",
-    color: "white"
+    padding: "12px",
+    borderRadius: "10px",
+    color: "#020617",
+    fontWeight: "bold",
+    marginTop: "12px"
   },
 
   kycCard: {
