@@ -16,6 +16,8 @@ export default function KYC() {
   const [aadhaarFile, setAadhaarFile] = useState(null);
   const [panFile, setPanFile] = useState(null);
   const [photo, setPhoto] = useState(null);
+  const [aadhaar, setAadhaar] = useState("");
+const [pan, setPan] = useState("");
 
   useEffect(() => {
     fetchUser();
@@ -40,6 +42,8 @@ export default function KYC() {
 
       setUser(data || {});
       setNewMobile(data?.mobile || "");
+      setAadhaar(data?.aadhaar || data?.aadhaarNumber || "");
+setPan(data?.pan || data?.panNumber || "");
       localStorage.setItem("user", JSON.stringify(data || {}));
       setLoading(false);
     } catch (err) {
@@ -79,10 +83,15 @@ export default function KYC() {
       return;
     }
 
-    if (!aadhaarFile || !panFile || !photo) {
-      toast.warning("PLEASE UPLOAD ALL DOCUMENT");
-      return;
-    }
+    if (!aadhaar || !pan) {
+  toast.warning("Please enter Aadhaar and PAN number");
+  return;
+}
+
+if (!aadhaarFile || !panFile || !photo) {
+  toast.warning("PLEASE UPLOAD ALL DOCUMENT");
+  return;
+}
 
     try {
       const formData = new FormData();
@@ -90,6 +99,8 @@ export default function KYC() {
       formData.append("aadhaarFile", aadhaarFile);
       formData.append("panFile", panFile);
       formData.append("photo", photo);
+      formData.append("aadhaar", aadhaar);
+      formData.append("pan", pan);
 
       const res = await fetchWithAuth(`${API}/submit-kyc`, {
         method: "POST",
@@ -181,6 +192,22 @@ export default function KYC() {
 
       <div style={styles.card}>
         <h3 style={styles.sectionTitle}>Upload Documents</h3>
+
+        <input
+  style={styles.input}
+  placeholder="Enter Aadhaar Number"
+  value={aadhaar}
+  onChange={(e) => setAadhaar(e.target.value)}
+  disabled={user?.kycStatus === "approved"}
+/>
+
+<input
+  style={{ ...styles.input, marginTop: "12px" }}
+  placeholder="Enter PAN Number"
+  value={pan}
+  onChange={(e) => setPan(e.target.value.toUpperCase())}
+  disabled={user?.kycStatus === "approved"}
+/>
 
         <UploadBox
           title="Aadhaar Card"

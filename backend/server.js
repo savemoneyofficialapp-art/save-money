@@ -2392,14 +2392,16 @@ app.post(
   ]),
   async (req, res) => {
     try {
-      const { email } = req.body;
+      const { email, aadhaar, pan  } = req.body;
       await sendNotification(email, "KYC Submitted Successfully");
 
       console.log("KYC API HIT:", email);
 
       await User.updateOne(
         { email },
-        {
+        { aadhaar, 
+          pan,
+
           aadhaarFile: req.files.aadhaarFile[0].filename,
           panFile: req.files.panFile[0].filename,
           photo: req.files.photo[0].filename,
