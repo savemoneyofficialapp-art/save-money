@@ -31,16 +31,6 @@ export default function Notifications() {
 
     fetchData();
 
-    socket.on("new-notification", (msg) => {
-      const newMsg = normalizeNotification(msg);
-      setData(prev => [newMsg, ...prev]);
-      setPopup(newMsg);
-
-      setTimeout(() => {
-        setPopup(null);
-      }, 4000);
-    });
-
     socket.on("new_notification", (msg) => {
       const newMsg = normalizeNotification(msg);
       setData(prev => [newMsg, ...prev]);
@@ -52,7 +42,6 @@ export default function Notifications() {
     });
 
     return () => {
-      socket.off("new-notification");
       socket.off("new_notification");
     };
 
