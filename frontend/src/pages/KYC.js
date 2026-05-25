@@ -17,7 +17,7 @@ export default function KYC() {
   const [panFile, setPanFile] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [aadhaar, setAadhaar] = useState("");
-const [pan, setPan] = useState("");
+  const [pan, setPan] = useState("");
 
   useEffect(() => {
     fetchUser();
@@ -43,7 +43,7 @@ const [pan, setPan] = useState("");
       setUser(data || {});
       setNewMobile(data?.mobile || "");
       setAadhaar(data?.aadhaar || data?.aadhaarNumber || "");
-setPan(data?.pan || data?.panNumber || "");
+      setPan(data?.pan || data?.panNumber || "");
       localStorage.setItem("user", JSON.stringify(data || {}));
       setLoading(false);
     } catch (err) {
@@ -192,8 +192,8 @@ if (!aadhaarFile || !panFile || !photo) {
 
       <div style={styles.card}>
         <h3 style={styles.sectionTitle}>Upload Documents</h3>
-
-        <input
+       <input
+  type="text"
   style={styles.input}
   placeholder="Enter Aadhaar Number"
   value={aadhaar}
@@ -202,6 +202,7 @@ if (!aadhaarFile || !panFile || !photo) {
 />
 
 <input
+  type="text"
   style={{ ...styles.input, marginTop: "12px" }}
   placeholder="Enter PAN Number"
   value={pan}
