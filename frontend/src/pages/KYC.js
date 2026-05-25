@@ -495,6 +495,7 @@ rejectBox: {
   color: "white",
   padding: "14px",
   borderRadius: "14px",
+  textAlign:"center",
   marginTop: "15px",
   border: "1px solid #ef4444"
 }

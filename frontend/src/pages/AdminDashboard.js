@@ -514,15 +514,23 @@ const styles = {
     marginTop: "12px"
   },
 
-  redFull: {
+redFull: {
     width: "100%",
-    background: "#ed1206",
+    background: "#cb0d03",
     border: "none",
     padding: "12px",
     borderRadius: "10px",
     color: "#020617",
     fontWeight: "bold",
     marginTop: "12px"
+  },
+
+  red: {
+    background: "#ef4444",
+    border: "none",
+    padding: "10px",
+    borderRadius: "8px",
+    color: "white"
   },
 
   kycCard: {
