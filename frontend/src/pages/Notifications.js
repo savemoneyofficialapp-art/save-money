@@ -41,9 +41,7 @@ export default function Notifications() {
       }, 4000);
     });
 
-    return () => {
-      socket.off("new_notification");
-    };
+   
 
   }, [email, navigate]);
 

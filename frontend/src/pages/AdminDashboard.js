@@ -123,6 +123,17 @@ export default function AdminDashboard() {
   load();
 };
 
+const fileUrl = (file) => {
+
+  if (!file) return "#";
+
+  if (file.startsWith("http")) {
+    return file;
+  }
+
+  return `${API}/uploads/${file}`;
+};
+
   const approveCash = async (id) => {
     const d = await apiPost("/approve-cash", { requestId: id });
     if (!d) return;
@@ -281,7 +292,7 @@ export default function AdminDashboard() {
 
       {u.aadhaarFile && (
   <a
-    href={u.aadhaarFile}
+    href={fileUrl(u.aadhaarFile)}
     target="_blank"
     rel="noreferrer"
     style={styles.docBtn}
@@ -292,7 +303,7 @@ export default function AdminDashboard() {
 
 {u.panFile && (
   <a
-    href={u.panFile}
+    href={fileUrl(u.panFile)}
     target="_blank"
     rel="noreferrer"
     style={styles.docBtn}
@@ -303,7 +314,7 @@ export default function AdminDashboard() {
 
 {u.photo && (
   <a
-    href={u.photo }  
+    href={fileUrl(u.photo)}  
     target="_blank"
     rel="noreferrer"
     style={styles.docBtn}
