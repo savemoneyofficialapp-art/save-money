@@ -19,14 +19,17 @@ export default function Refer() {
     localStorage.getItem("user")
   );
 
-  if (user?.SaveMoney !== "activete") {
+  const investments =
+  JSON.parse(localStorage.getItem("investments")) || [];
 
-    toast.error("Please Invest SaveMoney First");
+  if (!investments || investments.length === 0) {
 
-    navigate("/save-money");
-    return false;
+  toast.error("Please Start Your Investment First");
 
-  }
+  navigate("/save-money");
+
+  return;
+}
 
 }, []);
 
