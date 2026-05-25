@@ -25,6 +25,10 @@ const QRCode = require("qrcode");
 const DailyReward = require("./models/DailyReward");
 const SupportTicket = require("./models/SupportTicket");
 const BonusLedger = require("./models/BonusLedger");
+const cloudinary = require("cloudinary").v2;
+
+const { CloudinaryStorage } =
+require("multer-storage-cloudinary");
 
 const helmet = require("helmet");
 
@@ -235,6 +239,17 @@ mongoose.connect(process.env.MONGO_URL)
 })
 .catch((err) => {
   console.log("MongoDB Error:", err.message);
+});
+
+cloudinary.config({
+  cloud_name:
+    process.env.CLOUDINARY_CLOUD_NAME,
+
+  api_key:
+    process.env.CLOUDINARY_API_KEY,
+
+  api_secret:
+    process.env.CLOUDINARY_API_SECRET
 });
 
 
@@ -845,64 +860,43 @@ app.use("/uploads", express.static("uploads"));
 
 // ================= STORAGE =================
 
-const storage = multer.diskStorage({
+const storage = new CloudinaryStorage({
+  cloudinary,
 
-  destination: function(req, file, cb) {
+  params: async (req, file) => {
 
-    cb(null, "uploads/");
+    let folder = "save-money";
 
-  },
-
-  filename: function(req, file, cb) {
-
-    cb(
-      null,
-      Date.now() + "-" + file.originalname
-    );
-
-  }
-
-});
-
-
-
-const upload = multer({
-
-  storage: storage,
-
-  limits: {
-
-    fileSize: 2 * 1024 * 1024
-
-  },
-
-  fileFilter: function(req, file, cb) {
-
-    const allowedTypes = [
-
-      "image/png",
-      "image/jpeg",
-      "image/jpg"
-
-    ];
-
-    if (
-      !allowedTypes.includes(file.mimetype)
-    ) {
-
-      return cb(
-        new Error(
-          "Only PNG JPG JPEG allowed"
-        )
-      );
-
+    if (file.fieldname === "aadhaarFile") {
+      folder = "save-money/aadhaar";
     }
 
-    cb(null, true);
+    if (file.fieldname === "panFile") {
+      folder = "save-money/pan";
+    }
 
+    if (file.fieldname === "photo") {
+      folder = "save-money/photo";
+    }
+
+    return {
+      folder,
+      allowed_formats: [
+        "jpg",
+        "png",
+        "jpeg",
+        "webp"
+      ],
+
+      public_id:
+        Date.now() +
+        "-" +
+        file.originalname
+    };
   }
-
 });
+
+const upload = multer({ storage });
 
 // ================= MODELS =================
 
@@ -2292,9 +2286,9 @@ app.post("/kyc-upload", upload.fields([
 
   const { email } = req.body;
 
-  const aadhaarFile = req.files["aadhaarFile"][0].filename;
-  const panFile = req.files["panFile"][0].filename;
-  const photo = req.files["photo"][0].filename;
+  const aadhaarFile = req.files["aadhaarFile"][0].path;
+const panFile = req.files["panFile"][0].path;
+const photo = req.files["photo"][0].path;
 
   await User.updateOne(
     { email },

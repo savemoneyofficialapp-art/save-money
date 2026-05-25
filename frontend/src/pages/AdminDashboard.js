@@ -1,4 +1,6 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import {
   BarChart,
   Bar,
@@ -45,7 +47,7 @@ export default function AdminDashboard() {
       d?.msg === "Admin only"
     ) {
       localStorage.clear();
-      alert(d.msg + ". Please login again.");
+      toast.alert(d.msg + ". Please login again.");
       window.location.href = "/login";
       return true;
     }
@@ -114,7 +116,7 @@ export default function AdminDashboard() {
 
   if (!d) return;
 
-  alert(d.msg || "KYC Approved");
+  toast.success(d.msg || "KYC Approved");
 
   setKyc((prev) => prev.filter((u) => u._id !== id));
 
@@ -124,27 +126,27 @@ export default function AdminDashboard() {
   const approveCash = async (id) => {
     const d = await apiPost("/approve-cash", { requestId: id });
     if (!d) return;
-    alert(d.msg || "Done");
+    toast.info(d.msg || "Done");
     load();
   };
 
   const banUser = async (id) => {
     const d = await apiPost("/ban-user", { userId: id });
     if (!d) return;
-    alert(d.msg || "Done");
+    toast.info(d.msg || "Done");
     load();
   };
 
   const broadcast = async () => {
     if (!title || !message) {
-      alert("Title and message required");
+      toast.info("Title and message required");
       return;
     }
 
     const d = await apiPost("/broadcast", { title, message });
     if (!d) return;
 
-    alert(d.msg || "Broadcast Sent");
+    toast.success(d.msg || "Broadcast Sent");
     setTitle("");
     setMessage("");
   };
@@ -279,7 +281,7 @@ export default function AdminDashboard() {
 
       {u.aadhaarFile && (
   <a
-    href={`${API}/uploads/${u.aadhaarFile}`}
+    href={u.aadhaarFile}
     target="_blank"
     rel="noreferrer"
     style={styles.docBtn}
@@ -290,7 +292,7 @@ export default function AdminDashboard() {
 
 {u.panFile && (
   <a
-    href={`${API}/uploads/${u.panFile}`}
+    href={u.panFile}
     target="_blank"
     rel="noreferrer"
     style={styles.docBtn}
@@ -301,7 +303,7 @@ export default function AdminDashboard() {
 
 {u.photo && (
   <a
-    href={`${API}/uploads/${u.photo}`}
+    href={u.photo }  
     target="_blank"
     rel="noreferrer"
     style={styles.docBtn}
