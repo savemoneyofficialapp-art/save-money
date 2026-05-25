@@ -19,11 +19,11 @@ export default function Refer() {
     localStorage.getItem("user")
   );
 
-  if (user?.kycStatus !== "approved") {
+  if (user?.SaveMoney !== "activete") {
 
-    toast.info("Please Complete Your KYC First");
+    toast.info("Please Invest SaveMoney First");
 
-    navigate("/kyc");
+    navigate("/SaveMoney");
 
   }
 
