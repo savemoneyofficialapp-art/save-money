@@ -25,7 +25,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "node": "^22.22.3",
     "node-cron": "^4.2.1",
-    "nodemailer": "^8.0.7",
+    "nodemailer": "^8.0.9",
     "pdfkit": "^0.18.0",
     "qrcode": "^1.5.4",
     "server.js": "^1.0.0",

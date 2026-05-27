@@ -26,6 +26,7 @@ const DailyReward = require("./models/DailyReward");
 const SupportTicket = require("./models/SupportTicket");
 const BonusLedger = require("./models/BonusLedger");
 const cloudinary = require("cloudinary").v2;
+const Otp = require("./models/Otp");
 
 const { CloudinaryStorage } =
 require("multer-storage-cloudinary");
@@ -838,6 +839,89 @@ async function sendEmail(to, subject, message) {
   }
 }
 
+app.post("/send-email-otp", async (req, res) => {
+
+  try {
+
+    const { email } = req.body;
+
+    if (!email) {
+      return res.json({
+        success: false,
+        msg: "Email required"
+      });
+    }
+
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    global.otpStore = global.otpStore || {};
+
+    global.otpStore[email] = otp;
+
+    await sendEmail(
+      email,
+      "Save Money OTP Verification",
+      `Your OTP is: ${otp}`
+    );
+
+    res.json({
+      success: true,
+      msg: "OTP sent successfully"
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false,
+      msg: "OTP send failed"
+    });
+
+  }
+
+});
+
+app.post("/verify-email-otp", async (req, res) => {
+
+  try {
+
+    const { email, otp } = req.body;
+
+    if (
+      global.otpStore &&
+      global.otpStore[email] === otp
+    ) {
+
+      delete global.otpStore[email];
+
+      return res.json({
+        success: true,
+        msg: "OTP verified"
+      });
+
+    }
+
+    res.json({
+      success: false,
+      msg: "Invalid OTP"
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false,
+      msg: "Verification failed"
+    });
+
+  }
+
+});
+
 
 const twilio = require("twilio");
 
@@ -1203,41 +1287,6 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.post("/send-email-otp", async (req, res) => {
-
-  console.log("EMAIL OTP API HIT");
-
-  const { email } = req.body;
-
-  if (!email) {
-    return res.json({ msg: "Email required" });
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    return res.json({ msg: "Email not registered" });
-  }
-
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  const expiry = new Date(Date.now() + 5 * 60 * 1000);
-
-  await OTP.findOneAndUpdate(
-    { email },
-    { otp, expiresAt: expiry },
-    { upsert: true }
-  );
-
-  await transporter.sendMail({
-    from: "YOUR_EMAIL@gmail.com",
-    to: email,
-    subject: "OTP",
-    text: `Your OTP is ${otp}`
-  });
-
-  res.json({ msg: "OTP sent to email" });
-});
 
 app.post("/reset-password", async (req, res) => {
 
@@ -1294,61 +1343,98 @@ app.post("/send-forgot-otp", async (req, res) => {
 
   try {
 
-    const { email } = req.body; // ✅ এখানে define হচ্ছে
+    const { mobile } = req.body;
 
-    console.log("Sending email to:", email); // ✅ এখানে OK
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.json({ msg: "User not found" });
+    if (!mobile) {
+      return res.json({
+        success: false,
+        msg: "Mobile number required"
+      });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000);
+    // RANDOM 6 DIGIT OTP
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
 
-    await transporter.sendMail({
-      from: "SaveMoney@gmail.com",
-      to: email,
-      subject: "OTP",
-      text: `Your OTP is ${otp}`
+    console.log("OTP:", otp);
+
+    // OLD OTP DELETE
+    await Otp.deleteMany({ mobile });
+
+    // SAVE NEW OTP
+    await Otp.create({
+      mobile,
+      otp,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000)
     });
 
-    res.json({ msg: "OTP sent" });
+    // HERE SMS API LATER CONNECT
+    // Twilio / Fast2SMS / MSG91
+
+    res.json({
+      success: true,
+      msg: "OTP Sent Successfully"
+    });
 
   } catch (err) {
+
     console.log(err);
-    res.json({ msg: "Error sending OTP" });
+
+    res.json({
+      success: false,
+      msg: "Server Error"
+    });
+
   }
+
 });
 
-app.post("/verify-otp", async (req, res) => {
+app.post("/verify-forgot-otp", async (req, res) => {
 
-  const { mobile, otp } = req.body;
+  try {
 
-  const data = await OTP.findOne({ mobile });
+    const { mobile, otp } = req.body;
 
-  if (!data) {
-    return res.json({ msg: "OTP not found" });
+    const data = await Otp.findOne({
+      mobile,
+      otp
+    });
+
+    if (!data) {
+      return res.json({
+        success: false,
+        msg: "Invalid OTP"
+      });
+    }
+
+    if (new Date() > data.expiresAt) {
+
+      await Otp.deleteOne({ _id: data._id });
+
+      return res.json({
+        success: false,
+        msg: "OTP Expired"
+      });
+
+    }
+
+    res.json({
+      success: true,
+      msg: "OTP Verified"
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false,
+      msg: "Server Error"
+    });
+
   }
 
-  if (data.otp !== otp) {
-    return res.json({ msg: "Invalid OTP" });
-  }
-
-  if (data.expiresAt < new Date()) {
-    return res.json({ msg: "OTP expired" });
-  }
-
-  const user = await User.findOne({ mobile });
-
-  if (!user) {
-    return res.json({ msg: "User not registered" });
-  }
-
-  res.json({
-    msg: "Login success",
-    email: user.email
-  });
 });
 
 app.post("/invest", async (req, res) => {
