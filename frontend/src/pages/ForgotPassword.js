@@ -14,6 +14,7 @@ export default function ForgotPassword() {
   const [timer, setTimer] = useState(30);
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
 
   const sendOTP = async () => {
 
@@ -103,16 +104,11 @@ const verifyOTP = async () => {
     const data = await res.json();
 
     if (data.success) {
-
-      toast.success("OTP Verified");
-
-      navigate("/reset-password");
-
-    } else {
-
-      alert(data.msg);
-
-    }
+  toast.success("OTP Verified");
+  setOtpVerified(true);
+} else {
+  alert(data.msg);
+}
 
   } catch (err) {
 
