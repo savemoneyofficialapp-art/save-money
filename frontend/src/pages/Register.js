@@ -578,12 +578,10 @@ const styles = {
     lineHeight: "34px"
   },
 
- rightPanel: {
-  flex: 1,
-  padding: "35px 38px",
-  background: "#ffffff",
-  position: "relative"
-},
+  rightPanel: {
+    flex: 1,
+    padding: "48px 42px"
+  },
 
   create: {
     textAlign: "center",
