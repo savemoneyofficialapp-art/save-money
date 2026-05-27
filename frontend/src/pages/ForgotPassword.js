@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { API } from "../config";
+
 
 
 export default function ForgotPassword() {
@@ -15,8 +17,8 @@ export default function ForgotPassword() {
 
   const sendOTP = async () => {
 
-  if (!mobile) {
-    toast.warning("Enter email address");
+  if (!email) {
+    alert("Enter email");
     return;
   }
 
@@ -24,34 +26,27 @@ export default function ForgotPassword() {
 
     setLoading(true);
 
-    const res = await fetch(
-      `${API}/send-email-otp`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-
-          email: email
-
-        })
-      }
-    );
+    const res = await fetch(`${API}/send-forgot-otp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase()
+      })
+    });
 
     const data = await res.json();
 
-    setLoading(false);
+    alert(data.msg || "OTP Sent");
 
-    if (data.success) {
+    if (res.ok) {
 
       setOtpSent(true);
 
-      toast.success(data.msg);
-
       let count = 30;
+
+      setTimer(count);
 
       const interval = setInterval(() => {
 
@@ -65,22 +60,19 @@ export default function ForgotPassword() {
 
       }, 1000);
 
-    } else {
-
-      alert(data.msg);
-
     }
 
   } catch (err) {
 
     console.log(err);
 
+    alert("OTP send failed");
+
+  } finally {
+
     setLoading(false);
 
-    toast.error("Server Error");
-
   }
-
 };
 
 const verifyOTP = async () => {
@@ -150,6 +142,8 @@ const verifyOTP = async () => {
   return (
 
     <div style={styles.container}>
+
+      <div style={styles.wrapper}>
 
       <div style={styles.bgCircle1}></div>
       <div style={styles.bgCircle2}></div>
@@ -225,7 +219,7 @@ const verifyOTP = async () => {
           </div>
 
           <input
-            type="text"
+            type="email"
             placeholder="Enter Eamil Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -311,11 +305,11 @@ const verifyOTP = async () => {
       </div>
 
       <button
-  style={styles.otpBtn}
-  onClick={verifyOTP}
->
-  Verify OTP
-</button>
+      style={styles.otpBtn}
+       onClick={verifyOTP}
+      >
+       Verify OTP
+      </button>
 
       <button
         style={styles.loginBtn}
@@ -351,6 +345,9 @@ const verifyOTP = async () => {
       </div>
 
     </div>
+
+     </div>
+     
   );
 }
 
