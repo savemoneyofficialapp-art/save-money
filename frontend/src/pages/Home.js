@@ -426,27 +426,27 @@ export default function Home() {
         </h2>
 
         <div style={styles.footerLinks}>
-          <button onClick={() => go("/legal/privacy")}>
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/privacy")}>
             Privacy Policy
           </button>
 
-          <button onClick={() => go("/legal/terms")}>
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/terms")}>
             Terms
           </button>
 
-          <button onClick={() => go("/legal/refund")}>
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/refund")}>
             Refund
           </button>
 
-          <button onClick={() => go("/legal/risk")}>
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/risk")}>
             Risk Disclosure
           </button>
 
-          <button onClick={() => go("/legal/aml")}>
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/aml")}>
             AML & KYC
           </button>
 
-          <button onClick={() => go("/legal/disclaimer")}>
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/disclaimer")}>
             Disclaimer
           </button>
         </div>
@@ -456,29 +456,7 @@ export default function Home() {
         </p>
       </footer>
 
-      {/* QUICK BAR */}
-      <div style={styles.quickBar}>
-        <button
-          style={styles.quickContact}
-          onClick={() => go("/support")}
-        >
-          📞 CONTACT
-        </button>
-
-        <button
-          style={styles.quickWallet}
-          onClick={() => go("/wallet")}
-        >
-          💰 WALLET
-        </button>
-
-        <button
-          style={styles.quickTeam}
-          onClick={() => go("/refer")}
-        >
-          👥 TEAM
-        </button>
-      </div>
+    
 
       {/* BOTTOM NAVIGATION */}
       <nav style={styles.bottomNav}>
@@ -489,12 +467,7 @@ export default function Home() {
           onClick={() => go("/home")}
         />
 
-        <BottomNavItem
-          icon="📈"
-          title="Investment"
-          active={location.pathname === "/my-investment"}
-          onClick={() => go("/my-investment")}
-        />
+       
 
         <BottomNavItem
           icon="👛"
@@ -510,12 +483,7 @@ export default function Home() {
           onClick={() => go("/refer")}
         />
 
-        <BottomNavItem
-          icon="👤"
-          title="Profile"
-          active={location.pathname === "/profile"}
-          onClick={() => go("/profile")}
-        />
+       
       </nav>
 
     </div>
@@ -834,17 +802,17 @@ const styles = {
   },
 
   latestCard: {
-    marginTop: "14px",
-    borderRadius: "18px",
-    padding: "15px",
-    background:
-      "linear-gradient(135deg,#111827,#0b1220,#172554)",
-    border: "1px solid #31527a",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    boxShadow: "0 0 18px rgba(56,189,248,0.18)"
-  },
+  marginTop: "14px",
+  borderRadius: "20px",
+  padding: "16px",
+  background: "linear-gradient(135deg,#ffb703,#fb8500,#ff006e)",
+  border: "2px solid #ffd166",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  boxShadow: "0 0 25px rgba(255,183,3,0.45)"
+},
+
 
   latestLeft: {
     display: "flex",
@@ -864,20 +832,20 @@ const styles = {
   },
 
   statsGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginTop: "16px"
-  },
+  display: "grid",
+  gridTemplateColumns: "repeat(4,1fr)",
+  gap: "12px",
+  marginTop: "16px"
+},
 
   statCard: {
-    position: "relative",
-    minHeight: "118px",
-    borderRadius: "19px",
-    padding: "15px",
-    overflow: "hidden",
-    boxShadow: "0 10px 24px rgba(0,0,0,0.35)"
-  },
+  position: "relative",
+  minHeight: "120px",
+  borderRadius: "20px",
+  padding: "14px",
+  overflow: "hidden",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.45)"
+},
 
   statBlue: {
     background: "linear-gradient(135deg,#2f63ff,#061b91)"
@@ -934,12 +902,12 @@ const styles = {
     gap: "10px"
   },
 
-  sectionLine: {
-    width: "58px",
-    height: "2px",
-    background:
-      "linear-gradient(90deg,transparent,#64748b,transparent)"
-  },
+ sectionLine: {
+  width: "70px",
+  height: "3px",
+  borderRadius: "10px",
+  background: "linear-gradient(90deg,transparent,#38bdf8,#facc15,transparent)"
+},
 
   sectionTitleText: {
     margin: 0,
@@ -949,61 +917,62 @@ const styles = {
   },
 
   actionPanel: {
-    background: "linear-gradient(180deg,#061936,#07101e)",
-    border: "1px solid #1e40af",
-    borderRadius: "24px",
-    padding: "13px",
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    boxShadow: "inset 0 0 28px rgba(59,130,246,0.17)"
-  },
+  background: "linear-gradient(180deg,#061936,#07101e)",
+  border: "2px solid #1d4ed8",
+  borderRadius: "26px",
+  padding: "14px",
+  display: "grid",
+  gridTemplateColumns: "repeat(3,1fr)",
+  gap: "14px",
+  boxShadow: "inset 0 0 35px rgba(59,130,246,0.25)"
+},
 
   actionButton: {
-    position: "relative",
-    border: "none",
-    borderRadius: "18px",
-    minHeight: "105px",
-    color: "white",
-    padding: "13px",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    overflow: "hidden",
-    boxShadow: "0 10px 24px rgba(0,0,0,0.35)",
-    cursor: "pointer"
-  },
+  position: "relative",
+  border: "none",
+  borderRadius: "20px",
+  minHeight: "120px",
+  color: "white",
+  padding: "14px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  overflow: "hidden",
+  boxShadow: "0 10px 26px rgba(0,0,0,0.45)",
+  cursor: "pointer"
+},
 
-  actionIconCircle: {
-    width: "42px",
-    height: "42px",
-    borderRadius: "14px",
-    background: "rgba(255,255,255,0.22)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "24px",
-    flexShrink: 0,
-    boxShadow: "inset 0 0 10px rgba(255,255,255,0.18)"
-  },
+actionIconCircle: {
+  width: "46px",
+  height: "46px",
+  borderRadius: "16px",
+  background: "rgba(255,255,255,0.28)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "28px",
+  boxShadow: "inset 0 0 12px rgba(255,255,255,0.25)"
+},
 
-  actionTextBox: {
-    textAlign: "left",
-    zIndex: 2
-  },
+actionTextBox: {
+  textAlign: "center",
+  zIndex: 2
+},
 
-  actionTitle: {
-    margin: 0,
-    fontSize: "14px",
-    fontWeight: "900"
-  },
+actionTitle: {
+  margin: 0,
+  fontSize: "14px",
+  fontWeight: "900"
+},
 
-  actionSubtitle: {
-    margin: "5px 0 0",
-    fontSize: "11px",
-    color: "rgba(255,255,255,0.9)",
-    fontWeight: "700"
-  },
+actionSubtitle: {
+  margin: "4px 0 0",
+  fontSize: "11px",
+  color: "rgba(255,255,255,0.92)",
+  fontWeight: "700"
+},
 
   actionShine: {
     position: "absolute",
@@ -1015,53 +984,43 @@ const styles = {
     background: "rgba(255,255,255,0.17)"
   },
 
-  actionInvest: {
-    background: "linear-gradient(135deg,#00ff75,#008f45)"
-  },
+ actionInvest: {
+  background: "linear-gradient(135deg,#00ff75,#00c853,#008f45)"
+},
+actionMyInvestment: {
+  background: "linear-gradient(135deg,#00b4ff,#2563eb,#003cff)"
+},
+actionWallet: {
+  background: "linear-gradient(135deg,#a855f7,#d946ef,#ff00d4)"
+},
+actionWithdraw: {
+  background: "linear-gradient(135deg,#ff6b00,#ff9f00,#ffd000)"
+},
+actionRefer: {
+  background: "linear-gradient(135deg,#ff007a,#ff2bd6,#b000ff)"
+},
+actionTransaction: {
+  background: "linear-gradient(135deg,#00e5ff,#00c8ff,#00ffd5)"
+},
+actionKyc: {
+  background: "linear-gradient(135deg,#00f5ff,#0284c7,#005eff)"
+},
+actionReward: {
+  background: "linear-gradient(135deg,#7c3aed,#a855f7,#e879f9)"
+},
+actionBank: {
+  background: "linear-gradient(135deg,#ff8c00,#ffb703,#ffdd00)"
+},
+actionPlan: {
+  background: "linear-gradient(135deg,#2979ff,#00b0ff,#00e5ff)"
+},
+actionNotification: {
+  background: "linear-gradient(135deg,#ff1744,#ff006e,#ff5c8d)"
+},
+actionSupport: {
+  background: "linear-gradient(135deg,#00ff75,#00e676,#00c853)"
+},
 
-  actionMyInvestment: {
-    background: "linear-gradient(135deg,#2f7bff,#0047ff)"
-  },
-
-  actionWallet: {
-    background: "linear-gradient(135deg,#8b5cff,#e000ff)"
-  },
-
-  actionWithdraw: {
-    background: "linear-gradient(135deg,#ff7a00,#ffc400)"
-  },
-
-  actionRefer: {
-    background: "linear-gradient(135deg,#ff007a,#ff37d2)"
-  },
-
-  actionTransaction: {
-    background: "linear-gradient(135deg,#00c8ff,#00ffd5)"
-  },
-
-  actionKyc: {
-    background: "linear-gradient(135deg,#00d9ff,#0077ff)"
-  },
-
-  actionReward: {
-    background: "linear-gradient(135deg,#7c3aed,#c084fc)"
-  },
-
-  actionBank: {
-    background: "linear-gradient(135deg,#ff8c00,#ffca28)"
-  },
-
-  actionPlan: {
-    background: "linear-gradient(135deg,#2979ff,#00b0ff)"
-  },
-
-  actionNotification: {
-    background: "linear-gradient(135deg,#ff1744,#ff5c8d)"
-  },
-
-  actionSupport: {
-    background: "linear-gradient(135deg,#00e676,#00c853)"
-  },
 
   promoBanner: {
     marginTop: "18px",
@@ -1093,16 +1052,16 @@ const styles = {
     fontSize: "55px"
   },
 
-  trustPanel: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "10px",
-    marginTop: "14px",
-    background: "#071831",
-    borderRadius: "21px",
-    padding: "12px",
-    border: "1px solid #1e40af"
-  },
+ trustPanel: {
+  display: "grid",
+  gridTemplateColumns: "repeat(4,1fr)",
+  gap: "10px",
+  marginTop: "14px",
+  background: "#071831",
+  borderRadius: "22px",
+  padding: "12px",
+  border: "2px solid #1e40af"
+},
 
   trustMiniCard: {
     display: "flex",
@@ -1155,12 +1114,21 @@ const styles = {
   },
 
   footerLinks: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "9px",
-    justifyContent: "center",
-    marginBottom: "12px"
-  },
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "10px",
+  justifyContent: "center",
+  marginBottom: "12px"
+},
+
+footerLinkBtn: {
+  background: "transparent",
+  border: "none",
+  color: "#38bdf8",
+  fontSize: "12px",
+  fontWeight: "700",
+  cursor: "pointer"
+},
 
   quickBar: {
     position: "fixed",
