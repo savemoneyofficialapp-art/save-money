@@ -2470,7 +2470,9 @@ app.post("/dashboard", async (req, res) => {
   referralIncome: user?.referralIncome || 0,
   teamIncome: user?.teamIncome || 0,
   myCode: user?.referCode || "",
+  photo: user.photo,
   kycStatus: user?.kycStatus || "not submitted"
+  
 });
 });
 
