@@ -397,15 +397,15 @@ const styles = {
   },
 
   card: {
-    width: "100%",
-    maxWidth: "980px",
-    minHeight: "92vh",
-    background: "#fff",
-    borderRadius: "46px",
-    display: "flex",
-    overflow: "hidden",
-    boxShadow: "0 25px 70px rgba(0,0,0,.18)"
-  },
+  width: "100%",
+  maxWidth: "980px",
+  background: "#ffffff",
+  borderRadius: "38px",
+  overflow: "hidden",
+  display: "flex",
+  boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
+  transform: "scale(0.94)"
+},
 
   leftPanel: {
     width: "33%",
@@ -578,10 +578,12 @@ const styles = {
     lineHeight: "34px"
   },
 
-  rightPanel: {
-    flex: 1,
-    padding: "48px 42px"
-  },
+ rightPanel: {
+  flex: 1,
+  padding: "35px 38px",
+  background: "#ffffff",
+  position: "relative"
+},
 
   create: {
     textAlign: "center",
@@ -608,7 +610,7 @@ const styles = {
   },
 
   inputWrap: {
-    height: "70px",
+    height: "68px",
     border: "1.8px solid",
     borderRadius: "24px",
     display: "flex",
@@ -799,46 +801,46 @@ const styles = {
     fontWeight: "800"
   },
 
-  bottomFeatures: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "10px",
-  marginTop: "28px",
-  flexWrap: "wrap"
+ bottomFeatures: {
+  display: "grid",
+  gridTemplateColumns: "repeat(2,1fr)",
+  gap: "14px",
+  marginTop: "25px",
+  width: "100%"
 },
 
 bottomItem: {
   display: "flex",
   alignItems: "center",
   gap: "10px",
-  minWidth: "140px"
+  background: "transparent"
 },
 
 bottomIcon: {
-  width: "48px",
-  height: "48px",
+  width: "42px",
+  height: "42px",
+  minWidth: "42px",
   borderRadius: "50%",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   color: "white",
-  fontSize: "20px",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.12)"
+  fontSize: "17px",
+  boxShadow: "0 5px 15px rgba(0,0,0,0.12)"
 },
 
 bottomTitle: {
-  fontSize: "14px",
+  fontSize: "13px",
   fontWeight: "700",
   color: "#111827",
-  lineHeight: "18px"
+  lineHeight: "16px"
 },
 
 bottomText: {
-  fontSize: "14px",
+  fontSize: "13px",
   fontWeight: "700",
   color: "#111827",
-  lineHeight: "18px"
+  lineHeight: "16px"
 },
   
 };
