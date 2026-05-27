@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { API } from "../config";
 
 export default function Register() {
-
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -12,13 +11,11 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [referCode, setReferCode] = useState("");
-
   const [terms, setTerms] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const register = async () => {
-
     if (!name || !mobile || !email || !password || !walletAddress) {
       alert("Please fill all required fields");
       return;
@@ -30,14 +27,11 @@ export default function Register() {
     }
 
     try {
-
       setLoading(true);
 
       const res = await fetch(`${API}/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
           mobile: mobile.trim(),
@@ -51,18 +45,12 @@ export default function Register() {
       });
 
       const data = await res.json();
+      alert(data.msg || "Registered");
 
-      alert(data.msg);
-
-      if (
-        data.msg === "Registered Successfully" ||
-        data.success === true
-      ) {
+      if (data.msg === "Registered Successfully" || data.success === true) {
         navigate("/login");
       }
-
     } catch (err) {
-      console.log(err);
       alert("Registration failed");
     } finally {
       setLoading(false);
@@ -70,185 +58,47 @@ export default function Register() {
   };
 
   return (
-
-    <div style={styles.container}>
-
-      <div style={styles.mainCard}>
-
-        {/* LEFT SIDE */}
+    <div style={styles.page}>
+      <div style={styles.card}>
 
         <div style={styles.leftPanel}>
+          <div style={styles.piggy}>🐷</div>
 
-          <div style={styles.logoTop}>
+          <h1 style={styles.brand}>
+            save<br />
+            <span>money</span>
+          </h1>
 
-            <div style={styles.piggyBox}>
-              🐷
-            </div>
+          <p style={styles.brandSub}>
+            Save Today, Secure Tomorrow
+          </p>
 
-            <h1 style={styles.saveMoney}>
-              save
-              <br />
-              money
-            </h1>
+          <h2 style={styles.why}>Why Join Us?</h2>
 
-            <p style={styles.leftSub}>
-              Save Today, Secure Tomorrow
-            </p>
+          <Benefit icon="🛡️" title="100% Secure" text="Your data is safe with us" />
+          <Benefit icon="👛" title="Save More" text="Smart saving for a better future" />
+          <Benefit icon="📈" title="Grow Faster" text="Achieve your financial goals with us" />
+          <Benefit icon="🎁" title="Exciting Rewards" text="Earn points and get amazing rewards" />
 
+          <div style={styles.smallSteps}>
+            Small Steps<br />Big Savings!
           </div>
-
-          <div style={styles.whyBox}>
-
-            <h2 style={styles.whyTitle}>
-              Why Join Us?
-            </h2>
-
-            <div style={styles.featureItem}>
-              <div style={styles.featureIcon}>🛡</div>
-
-              <div>
-                <h4 style={styles.featureHead}>
-                  100% Secure
-                </h4>
-
-                <p style={styles.featureText}>
-                  Your data is safe with us
-                </p>
-              </div>
-            </div>
-
-            <div style={styles.featureItem}>
-              <div style={styles.featureIconGreen}>💼</div>
-
-              <div>
-                <h4 style={styles.featureHead}>
-                  Save More
-                </h4>
-
-                <p style={styles.featureText}>
-                  Smart saving for a better future
-                </p>
-              </div>
-            </div>
-
-            <div style={styles.featureItem}>
-              <div style={styles.featureIconOrange}>📈</div>
-
-              <div>
-                <h4 style={styles.featureHead}>
-                  Grow Faster
-                </h4>
-
-                <p style={styles.featureText}>
-                  Achieve your financial goals
-                </p>
-              </div>
-            </div>
-
-            <div style={styles.featureItem}>
-              <div style={styles.featureIconPink}>🎁</div>
-
-              <div>
-                <h4 style={styles.featureHead}>
-                  Exciting Rewards
-                </h4>
-
-                <p style={styles.featureText}>
-                  Earn points and rewards
-                </p>
-              </div>
-            </div>
-
-          </div>
-
-          <div style={styles.bottomText}>
-            Small Steps
-            <br />
-            Big Savings!
-          </div>
-
         </div>
 
-        {/* RIGHT SIDE */}
-
         <div style={styles.rightPanel}>
+          <h2 style={styles.create}>Create Your</h2>
+          <h1 style={styles.account}>Account</h1>
 
-          <div style={styles.topArea}>
+          <p style={styles.join}>
+            Join <b>Save Money</b> and start your journey to financial freedom.
+          </p>
 
-            <h2 style={styles.createText}>
-              Create Your
-            </h2>
+          <InputBox color="#ff4cc4" icon="👤" placeholder="Full Name" value={name} setValue={setName} />
+          <InputBox color="#7c3aed" icon="📱" placeholder="Mobile Number" value={mobile} setValue={setMobile} />
+          <InputBox color="#0ea5e9" icon="✉️" placeholder="Email ID" value={email} setValue={setEmail} />
 
-            <h1 style={styles.accountText}>
-              Account
-            </h1>
-
-            <p style={styles.joinText}>
-              Join <span style={styles.joinSave}>Save Money</span> and
-              start your journey to financial freedom.
-            </p>
-
-          </div>
-
-          {/* NAME */}
-
-          <div style={styles.inputBoxPink}>
-
-            <div style={styles.iconPink}>
-              👤
-            </div>
-
-            <input
-              style={styles.input}
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-
-          </div>
-
-          {/* MOBILE */}
-
-          <div style={styles.inputBoxPurple}>
-
-            <div style={styles.iconPurple}>
-              📱
-            </div>
-
-            <input
-              style={styles.input}
-              placeholder="Mobile Number"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-            />
-
-          </div>
-
-          {/* EMAIL */}
-
-          <div style={styles.inputBoxBlue}>
-
-            <div style={styles.iconBlue}>
-              ✉
-            </div>
-
-            <input
-              style={styles.input}
-              placeholder="Email ID"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-
-          </div>
-
-          {/* PASSWORD */}
-
-          <div style={styles.inputBoxGreen}>
-
-            <div style={styles.iconGreen}>
-              🔒
-            </div>
-
+          <div style={{ ...styles.inputWrap, borderColor: "#10b981" }}>
+            <div style={{ ...styles.iconBox, background: "linear-gradient(135deg,#10b981,#22c55e)" }}>🔒</div>
             <input
               style={styles.input}
               type={showPass ? "text" : "password"}
@@ -256,571 +106,319 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-
-            <button
-              style={styles.eyeBtn}
-              onClick={() => setShowPass(!showPass)}
-            >
+            <button style={styles.eye} type="button" onClick={() => setShowPass(!showPass)}>
               👁
             </button>
-
           </div>
 
-          {/* WALLET */}
-
-          <div style={styles.inputBoxWallet}>
-
-            <div style={styles.iconWallet}>
-              💰
-            </div>
-
-            <input
-              style={styles.input}
-              placeholder="USDT Wallet Address"
-              value={walletAddress}
-              onChange={(e) => setWalletAddress(e.target.value)}
-            />
-
-          </div>
-
-          {/* REFER */}
-
-          <div style={styles.inputBoxOrange}>
-
-            <div style={styles.iconOrange}>
-              🎁
-            </div>
-
-            <input
-              style={styles.input}
-              placeholder="Refer Code (Optional)"
-              value={referCode}
-              onChange={(e) => setReferCode(e.target.value)}
-            />
-
-          </div>
-
-          {/* TERMS */}
+          <InputBox color="#06b6d4" icon="💰" placeholder="USDT Wallet Address" value={walletAddress} setValue={setWalletAddress} />
+          <InputBox color="#f59e0b" icon="🎁" placeholder="Refer Code (Optional)" value={referCode} setValue={setReferCode} />
 
           <label style={styles.checkRow}>
-
             <input
               type="checkbox"
               checked={terms}
               onChange={(e) => setTerms(e.target.checked)}
-              style={styles.check}
+              style={styles.checkbox}
             />
-
-            <span style={styles.termsText}>
-              I agree to the Terms & Conditions
+            <span>
+              I agree to the <b style={{ color: "#7c3aed" }}>Terms & Conditions</b>
             </span>
-
           </label>
 
-          {/* BUTTON */}
-
-          <button
-            style={styles.registerBtn}
-            onClick={register}
-            disabled={loading}
-          >
-
-            {loading
-              ? "Creating Account..."
-              : "Register Now"
-            }
-
-            <div style={styles.arrowCircle}>
-              ➜
-            </div>
-
+          <button style={styles.registerBtn} onClick={register} disabled={loading}>
+            {loading ? "Creating Account..." : "Register Now"}
+            <span style={styles.arrow}>›</span>
           </button>
 
-          {/* LOGIN */}
+         <p style={styles.loginText}>
+  Already have an account?
+  <span
+    style={styles.loginLink}
+    onClick={() => navigate("/login")}
+  >
+    Login
+  </span>
+</p>
 
-          <div style={styles.loginArea}>
-
-            Already have an account?
-
-            <span
-              style={styles.loginLink}
-              onClick={() => navigate("/login")}
-            >
-              Login
-            </span>
-
-          </div>
-
-          {/* DISCLAIMER */}
-
-          <div style={styles.disclaimerBox}>
-
-            <div style={styles.disclaimerIcon}>
-              🛡
-            </div>
-
+          <div style={styles.disclaimer}>
+            <div style={styles.disIcon}>🛡️</div>
             <div>
-
-              <h3 style={styles.disclaimerTitle}>
-                Disclaimer
-              </h3>
-
-              <p style={styles.disclaimerText}>
-                The information provided is for general
-                purposes only. Please read all terms
-                carefully before using our services.
+              <h3>Disclaimer</h3>
+              <p>
+                The information provided is for general purposes only. Please read all
+                the terms carefully before investing or using our services.
               </p>
-
             </div>
-
           </div>
-
         </div>
 
       </div>
+    </div>
+  );
+}
 
+function InputBox({ color, icon, placeholder, value, setValue }) {
+  return (
+    <div style={{ ...styles.inputWrap, borderColor: color }}>
+      <div style={{ ...styles.iconBox, background: `linear-gradient(135deg,${color},#7c3aed)` }}>
+        {icon}
+      </div>
+      <input
+        style={styles.input}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+      />
+    </div>
+  );
+}
+
+function Benefit({ icon, title, text }) {
+  return (
+    <div style={styles.benefit}>
+      <div style={styles.benefitIcon}>{icon}</div>
+      <div>
+        <h3>{title}</h3>
+        <p>{text}</p>
+      </div>
     </div>
   );
 }
 
 const styles = {
-
-  container: {
+  page: {
     minHeight: "100vh",
-    background:
-      "linear-gradient(135deg,#f8d7ff,#e9f3ff,#fff6e0)",
+    background: "linear-gradient(135deg,#ffd18a,#eef3ff,#dff7ff)",
+    padding: "25px",
     display: "flex",
     justifyContent: "center",
-    alignItems: "center",
-    padding: "25px"
-  },
-
-  mainCard: {
-    width: "100%",
-    maxWidth: "1180px",
-    background: "white",
-    borderRadius: "50px",
-    overflow: "hidden",
-    display: "flex",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.18)"
-  },
-
-  leftPanel: {
-    width: "34%",
-    background:
-      "linear-gradient(180deg,#7c3aed,#4f46e5,#5b21b6)",
-    padding: "40px 30px",
-    color: "white",
-    position: "relative"
-  },
-
-  logoTop: {
-    textAlign: "left"
-  },
-
-  piggyBox: {
-    width: "120px",
-    height: "120px",
-    borderRadius: "35px",
-    background:
-      "linear-gradient(135deg,#ff9bd2,#ff6ec7)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "65px",
-    marginBottom: "20px"
-  },
-
-  saveMoney: {
-    fontSize: "74px",
-    lineHeight: "72px",
-    margin: 0,
-    fontWeight: "900",
-    color: "#ffd43b"
-  },
-
-  leftSub: {
-    fontSize: "22px",
-    marginTop: "20px",
-    color: "#ffffff"
-  },
-
-  whyBox: {
-    marginTop: "60px"
-  },
-
-  whyTitle: {
-    color: "#ffd43b",
-    marginBottom: "28px",
-    fontSize: "38px"
-  },
-
-  featureItem: {
-    display: "flex",
-    gap: "18px",
-    marginBottom: "24px",
     alignItems: "center"
   },
 
-  featureIcon: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#38bdf8,#2563eb)",
+  card: {
+    width: "100%",
+    maxWidth: "980px",
+    minHeight: "92vh",
+    background: "#fff",
+    borderRadius: "46px",
     display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "30px"
+    overflow: "hidden",
+    boxShadow: "0 25px 70px rgba(0,0,0,.18)"
   },
 
-  featureIconGreen: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#22c55e,#16a34a)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "30px"
+  leftPanel: {
+    width: "33%",
+    background: "linear-gradient(180deg,#7c2cff,#4f20d8,#631bd9)",
+    color: "white",
+    padding: "38px 32px",
+    borderTopRightRadius: "60px",
+    borderBottomRightRadius: "60px",
+    position: "relative"
   },
 
-  featureIconOrange: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#fb923c,#f97316)",
+  piggy: {
+    width: "130px",
+    height: "130px",
+    borderRadius: "38px",
+    background: "linear-gradient(135deg,#ffb3c7,#ff6aa2)",
     display: "flex",
-    justifyContent: "center",
     alignItems: "center",
-    fontSize: "30px"
+    justifyContent: "center",
+    fontSize: "72px",
+    marginBottom: "28px"
   },
 
-  featureIconPink: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#ff4ecd,#ff0080)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "30px"
-  },
-
-  featureHead: {
+  brand: {
+    fontSize: "58px",
+    lineHeight: "52px",
     margin: 0,
-    fontSize: "26px"
+    fontWeight: "900",
+    letterSpacing: "-2px"
   },
 
-  featureText: {
-    margin: "6px 0 0",
-    color: "#f1f5f9",
-    fontSize: "18px"
+  brandSub: {
+    marginTop: "20px",
+    fontSize: "17px"
   },
 
-  bottomText: {
+  why: {
+    color: "#ffde3b",
+    marginTop: "80px",
+    fontSize: "24px"
+  },
+
+  benefit: {
+    display: "flex",
+    gap: "14px",
+    alignItems: "center",
+    marginTop: "20px"
+  },
+
+  benefitIcon: {
+    width: "50px",
+    height: "50px",
+    borderRadius: "15px",
+    background: "linear-gradient(135deg,#38bdf8,#2563eb)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "24px",
+    flexShrink: 0
+  },
+
+  smallSteps: {
     position: "absolute",
-    bottom: "40px",
-    left: "40px",
-    fontSize: "40px",
-    fontWeight: "bold",
-    color: "#e9d5ff",
-    lineHeight: "52px"
+    bottom: "30px",
+    left: "35px",
+    fontSize: "26px",
+    color: "#efe7ff",
+    fontStyle: "italic",
+    lineHeight: "36px"
   },
 
   rightPanel: {
     flex: 1,
-    padding: "45px"
+    padding: "55px 42px"
   },
 
-  topArea: {
+  create: {
     textAlign: "center",
-    marginBottom: "28px"
+    fontSize: "34px",
+    color: "#0f172a",
+    margin: 0
   },
 
-  createText: {
-    margin: 0,
-    fontSize: "52px",
-    color: "#0f172a"
-  },
-
-  accountText: {
-    margin: 0,
-    fontSize: "88px",
-    lineHeight: "95px",
-    background:
-      "linear-gradient(135deg,#ff00aa,#7c3aed,#2563eb)",
+  account: {
+    textAlign: "center",
+    fontSize: "72px",
+    margin: "-5px 0 10px",
+    background: "linear-gradient(135deg,#ff2ebd,#8b2cff,#118cff)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
-    fontWeight: "900"
+    fontWeight: "900",
+    fontFamily: "cursive"
   },
 
-  joinText: {
-    marginTop: "14px",
-    fontSize: "24px",
+  join: {
+    textAlign: "center",
+    fontSize: "17px",
     color: "#475569",
-    lineHeight: "40px"
+    marginBottom: "30px"
   },
 
-  joinSave: {
-    color: "#7c3aed",
-    fontWeight: "bold"
+  inputWrap: {
+    height: "72px",
+    border: "1.8px solid",
+    borderRadius: "24px",
+    display: "flex",
+    alignItems: "center",
+    padding: "0 14px",
+    gap: "18px",
+    marginTop: "16px"
+  },
+
+  iconBox: {
+    width: "52px",
+    height: "52px",
+    borderRadius: "17px",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "25px",
+    flexShrink: 0
   },
 
   input: {
     flex: 1,
     border: "none",
     outline: "none",
-    background: "transparent",
-    fontSize: "24px",
-    color: "#0f172a"
+    fontSize: "18px",
+    color: "#0f172a",
+    background: "transparent"
   },
 
-  inputBoxPink: {
-    height: "88px",
-    borderRadius: "30px",
-    border: "2px solid #ff7ac8",
-    display: "flex",
-    alignItems: "center",
-    padding: "0 22px",
-    marginTop: "18px",
-    gap: "18px"
-  },
-
-  inputBoxPurple: {
-    height: "88px",
-    borderRadius: "30px",
-    border: "2px solid #a855f7",
-    display: "flex",
-    alignItems: "center",
-    padding: "0 22px",
-    marginTop: "18px",
-    gap: "18px"
-  },
-
-  inputBoxBlue: {
-    height: "88px",
-    borderRadius: "30px",
-    border: "2px solid #3b82f6",
-    display: "flex",
-    alignItems: "center",
-    padding: "0 22px",
-    marginTop: "18px",
-    gap: "18px"
-  },
-
-  inputBoxGreen: {
-    height: "88px",
-    borderRadius: "30px",
-    border: "2px solid #22c55e",
-    display: "flex",
-    alignItems: "center",
-    padding: "0 22px",
-    marginTop: "18px",
-    gap: "18px"
-  },
-
-  inputBoxWallet: {
-    height: "88px",
-    borderRadius: "30px",
-    border: "2px solid #06b6d4",
-    display: "flex",
-    alignItems: "center",
-    padding: "0 22px",
-    marginTop: "18px",
-    gap: "18px"
-  },
-
-  inputBoxOrange: {
-    height: "88px",
-    borderRadius: "30px",
-    border: "2px solid #f59e0b",
-    display: "flex",
-    alignItems: "center",
-    padding: "0 22px",
-    marginTop: "18px",
-    gap: "18px"
-  },
-
-  iconPink: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#ff4ecd,#c026d3)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "28px"
-  },
-
-  iconPurple: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#9333ea,#7c3aed)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "28px"
-  },
-
-  iconBlue: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#3b82f6,#2563eb)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "28px"
-  },
-
-  iconGreen: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#22c55e,#16a34a)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "28px"
-  },
-
-  iconWallet: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#06b6d4,#0284c7)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "28px"
-  },
-
-  iconOrange: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "18px",
-    background:
-      "linear-gradient(135deg,#f59e0b,#f97316)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "28px"
-  },
-
-  eyeBtn: {
+  eye: {
     border: "none",
     background: "transparent",
-    fontSize: "28px",
-    cursor: "pointer"
+    fontSize: "22px"
   },
 
   checkRow: {
     display: "flex",
     alignItems: "center",
-    gap: "14px",
-    marginTop: "26px"
-  },
-
-  check: {
-    width: "24px",
-    height: "24px"
-  },
-
-  termsText: {
-    fontSize: "22px",
+    gap: "12px",
+    marginTop: "22px",
+    fontSize: "16px",
     color: "#334155"
+  },
+
+  checkbox: {
+    width: "22px",
+    height: "22px"
   },
 
   registerBtn: {
     width: "100%",
-    height: "90px",
+    height: "74px",
     border: "none",
-    borderRadius: "30px",
-    marginTop: "28px",
-    background:
-      "linear-gradient(135deg,#ff2ea6,#7c3aed,#4338ca)",
+    borderRadius: "26px",
+    marginTop: "26px",
+    background: "linear-gradient(135deg,#ff2ebd,#8b2cff,#412cff)",
     color: "white",
-    fontSize: "36px",
-    fontWeight: "bold",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "20px",
-    cursor: "pointer",
-    position: "relative"
+    fontSize: "24px",
+    fontWeight: "900",
+    position: "relative",
+    boxShadow: "0 14px 25px rgba(124,58,237,.35)"
   },
 
-  arrowCircle: {
-    width: "58px",
-    height: "58px",
+  arrow: {
+    position: "absolute",
+    right: "20px",
+    top: "12px",
+    width: "50px",
+    height: "50px",
     borderRadius: "50%",
     background: "white",
-    color: "#4338ca",
+    color: "#4f46e5",
     display: "flex",
-    justifyContent: "center",
     alignItems: "center",
-    fontSize: "28px",
-    position: "absolute",
-    right: "20px"
+    justifyContent: "center",
+    fontSize: "42px"
   },
 
-  loginArea: {
-    marginTop: "25px",
+  loginText: {
     textAlign: "center",
-    fontSize: "22px",
+    marginTop: "20px",
     color: "#475569"
   },
 
-  loginLink: {
-    color: "#7c3aed",
-    fontWeight: "bold",
-    marginLeft: "10px",
-    cursor: "pointer"
-  },
+loginLink: {
+  color: "#7c3aed",
+  fontWeight: "900",
+  cursor: "pointer",
+  marginLeft: "6px"
+},
 
-  disclaimerBox: {
-    marginTop: "40px",
+  disclaimer: {
+    marginTop: "28px",
     background: "#f0fdf4",
-    borderRadius: "30px",
-    padding: "25px",
+    border: "1px solid #bbf7d0",
+    borderRadius: "24px",
+    padding: "18px",
     display: "flex",
-    gap: "20px",
-    alignItems: "flex-start"
+    gap: "16px"
   },
 
-  disclaimerIcon: {
-    width: "75px",
-    height: "75px",
-    borderRadius: "22px",
-    background:
-      "linear-gradient(135deg,#22c55e,#16a34a)",
+  disIcon: {
+    width: "55px",
+    height: "55px",
+    borderRadius: "18px",
+    background: "linear-gradient(135deg,#22c55e,#16a34a)",
     display: "flex",
-    justifyContent: "center",
     alignItems: "center",
-    fontSize: "36px"
-  },
-
-  disclaimerTitle: {
-    margin: 0,
-    color: "#16a34a",
-    fontSize: "34px"
-  },
-
-  disclaimerText: {
-    marginTop: "10px",
-    color: "#334155",
-    lineHeight: "38px",
-    fontSize: "20px"
+    justifyContent: "center",
+    fontSize: "28px"
   }
-
 };
