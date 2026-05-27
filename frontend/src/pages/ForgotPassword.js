@@ -14,7 +14,9 @@ export default function ForgotPassword() {
   const [timer, setTimer] = useState(30);
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
+const [otpVerified, setOtpVerified] = useState(false);
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
 
   const sendOTP = async () => {
 
@@ -306,6 +308,32 @@ const verifyOTP = async () => {
       >
        Verify OTP
       </button>
+
+      {otpVerified && (
+  <div style={styles.resetBox}>
+    <h3 style={styles.resetTitle}>Create New Password</h3>
+
+    <input
+      type="password"
+      placeholder="New Password"
+      value={newPassword}
+      onChange={(e) => setNewPassword(e.target.value)}
+      style={styles.resetInput}
+    />
+
+    <input
+      type="password"
+      placeholder="Confirm Password"
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      style={styles.resetInput}
+    />
+
+    <button style={styles.resetBtn} onClick={resetPassword}>
+      Reset Password
+    </button>
+  </div>
+)}
 
       <button
         style={styles.loginBtn}
@@ -651,6 +679,42 @@ const styles = {
   timer: {
     color: "#6b7280"
   },
+
+  resetBox: {
+  marginTop: "25px",
+  padding: "24px",
+  borderRadius: "25px",
+  background: "white",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.08)"
+},
+
+resetTitle: {
+  fontSize: "28px",
+  color: "#111827",
+  marginBottom: "18px"
+},
+
+resetInput: {
+  width: "100%",
+  height: "60px",
+  borderRadius: "18px",
+  border: "2px solid #d8b4fe",
+  padding: "0 18px",
+  fontSize: "18px",
+  marginBottom: "14px",
+  outline: "none"
+},
+
+resetBtn: {
+  width: "100%",
+  height: "65px",
+  border: "none",
+  borderRadius: "25px",
+  background: "linear-gradient(90deg,#2563eb,#ec4899)",
+  color: "white",
+  fontSize: "22px",
+  fontWeight: "bold"
+},
 
   loginBtn: {
     width: "100%",
