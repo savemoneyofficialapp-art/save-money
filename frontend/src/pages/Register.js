@@ -14,6 +14,7 @@ export default function Register() {
   const [terms, setTerms] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const register = async () => {
     if (!name || !mobile || !email || !password || !walletAddress) {
@@ -31,7 +32,9 @@ export default function Register() {
 
       const res = await fetch(`${API}/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           name: name.trim(),
           mobile: mobile.trim(),
@@ -45,12 +48,14 @@ export default function Register() {
       });
 
       const data = await res.json();
+
       alert(data.msg || "Registered");
 
       if (data.msg === "Registered Successfully" || data.success === true) {
         navigate("/login");
       }
     } catch (err) {
+      console.log(err);
       alert("Registration failed");
     } finally {
       setLoading(false);
@@ -62,11 +67,22 @@ export default function Register() {
       <div style={styles.card}>
 
         <div style={styles.leftPanel}>
-          <div style={styles.piggy}>🐷</div>
+          <div style={styles.piggyWrap}>
+            <div style={styles.coin}>₹</div>
+            <div style={styles.piggy}>
+              <div style={styles.earLeft}></div>
+              <div style={styles.earRight}></div>
+              <div style={styles.eyeLeft}></div>
+              <div style={styles.eyeRight}></div>
+              <div style={styles.nose}>● ●</div>
+              <div style={styles.legOne}></div>
+              <div style={styles.legTwo}></div>
+            </div>
+          </div>
 
           <h1 style={styles.brand}>
             save<br />
-            <span>money</span>
+            money
           </h1>
 
           <p style={styles.brandSub}>
@@ -77,8 +93,8 @@ export default function Register() {
 
           <Benefit icon="🛡️" title="100% Secure" text="Your data is safe with us" />
           <Benefit icon="👛" title="Save More" text="Smart saving for a better future" />
-          <Benefit icon="📈" title="Grow Faster" text="Achieve your financial goals with us" />
-          <Benefit icon="🎁" title="Exciting Rewards" text="Earn points and get amazing rewards" />
+          <Benefit icon="📈" title="Grow Faster" text="Achieve your financial goals" />
+          <Benefit icon="🎁" title="Exciting Rewards" text="Earn rewards and benefits" />
 
           <div style={styles.smallSteps}>
             Small Steps<br />Big Savings!
@@ -98,7 +114,10 @@ export default function Register() {
           <InputBox color="#0ea5e9" icon="✉️" placeholder="Email ID" value={email} setValue={setEmail} />
 
           <div style={{ ...styles.inputWrap, borderColor: "#10b981" }}>
-            <div style={{ ...styles.iconBox, background: "linear-gradient(135deg,#10b981,#22c55e)" }}>🔒</div>
+            <div style={{ ...styles.iconBox, background: "linear-gradient(135deg,#10b981,#22c55e)" }}>
+              🔒
+            </div>
+
             <input
               style={styles.input}
               type={showPass ? "text" : "password"}
@@ -106,13 +125,18 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <button style={styles.eye} type="button" onClick={() => setShowPass(!showPass)}>
+
+            <button
+              style={styles.eye}
+              type="button"
+              onClick={() => setShowPass(!showPass)}
+            >
               👁
             </button>
           </div>
 
           <InputBox color="#06b6d4" icon="💰" placeholder="USDT Wallet Address" value={walletAddress} setValue={setWalletAddress} />
-          <InputBox color="#f59e0b" icon="🎁" placeholder="Refer Code (Optional)" value={referCode} setValue={setReferCode} />
+          <InputBox color="#f59e0b" icon="🎁" placeholder="Refer Code Optional" value={referCode} setValue={setReferCode} />
 
           <label style={styles.checkRow}>
             <input
@@ -121,39 +145,157 @@ export default function Register() {
               onChange={(e) => setTerms(e.target.checked)}
               style={styles.checkbox}
             />
+
             <span>
-              I agree to the <b style={{ color: "#7c3aed" }}>Terms & Conditions</b>
+              I agree to the{" "}
+              <b
+                style={styles.termsLink}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowTerms(true);
+                }}
+              >
+                Terms & Conditions
+              </b>
             </span>
           </label>
 
-          <button style={styles.registerBtn} onClick={register} disabled={loading}>
+          <button
+            style={{
+              ...styles.registerBtn,
+              opacity: loading ? 0.7 : 1
+            }}
+            onClick={register}
+            disabled={loading}
+          >
             {loading ? "Creating Account..." : "Register Now"}
             <span style={styles.arrow}>›</span>
           </button>
 
-         <p style={styles.loginText}>
-  Already have an account?
-  <span
-    style={styles.loginLink}
-    onClick={() => navigate("/login")}
-  >
-    Login
-  </span>
-</p>
+          <p style={styles.loginText}>
+            Already have an account?
+            <span
+              style={styles.loginLink}
+              onClick={() => navigate("/login")}
+            >
+              Login
+            </span>
+          </p>
 
           <div style={styles.disclaimer}>
             <div style={styles.disIcon}>🛡️</div>
+
             <div>
-              <h3>Disclaimer</h3>
-              <p>
-                The information provided is for general purposes only. Please read all
-                the terms carefully before investing or using our services.
+              <h3 style={styles.disclaimerTitle}>Disclaimer</h3>
+
+              <p style={styles.disclaimerText}>
+                Save Money is a private digital saving and investment initiative.
+                Users must read all terms, risk disclosures, investment conditions,
+                renewal rules, bonus rules, KYC rules, wallet policies and withdrawal
+                conditions before creating an account or using any service.
+              </p>
+
+              <p style={styles.disclaimerText}>
+                Investment returns may vary based on company performance, market
+                conditions, internal policies and future updates. Early closure may
+                include deduction as per platform policy. Referral, performance,
+                team, royalty and reward benefits are subject to eligibility rules.
               </p>
             </div>
           </div>
         </div>
-
       </div>
+
+      {showTerms && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <h2 style={styles.modalTitle}>Save Money Terms & Conditions</h2>
+
+            <div style={styles.modalBody}>
+              <p>
+                Save Money is a private digital saving and investment initiative created
+                to help users build disciplined saving habits and explore digital earning
+                opportunities through a structured platform.
+              </p>
+
+              <p>
+                Users must complete registration with correct personal information and
+                must complete KYC verification before accessing investment, referral,
+                wallet and earning related features.
+              </p>
+
+              <p>
+                Users are responsible for providing accurate mobile number, email ID,
+                USDT wallet address, PAN details, Aadhaar details and uploaded documents.
+                Wrong information may result in rejection, delay, freeze or restriction.
+              </p>
+
+              <p>
+                If a user closes an investment before completing the selected tenure,
+                the platform may deduct 20% from the principal investment amount and
+                return the remaining principal without interest, according to company
+                policy.
+              </p>
+
+              <p>
+                Save Money works as a systematic saving and investment style platform.
+                ROI may be updated, increased or decreased depending on company profit,
+                business performance, risk factors, market conditions and internal
+                decisions.
+              </p>
+
+              <p>
+                Referral income, performance bonus, team bonus, royalty bonus and daily
+                reward are not guaranteed income. These benefits depend on eligibility,
+                active status, investment completion, renewals, direct referral tasks
+                and other platform rules.
+              </p>
+
+              <p>
+                Wallet balance, rewards, referral income and other earnings may be
+                reviewed by admin before approval, withdrawal or adjustment. Any
+                suspicious activity, fake account, duplicate KYC, false referral or
+                policy violation may result in account block.
+              </p>
+
+              <p>
+                Auto withdrawal is subject to renewal status, wallet eligibility, admin
+                verification and company policy. Withdrawal delays may happen due to
+                verification, bank or wallet network issues.
+              </p>
+
+              <p>
+                Save Money aims to grow into a bigger, transparent and legally compliant
+                financial technology ecosystem in the future. Users should use the
+                platform only after understanding all possible risks and rules.
+              </p>
+
+              <p>
+                By creating an account, the user confirms that they have read,
+                understood and accepted all policies, risks, rules, conditions,
+                deductions, renewal rules, KYC rules and platform limitations.
+              </p>
+            </div>
+
+            <button
+              style={styles.modalBtn}
+              onClick={() => {
+                setTerms(true);
+                setShowTerms(false);
+              }}
+            >
+              Accept & Continue
+            </button>
+
+            <button
+              style={styles.closeBtn}
+              onClick={() => setShowTerms(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -164,6 +306,7 @@ function InputBox({ color, icon, placeholder, value, setValue }) {
       <div style={{ ...styles.iconBox, background: `linear-gradient(135deg,${color},#7c3aed)` }}>
         {icon}
       </div>
+
       <input
         style={styles.input}
         placeholder={placeholder}
@@ -178,6 +321,7 @@ function Benefit({ icon, title, text }) {
   return (
     <div style={styles.benefit}>
       <div style={styles.benefitIcon}>{icon}</div>
+
       <div>
         <h3>{title}</h3>
         <p>{text}</p>
@@ -217,16 +361,117 @@ const styles = {
     position: "relative"
   },
 
-  piggy: {
-    width: "130px",
-    height: "130px",
-    borderRadius: "38px",
-    background: "linear-gradient(135deg,#ffb3c7,#ff6aa2)",
+  piggyWrap: {
+    position: "relative",
+    width: "145px",
+    height: "125px",
+    marginBottom: "25px"
+  },
+
+  coin: {
+    position: "absolute",
+    top: "-8px",
+    left: "52px",
+    width: "42px",
+    height: "42px",
+    borderRadius: "50%",
+    background: "#ffd43b",
+    color: "#7c3aed",
+    fontWeight: "900",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "72px",
-    marginBottom: "28px"
+    fontSize: "25px",
+    zIndex: 3,
+    boxShadow: "0 8px 15px rgba(0,0,0,.2)"
+  },
+
+  piggy: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    width: "135px",
+    height: "92px",
+    borderRadius: "55px 60px 45px 45px",
+    background: "linear-gradient(135deg,#ffb3c7,#ff6aa2)",
+    boxShadow: "inset -10px -8px 0 rgba(255,0,100,.16)"
+  },
+
+  earLeft: {
+    position: "absolute",
+    top: "-18px",
+    left: "25px",
+    width: "32px",
+    height: "32px",
+    background: "#ff8ab8",
+    borderRadius: "8px 20px 8px 20px",
+    transform: "rotate(25deg)"
+  },
+
+  earRight: {
+    position: "absolute",
+    top: "-14px",
+    right: "20px",
+    width: "26px",
+    height: "26px",
+    background: "#ff8ab8",
+    borderRadius: "8px 18px 8px 18px",
+    transform: "rotate(45deg)"
+  },
+
+  eyeLeft: {
+    position: "absolute",
+    top: "28px",
+    left: "78px",
+    width: "7px",
+    height: "7px",
+    borderRadius: "50%",
+    background: "#1e293b"
+  },
+
+  eyeRight: {
+    position: "absolute",
+    top: "28px",
+    left: "100px",
+    width: "7px",
+    height: "7px",
+    borderRadius: "50%",
+    background: "#1e293b"
+  },
+
+  nose: {
+    position: "absolute",
+    right: "-8px",
+    top: "36px",
+    width: "36px",
+    height: "26px",
+    borderRadius: "50%",
+    background: "#ff8ab8",
+    color: "#7c2d12",
+    fontSize: "8px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  legOne: {
+    position: "absolute",
+    bottom: "-8px",
+    left: "32px",
+    width: "20px",
+    height: "18px",
+    background: "#ff6aa2",
+    borderRadius: "0 0 8px 8px"
+  },
+
+  legTwo: {
+    position: "absolute",
+    bottom: "-8px",
+    right: "34px",
+    width: "20px",
+    height: "18px",
+    background: "#ff6aa2",
+    borderRadius: "0 0 8px 8px"
   },
 
   brand: {
@@ -244,7 +489,7 @@ const styles = {
 
   why: {
     color: "#ffde3b",
-    marginTop: "80px",
+    marginTop: "70px",
     fontSize: "24px"
   },
 
@@ -252,7 +497,7 @@ const styles = {
     display: "flex",
     gap: "14px",
     alignItems: "center",
-    marginTop: "20px"
+    marginTop: "18px"
   },
 
   benefitIcon: {
@@ -269,17 +514,17 @@ const styles = {
 
   smallSteps: {
     position: "absolute",
-    bottom: "30px",
+    bottom: "28px",
     left: "35px",
-    fontSize: "26px",
+    fontSize: "24px",
     color: "#efe7ff",
     fontStyle: "italic",
-    lineHeight: "36px"
+    lineHeight: "34px"
   },
 
   rightPanel: {
     flex: 1,
-    padding: "55px 42px"
+    padding: "48px 42px"
   },
 
   create: {
@@ -291,31 +536,30 @@ const styles = {
 
   account: {
     textAlign: "center",
-    fontSize: "72px",
+    fontSize: "68px",
     margin: "-5px 0 10px",
     background: "linear-gradient(135deg,#ff2ebd,#8b2cff,#118cff)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
-    fontWeight: "900",
-    fontFamily: "cursive"
+    fontWeight: "900"
   },
 
   join: {
     textAlign: "center",
     fontSize: "17px",
     color: "#475569",
-    marginBottom: "30px"
+    marginBottom: "28px"
   },
 
   inputWrap: {
-    height: "72px",
+    height: "70px",
     border: "1.8px solid",
     borderRadius: "24px",
     display: "flex",
     alignItems: "center",
     padding: "0 14px",
     gap: "18px",
-    marginTop: "16px"
+    marginTop: "15px"
   },
 
   iconBox: {
@@ -342,7 +586,8 @@ const styles = {
   eye: {
     border: "none",
     background: "transparent",
-    fontSize: "22px"
+    fontSize: "22px",
+    cursor: "pointer"
   },
 
   checkRow: {
@@ -359,6 +604,11 @@ const styles = {
     height: "22px"
   },
 
+  termsLink: {
+    color: "#7c3aed",
+    cursor: "pointer"
+  },
+
   registerBtn: {
     width: "100%",
     height: "74px",
@@ -370,7 +620,8 @@ const styles = {
     fontSize: "24px",
     fontWeight: "900",
     position: "relative",
-    boxShadow: "0 14px 25px rgba(124,58,237,.35)"
+    boxShadow: "0 14px 25px rgba(124,58,237,.35)",
+    cursor: "pointer"
   },
 
   arrow: {
@@ -394,15 +645,15 @@ const styles = {
     color: "#475569"
   },
 
-loginLink: {
-  color: "#7c3aed",
-  fontWeight: "900",
-  cursor: "pointer",
-  marginLeft: "6px"
-},
+  loginLink: {
+    color: "#7c3aed",
+    fontWeight: "900",
+    cursor: "pointer",
+    marginLeft: "6px"
+  },
 
   disclaimer: {
-    marginTop: "28px",
+    marginTop: "26px",
     background: "#f0fdf4",
     border: "1px solid #bbf7d0",
     borderRadius: "24px",
@@ -419,6 +670,76 @@ loginLink: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "28px"
+    fontSize: "28px",
+    flexShrink: 0
+  },
+
+  disclaimerTitle: {
+    margin: 0,
+    color: "#16a34a"
+  },
+
+  disclaimerText: {
+    color: "#334155",
+    lineHeight: "24px",
+    fontSize: "14px"
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15,23,42,.55)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+    padding: "20px"
+  },
+
+  modal: {
+    width: "100%",
+    maxWidth: "520px",
+    maxHeight: "82vh",
+    background: "white",
+    borderRadius: "28px",
+    padding: "24px",
+    boxShadow: "0 25px 70px rgba(0,0,0,.35)"
+  },
+
+  modalTitle: {
+    margin: 0,
+    color: "#7c3aed",
+    textAlign: "center"
+  },
+
+  modalBody: {
+    marginTop: "18px",
+    maxHeight: "52vh",
+    overflowY: "auto",
+    color: "#334155",
+    lineHeight: "25px",
+    fontSize: "14px"
+  },
+
+  modalBtn: {
+    width: "100%",
+    marginTop: "18px",
+    padding: "14px",
+    border: "none",
+    borderRadius: "16px",
+    background: "linear-gradient(135deg,#7c3aed,#2563eb)",
+    color: "white",
+    fontWeight: "900"
+  },
+
+  closeBtn: {
+    width: "100%",
+    marginTop: "10px",
+    padding: "12px",
+    border: "none",
+    borderRadius: "14px",
+    background: "#e2e8f0",
+    color: "#334155",
+    fontWeight: "800"
   }
 };
