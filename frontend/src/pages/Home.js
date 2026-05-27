@@ -381,370 +381,282 @@ function NavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-
   container: {
     minHeight: "100vh",
-    background:
-      "linear-gradient(180deg,#000814,#020b22,#03112f)",
+    background: "#020817",
     color: "white",
-    paddingBottom: "170px",
-    overflowX: "hidden"
+    padding: "0 22px 160px",
+    fontFamily: "Arial, sans-serif"
   },
 
   topBar: {
+    height: "70px",
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    padding: "18px 18px 10px"
+    alignItems: "center"
   },
 
   menuBtn: {
-    background: "transparent",
+    background: "none",
     border: "none",
     color: "white",
     fontSize: "34px"
   },
 
   topTitle: {
-    margin: 0,
-    fontSize: "26px",
-    fontWeight: "700"
+    fontSize: "24px",
+    fontWeight: "800"
   },
 
   bellBox: {
     position: "relative",
-    fontSize: "28px",
-    cursor: "pointer"
+    fontSize: "28px"
   },
 
   bellBadge: {
     position: "absolute",
-    top: "-7px",
-    right: "-7px",
-    width: "22px",
-    height: "22px",
+    top: "-8px",
+    right: "-8px",
+    background: "#e11d48",
+    width: "23px",
+    height: "23px",
     borderRadius: "50%",
-    background: "#ff1744",
+    fontSize: "12px",
     display: "flex",
-    justifyContent: "center",
     alignItems: "center",
-    fontSize: "11px",
+    justifyContent: "center",
     fontWeight: "bold"
   },
 
   heroCard: {
-    margin: "15px",
-    borderRadius: "28px",
+    height: "180px",
+    borderRadius: "22px",
     padding: "22px",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
     background:
-      "linear-gradient(135deg,#021526,#042e4b,#10b85b)",
-    boxShadow:
-      "0 0 35px rgba(0,255,170,0.18)",
-    border: "1px solid rgba(0,255,170,0.18)",
-    position: "relative",
-    overflow: "hidden"
+      "radial-gradient(circle at 80% 10%, #16a34a 0%, transparent 30%), linear-gradient(135deg,#061426,#052b3a,#08b85e)",
+    border: "1px solid rgba(34,197,94,.45)",
+    boxShadow: "0 0 30px rgba(34,197,94,.18)",
+    gap: "28px"
   },
 
   avatarBox: {
-    width: "92px",
-    height: "92px",
+    width: "120px",
+    height: "120px",
     borderRadius: "50%",
-    border: "3px solid rgba(255,255,255,0.7)",
+    background: "#253244",
+    border: "3px solid #dbeafe",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "52px",
-    background: "#394457"
+    fontSize: "68px"
   },
 
   heroUser: {
-    flex: 1,
-    marginLeft: "18px"
+    flex: 1
   },
 
   welcomeBack: {
-    margin: 0,
-    fontSize: "20px",
-    color: "#ffffff"
+    fontSize: "19px",
+    fontWeight: "700",
+    margin: 0
   },
 
   nameRow: {
     display: "flex",
     alignItems: "center",
-    gap: "10px",
-    marginTop: "6px"
+    gap: "10px"
   },
 
   userName: {
-    margin: 0,
-    fontSize: "48px",
-    fontWeight: "800"
+    fontSize: "38px",
+    margin: "8px 0",
+    fontWeight: "900"
   },
 
   vip: {
-    background:
-      "linear-gradient(135deg,#5b2cff,#8e44ff)",
-    padding: "7px 14px",
-    borderRadius: "10px",
-    fontWeight: "bold",
-    fontSize: "14px"
+    background: "#6d28d9",
+    padding: "7px 12px",
+    borderRadius: "9px",
+    fontWeight: "800"
   },
 
   slogan: {
-    marginTop: "8px",
-    color: "#d4ffe9",
-    fontSize: "18px"
+    margin: 0,
+    fontSize: "15px",
+    fontWeight: "700"
   },
 
   walletCard: {
-    width: "210px",
-    borderRadius: "24px",
+    width: "230px",
+    height: "110px",
+    borderRadius: "18px",
     padding: "20px",
-    background:
-      "linear-gradient(135deg,#12b85f,#19d978)",
-    color: "white",
-    boxShadow:
-      "0 0 20px rgba(0,255,100,0.3)"
+    background: "linear-gradient(135deg,#16a34a,#05c46b)",
+    boxShadow: "0 12px 25px rgba(0,0,0,.25)"
   },
 
   walletIcon: {
-    fontSize: "48px",
-    marginTop: "10px"
+    fontSize: "42px",
+    float: "right"
   },
 
   updateCard: {
-    margin: "15px",
-    background:
-      "linear-gradient(90deg,#08111d,#111827)",
-    borderRadius: "26px",
-    padding: "20px",
+    height: "75px",
+    marginTop: "18px",
+    borderRadius: "17px",
+    padding: "18px 28px",
+    background: "linear-gradient(135deg,#111827,#0b1220)",
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    border: "1px solid #1d3557"
+    alignItems: "center"
   },
 
   updateLeft: {
     display: "flex",
     alignItems: "center",
-    gap: "15px"
+    gap: "18px"
   },
 
   updateIcon: {
-    fontSize: "38px",
-    color: "#ffc107"
+    fontSize: "30px"
   },
 
   arrow: {
-    fontSize: "45px",
-    color: "#cfd8dc"
+    fontSize: "46px"
   },
 
   statsGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "15px",
-    padding: "0 15px"
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "18px",
+    marginTop: "22px"
   },
 
   statCard: {
-    borderRadius: "24px",
+    height: "145px",
+    borderRadius: "17px",
     padding: "22px",
-    minHeight: "170px",
-    position: "relative",
-    overflow: "hidden",
-    boxShadow:
-      "0 0 22px rgba(0,0,0,0.35)"
+    boxShadow: "0 10px 25px rgba(0,0,0,.35)"
   },
 
-  statBlue: {
-    background:
-      "linear-gradient(135deg,#1736ff,#071b7a)"
-  },
-
-  statGreen: {
-    background:
-      "linear-gradient(135deg,#0aa06e,#014737)"
-  },
-
-  statPurple: {
-    background:
-      "linear-gradient(135deg,#742bff,#3b0764)"
-  },
-
-  statOrange: {
-    background:
-      "linear-gradient(135deg,#ff7b00,#9a3412)"
-  },
+  statBlue: { background: "linear-gradient(135deg,#1337d8,#061b6b)" },
+  statGreen: { background: "linear-gradient(135deg,#047857,#064e3b)" },
+  statPurple: { background: "linear-gradient(135deg,#6b21a8,#3b0764)" },
+  statOrange: { background: "linear-gradient(135deg,#ea580c,#9a3412)" },
 
   statIcon: {
-    fontSize: "42px",
-    marginBottom: "15px"
+    fontSize: "34px"
   },
 
   sectionTitle: {
+    margin: "22px 0 16px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "18px",
-    marginTop: "35px",
-    marginBottom: "20px"
+    gap: "14px"
   },
 
   sectionBox: {
-    margin: "0 15px",
-    background:
-      "linear-gradient(180deg,#06142d,#071223)",
-    borderRadius: "30px",
-    padding: "18px",
+    borderRadius: "20px",
+    background: "linear-gradient(180deg,#081a35,#06101f)",
+    border: "1px solid #123c70",
+    padding: "22px",
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "18px",
-    border: "1px solid #163c75"
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "18px"
   },
 
   actionBtn: {
+    height: "110px",
     border: "none",
-    borderRadius: "24px",
-    padding: "22px",
-    minHeight: "140px",
-    textAlign: "left",
+    borderRadius: "16px",
     color: "white",
-    boxShadow:
-      "0 0 22px rgba(0,0,0,0.25)"
+    fontWeight: "800",
+    textAlign: "center",
+    boxShadow: "0 10px 22px rgba(0,0,0,.3)"
   },
 
-  btnGreen: {
-    background:
-      "linear-gradient(135deg,#00c853,#007e33)"
-  },
-
-  btnBlue: {
-    background:
-      "linear-gradient(135deg,#1e88ff,#004fc4)"
-  },
-
-  btnPurple: {
-    background:
-      "linear-gradient(135deg,#7c3aed,#d946ef)"
-  },
-
-  btnOrange: {
-    background:
-      "linear-gradient(135deg,#ff7b00,#ffb300)"
-  },
-
-  btnPink: {
-    background:
-      "linear-gradient(135deg,#ff006e,#d000ff)"
-  },
-
-  btnCyan: {
-    background:
-      "linear-gradient(135deg,#00acc1,#00e5ff)"
-  },
-
-  btnSky: {
-    background:
-      "linear-gradient(135deg,#00b8d4,#0288d1)"
-  },
-
-  btnViolet: {
-    background:
-      "linear-gradient(135deg,#7b2cff,#b388ff)"
-  },
-
-  btnGold: {
-    background:
-      "linear-gradient(135deg,#ff9800,#ef6c00)"
-  },
-
-  btnPlan: {
-    background:
-      "linear-gradient(135deg,#2979ff,#304ffe)"
-  },
-
-  btnRed: {
-    background:
-      "linear-gradient(135deg,#ff1744,#ff5252)"
-  },
-
-  btnSupport: {
-    background:
-      "linear-gradient(135deg,#00c853,#00e676)"
-  },
+  btnGreen: { background: "linear-gradient(135deg,#16a34a,#05c46b)" },
+  btnBlue: { background: "linear-gradient(135deg,#2563eb,#0284c7)" },
+  btnPurple: { background: "linear-gradient(135deg,#7c3aed,#c026d3)" },
+  btnOrange: { background: "linear-gradient(135deg,#ea580c,#f59e0b)" },
+  btnPink: { background: "linear-gradient(135deg,#db2777,#ec4899)" },
+  btnCyan: { background: "linear-gradient(135deg,#0891b2,#14b8a6)" },
+  btnSky: { background: "linear-gradient(135deg,#06b6d4,#0284c7)" },
+  btnViolet: { background: "linear-gradient(135deg,#6d28d9,#a78bfa)" },
+  btnGold: { background: "linear-gradient(135deg,#c2410c,#f59e0b)" },
+  btnPlan: { background: "linear-gradient(135deg,#2563eb,#0ea5e9)" },
+  btnRed: { background: "linear-gradient(135deg,#be123c,#f43f5e)" },
+  btnSupport: { background: "linear-gradient(135deg,#059669,#22c55e)" },
 
   banner: {
-    margin: "30px 15px 0",
-    borderRadius: "30px",
-    padding: "30px",
-    background:
-      "linear-gradient(135deg,#3f0d99,#7b2cff,#8e24aa)",
+    marginTop: "24px",
+    height: "170px",
+    borderRadius: "20px",
+    padding: "28px",
+    background: "linear-gradient(135deg,#4c1d95,#7e22ce,#6d28d9)",
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    overflow: "hidden"
+    alignItems: "center"
   },
 
   bannerImg: {
-    fontSize: "100px"
+    fontSize: "86px"
   },
 
   trustGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "repeat(4,1fr)",
     gap: "14px",
-    padding: "15px",
-    marginTop: "18px"
+    marginTop: "18px",
+    background: "#07152b",
+    borderRadius: "18px",
+    padding: "18px",
+    border: "1px solid #123c70"
   },
 
   trustCard: {
-    background:
-      "linear-gradient(135deg,#06142d,#08111d)",
-    borderRadius: "22px",
-    padding: "18px",
     display: "flex",
     alignItems: "center",
-    gap: "14px",
-    border: "1px solid #163c75"
+    gap: "12px"
   },
 
   aboutBar: {
-    marginTop: "20px",
-    background:
-      "linear-gradient(90deg,#00acc1,#26c6da)",
-    padding: "16px",
-    textAlign: "center",
-    fontWeight: "700",
-    fontSize: "20px"
+    margin: "26px -22px 0",
+    height: "54px",
+    background: "linear-gradient(90deg,#0891b2,#14b8a6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "800"
   },
 
   helpText: {
     textAlign: "center",
-    color: "#00ff66",
-    fontSize: "42px",
-    marginTop: "35px",
-    fontWeight: "900"
+    color: "#22c55e",
+    fontSize: "26px",
+    fontWeight: "900",
+    marginTop: "28px"
   },
 
   footer: {
     textAlign: "center",
-    padding: "35px 20px"
+    padding: "25px",
+    borderTop: "1px solid #0f2b52",
+    color: "#38bdf8"
   },
 
   quickBtns: {
     position: "fixed",
-    bottom: "78px",
-    left: 0,
-    right: 0,
+    bottom: "70px",
+    left: "18px",
+    right: "18px",
     display: "grid",
     gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "10px",
-    padding: "0 12px",
-    zIndex: 999
+    gap: "8px",
+    zIndex: 1000
   },
 
   bottomNav: {
@@ -752,24 +664,20 @@ const styles = {
     bottom: 0,
     left: 0,
     right: 0,
-    height: "72px",
+    height: "70px",
     background: "#020817",
-    borderTop: "1px solid #163c75",
     display: "grid",
     gridTemplateColumns: "repeat(5,1fr)",
+    borderTop: "1px solid #0f2b52",
     zIndex: 999
   },
 
   navItem: {
     border: "none",
-    background: "transparent",
     color: "white",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center",
-    gap: "4px",
-    fontSize: "13px"
+    justifyContent: "center"
   }
-
 };
