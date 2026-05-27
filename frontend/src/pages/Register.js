@@ -197,10 +197,8 @@ export default function Register() {
               </p>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div style={styles.bottomFeatures}>
+<div style={styles.bottomFeatures}>
 
   <div style={styles.bottomItem}>
     <div style={{
@@ -259,6 +257,11 @@ export default function Register() {
   </div>
 
 </div>
+
+        </div>
+      </div>
+
+      
 
       
 
@@ -397,15 +400,15 @@ const styles = {
   },
 
   card: {
-  width: "100%",
-  maxWidth: "980px",
-  minHeight: "92vh",
-  background: "#fff",
-  borderRadius: "46px",
-  overflow: "hidden",
-  display: "flex",
-  boxShadow: "0 25px 70px rgba(0,0,0,.18)",
-},
+    width: "100%",
+    maxWidth: "980px",
+    minHeight: "92vh",
+    background: "#fff",
+    borderRadius: "46px",
+    display: "flex",
+    overflow: "hidden",
+    boxShadow: "0 25px 70px rgba(0,0,0,.18)"
+  },
 
   leftPanel: {
     width: "33%",
@@ -580,9 +583,7 @@ const styles = {
 
   rightPanel: {
     flex: 1,
-    padding: "45px 42px",
-    position: "relative",
-    background: "#fff"
+    padding: "48px 42px"
   },
 
   create: {
@@ -610,7 +611,7 @@ const styles = {
   },
 
   inputWrap: {
-    height: "68px",
+    height: "70px",
     border: "1.8px solid",
     borderRadius: "24px",
     display: "flex",
@@ -801,44 +802,46 @@ const styles = {
     fontWeight: "800"
   },
 
- bottomFeatures: {
-  display: "grid",
-  gridTemplateColumns: "repeat(4,1fr)",
-  gap: "14px",
-  marginTop: "24px",
-  width: "100%"
+bottomFeatures: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "10px",
+  marginTop: "28px",
+  flexWrap: "wrap"
 },
 
 bottomItem: {
   display: "flex",
   alignItems: "center",
-  gap: "8px"
+  gap: "10px",
+  minWidth: "140px"
 },
 
 bottomIcon: {
-  width: "42px",
-  height: "42px",
-  minWidth: "42px",
+  width: "48px",
+  height: "48px",
   borderRadius: "50%",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   color: "white",
-  fontSize: "17px"
+  fontSize: "20px",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.12)"
 },
 
 bottomTitle: {
-  fontSize: "13px",
+  fontSize: "14px",
   fontWeight: "700",
   color: "#111827",
-  lineHeight: "16px"
+  lineHeight: "18px"
 },
 
 bottomText: {
-  fontSize: "13px",
+  fontSize: "14px",
   fontWeight: "700",
   color: "#111827",
-  lineHeight: "16px"
+  lineHeight: "18px"
 },
-  
+
 };
