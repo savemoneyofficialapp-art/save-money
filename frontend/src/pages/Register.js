@@ -190,13 +190,7 @@ export default function Register() {
 
               <p style={styles.disclaimerText}>
                 Save Money is a private digital saving and investment initiative.
-                Users must read all terms, risk disclosures, investment conditions,
-                renewal rules, bonus rules, KYC rules, wallet policies and withdrawal
-                conditions before creating an account or using any service.
-              </p>
-
-              <p style={styles.disclaimerText}>
-                Investment returns may vary based on company performance, market
+               Investment returns may vary based on company performance, market
                 conditions, internal policies and future updates. Early closure may
                 include deduction as per platform policy. Referral, performance,
                 team, royalty and reward benefits are subject to eligibility rules.
@@ -206,51 +200,67 @@ export default function Register() {
         </div>
       </div>
 
-      <div style={styles.bottomInfoWrap}>
+      <div style={styles.bottomFeatures}>
 
-  <div style={styles.bottomInfoCard}>
-    <div style={styles.bottomInfoIconBlue}>🔐</div>
+  <div style={styles.bottomItem}>
+    <div style={{
+      ...styles.bottomIcon,
+      background: "linear-gradient(135deg,#22c55e,#86efac)"
+    }}>
+      🛡
+    </div>
 
     <div>
-      <h4 style={styles.bottomInfoTitle}>
-        Secure Registration
-      </h4>
-
-      <p style={styles.bottomInfoText}>
-        Your account information is encrypted and protected.
-      </p>
+      <div style={styles.bottomTitle}>100% Secure</div>
+      <div style={styles.bottomText}>& Safe</div>
     </div>
   </div>
 
-  <div style={styles.bottomInfoCard}>
-    <div style={styles.bottomInfoIconPink}>⚡</div>
+  <div style={styles.bottomItem}>
+    <div style={{
+      ...styles.bottomIcon,
+      background: "linear-gradient(135deg,#9333ea,#c084fc)"
+    }}>
+      🔒
+    </div>
 
     <div>
-      <h4 style={styles.bottomInfoTitle}>
-        Fast Verification
-      </h4>
-
-      <p style={styles.bottomInfoText}>
-        Complete KYC quickly and start your saving journey.
-      </p>
+      <div style={styles.bottomTitle}>Your Data is</div>
+      <div style={styles.bottomText}>Protected</div>
     </div>
   </div>
 
-  <div style={styles.bottomInfoCard}>
-    <div style={styles.bottomInfoIconGreen}>🎯</div>
+  <div style={styles.bottomItem}>
+    <div style={{
+      ...styles.bottomIcon,
+      background: "linear-gradient(135deg,#2563eb,#60a5fa)"
+    }}>
+      🎧
+    </div>
 
     <div>
-      <h4 style={styles.bottomInfoTitle}>
-        Smart Financial Goal
-      </h4>
+      <div style={styles.bottomTitle}>24/7 Customer</div>
+      <div style={styles.bottomText}>Support</div>
+    </div>
+  </div>
 
-      <p style={styles.bottomInfoText}>
-        Save smarter and achieve your future financial targets.
-      </p>
+  <div style={styles.bottomItem}>
+    <div style={{
+      ...styles.bottomIcon,
+      background: "linear-gradient(135deg,#f59e0b,#facc15)"
+    }}>
+      ⭐
+    </div>
+
+    <div>
+      <div style={styles.bottomTitle}>Trusted by</div>
+      <div style={styles.bottomText}>Thousands</div>
     </div>
   </div>
 
 </div>
+
+      
 
       {showTerms && (
         <div style={styles.modalOverlay}>
@@ -789,74 +799,46 @@ const styles = {
     fontWeight: "800"
   },
 
-  bottomInfoWrap: {
-  marginTop: "18px",
-  display: "grid",
-  gap: "14px"
+  bottomFeatures: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "10px",
+  marginTop: "28px",
+  flexWrap: "wrap"
 },
 
-bottomInfoCard: {
-  background: "#ffffff",
-  border: "1px solid #e2e8f0",
-  borderRadius: "20px",
-  padding: "16px",
+bottomItem: {
   display: "flex",
   alignItems: "center",
-  gap: "14px",
-  boxShadow: "0 8px 20px rgba(0,0,0,.06)"
+  gap: "10px",
+  minWidth: "140px"
 },
 
-bottomInfoIconBlue: {
-  width: "52px",
-  height: "52px",
-  borderRadius: "16px",
-  background: "linear-gradient(135deg,#38bdf8,#2563eb)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "24px",
-  color: "white",
-  flexShrink: 0
-},
-
-bottomInfoIconPink: {
-  width: "52px",
-  height: "52px",
-  borderRadius: "16px",
-  background: "linear-gradient(135deg,#ff2ebd,#c026d3)",
+bottomIcon: {
+  width: "48px",
+  height: "48px",
+  borderRadius: "50%",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "24px",
   color: "white",
-  flexShrink: 0
+  fontSize: "20px",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.12)"
 },
 
-bottomInfoIconGreen: {
-  width: "52px",
-  height: "52px",
-  borderRadius: "16px",
-  background: "linear-gradient(135deg,#22c55e,#16a34a)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "24px",
-  color: "white",
-  flexShrink: 0
+bottomTitle: {
+  fontSize: "14px",
+  fontWeight: "700",
+  color: "#111827",
+  lineHeight: "18px"
 },
 
-bottomInfoTitle: {
-  margin: 0,
-  color: "#0f172a",
-  fontSize: "16px",
-  fontWeight: "800"
+bottomText: {
+  fontSize: "14px",
+  fontWeight: "700",
+  color: "#111827",
+  lineHeight: "18px"
 },
-
-bottomInfoText: {
-  margin: "5px 0 0",
-  color: "#64748b",
-  fontSize: "13px",
-  lineHeight: "20px"
-},
-
+  
 };
