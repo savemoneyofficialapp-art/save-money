@@ -319,13 +319,16 @@ export default function Login() {
               Remember Me
             </label>
 
-            <button
-              type="button"
-              style={styles.forgot}
-              onClick={() => navigate("/forgot-password")}
-            >
-              Forgot Password?
-            </button>
+           <button
+  type="button"
+  style={styles.forgot}
+  onClick={() => {
+    console.log("Forgot clicked");
+    navigate("/forgot-password");
+  }}
+>
+  Forgot Password?
+</button>
           </div>
 
           <button
@@ -826,13 +829,15 @@ const styles = {
   },
 
   forgot: {
-    border: "none",
-    background: "transparent",
-    color: "#6d28d9",
-    fontSize: "16px",
-    fontWeight: "800",
-    cursor: "pointer"
-  },
+  border: "none",
+  background: "transparent",
+  color: "#6d28d9",
+  fontSize: "16px",
+  fontWeight: "800",
+  cursor: "pointer",
+  position: "relative",
+  zIndex: 50
+},
 
   loginBtn: {
     marginTop: "30px",
