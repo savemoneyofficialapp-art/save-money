@@ -805,43 +805,32 @@ const createNotification = async (email, message) => {
   });
 };
 
+
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "smtp-relay.brevo.com",
   port: 587,
   secure: false,
-  requireTLS: true,
-  family: 4,
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 15000,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
+    user: process.env.BREVO_USER,
+    pass: process.env.BREVO_PASS
   }
 });
 
 async function sendEmail(to, subject, message) {
+
   try {
-    await transporter.sendMail({
-      from: `"Save Money" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html: `
-        <div style="font-family:Arial;background:#f8fafc;padding:20px;">
-          <div style="max-width:500px;margin:auto;background:white;padding:20px;border-radius:12px;">
-            <h2 style="color:#16a34a;">Save Money</h2>
-            <p style="font-size:15px;color:#111827;">${message}</p>
-            <hr/>
-            <p style="font-size:12px;color:#64748b;">
-              This is an automated email from Save Money.
-            </p>
-          </div>
-        </div>
-      `
-    });
+  await transporter.sendMail({
+  from: `"Save Money" <${process.env.EMAIL_USER}>`,
+  to: email,
+  subject: "Save Money Password Reset OTP",
+  html: `
+    <div style="font-family:sans-serif;padding:20px">
+      <h2>Save Money OTP Verification</h2>
+      <h1>${otp}</h1>
+      <p>This OTP is valid for 10 minutes.</p>
+    </div>
+  `
+});
 
     console.log("Email sent:", to);
   } catch (err) {
