@@ -400,29 +400,32 @@ const styles = {
   },
 
   card: {
-  width: "100%",
-  maxWidth: "930px",
-  minHeight: "650px",
-  background: "#ffffff",
-  borderRadius: "38px",
-  overflow: "hidden",
-  display: "flex",
-  boxShadow: "0 20px 60px rgba(0,0,0,0.12)"
-},
+    width: "100%",
+    maxWidth: "980px",
+    minHeight: "92vh",
+    background: "#fff",
+    borderRadius: "46px",
+    display: "flex",
+    overflow: "hidden",
+    boxShadow: "0 25px 70px rgba(0,0,0,.18)"
+  },
 
   leftPanel: {
-  width: "33%",
-  background: "linear-gradient(180deg,#5b21b6,#7c3aed,#2563eb)",
-  padding: "32px 24px",
-  color: "white",
-  position: "relative"
-},
+    width: "33%",
+    background: "linear-gradient(180deg,#7c2cff,#4f20d8,#631bd9)",
+    color: "white",
+    padding: "38px 32px",
+    borderTopRightRadius: "60px",
+    borderBottomRightRadius: "60px",
+    position: "relative"
+  },
 
   piggyWrap: {
-  width: "150px",
-  height: "150px",
-  margin: "0 auto 18px",
-},
+    position: "relative",
+    width: "145px",
+    height: "125px",
+    marginBottom: "25px"
+  },
 
   coin: {
     position: "absolute",
@@ -579,18 +582,9 @@ const styles = {
   },
 
   rightPanel: {
-  width: "67%",
-  padding: "35px 42px",
-  background: "#fff",
-  overflowY: "auto"
-},
-
-saveTitle: {
-  fontSize: "52px",
-  lineHeight: "52px",
-  fontWeight: "900",
-  marginTop: "15px"
-},
+    flex: 1,
+    padding: "48px 42px"
+  },
 
   create: {
     textAlign: "center",
@@ -617,10 +611,15 @@ saveTitle: {
   },
 
   inputWrap: {
-  height: "68px",
-  borderRadius: "34px",
-  marginBottom: "18px",
-},
+    height: "70px",
+    border: "1.8px solid",
+    borderRadius: "24px",
+    display: "flex",
+    alignItems: "center",
+    padding: "0 14px",
+    gap: "18px",
+    marginTop: "15px"
+  },
 
   iconBox: {
     width: "52px",
@@ -633,15 +632,15 @@ saveTitle: {
     fontSize: "25px",
     flexShrink: 0
   },
-  
+
   input: {
-  flex: 1,
-  border: "none",
-  outline: "none",
-  fontSize: "20px",
-  background: "transparent",
-  color: "#374151"
-},
+    flex: 1,
+    border: "none",
+    outline: "none",
+    fontSize: "18px",
+    color: "#0f172a",
+    background: "transparent"
+  },
 
   eye: {
     border: "none",
@@ -670,16 +669,19 @@ saveTitle: {
   },
 
   registerBtn: {
-  width: "100%",
-  height: "72px",
-  border: "none",
-  borderRadius: "40px",
-  marginTop: "22px",
-  background: "linear-gradient(90deg,#ff2ea6,#5b21ff)",
-  color: "white",
-  fontSize: "20px",
-  fontWeight: "800",
-},
+    width: "100%",
+    height: "74px",
+    border: "none",
+    borderRadius: "26px",
+    marginTop: "26px",
+    background: "linear-gradient(135deg,#ff2ebd,#8b2cff,#412cff)",
+    color: "white",
+    fontSize: "24px",
+    fontWeight: "900",
+    position: "relative",
+    boxShadow: "0 14px 25px rgba(124,58,237,.35)",
+    cursor: "pointer"
+  },
 
   arrow: {
     position: "absolute",
@@ -710,14 +712,14 @@ saveTitle: {
   },
 
   disclaimer: {
-  marginTop: "26px",
-  background: "#ecfdf5",
-  border: "2px solid #d1fae5",
-  borderRadius: "24px",
-  padding: "22px",
-  display: "flex",
-  gap: "18px"
-},
+    marginTop: "26px",
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: "24px",
+    padding: "18px",
+    display: "flex",
+    gap: "16px"
+  },
 
   disIcon: {
     width: "55px",
@@ -803,8 +805,9 @@ saveTitle: {
 bottomFeatures: {
   display: "flex",
   justifyContent: "space-between",
-  gap: "8px",
-  marginTop: "24px",
+  alignItems: "center",
+  gap: "10px",
+  marginTop: "28px",
   flexWrap: "wrap"
 },
 
@@ -816,10 +819,15 @@ bottomItem: {
 },
 
 bottomIcon: {
-  width: "44px",
-  height: "44px",
+  width: "48px",
+  height: "48px",
   borderRadius: "50%",
-  fontSize: "18px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "white",
+  fontSize: "15px",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.12)"
 },
 
 bottomTitle: {
