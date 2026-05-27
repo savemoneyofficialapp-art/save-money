@@ -2458,22 +2458,104 @@ app.post("/reject-kyc", auth, adminAuth, async (req, res) => {
 
 
 // ================= DASHBOARD =================
-app.post("/dashboard", async (req, res) => {
-  const { email } = req.body;
+app.post("/dashboard", auth, async (req, res) => {
+  try {
+    const { email } = req.body;
 
-  const user = await User.findOne({ email }).select("-password");
+    const user = await User.findOne({ email }).select("-password");
 
-  res.json({
-  name: user?.name || "",
-  balance: user?.wallet || 0,
-  wallet: user?.wallet || 0,
-  referralIncome: user?.referralIncome || 0,
-  teamIncome: user?.teamIncome || 0,
-  myCode: user?.referCode || "",
-  photo: user.photo,
-  kycStatus: user?.kycStatus || "not submitted"
-  
-});
+    if (!user) {
+      return res.status(404).json({
+        msg: "User not found"
+      });
+    }
+
+    const investments = await Investment.find({
+      email
+    });
+
+    let totalInvestment = 0;
+    let totalReturn = 0;
+
+    investments.forEach((inv) => {
+      const amount =
+        Number(inv.amount) ||
+        Number(inv.monthlyAmount) ||
+        Number(inv.investAmount) ||
+        Number(inv.principal) ||
+        0;
+
+      const roi =
+        Number(inv.roi) ||
+        Number(inv.roiPercent) ||
+        Number(inv.interestRate) ||
+        Number(inv.returnPercent) ||
+        0;
+
+      totalInvestment += amount;
+
+      const monthlyPercent = roi / 12;
+      const monthlyReturn = (amount * monthlyPercent) / 100;
+
+      totalReturn += monthlyReturn;
+    });
+
+    const totalReferral = await User.countDocuments({
+      referredBy: user.referCode
+    });
+
+    let totalWithdraw = 0;
+
+    try {
+      const withdrawData = await WalletHistory.aggregate([
+        {
+          $match: {
+            email,
+            type: {
+              $in: [
+                "withdraw",
+                "withdrawal",
+                "auto-withdrawal",
+                "Auto Withdrawal"
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$amount" }
+          }
+        }
+      ]);
+
+      totalWithdraw = withdrawData[0]?.total || 0;
+    } catch (e) {
+      totalWithdraw = user.totalWithdraw || 0;
+    }
+
+    res.json({
+      name: user.name,
+      email: user.email,
+      mobile: user.mobile,
+      wallet: user.wallet || 0,
+      walletId: user.walletId,
+      referCode: user.referCode,
+      kycStatus: user.kycStatus,
+      photo: user.photo,
+
+      totalInvestment,
+      totalReturn: Math.round(totalReturn),
+      totalReferral,
+      totalWithdraw
+    });
+
+  } catch (err) {
+    console.log("DASHBOARD ERROR:", err);
+    res.status(500).json({
+      msg: "Server error"
+    });
+  }
 });
 
 // ================= UPLOAD WITH IMAGE =================
