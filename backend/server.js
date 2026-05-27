@@ -27,6 +27,7 @@ const SupportTicket = require("./models/SupportTicket");
 const BonusLedger = require("./models/BonusLedger");
 const cloudinary = require("cloudinary").v2;
 const Otp = require("./models/Otp");
+const axios = require("axios");
 
 const { CloudinaryStorage } =
 require("multer-storage-cloudinary");
@@ -826,24 +827,43 @@ transporter.verify(function (error, success) {
 
 async function sendEmail(to, subject, message) {
 
-  try {
-  await transporter.sendMail({
-  from: `"Save Money" <${process.env.EMAIL_USER}>`,
-  to: email,
-  subject: "Save Money Password Reset OTP",
-  html: `
-    <div style="font-family:sans-serif;padding:20px">
-      <h2>Save Money OTP Verification</h2>
-      <h1>${otp}</h1>
-      <p>This OTP is valid for 10 minutes.</p>
-    </div>
-  `
-});
+ try {
+  await axios.post(
+    "https://api.brevo.com/v3/smtp/email",
+    {
+      sender: {
+        name: "Save Money",
+        email: process.env.EMAIL_USER
+      },
+      to: [
+        {
+          email: email
+        }
+      ],
+      subject: "Save Money Password Reset OTP",
+      htmlContent: `
+        <div style="font-family:Arial;padding:20px">
+          <h2 style="color:#7c3aed">Save Money</h2>
+          <p>Your password reset OTP is:</p>
+          <h1 style="letter-spacing:6px;color:#16a34a">${otp}</h1>
+          <p>This OTP will expire in 5 minutes.</p>
+        </div>
+      `
+    },
+    {
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+} catch (mailErr) {
+  console.log("BREVO API EMAIL ERROR:", mailErr.response?.data || mailErr.message);
 
-    console.log("Email sent:", to);
-  } catch (err) {
-    console.log("EMAIL ERROR:", err.message);
-  }
+  return res.status(500).json({
+    msg: "Email send failed"
+  });
+}
 }
 
 app.post("/send-email-otp", async (req, res) => {
@@ -1353,35 +1373,25 @@ app.post("/send-forgot-otp", async (req, res) => {
     await user.save();
 
     console.log("FORGOT PASSWORD OTP:", otp);
-
-    try {
-
-      await transporter.sendMail({
-        from: `"Save Money" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: "Save Money Password Reset OTP",
-
-        html: `
-          <div style="font-family:sans-serif;padding:20px">
-            <h2 style="color:#7c3aed">
-              Save Money
-            </h2>
-
-            <p>Your OTP is:</p>
-
-            <h1 style="
-              letter-spacing:6px;
-              color:#16a34a;
-            ">
-              ${otp}
-            </h1>
-
-            <p>
-              OTP valid for 5 minutes
-            </p>
-          </div>
-        `
-      });
+try {
+    await axios.post(
+  "https://api.brevo.com/v3/smtp/email",
+  {
+    sender: {
+      name: "Save Money",
+      email: process.env.EMAIL_USER
+    },
+    to: [{ email }],
+    subject: "Save Money Password Reset OTP",
+    htmlContent: `<h2>Your OTP: ${otp}</h2>`
+  },
+  {
+    headers: {
+      "api-key": process.env.BREVO_API_KEY,
+      "Content-Type": "application/json"
+    }
+  }
+);
 
     } catch (mailErr) {
 
