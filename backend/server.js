@@ -809,12 +809,15 @@ const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false,
-
+  requireTLS: true,
+  family: 4,
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 15000,
   auth: {
-   user: process.env.EMAIL_USER,
+    user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
-
   tls: {
     rejectUnauthorized: false
   }
@@ -1324,10 +1327,13 @@ app.post("/send-otp", async (req, res) => {
 // SEND FORGOT PASSWORD OTP BY EMAIL
 app.post("/send-forgot-otp", async (req, res) => {
   try {
+
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({ msg: "Email required" });
+      return res.status(400).json({
+        msg: "Email required"
+      });
     }
 
     const user = await User.findOne({
@@ -1335,50 +1341,78 @@ app.post("/send-forgot-otp", async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({
+        msg: "User not found"
+      });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp =
+      Math.floor(100000 + Math.random() * 900000).toString();
 
     user.resetOtp = otp;
-    user.resetOtpExpire = new Date(Date.now() + 5 * 60 * 1000);
+    user.resetOtpExpire =
+      new Date(Date.now() + 5 * 60 * 1000);
+
     await user.save();
 
     console.log("FORGOT PASSWORD OTP:", otp);
 
-    await transporter.sendMail({
-  from: "Save Money <savemoneyofficial@gmail.com>",
-  to: email,
-  subject: "Save Money Password Reset OTP",
-  html: `
-    <div style="font-family:sans-serif;padding:20px">
-      <h2 style="color:#7c3aed">Save Money</h2>
+    try {
 
-      <p>Your password reset OTP is:</p>
+      await transporter.sendMail({
+        from: `"Save Money" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: "Save Money Password Reset OTP",
 
-      <h1 style="
-        letter-spacing:5px;
-        color:#16a34a;
-      ">
-        ${otp}
-      </h1>
+        html: `
+          <div style="font-family:sans-serif;padding:20px">
+            <h2 style="color:#7c3aed">
+              Save Money
+            </h2>
 
-      <p>
-        This OTP will expire in 5 minutes.
-      </p>
-    </div>
-  `
-});
+            <p>Your OTP is:</p>
+
+            <h1 style="
+              letter-spacing:6px;
+              color:#16a34a;
+            ">
+              ${otp}
+            </h1>
+
+            <p>
+              OTP valid for 5 minutes
+            </p>
+          </div>
+        `
+      });
+
+    } catch (mailErr) {
+
+      console.log(
+        "SEND FORGOT OTP ERROR:",
+        mailErr
+      );
+
+      return res.status(500).json({
+        msg: "Email send failed"
+      });
+    }
 
     return res.json({
       success: true,
-      msg: "OTP sent successfully",
-      otp // testing এর জন্য আছে, পরে remove করবে
+      msg: "OTP sent successfully"
     });
 
   } catch (err) {
-    console.log("SEND FORGOT OTP ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+
+    console.log(
+      "FORGOT OTP MAIN ERROR:",
+      err
+    );
+
+    return res.status(500).json({
+      msg: "Server error"
+    });
   }
 });
 
