@@ -416,7 +416,7 @@ export default function Home() {
 
       {/* HELP TEXT */}
       <h1 style={styles.helpText}>
-        HELP OTHER FOR EARN
+        HELP OTHER FOR EARN MORE 💸
       </h1>
 
       {/* FOOTER */}
@@ -483,7 +483,12 @@ export default function Home() {
           onClick={() => go("/refer")}
         />
 
-       
+        <BottomNavItem
+          icon="🌲"
+          title="tree"
+          active={location.pathname === "/profile"}
+          onClick={() => go("/referral-tree")}
+        />
       </nav>
 
     </div>
@@ -1176,7 +1181,7 @@ footerLinkBtn: {
     height: "62px",
     background: "#020817",
     display: "grid",
-    gridTemplateColumns: "repeat(5,1fr)",
+    gridTemplateColumns: "repeat(4,1fr)",
     borderTop: "1px solid #1e40af",
     zIndex: 999
   },
