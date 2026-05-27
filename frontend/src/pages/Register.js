@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function Register() {
@@ -18,12 +19,12 @@ export default function Register() {
 
   const register = async () => {
     if (!name || !mobile || !email || !password || !walletAddress) {
-      alert("Please fill all required fields");
+      toast.warning("Please fill all required fields");
       return;
     }
 
     if (!terms) {
-      alert("Please accept Terms & Conditions");
+      toast.warning("Please accept Terms & Conditions");
       return;
     }
 
@@ -49,14 +50,14 @@ export default function Register() {
 
       const data = await res.json();
 
-      alert(data.msg || "Registered");
+      toast.success(data.msg || "Registered");
 
       if (data.msg === "Registered Successfully" || data.success === true) {
         navigate("/login");
       }
     } catch (err) {
       console.log(err);
-      alert("Registration failed");
+      toast.error("Registration failed");
     } finally {
       setLoading(false);
     }
@@ -827,7 +828,7 @@ bottomIcon: {
   justifyContent: "center",
   color: "white",
   fontSize: "15px",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.12)"
+  boxShadow: "0 8px 15px rgba(0,0,0,0.12)"
 },
 
 bottomTitle: {
