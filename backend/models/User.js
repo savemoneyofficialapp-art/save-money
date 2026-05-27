@@ -223,6 +223,15 @@ totalEarning: {
 totalDirect: {
   type: Number,
   default: 0
+},
+
+resetOtp: {
+  type: String,
+  default: ""
+},
+resetOtpExpire: {
+  type: Date,
+  default: null
 }
 
 });

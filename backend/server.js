@@ -1288,31 +1288,6 @@ app.post("/login", async (req, res) => {
 });
 
 
-app.post("/reset-password", async (req, res) => {
-
-  try {
-
-    const { email, otp, newPassword } = req.body;
-
-    if (otpStore[email] != otp) {
-      return res.json({ msg: "Invalid OTP" });
-    }
-
-    await User.updateOne(
-      { email },
-      { password: newPassword }
-    );
-
-    delete otpStore[email];
-
-    res.json({ msg: "Password updated" });
-
-  } catch (error) {
-    console.log(error);
-    res.json({ msg: "Reset failed" });
-  }
-});
-
 app.post("/send-otp", async (req, res) => {
 
   const { mobile } = req.body;
@@ -1339,102 +1314,149 @@ app.post("/send-otp", async (req, res) => {
   res.json({ msg: "OTP Sent" });
 });
 
+// SEND FORGOT PASSWORD OTP BY EMAIL
 app.post("/send-forgot-otp", async (req, res) => {
-
   try {
+    const { email } = req.body;
 
-    const { mobile } = req.body;
-
-    if (!mobile) {
-      return res.json({
-        success: false,
-        msg: "Mobile number required"
-      });
+    if (!email) {
+      return res.status(400).json({ msg: "Email required" });
     }
 
-    // RANDOM 6 DIGIT OTP
-    const otp = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
-
-    console.log("OTP:", otp);
-
-    // OLD OTP DELETE
-    await Otp.deleteMany({ mobile });
-
-    // SAVE NEW OTP
-    await Otp.create({
-      mobile,
-      otp,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+    const user = await User.findOne({
+      email: email.toLowerCase()
     });
 
-    // HERE SMS API LATER CONNECT
-    // Twilio / Fast2SMS / MSG91
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-    res.json({
-      success: true,
-      msg: "OTP Sent Successfully"
-    });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  } catch (err) {
+    user.resetOtp = otp;
+    user.resetOtpExpire = new Date(Date.now() + 5 * 60 * 1000);
+    await user.save();
 
-    console.log(err);
+    console.log("FORGOT PASSWORD OTP:", otp);
 
-    res.json({
-      success: false,
-      msg: "Server Error"
-    });
+    await transporter.sendMail({
+  from: "Save Money <savemoneyofficial@gmail.com>",
+  to: email,
+  subject: "Save Money Password Reset OTP",
+  html: `
+    <div style="font-family:sans-serif;padding:20px">
+      <h2 style="color:#7c3aed">Save Money</h2>
 
-  }
+      <p>Your password reset OTP is:</p>
 
+      <h1 style="
+        letter-spacing:5px;
+        color:#16a34a;
+      ">
+        ${otp}
+      </h1>
+
+      <p>
+        This OTP will expire in 5 minutes.
+      </p>
+    </div>
+  `
 });
 
-app.post("/verify-forgot-otp", async (req, res) => {
-
-  try {
-
-    const { mobile, otp } = req.body;
-
-    const data = await Otp.findOne({
-      mobile,
-      otp
-    });
-
-    if (!data) {
-      return res.json({
-        success: false,
-        msg: "Invalid OTP"
-      });
-    }
-
-    if (new Date() > data.expiresAt) {
-
-      await Otp.deleteOne({ _id: data._id });
-
-      return res.json({
-        success: false,
-        msg: "OTP Expired"
-      });
-
-    }
-
-    res.json({
+    return res.json({
       success: true,
-      msg: "OTP Verified"
+      msg: "OTP sent successfully",
+      otp // testing এর জন্য আছে, পরে remove করবে
     });
 
   } catch (err) {
+    console.log("SEND FORGOT OTP ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
 
-    console.log(err);
 
-    res.json({
-      success: false,
-      msg: "Server Error"
+// VERIFY FORGOT PASSWORD OTP
+app.post("/verify-forgot-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ msg: "Email and OTP required" });
+    }
+
+    const user = await User.findOne({
+      email: email.toLowerCase()
     });
 
-  }
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
+    if (!user.resetOtp || user.resetOtp !== otp) {
+      return res.status(400).json({ msg: "Invalid OTP" });
+    }
+
+    if (!user.resetOtpExpire || user.resetOtpExpire < new Date()) {
+      return res.status(400).json({ msg: "OTP expired" });
+    }
+
+    return res.json({
+      success: true,
+      msg: "OTP verified successfully"
+    });
+
+  } catch (err) {
+    console.log("VERIFY OTP ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+
+// RESET PASSWORD
+app.post("/reset-password", async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        msg: "Email, OTP and new password required"
+      });
+    }
+
+    const user = await User.findOne({
+      email: email.toLowerCase()
+    });
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    if (!user.resetOtp || user.resetOtp !== otp) {
+      return res.status(400).json({ msg: "Invalid OTP" });
+    }
+
+    if (!user.resetOtpExpire || user.resetOtpExpire < new Date()) {
+      return res.status(400).json({ msg: "OTP expired" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.resetOtp = "";
+    user.resetOtpExpire = null;
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      msg: "Password reset successfully"
+    });
+
+  } catch (err) {
+    console.log("RESET PASSWORD ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
 });
 
 app.post("/invest", async (req, res) => {
