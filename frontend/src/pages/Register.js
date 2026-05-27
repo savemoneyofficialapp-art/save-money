@@ -206,6 +206,52 @@ export default function Register() {
         </div>
       </div>
 
+      <div style={styles.bottomInfoWrap}>
+
+  <div style={styles.bottomInfoCard}>
+    <div style={styles.bottomInfoIconBlue}>🔐</div>
+
+    <div>
+      <h4 style={styles.bottomInfoTitle}>
+        Secure Registration
+      </h4>
+
+      <p style={styles.bottomInfoText}>
+        Your account information is encrypted and protected.
+      </p>
+    </div>
+  </div>
+
+  <div style={styles.bottomInfoCard}>
+    <div style={styles.bottomInfoIconPink}>⚡</div>
+
+    <div>
+      <h4 style={styles.bottomInfoTitle}>
+        Fast Verification
+      </h4>
+
+      <p style={styles.bottomInfoText}>
+        Complete KYC quickly and start your saving journey.
+      </p>
+    </div>
+  </div>
+
+  <div style={styles.bottomInfoCard}>
+    <div style={styles.bottomInfoIconGreen}>🎯</div>
+
+    <div>
+      <h4 style={styles.bottomInfoTitle}>
+        Smart Financial Goal
+      </h4>
+
+      <p style={styles.bottomInfoText}>
+        Save smarter and achieve your future financial targets.
+      </p>
+    </div>
+  </div>
+
+</div>
+
       {showTerms && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
@@ -741,5 +787,76 @@ const styles = {
     background: "#e2e8f0",
     color: "#334155",
     fontWeight: "800"
-  }
+  },
+
+  bottomInfoWrap: {
+  marginTop: "18px",
+  display: "grid",
+  gap: "14px"
+},
+
+bottomInfoCard: {
+  background: "#ffffff",
+  border: "1px solid #e2e8f0",
+  borderRadius: "20px",
+  padding: "16px",
+  display: "flex",
+  alignItems: "center",
+  gap: "14px",
+  boxShadow: "0 8px 20px rgba(0,0,0,.06)"
+},
+
+bottomInfoIconBlue: {
+  width: "52px",
+  height: "52px",
+  borderRadius: "16px",
+  background: "linear-gradient(135deg,#38bdf8,#2563eb)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "24px",
+  color: "white",
+  flexShrink: 0
+},
+
+bottomInfoIconPink: {
+  width: "52px",
+  height: "52px",
+  borderRadius: "16px",
+  background: "linear-gradient(135deg,#ff2ebd,#c026d3)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "24px",
+  color: "white",
+  flexShrink: 0
+},
+
+bottomInfoIconGreen: {
+  width: "52px",
+  height: "52px",
+  borderRadius: "16px",
+  background: "linear-gradient(135deg,#22c55e,#16a34a)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "24px",
+  color: "white",
+  flexShrink: 0
+},
+
+bottomInfoTitle: {
+  margin: 0,
+  color: "#0f172a",
+  fontSize: "16px",
+  fontWeight: "800"
+},
+
+bottomInfoText: {
+  margin: "5px 0 0",
+  color: "#64748b",
+  fontSize: "13px",
+  lineHeight: "20px"
+},
+
 };
