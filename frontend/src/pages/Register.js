@@ -387,192 +387,274 @@ function Benefit({ icon, title, text }) {
 }
 
 const styles = {
-
-  container: {
+  page: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg,#fdf2f8,#e0f2fe,#ede9fe)",
+    background: "linear-gradient(135deg,#ffd18a,#eef3ff,#dff7ff)",
+    padding: "25px",
     display: "flex",
     justifyContent: "center",
-    alignItems: "center",
-    padding: "30px"
+    alignItems: "center"
   },
 
   card: {
-    width: "100%",
-    maxWidth: "1050px",
-    minHeight: "92vh",
-    background: "#ffffff",
-    borderRadius: "45px",
-    display: "flex",
-    overflow: "hidden",
-    boxShadow: "0 25px 70px rgba(0,0,0,0.15)"
-  },
-
-  /* LEFT PANEL */
+  width: "100%",
+  maxWidth: "980px",
+  minHeight: "92vh",
+  background: "#fff",
+  borderRadius: "46px",
+  overflow: "hidden",
+  display: "flex",
+  boxShadow: "0 25px 70px rgba(0,0,0,.18)",
+},
 
   leftPanel: {
     width: "33%",
-    background: "linear-gradient(180deg,#5b21b6,#2563eb)",
-    padding: "35px 28px",
+    background: "linear-gradient(180deg,#7c2cff,#4f20d8,#631bd9)",
+    color: "white",
+    padding: "38px 32px",
+    borderTopRightRadius: "60px",
+    borderBottomRightRadius: "60px",
+    position: "relative"
+  },
+
+  piggyWrap: {
     position: "relative",
-    overflow: "hidden",
-    color: "white"
+    width: "145px",
+    height: "125px",
+    marginBottom: "25px"
+  },
+
+  coin: {
+    position: "absolute",
+    top: "-8px",
+    left: "52px",
+    width: "42px",
+    height: "42px",
+    borderRadius: "50%",
+    background: "#ffd43b",
+    color: "#7c3aed",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "25px",
+    zIndex: 3,
+    boxShadow: "0 8px 15px rgba(0,0,0,.2)"
   },
 
   piggy: {
-    width: "120px",
-    marginBottom: "20px"
-  },
-
-  saveMoney: {
-    fontSize: "72px",
-    fontWeight: "900",
-    lineHeight: "70px",
-    margin: 0,
-    color: "#ffffff"
-  },
-
-  saveYellow: {
-    color: "#facc15"
-  },
-
-  leftSub: {
-    marginTop: "18px",
-    fontSize: "24px",
-    lineHeight: "36px",
-    color: "rgba(255,255,255,0.9)"
-  },
-
-  whyTitle: {
-    marginTop: "55px",
-    fontSize: "38px",
-    fontWeight: "800",
-    color: "#facc15"
-  },
-
-  leftFeature: {
-    display: "flex",
-    gap: "18px",
-    alignItems: "center",
-    marginTop: "32px"
-  },
-
-  leftIcon: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "18px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "28px",
-    color: "white"
-  },
-
-  leftFeatureTitle: {
-    fontSize: "28px",
-    fontWeight: "800",
-    marginBottom: "5px"
-  },
-
-  leftFeatureText: {
-    fontSize: "20px",
-    lineHeight: "30px",
-    color: "rgba(255,255,255,0.88)"
-  },
-
-  bottomTextLeft: {
     position: "absolute",
-    bottom: "45px",
-    left: "35px",
-    fontSize: "34px",
-    lineHeight: "52px",
-    color: "#ffffff",
-    fontStyle: "italic",
-    fontWeight: "700"
+    bottom: 0,
+    left: 0,
+    width: "135px",
+    height: "92px",
+    borderRadius: "55px 60px 45px 45px",
+    background: "linear-gradient(135deg,#ffb3c7,#ff6aa2)",
+    boxShadow: "inset -10px -8px 0 rgba(255,0,100,.16)"
   },
 
-  /* RIGHT PANEL */
+  earLeft: {
+    position: "absolute",
+    top: "-18px",
+    left: "25px",
+    width: "32px",
+    height: "32px",
+    background: "#ff8ab8",
+    borderRadius: "8px 20px 8px 20px",
+    transform: "rotate(25deg)"
+  },
+
+  earRight: {
+    position: "absolute",
+    top: "-14px",
+    right: "20px",
+    width: "26px",
+    height: "26px",
+    background: "#ff8ab8",
+    borderRadius: "8px 18px 8px 18px",
+    transform: "rotate(45deg)"
+  },
+
+  eyeLeft: {
+    position: "absolute",
+    top: "28px",
+    left: "78px",
+    width: "7px",
+    height: "7px",
+    borderRadius: "50%",
+    background: "#1e293b"
+  },
+
+  eyeRight: {
+    position: "absolute",
+    top: "28px",
+    left: "100px",
+    width: "7px",
+    height: "7px",
+    borderRadius: "50%",
+    background: "#1e293b"
+  },
+
+  nose: {
+    position: "absolute",
+    right: "-8px",
+    top: "36px",
+    width: "36px",
+    height: "26px",
+    borderRadius: "50%",
+    background: "#ff8ab8",
+    color: "#7c2d12",
+    fontSize: "8px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  legOne: {
+    position: "absolute",
+    bottom: "-8px",
+    left: "32px",
+    width: "20px",
+    height: "18px",
+    background: "#ff6aa2",
+    borderRadius: "0 0 8px 8px"
+  },
+
+  legTwo: {
+    position: "absolute",
+    bottom: "-8px",
+    right: "34px",
+    width: "20px",
+    height: "18px",
+    background: "#ff6aa2",
+    borderRadius: "0 0 8px 8px"
+  },
+
+  brand: {
+    fontSize: "58px",
+    lineHeight: "52px",
+    margin: 0,
+    fontWeight: "900",
+    letterSpacing: "-2px"
+  },
+
+  brandSub: {
+    marginTop: "20px",
+    fontSize: "17px"
+  },
+
+  why: {
+    color: "#ffde3b",
+    marginTop: "70px",
+    fontSize: "24px"
+  },
+
+  benefit: {
+    display: "flex",
+    gap: "14px",
+    alignItems: "center",
+    marginTop: "18px"
+  },
+
+  benefitIcon: {
+    width: "50px",
+    height: "50px",
+    borderRadius: "15px",
+    background: "linear-gradient(135deg,#38bdf8,#2563eb)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "24px",
+    flexShrink: 0
+  },
+
+  smallSteps: {
+    position: "absolute",
+    bottom: "28px",
+    left: "35px",
+    fontSize: "24px",
+    color: "#efe7ff",
+    fontStyle: "italic",
+    lineHeight: "34px"
+  },
 
   rightPanel: {
     flex: 1,
     padding: "45px 42px",
-    background: "#ffffff",
-    position: "relative"
+    position: "relative",
+    background: "#fff"
   },
 
-  heading: {
-    fontSize: "76px",
-    fontWeight: "900",
-    lineHeight: "82px",
-    margin: 0,
-    color: "#111827"
+  create: {
+    textAlign: "center",
+    fontSize: "34px",
+    color: "#0f172a",
+    margin: 0
   },
 
-  gradientText: {
-    background: "linear-gradient(135deg,#ec4899,#2563eb)",
+  account: {
+    textAlign: "center",
+    fontSize: "68px",
+    margin: "-5px 0 10px",
+    background: "linear-gradient(135deg,#ff2ebd,#8b2cff,#118cff)",
     WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent"
+    WebkitTextFillColor: "transparent",
+    fontWeight: "900"
   },
 
-  subtitle: {
-    marginTop: "18px",
-    fontSize: "23px",
-    color: "#4b5563",
-    lineHeight: "36px"
+  join: {
+    textAlign: "center",
+    fontSize: "17px",
+    color: "#475569",
+    marginBottom: "28px"
   },
 
-  saveBlue: {
-    color: "#2563eb",
-    fontWeight: "800"
-  },
-
-  /* INPUTS */
-
-  inputWrapper: {
-    height: "72px",
-    borderRadius: "25px",
-    background: "#fff",
+  inputWrap: {
+    height: "68px",
+    border: "1.8px solid",
+    borderRadius: "24px",
     display: "flex",
     alignItems: "center",
-    padding: "0 22px",
-    marginTop: "22px",
-    border: "2px solid #e5e7eb"
+    padding: "0 14px",
+    gap: "18px",
+    marginTop: "15px"
   },
 
   iconBox: {
     width: "52px",
     height: "52px",
-    borderRadius: "16px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+    borderRadius: "17px",
     color: "white",
-    fontSize: "24px",
-    marginRight: "16px"
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "25px",
+    flexShrink: 0
   },
 
   input: {
     flex: 1,
     border: "none",
     outline: "none",
-    fontSize: "21px",
-    color: "#111827",
+    fontSize: "18px",
+    color: "#0f172a",
     background: "transparent"
   },
 
   eye: {
-    fontSize: "24px",
-    color: "#6b7280",
+    border: "none",
+    background: "transparent",
+    fontSize: "22px",
     cursor: "pointer"
   },
 
-  /* TERMS */
-
-  termsRow: {
+  checkRow: {
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    marginTop: "22px"
+    marginTop: "22px",
+    fontSize: "16px",
+    color: "#334155"
   },
 
   checkbox: {
@@ -580,163 +662,183 @@ const styles = {
     height: "22px"
   },
 
-  termsText: {
-    fontSize: "18px",
-    color: "#6b7280"
-  },
-
   termsLink: {
-    color: "#4f46e5",
-    fontWeight: "700",
+    color: "#7c3aed",
     cursor: "pointer"
   },
-
-  /* BUTTON */
 
   registerBtn: {
     width: "100%",
-    height: "76px",
+    height: "74px",
     border: "none",
-    borderRadius: "24px",
-    marginTop: "24px",
-    background: "linear-gradient(135deg,#ec4899,#2563eb)",
+    borderRadius: "26px",
+    marginTop: "26px",
+    background: "linear-gradient(135deg,#ff2ebd,#8b2cff,#412cff)",
     color: "white",
-    fontSize: "34px",
-    fontWeight: "800",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 12px 0 40px",
-    boxShadow: "0 15px 30px rgba(99,102,241,.25)"
-  },
-
-  arrowCircle: {
-    width: "56px",
-    height: "56px",
-    borderRadius: "50%",
-    background: "white",
-    color: "#2563eb",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "30px",
-    fontWeight: "bold"
-  },
-
-  loginText: {
-    marginTop: "18px",
-    textAlign: "center",
-    fontSize: "18px",
-    color: "#6b7280"
-  },
-
-  loginLink: {
-    color: "#2563eb",
-    fontWeight: "800",
+    fontSize: "24px",
+    fontWeight: "900",
+    position: "relative",
+    boxShadow: "0 14px 25px rgba(124,58,237,.35)",
     cursor: "pointer"
   },
 
-  /* WHY JOIN */
-
-  whyJoinRow: {
+  arrow: {
+    position: "absolute",
+    right: "20px",
+    top: "12px",
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    background: "white",
+    color: "#4f46e5",
     display: "flex",
     alignItems: "center",
-    gap: "15px",
-    marginTop: "35px",
-    marginBottom: "20px"
+    justifyContent: "center",
+    fontSize: "42px"
   },
 
-  line: {
-    flex: 1,
-    height: "2px",
-    background: "#e5e7eb"
+  loginText: {
+    textAlign: "center",
+    marginTop: "20px",
+    color: "#475569"
   },
 
-  whyJoinText: {
-    fontSize: "22px",
-    color: "#6b7280",
-    fontWeight: "700"
+  loginLink: {
+    color: "#7c3aed",
+    fontWeight: "900",
+    cursor: "pointer",
+    marginLeft: "6px"
   },
-
-  /* DISCLAIMER */
 
   disclaimer: {
+    marginTop: "26px",
     background: "#f0fdf4",
-    border: "2px solid #bbf7d0",
-    borderRadius: "28px",
-    padding: "24px",
+    border: "1px solid #bbf7d0",
+    borderRadius: "24px",
+    padding: "18px",
     display: "flex",
-    gap: "18px",
-    marginTop: "20px"
+    gap: "16px"
   },
 
-  disclaimerIcon: {
-    width: "70px",
-    height: "70px",
-    borderRadius: "20px",
-    background: "#dcfce7",
+  disIcon: {
+    width: "55px",
+    height: "55px",
+    borderRadius: "18px",
+    background: "linear-gradient(135deg,#22c55e,#16a34a)",
     display: "flex",
-    justifyContent: "center",
     alignItems: "center",
-    fontSize: "34px",
-    color: "#16a34a"
+    justifyContent: "center",
+    fontSize: "28px",
+    flexShrink: 0
   },
 
   disclaimerTitle: {
-    fontSize: "34px",
-    fontWeight: "800",
-    color: "#16a34a",
-    marginBottom: "10px"
+    margin: 0,
+    color: "#16a34a"
   },
 
   disclaimerText: {
-    fontSize: "19px",
-    lineHeight: "32px",
-    color: "#374151"
+    color: "#334155",
+    lineHeight: "24px",
+    fontSize: "14px"
   },
 
-  /* BOTTOM FEATURES */
-
-  bottomFeatures: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2,1fr)",
-    gap: "18px",
-    marginTop: "28px",
-    width: "100%"
-  },
-
-  bottomItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px"
-  },
-
-  bottomIcon: {
-    width: "50px",
-    height: "50px",
-    minWidth: "50px",
-    borderRadius: "50%",
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15,23,42,.55)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 9999,
+    padding: "20px"
+  },
+
+  modal: {
+    width: "100%",
+    maxWidth: "520px",
+    maxHeight: "82vh",
+    background: "white",
+    borderRadius: "28px",
+    padding: "24px",
+    boxShadow: "0 25px 70px rgba(0,0,0,.35)"
+  },
+
+  modalTitle: {
+    margin: 0,
+    color: "#7c3aed",
+    textAlign: "center"
+  },
+
+  modalBody: {
+    marginTop: "18px",
+    maxHeight: "52vh",
+    overflowY: "auto",
+    color: "#334155",
+    lineHeight: "25px",
+    fontSize: "14px"
+  },
+
+  modalBtn: {
+    width: "100%",
+    marginTop: "18px",
+    padding: "14px",
+    border: "none",
+    borderRadius: "16px",
+    background: "linear-gradient(135deg,#7c3aed,#2563eb)",
     color: "white",
-    fontSize: "22px",
-    boxShadow: "0 8px 18px rgba(0,0,0,0.12)"
+    fontWeight: "900"
   },
 
-  bottomTitle: {
-    fontSize: "18px",
-    fontWeight: "800",
-    color: "#111827",
-    lineHeight: "24px"
+  closeBtn: {
+    width: "100%",
+    marginTop: "10px",
+    padding: "12px",
+    border: "none",
+    borderRadius: "14px",
+    background: "#e2e8f0",
+    color: "#334155",
+    fontWeight: "800"
   },
 
-  bottomText: {
-    fontSize: "18px",
-    fontWeight: "700",
-    color: "#374151",
-    lineHeight: "24px"
-  }
+ bottomFeatures: {
+  display: "grid",
+  gridTemplateColumns: "repeat(4,1fr)",
+  gap: "14px",
+  marginTop: "24px",
+  width: "100%"
+},
 
+bottomItem: {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px"
+},
+
+bottomIcon: {
+  width: "42px",
+  height: "42px",
+  minWidth: "42px",
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "white",
+  fontSize: "17px"
+},
+
+bottomTitle: {
+  fontSize: "13px",
+  fontWeight: "700",
+  color: "#111827",
+  lineHeight: "16px"
+},
+
+bottomText: {
+  fontSize: "13px",
+  fontWeight: "700",
+  color: "#111827",
+  lineHeight: "16px"
+},
+  
 };
