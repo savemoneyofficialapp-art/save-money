@@ -5,24 +5,24 @@ import { API } from "../config";
 export default function Home() {
   const navigate = useNavigate();
 
-  const email = localStorage.getItem("email");
-  const name = localStorage.getItem("name") || "User";
-  const token = localStorage.getItem("token");
+  const email = localStorage.getItem("email") || "";
+  const token = localStorage.getItem("token") || "";
+  const localName = localStorage.getItem("name") || "User";
 
   const [user, setUser] = useState({});
-  const [notificationCount, setNotificationCount] = useState(0);
+  const [latestUpdate, setLatestUpdate] = useState("No new announcement");
 
   useEffect(() => {
-    loadUser();
+    loadHome();
   }, []);
 
-  const loadUser = async () => {
+  const loadHome = async () => {
     try {
       const res = await fetch(`${API}/dashboard`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          authorization: token || ""
+          authorization: token
         },
         body: JSON.stringify({ email })
       });
@@ -30,9 +30,11 @@ export default function Home() {
       const data = await res.json();
       setUser(data || {});
     } catch (err) {
-      console.log("Home load error", err);
+      console.log("Home load error:", err);
     }
   };
+
+  const name = user.name || localName || "User";
 
   const wallet = user.wallet || user.totalWallet || 0;
   const totalInvestment = user.totalInvestment || 0;
@@ -40,136 +42,301 @@ export default function Home() {
   const totalReferral = user.totalReferral || user.referralCount || 0;
   const totalWithdraw = user.totalWithdraw || 0;
 
+  const go = (path) => {
+    navigate(path);
+  };
+
   return (
     <div style={styles.container}>
 
-      <div style={styles.topbar}>
-        <button style={styles.menu}>☰</button>
-        <h3>Welcome, {name}</h3>
+      {/* TOP BAR */}
+      <div style={styles.topBar}>
+        <button style={styles.menuBtn}>☰</button>
+
+        <h2 style={styles.topTitle}>
+          Welcome, {name}
+        </h2>
 
         <div
-          style={styles.bell}
-          onClick={() => navigate("/notifications")}
+          style={styles.bellBox}
+          onClick={() => go("/notifications")}
         >
           🔔
-          <span style={styles.badge}>3</span>
+          <span style={styles.bellBadge}>3</span>
         </div>
       </div>
 
+      {/* HERO CARD */}
       <div style={styles.heroCard}>
-        <div style={styles.profileCircle}>👤</div>
 
-        <div style={{ flex: 1 }}>
-          <p style={styles.welcome}>Welcome Back 👋</p>
-          <h1 style={styles.userName}>{name}</h1>
-          <p style={styles.tagline}>Save Money, Secure Future 💚</p>
+        <div style={styles.avatarBox}>
+          👤
         </div>
 
-        <div style={styles.walletMini}>
+        <div style={styles.heroUser}>
+          <p style={styles.welcomeBack}>
+            Welcome Back 👋
+          </p>
+
+          <div style={styles.nameRow}>
+            <h1 style={styles.userName}>
+              {name}
+            </h1>
+
+            <span style={styles.vip}>
+              VIP
+            </span>
+          </div>
+
+          <p style={styles.slogan}>
+            Save Money, Secure Future 💚
+          </p>
+        </div>
+
+        <div style={styles.walletCard}>
           <p>Total Wallet</p>
-          <h2>₹{wallet}</h2>
-          <span>👛</span>
+          <h2>₹{Number(wallet).toFixed(2)}</h2>
+          <div style={styles.walletIcon}>👛</div>
         </div>
+
       </div>
 
-      <div style={styles.updateBox}>
-        <div>
-          <b>📢 Latest Update</b>
-          <p>No new announcement</p>
+      {/* LATEST UPDATE */}
+      <div style={styles.updateCard}>
+        <div style={styles.updateLeft}>
+          <span style={styles.updateIcon}>📢</span>
+
+          <div>
+            <h3>Latest Update</h3>
+            <p>{latestUpdate}</p>
+          </div>
         </div>
-        <span>›</span>
+
+        <span style={styles.arrow}>›</span>
       </div>
 
+      {/* STATS */}
       <div style={styles.statsGrid}>
-        <Stat title="Total Investment" value={`₹${totalInvestment}`} icon="📈" bg="linear-gradient(135deg,#1d4ed8,#172554)" />
-        <Stat title="Total Return" value={`₹${totalReturn}`} icon="📊" bg="linear-gradient(135deg,#059669,#064e3b)" />
-        <Stat title="Total Referral" value={totalReferral} icon="👥" bg="linear-gradient(135deg,#7e22ce,#3b0764)" />
-        <Stat title="Total Withdraw" value={`₹${totalWithdraw}`} icon="⬇️" bg="linear-gradient(135deg,#ea580c,#7c2d12)" />
+        <StatCard
+          title="Total Investment"
+          value={`₹${Number(totalInvestment).toFixed(2)}`}
+          icon="📈"
+          bg={styles.statBlue}
+        />
+
+        <StatCard
+          title="Total Return"
+          value={`₹${Number(totalReturn).toFixed(2)}`}
+          icon="📊"
+          bg={styles.statGreen}
+        />
+
+        <StatCard
+          title="Total Referral"
+          value={totalReferral}
+          icon="👥"
+          bg={styles.statPurple}
+        />
+
+        <StatCard
+          title="Total Withdraw"
+          value={`₹${Number(totalWithdraw).toFixed(2)}`}
+          icon="⬇️"
+          bg={styles.statOrange}
+        />
       </div>
 
-      <SectionTitle title="MAIN ACTIONS" color="#38bdf8" />
+      {/* MAIN ACTIONS */}
+      <SectionTitle
+        title="MAIN ACTIONS"
+        color="#00c8ff"
+      />
 
-      <div style={styles.actionGrid}>
-        <Action title="💰 INVEST NOW" sub="Start Investing" bg="linear-gradient(135deg,#16a34a,#047857)" onClick={() => navigate("/save-money")} />
-        <Action title="📈 My Investment" sub="View Details" bg="linear-gradient(135deg,#2563eb,#0f766e)" onClick={() => navigate("/my-investment")} />
-        <Action title="💵 Wallet" sub="Add & Manage" bg="linear-gradient(135deg,#7c3aed,#9333ea)" onClick={() => navigate("/wallet")} />
-        <Action title="💸 Withdraw" sub="Request Payout" bg="linear-gradient(135deg,#f97316,#ea580c)" onClick={() => navigate("/withdraw")} />
-        <Action title="👥 Refer & Earn" sub="Invite & Earn" bg="linear-gradient(135deg,#db2777,#ec4899)" onClick={() => navigate("/refer")} />
-        <Action title="🧾 Transactions" sub="All History" bg="linear-gradient(135deg,#0891b2,#0f766e)" onClick={() => navigate("/transactions")} />
+      <div style={styles.sectionBox}>
+        <ActionBtn
+          title="💰 INVEST NOW"
+          sub="Start Investing"
+          bg={styles.btnGreen}
+          onClick={() => go("/save-money")}
+        />
+
+        <ActionBtn
+          title="📈 My Investment"
+          sub="View Details"
+          bg={styles.btnBlue}
+          onClick={() => go("/my-investment")}
+        />
+
+        <ActionBtn
+          title="💵 Wallet"
+          sub="Add & Manage"
+          bg={styles.btnPurple}
+          onClick={() => go("/wallet")}
+        />
+
+        <ActionBtn
+          title="💸 Withdraw"
+          sub="Request Payout"
+          bg={styles.btnOrange}
+          onClick={() => go("/withdraw")}
+        />
+
+        <ActionBtn
+          title="👥 Refer & Earn"
+          sub="Invite & Earn"
+          bg={styles.btnPink}
+          onClick={() => go("/refer")}
+        />
+
+        <ActionBtn
+          title="🧾 Transactions"
+          sub="All History"
+          bg={styles.btnCyan}
+          onClick={() => go("/transactions")}
+        />
       </div>
 
-      <SectionTitle title="MORE FEATURES" color="#facc15" />
+      {/* MORE FEATURES */}
+      <SectionTitle
+        title="MORE FEATURES"
+        color="#facc15"
+      />
 
-      <div style={styles.actionGrid}>
-        <Action title="✅ KYC Verification" sub="Verify Your Account" bg="linear-gradient(135deg,#06b6d4,#0891b2)" onClick={() => navigate("/kyc")} />
-        <Action title="🎁 Daily Reward" sub="Claim Reward" bg="linear-gradient(135deg,#7c3aed,#a855f7)" onClick={() => navigate("/daily-reward")} />
-        <Action title="🏦 Bank Details" sub="Manage Bank Info" bg="linear-gradient(135deg,#d97706,#ea580c)" onClick={() => navigate("/bank-details")} />
-        <Action title="📊 Investment Plan" sub="View All Plans" bg="linear-gradient(135deg,#1d4ed8,#2563eb)" onClick={() => navigate("/investment-plan")} />
-        <Action title="🔔 Notifications" sub="All Notifications" bg="linear-gradient(135deg,#e11d48,#f43f5e)" onClick={() => navigate("/notifications")} />
-        <Action title="🎧 Support" sub="Need Help?" bg="linear-gradient(135deg,#059669,#16a34a)" onClick={() => navigate("/support")} />
+      <div style={styles.sectionBox}>
+        <ActionBtn
+          title="✅ KYC Verification"
+          sub="Verify Your Account"
+          bg={styles.btnSky}
+          onClick={() => go("/kyc")}
+        />
+
+        <ActionBtn
+          title="🎁 Referral Income"
+          sub="Check Your Earnings"
+          bg={styles.btnViolet}
+          onClick={() => go("/referral-income")}
+        />
+
+        <ActionBtn
+          title="🏦 Bank Details"
+          sub="Manage Bank Info"
+          bg={styles.btnGold}
+          onClick={() => go("/bank-details")}
+        />
+
+        <ActionBtn
+          title="📊 Investment Plan"
+          sub="View All Plans"
+          bg={styles.btnPlan}
+          onClick={() => go("/investment-plan")}
+        />
+
+        <ActionBtn
+          title="🔔 Notifications"
+          sub="All Notifications"
+          bg={styles.btnRed}
+          onClick={() => go("/notifications")}
+        />
+
+        <ActionBtn
+          title="🎧 Support"
+          sub="Need Help?"
+          bg={styles.btnSupport}
+          onClick={() => go("/support")}
+        />
       </div>
 
+      {/* BANNER */}
       <div style={styles.banner}>
         <div>
-          <h1>Grow Your Money<br />Build Your Future</h1>
+          <h1>
+            Grow Your Money
+            <br />
+            Build Your Future
+          </h1>
+
           <p>Invest Smart, Earn More</p>
-          <button onClick={() => navigate("/save-money")}>
+
+          <button onClick={() => go("/save-money")}>
             Invest Now →
           </button>
         </div>
-        <div style={styles.moneyIcon}>💰📈</div>
+
+        <div style={styles.bannerImg}>
+          💰📈
+        </div>
       </div>
 
-      <div style={styles.trustRow}>
-        <Trust icon="🔒" title="100% Secure" sub="Your money is safe" />
-        <Trust icon="⚡" title="Fast Payout" sub="Quick withdrawals" />
-        <Trust icon="🛡️" title="Trusted Platform" sub="Trusted by users" />
-        <Trust icon="💬" title="24/7 Support" sub="We are here" />
+      {/* TRUST CARDS */}
+      <div style={styles.trustGrid}>
+        <TrustCard icon="🔒" title="100% Secure" sub="Your money is safe" />
+        <TrustCard icon="⚡" title="Fast Payout" sub="Quick withdrawals" />
+        <TrustCard icon="🛡️" title="Trusted Platform" sub="Trusted by users" />
+        <TrustCard icon="💬" title="24/7 Support" sub="We are here" />
       </div>
 
-      <div style={styles.about} onClick={() => navigate("/about-company")}>
+      {/* ABOUT */}
+      <div
+        style={styles.aboutBar}
+        onClick={() => go("/about-company")}
+      >
         🏢 About Save Money
       </div>
 
-      <h2 style={styles.help}>HELP OTHER FOR EARN</h2>
+      <h2 style={styles.helpText}>
+        HELP OTHER FOR EARN
+      </h2>
 
-      <footer style={styles.footer}>
+      {/* FOOTER */}
+      <div style={styles.footer}>
         <h3>Save Money</h3>
-        <p>Privacy Policy &nbsp; Terms &nbsp; Refund &nbsp; Risk Disclosure</p>
-        <small>© 2026 Save Money. All Rights Reserved.</small>
-      </footer>
 
-      <div style={styles.quickRow}>
-        <button onClick={() => navigate("/support")}>📞 CONTACT</button>
-        <button onClick={() => navigate("/wallet")}>💰 WALLET</button>
-        <button onClick={() => navigate("/refer")}>👥 TEAM</button>
+        <p>
+          Privacy Policy &nbsp; Terms &nbsp; Refund &nbsp;
+          Risk Disclosure &nbsp; AML & KYC &nbsp; Disclaimer
+        </p>
+
+        <small>
+          © 2025 Save Money. All Rights Reserved.
+        </small>
       </div>
 
+      {/* QUICK BUTTONS */}
+      <div style={styles.quickBtns}>
+        <button onClick={() => go("/support")}>📞 CONTACT</button>
+        <button onClick={() => go("/wallet")}>💰 WALLET</button>
+        <button onClick={() => go("/refer")}>👥 TEAM</button>
+      </div>
+
+      {/* BOTTOM NAV */}
       <div style={styles.bottomNav}>
-        <Nav icon="🏠" title="Home" active onClick={() => navigate("/home")} />
-        <Nav icon="📈" title="Investment" onClick={() => navigate("/my-investment")} />
-        <Nav icon="👛" title="Wallet" onClick={() => navigate("/wallet")} />
-        <Nav icon="👥" title="Refer" onClick={() => navigate("/refer")} />
-        <Nav icon="👤" title="Profile" onClick={() => navigate("/profile")} />
+        <NavItem icon="🏠" title="Home" active onClick={() => go("/home")} />
+        <NavItem icon="📈" title="Investment" onClick={() => go("/my-investment")} />
+        <NavItem icon="👛" title="Wallet" onClick={() => go("/wallet")} />
+        <NavItem icon="👥" title="Refer" onClick={() => go("/refer")} />
+        <NavItem icon="👤" title="Profile" onClick={() => go("/profile")} />
       </div>
 
     </div>
   );
 }
 
-function Stat({ title, value, icon, bg }) {
+function StatCard({ title, value, icon, bg }) {
   return (
-    <div style={{ ...styles.statCard, background: bg }}>
-      <div>{icon}</div>
+    <div style={{ ...styles.statCard, ...bg }}>
+      <div style={styles.statIcon}>{icon}</div>
       <p>{title}</p>
       <h2>{value}</h2>
     </div>
   );
 }
 
-function Action({ title, sub, bg, onClick }) {
+function ActionBtn({ title, sub, bg, onClick }) {
   return (
-    <button style={{ ...styles.actionCard, background: bg }} onClick={onClick}>
+    <button
+      style={{ ...styles.actionBtn, ...bg }}
+      onClick={onClick}
+    >
       <h3>{title}</h3>
       <p>{sub}</p>
     </button>
@@ -186,23 +353,25 @@ function SectionTitle({ title, color }) {
   );
 }
 
-function Trust({ icon, title, sub }) {
+function TrustCard({ icon, title, sub }) {
   return (
     <div style={styles.trustCard}>
-      <div>{icon}</div>
-      <b>{title}</b>
-      <small>{sub}</small>
+      <span>{icon}</span>
+      <div>
+        <b>{title}</b>
+        <p>{sub}</p>
+      </div>
     </div>
   );
 }
 
-function Nav({ icon, title, active, onClick }) {
+function NavItem({ icon, title, active, onClick }) {
   return (
     <button
       onClick={onClick}
       style={{
-        ...styles.navBtn,
-        background: active ? "#1e3a8a" : "transparent"
+        ...styles.navItem,
+        background: active ? "#102a5c" : "transparent"
       }}
     >
       <span>{icon}</span>
@@ -212,226 +381,395 @@ function Nav({ icon, title, active, onClick }) {
 }
 
 const styles = {
+
   container: {
     minHeight: "100vh",
-    background: "linear-gradient(180deg,#020617,#020617,#06162f)",
+    background:
+      "linear-gradient(180deg,#000814,#020b22,#03112f)",
     color: "white",
-    padding: "16px",
-    paddingBottom: "125px",
-    fontFamily: "Arial"
+    paddingBottom: "170px",
+    overflowX: "hidden"
   },
 
-  topbar: {
+  topBar: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "18px"
+    padding: "18px 18px 10px"
   },
 
-  menu: {
+  menuBtn: {
     background: "transparent",
-    color: "white",
     border: "none",
-    fontSize: "26px"
+    color: "white",
+    fontSize: "34px"
   },
 
-  bell: {
+  topTitle: {
+    margin: 0,
+    fontSize: "26px",
+    fontWeight: "700"
+  },
+
+  bellBox: {
     position: "relative",
-    fontSize: "24px",
+    fontSize: "28px",
     cursor: "pointer"
   },
 
-  badge: {
+  bellBadge: {
     position: "absolute",
-    top: "-8px",
-    right: "-8px",
-    background: "#e11d48",
-    padding: "3px 7px",
+    top: "-7px",
+    right: "-7px",
+    width: "22px",
+    height: "22px",
     borderRadius: "50%",
-    fontSize: "11px"
-  },
-
-  heroCard: {
+    background: "#ff1744",
     display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    background:
-      "radial-gradient(circle at right,#22c55e,#064e3b,#0f172a)",
-    borderRadius: "22px",
-    padding: "18px",
-    border: "1px solid #10b981",
-    boxShadow: "0 0 30px rgba(34,197,94,0.25)"
-  },
-
-  profileCircle: {
-    width: "78px",
-    height: "78px",
-    borderRadius: "50%",
-    background: "#e5e7eb",
-    color: "#334155",
-    display: "flex",
-    alignItems: "center",
     justifyContent: "center",
-    fontSize: "45px",
-    border: "3px solid #bae6fd"
-  },
-
-  welcome: {
-    margin: 0,
+    alignItems: "center",
+    fontSize: "11px",
     fontWeight: "bold"
   },
 
-  userName: {
-    margin: "5px 0",
-    fontSize: "28px"
+  heroCard: {
+    margin: "15px",
+    borderRadius: "28px",
+    padding: "22px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    background:
+      "linear-gradient(135deg,#021526,#042e4b,#10b85b)",
+    boxShadow:
+      "0 0 35px rgba(0,255,170,0.18)",
+    border: "1px solid rgba(0,255,170,0.18)",
+    position: "relative",
+    overflow: "hidden"
   },
 
-  tagline: {
+  avatarBox: {
+    width: "92px",
+    height: "92px",
+    borderRadius: "50%",
+    border: "3px solid rgba(255,255,255,0.7)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "52px",
+    background: "#394457"
+  },
+
+  heroUser: {
+    flex: 1,
+    marginLeft: "18px"
+  },
+
+  welcomeBack: {
     margin: 0,
-    color: "#d1fae5"
+    fontSize: "20px",
+    color: "#ffffff"
   },
 
-  walletMini: {
-    background: "rgba(34,197,94,0.35)",
-    padding: "14px",
-    borderRadius: "16px",
-    minWidth: "115px"
+  nameRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginTop: "6px"
   },
 
-  updateBox: {
-    background: "#111827",
-    marginTop: "14px",
-    padding: "16px",
-    borderRadius: "16px",
+  userName: {
+    margin: 0,
+    fontSize: "48px",
+    fontWeight: "800"
+  },
+
+  vip: {
+    background:
+      "linear-gradient(135deg,#5b2cff,#8e44ff)",
+    padding: "7px 14px",
+    borderRadius: "10px",
+    fontWeight: "bold",
+    fontSize: "14px"
+  },
+
+  slogan: {
+    marginTop: "8px",
+    color: "#d4ffe9",
+    fontSize: "18px"
+  },
+
+  walletCard: {
+    width: "210px",
+    borderRadius: "24px",
+    padding: "20px",
+    background:
+      "linear-gradient(135deg,#12b85f,#19d978)",
+    color: "white",
+    boxShadow:
+      "0 0 20px rgba(0,255,100,0.3)"
+  },
+
+  walletIcon: {
+    fontSize: "48px",
+    marginTop: "10px"
+  },
+
+  updateCard: {
+    margin: "15px",
+    background:
+      "linear-gradient(90deg,#08111d,#111827)",
+    borderRadius: "26px",
+    padding: "20px",
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
+    border: "1px solid #1d3557"
+  },
+
+  updateLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "15px"
+  },
+
+  updateIcon: {
+    fontSize: "38px",
+    color: "#ffc107"
+  },
+
+  arrow: {
+    fontSize: "45px",
+    color: "#cfd8dc"
   },
 
   statsGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginTop: "18px"
+    gap: "15px",
+    padding: "0 15px"
   },
 
   statCard: {
-    padding: "17px",
-    borderRadius: "16px",
-    minHeight: "105px",
-    boxShadow: "0 0 15px rgba(0,0,0,0.35)"
+    borderRadius: "24px",
+    padding: "22px",
+    minHeight: "170px",
+    position: "relative",
+    overflow: "hidden",
+    boxShadow:
+      "0 0 22px rgba(0,0,0,0.35)"
+  },
+
+  statBlue: {
+    background:
+      "linear-gradient(135deg,#1736ff,#071b7a)"
+  },
+
+  statGreen: {
+    background:
+      "linear-gradient(135deg,#0aa06e,#014737)"
+  },
+
+  statPurple: {
+    background:
+      "linear-gradient(135deg,#742bff,#3b0764)"
+  },
+
+  statOrange: {
+    background:
+      "linear-gradient(135deg,#ff7b00,#9a3412)"
+  },
+
+  statIcon: {
+    fontSize: "42px",
+    marginBottom: "15px"
   },
 
   sectionTitle: {
-    marginTop: "20px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "10px"
+    gap: "18px",
+    marginTop: "35px",
+    marginBottom: "20px"
   },
 
-  actionGrid: {
-    background: "rgba(15,23,42,0.95)",
-    border: "1px solid #1e3a8a",
-    borderRadius: "18px",
-    padding: "14px",
+  sectionBox: {
+    margin: "0 15px",
+    background:
+      "linear-gradient(180deg,#06142d,#071223)",
+    borderRadius: "30px",
+    padding: "18px",
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "12px"
+    gap: "18px",
+    border: "1px solid #163c75"
   },
 
-  actionCard: {
+  actionBtn: {
     border: "none",
+    borderRadius: "24px",
+    padding: "22px",
+    minHeight: "140px",
+    textAlign: "left",
     color: "white",
-    borderRadius: "16px",
-    padding: "18px 10px",
-    minHeight: "95px",
-    fontWeight: "bold",
-    boxShadow: "0 0 18px rgba(0,0,0,0.3)"
+    boxShadow:
+      "0 0 22px rgba(0,0,0,0.25)"
+  },
+
+  btnGreen: {
+    background:
+      "linear-gradient(135deg,#00c853,#007e33)"
+  },
+
+  btnBlue: {
+    background:
+      "linear-gradient(135deg,#1e88ff,#004fc4)"
+  },
+
+  btnPurple: {
+    background:
+      "linear-gradient(135deg,#7c3aed,#d946ef)"
+  },
+
+  btnOrange: {
+    background:
+      "linear-gradient(135deg,#ff7b00,#ffb300)"
+  },
+
+  btnPink: {
+    background:
+      "linear-gradient(135deg,#ff006e,#d000ff)"
+  },
+
+  btnCyan: {
+    background:
+      "linear-gradient(135deg,#00acc1,#00e5ff)"
+  },
+
+  btnSky: {
+    background:
+      "linear-gradient(135deg,#00b8d4,#0288d1)"
+  },
+
+  btnViolet: {
+    background:
+      "linear-gradient(135deg,#7b2cff,#b388ff)"
+  },
+
+  btnGold: {
+    background:
+      "linear-gradient(135deg,#ff9800,#ef6c00)"
+  },
+
+  btnPlan: {
+    background:
+      "linear-gradient(135deg,#2979ff,#304ffe)"
+  },
+
+  btnRed: {
+    background:
+      "linear-gradient(135deg,#ff1744,#ff5252)"
+  },
+
+  btnSupport: {
+    background:
+      "linear-gradient(135deg,#00c853,#00e676)"
   },
 
   banner: {
-    marginTop: "18px",
-    background: "linear-gradient(135deg,#4c1d95,#7e22ce)",
-    borderRadius: "20px",
-    padding: "22px",
+    margin: "30px 15px 0",
+    borderRadius: "30px",
+    padding: "30px",
+    background:
+      "linear-gradient(135deg,#3f0d99,#7b2cff,#8e24aa)",
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
+    overflow: "hidden"
   },
 
-  moneyIcon: {
-    fontSize: "55px"
+  bannerImg: {
+    fontSize: "100px"
   },
 
-  trustRow: {
-    marginTop: "15px",
+  trustGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "10px"
+    gap: "14px",
+    padding: "15px",
+    marginTop: "18px"
   },
 
   trustCard: {
-    background: "#0f172a",
-    borderRadius: "14px",
-    padding: "13px",
-    border: "1px solid #1e40af",
+    background:
+      "linear-gradient(135deg,#06142d,#08111d)",
+    borderRadius: "22px",
+    padding: "18px",
     display: "flex",
-    flexDirection: "column",
-    gap: "5px"
+    alignItems: "center",
+    gap: "14px",
+    border: "1px solid #163c75"
   },
 
-  about: {
-    marginTop: "18px",
-    background: "linear-gradient(135deg,#0891b2,#0f766e)",
+  aboutBar: {
+    marginTop: "20px",
+    background:
+      "linear-gradient(90deg,#00acc1,#26c6da)",
     padding: "16px",
     textAlign: "center",
-    borderRadius: "12px",
-    fontWeight: "bold"
+    fontWeight: "700",
+    fontSize: "20px"
   },
 
-  help: {
-    color: "#22c55e",
+  helpText: {
     textAlign: "center",
-    marginTop: "20px"
+    color: "#00ff66",
+    fontSize: "42px",
+    marginTop: "35px",
+    fontWeight: "900"
   },
 
   footer: {
     textAlign: "center",
-    color: "#38bdf8",
-    padding: "15px"
+    padding: "35px 20px"
   },
 
-  quickRow: {
+  quickBtns: {
     position: "fixed",
-    bottom: "63px",
-    left: "0",
-    right: "0",
-    padding: "8px 14px",
+    bottom: "78px",
+    left: 0,
+    right: 0,
     display: "grid",
     gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "8px",
-    background: "#020617"
+    gap: "10px",
+    padding: "0 12px",
+    zIndex: 999
   },
 
   bottomNav: {
     position: "fixed",
-    bottom: "0",
-    left: "0",
-    right: "0",
-    height: "62px",
-    background: "#020617",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "72px",
+    background: "#020817",
+    borderTop: "1px solid #163c75",
     display: "grid",
     gridTemplateColumns: "repeat(5,1fr)",
-    borderTop: "1px solid #1e3a8a"
+    zIndex: 999
   },
 
-  navBtn: {
-    color: "white",
+  navItem: {
     border: "none",
+    background: "transparent",
+    color: "white",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    gap: "4px",
+    fontSize: "13px"
   }
+
 };
