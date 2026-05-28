@@ -678,7 +678,6 @@ const styles = {
     height: "64px",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between"
   },
 
   menuButton: {
