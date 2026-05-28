@@ -677,7 +677,7 @@ const styles = {
   topHeader: {
     height: "64px",
     display: "flex",
-    alignItems: "center",
+    alignItems: "right",
   },
 
   menuButton: {
