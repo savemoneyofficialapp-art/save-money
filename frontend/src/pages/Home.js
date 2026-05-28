@@ -119,8 +119,16 @@ export default function Home() {
     <div style={styles.page}>
 
       {/* TOP HEADER */}
-      <div>
-       <button
+      <div style={styles.topHeader}>
+        <button style={styles.menuButton}>
+          ☰
+        </button>
+
+        <h2 style={styles.headerTitle}>
+          Welcome, {name}
+        </h2>
+
+           <button
           style={styles.notificationButton}
           onClick={() => go("/notifications")}
         >
@@ -132,12 +140,6 @@ export default function Home() {
             </small>
           )}
         </button>
-
-        <h2 style={styles.headerTitle}>
-          Welcome, {name}
-        </h2>
-
-           
 
  <button
     style={styles.logoutBtn}
