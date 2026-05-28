@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API } from "../config";
 
-export default function InvestNow() {
+export default function InvestmentNow() {
   const navigate = useNavigate();
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
@@ -16,33 +16,38 @@ export default function InvestNow() {
   });
 
   useEffect(() => {
-    loadSummary();
+    fetchSummary();
   }, []);
 
-  const loadSummary = async () => {
+  const fetchSummary = async () => {
     try {
       const res = await fetch(`${API}/investment-summary`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", authorization: token },
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token
+        },
         body: JSON.stringify({ email })
       });
 
       const data = await res.json();
 
-      setSummary({
-        totalInvestment: Number(data.totalInvestment || 25680),
-        monthlyInvestment: Number(data.monthlyInvestment || 2560),
-        totalReturn: Number(data.totalReturn || 2560),
-        returnRate: Number(data.returnRate || 11.09),
-        activePlan: Number(data.activePlan || 2)
-      });
+      if (data.success) {
+        setSummary({
+          totalInvestment: Number(data.totalInvestment || 0),
+          monthlyInvestment: Number(data.monthlyInvestment || 0),
+          totalReturn: Number(data.totalReturn || 0),
+          returnRate: Number(data.returnRate || 0),
+          activePlan: Number(data.activePlan || 0)
+        });
+      }
     } catch (err) {
-      console.log(err);
+      console.log("Investment summary error:", err);
     }
   };
 
   const money = (n) => `₹ ${Number(n || 0).toLocaleString("en-IN")}.00`;
-  const soon = () => alert("Coming Soon");
+  const soon = () => alert("Temporary Unavailable - Coming Soon");
 
   return (
     <div style={styles.page}>
@@ -53,22 +58,15 @@ export default function InvestNow() {
             <p style={styles.heroLabel}>Total Investment Value 👁</p>
             <h1 style={styles.heroAmount}>{money(summary.totalInvestment)}</h1>
             <h3 style={styles.gain}>
-              +₹ {summary.monthlyInvestment.toLocaleString("en-IN")}.00 (▲ {summary.returnRate}%)
+              +{money(summary.monthlyInvestment)} (▲ {summary.returnRate}%)
             </h3>
-            <p style={styles.allTime}>All Time Gain</p>
+            <p style={styles.allTime}>This Month Added</p>
           </div>
 
-          <div style={styles.graph}>
-            <span style={styles.arrow}>↗</span>
-            <span style={styles.bar1}></span>
-            <span style={styles.bar2}></span>
-            <span style={styles.bar3}></span>
-            <span style={styles.bar4}></span>
-            <span style={styles.bar5}></span>
-          </div>
+          <div style={styles.graph}>↗</div>
 
           <div style={styles.pigStage}>
-            <div style={styles.coin}>$</div>
+            <div style={styles.coin}>₹</div>
             <div style={styles.pigFace}>🐷</div>
           </div>
         </div>
@@ -97,15 +95,16 @@ export default function InvestNow() {
 
         <div style={styles.activeGrid}>
           <div style={styles.saveCard}>
-            <div style={styles.roundPic}>
-              <div style={styles.plantIcon}>🌱</div>
-              <div style={styles.smallCoin}>$</div>
-            </div>
+            <div style={styles.roundPic}>🌱</div>
 
             <div style={styles.planText}>
               <h2>SAVE MONEY</h2>
               <span>SIP Invest Plan</span>
-              <p>Start small, grow big<br />Build your wealth step by step<br />with our SIP plan.</p>
+              <p>
+                Start small, grow big<br />
+                Build your wealth step by step<br />
+                with our SIP plan.
+              </p>
             </div>
 
             <button style={styles.planBtnGreen} onClick={() => navigate("/save-money")}>
@@ -114,14 +113,16 @@ export default function InvestNow() {
           </div>
 
           <div style={styles.oneCard}>
-            <div style={styles.roundPic}>
-              <div style={styles.rocketIcon}>🚀</div>
-            </div>
+            <div style={styles.roundPic}>🚀</div>
 
             <div style={styles.planText}>
               <h2>ONE TE</h2>
               <span>Upgrade Money</span>
-              <p>Upgrade your future<br />Make a smart move and<br />unlock higher returns.</p>
+              <p>
+                Upgrade your future<br />
+                Make a smart move and<br />
+                unlock higher returns.
+              </p>
             </div>
 
             <button style={styles.planBtnBlue} onClick={soon}>
@@ -135,7 +136,7 @@ export default function InvestNow() {
         <div style={styles.comingGrid}>
           <Coming icon="🪙" title="Invest GOLD" text="Secure your future with the value of gold." bg={styles.gold} onClick={soon} />
           <Coming icon="🥈" title="Invest SILVER" text="Invest in silver, secure tomorrow." bg={styles.silver} onClick={soon} />
-          <Coming icon="🐷" title="RECCURING DEPOSIT" text="Save regularly, get valuable returns." bg={styles.rd} onClick={soon} />
+          <Coming icon="🐷" title="RECURRING DEPOSIT" text="Save regularly, get valuable returns." bg={styles.rd} onClick={soon} />
         </div>
 
         <div style={styles.motive}>
@@ -148,8 +149,8 @@ export default function InvestNow() {
         </div>
 
         <div style={styles.stats}>
-          <Mini icon="↗" title="Total Invested" value={`₹ ${summary.totalInvestment.toLocaleString("en-IN")}`} color="#20c997" />
-          <Mini icon="↗" title="Total Return" value={`₹ ${summary.totalReturn.toLocaleString("en-IN")}`} color="#279eff" />
+          <Mini icon="↗" title="Total Invested" value={money(summary.totalInvestment)} color="#20c997" />
+          <Mini icon="₹" title="Total Return" value={money(summary.totalReturn)} color="#279eff" />
           <Mini icon="%" title="Return Rate" value={`${summary.returnRate}%`} color="#8b5cf6" />
           <Mini icon="▣" title="Active Plan" value={summary.activePlan} color="#ff9500" />
         </div>
@@ -184,7 +185,7 @@ function Coming({ icon, title, text, bg, onClick }) {
 function Mini({ icon, title, value, color }) {
   return (
     <div style={styles.mini}>
-      <span style={{ background: color }}>{icon}</span>
+      <span style={{ ...styles.miniIcon, background: color }}>{icon}</span>
       <div>
         <p>{title}</p>
         <b>{value}</b>
@@ -220,17 +221,12 @@ const styles = {
 
   heroText: { position: "relative", zIndex: 3 },
 
-  heroLabel: {
-    margin: 0,
-    fontSize: "20px",
-    opacity: 0.95
-  },
+  heroLabel: { margin: 0, fontSize: "20px", opacity: 0.95 },
 
   heroAmount: {
     margin: "18px 0 8px",
     fontSize: "50px",
-    fontWeight: "900",
-    letterSpacing: "1px"
+    fontWeight: "900"
   },
 
   gain: {
@@ -240,35 +236,16 @@ const styles = {
     fontWeight: "900"
   },
 
-  allTime: {
-    marginTop: "12px",
-    fontSize: "19px",
-    opacity: 0.9
-  },
+  allTime: { marginTop: "12px", fontSize: "19px", opacity: 0.9 },
 
   graph: {
     position: "absolute",
-    right: "38px",
-    bottom: "28px",
-    width: "330px",
-    height: "170px",
-    opacity: 0.28
+    right: "45px",
+    bottom: "15px",
+    fontSize: "160px",
+    color: "rgba(255,255,255,.22)",
+    fontWeight: "900"
   },
-
-  arrow: {
-    position: "absolute",
-    right: "40px",
-    top: "4px",
-    fontSize: "110px",
-    color: "white",
-    transform: "rotate(0deg)"
-  },
-
-  bar1: { position: "absolute", bottom: 0, left: 0, width: 25, height: 50, background: "white", borderRadius: 8 },
-  bar2: { position: "absolute", bottom: 0, left: 45, width: 25, height: 75, background: "white", borderRadius: 8 },
-  bar3: { position: "absolute", bottom: 0, left: 90, width: 25, height: 105, background: "white", borderRadius: 8 },
-  bar4: { position: "absolute", bottom: 0, left: 135, width: 25, height: 130, background: "white", borderRadius: 8 },
-  bar5: { position: "absolute", bottom: 0, left: 180, width: 25, height: 155, background: "white", borderRadius: 8 },
 
   pigStage: {
     position: "absolute",
@@ -276,8 +253,6 @@ const styles = {
     top: "38px",
     width: "190px",
     height: "160px",
-    borderRadius: "50%",
-    background: "radial-gradient(circle,#fff2 0%,#fff0 70%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -354,10 +329,7 @@ const styles = {
     fontSize: 25
   },
 
-  vLine: {
-    height: "45px",
-    background: "#d9deea"
-  },
+  vLine: { height: "45px", background: "#d9deea" },
 
   section: {
     margin: "34px 0 22px",
@@ -367,13 +339,7 @@ const styles = {
     gap: "18px"
   },
 
-  section: {
-    margin: "34px 0 22px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "18px"
-  },
+  sectionTitleLine: {},
 
   activeGrid: {
     display: "grid",
@@ -410,36 +376,11 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 12px 26px rgba(0,0,0,.18)"
+    boxShadow: "0 12px 26px rgba(0,0,0,.18)",
+    fontSize: 64
   },
 
-  plantIcon: { fontSize: 64 },
-  rocketIcon: { fontSize: 64 },
-
-  smallCoin: {
-    position: "absolute",
-    bottom: "8px",
-    right: "13px",
-    background: "#ffcf32",
-    color: "#a75b00",
-    width: 35,
-    height: 35,
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "900"
-  },
-
-  planText: {
-    marginLeft: "155px",
-    color: "white"
-  },
-
-  planText: {
-    marginLeft: "155px",
-    color: "white"
-  },
+  planText: { marginLeft: "155px", color: "white" },
 
   planBtnGreen: {
     position: "absolute",
@@ -452,11 +393,7 @@ const styles = {
     background: "white",
     color: "#14b873",
     fontSize: "20px",
-    fontWeight: "900",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "18px"
+    fontWeight: "900"
   },
 
   planBtnBlue: {
@@ -470,11 +407,7 @@ const styles = {
     background: "white",
     color: "#0877ec",
     fontSize: "20px",
-    fontWeight: "900",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "18px"
+    fontWeight: "900"
   },
 
   comingGrid: {
@@ -508,12 +441,7 @@ const styles = {
     fontWeight: "900"
   },
 
-  cIcon: {
-    fontSize: 58,
-    marginTop: 42,
-    float: "left",
-    marginRight: 16
-  },
+  cIcon: { fontSize: 58, marginTop: 42 },
 
   cBtn: {
     position: "absolute",
@@ -563,5 +491,16 @@ const styles = {
     justifyContent: "center",
     gap: 12,
     borderRight: "1px solid #e3e7f0"
+  },
+
+  miniIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: "14px",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "900"
   }
 };

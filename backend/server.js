@@ -3876,6 +3876,74 @@ app.post("/my-bonus-ledger", auth, async (req, res) => {
   res.json(data);
 });
 
+app.post("/investment-summary", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ msg: "Email required" });
+    }
+
+    const investments = await Investment.find({
+      email: email.toLowerCase()
+    });
+
+    let totalInvestment = 0;
+    let monthlyInvestment = 0;
+    let totalReturn = 0;
+    let activePlan = 0;
+    let rateSum = 0;
+    let rateCount = 0;
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    investments.forEach((inv) => {
+      const amount = Number(inv.amount || inv.monthlyAmount || inv.totalAmount || 0);
+      const rate = Number(inv.returnRate || inv.interestRate || inv.percent || 0);
+
+      totalInvestment += amount;
+
+      if (inv.status === "Active" || inv.status === "active") {
+        activePlan += 1;
+      }
+
+      if (rate > 0) {
+        rateSum += rate;
+        rateCount += 1;
+      }
+
+      const created = new Date(inv.createdAt || inv.date);
+
+      if (
+        created.getMonth() === currentMonth &&
+        created.getFullYear() === currentYear
+      ) {
+        monthlyInvestment += amount;
+      }
+
+      totalReturn += (amount * rate) / 100;
+    });
+
+    const returnRate =
+      rateCount > 0 ? Number((rateSum / rateCount).toFixed(2)) : 0;
+
+    res.json({
+      success: true,
+      totalInvestment,
+      monthlyInvestment,
+      totalReturn,
+      returnRate,
+      activePlan
+    });
+
+  } catch (err) {
+    console.log("INVESTMENT SUMMARY ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
 
 
 
