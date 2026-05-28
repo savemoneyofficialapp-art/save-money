@@ -1143,7 +1143,8 @@ actionSupport: {
 
   footer: {
     textAlign: "center",
-    padding: "24px 4px"
+    padding: "24px 4px",
+     color: " #87CEEB"
   },
 
   footerLinks: {
