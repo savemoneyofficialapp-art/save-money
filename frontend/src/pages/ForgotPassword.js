@@ -1,409 +1,342 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { API } from "../config";
 
-
-
 export default function ForgotPassword() {
-
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(30);
   const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
-const [otpVerified, setOtpVerified] = useState(false);
-const [newPassword, setNewPassword] = useState("");
-const [confirmPassword, setConfirmPassword] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const sendOTP = async () => {
-
-  if (!email) {
-    alert("Enter email");
-    return;
-  }
-
-  try {
-
-    setLoading(true);
-
-    const res = await fetch(`${API}/send-forgot-otp`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        email: email.trim().toLowerCase()
-      })
-    });
-
-    const data = await res.json();
-
-    alert(data.msg || "OTP Sent");
-
-    if (res.ok) {
-
-      setOtpSent(true);
-
-      let count = 30;
-
-      setTimer(count);
-
-      const interval = setInterval(() => {
-
-        count--;
-
-        setTimer(count);
-
-        if (count <= 0) {
-          clearInterval(interval);
-        }
-
-      }, 1000);
-
+    if (!email) {
+      alert("Email required");
+      return;
     }
 
-  } catch (err) {
+    try {
+      setLoading(true);
 
-    console.log(err);
-
-    alert("OTP send failed");
-
-  } finally {
-
-    setLoading(false);
-
-  }
-};
-
-const verifyOTP = async () => {
-
-  const finalOtp = otp.join("");
-
-  if (finalOtp.length !== 6) {
-    toast.warning("Enter complete OTP");
-    return;
-  }
-
-  try {
-
-    const res = await fetch(
-      `${API}/verify-forgot-otp`,
-      {
+      const res = await fetch(`${API}/send-forgot-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          email,
-          otp: finalOtp
+          email: email.trim().toLowerCase()
         })
+      });
+
+      const data = await res.json();
+      alert(data.msg || "OTP sent");
+
+      if (res.ok || data.success) {
+        setOtpSent(true);
+        setTimer(30);
+
+        let count = 30;
+        const interval = setInterval(() => {
+          count--;
+          setTimer(count);
+
+          if (count <= 0) {
+            clearInterval(interval);
+          }
+        }, 1000);
       }
-    );
 
-    const data = await res.json();
-
-    if (data.success) {
-  toast.success("OTP Verified");
-  setOtpVerified(true);
-} else {
-  alert(data.msg);
-}
-
-  } catch (err) {
-
-    console.log(err);
-
-    toast.error("Verification Failed");
-
-  }
-
-};
+    } catch (err) {
+      console.log("SEND OTP ERROR:", err);
+      alert("OTP send failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOtp = (value, index) => {
-
     if (!/^[0-9]*$/.test(value)) return;
 
     const newOtp = [...otp];
-
     newOtp[index] = value;
-
     setOtp(newOtp);
 
     if (value && index < 5) {
-      document.getElementById(`otp-${index + 1}`).focus();
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const verifyOTP = async () => {
+    const finalOtp = otp.join("");
+
+    if (finalOtp.length !== 6) {
+      alert("Enter 6 digit OTP");
+      return;
+    }
+
+    try {
+      setVerifyLoading(true);
+
+      const res = await fetch(`${API}/verify-forgot-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          otp: finalOtp
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("OTP Verified");
+        setOtpVerified(true);
+      } else {
+        alert(data.msg || "OTP verification failed");
+      }
+
+    } catch (err) {
+      console.log("VERIFY OTP ERROR:", err);
+      alert("Verification failed");
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const resetPassword = async () => {
+    const finalOtp = otp.join("");
+
+    if (!newPassword || !confirmPassword) {
+      alert("Enter new password");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      alert("Password not matched");
+      return;
+    }
+
+    try {
+      setResetLoading(true);
+
+      const res = await fetch(`${API}/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          otp: finalOtp,
+          newPassword
+        })
+      });
+
+      const data = await res.json();
+
+      alert(data.msg || "Password reset done");
+
+      if (data.success) {
+        navigate("/login");
+      }
+
+    } catch (err) {
+      console.log("RESET PASSWORD ERROR:", err);
+      alert("Password reset failed");
+    } finally {
+      setResetLoading(false);
     }
   };
 
   return (
-
     <div style={styles.container}>
-
       <div style={styles.wrapper}>
 
-      <div style={styles.bgCircle1}></div>
-      <div style={styles.bgCircle2}></div>
+        <button
+          style={styles.backBtn}
+          onClick={() => navigate("/login")}
+        >
+          ←
+        </button>
 
-      <button
-        style={styles.backBtn}
-        onClick={() => navigate("/login")}
-      >
-        ←
-      </button>
-
-      <div style={styles.topSection}>
-
-        <div style={styles.piggyWrap}>
-
-          <div style={styles.shield}></div>
-
-          <div style={styles.piggy}>
-            🐷
+        <div style={styles.topSection}>
+          <div style={styles.piggyWrap}>
+            <div style={styles.shield}></div>
+            <div style={styles.piggy}>🐷</div>
+            <div style={styles.coin}>$</div>
           </div>
 
-          <div style={styles.coin}>
-            $
-          </div>
+          <div style={styles.floating1}>🔒</div>
+          <div style={styles.floating2}>✉</div>
+          <div style={styles.floating3}>✔</div>
 
+          <h1 style={styles.title}>
+            Forgot <span>Password?</span>
+          </h1>
+
+          <p style={styles.subtitle}>
+            No worries! Enter your email address and we’ll send you an OTP to reset your password.
+          </p>
         </div>
 
-        <div style={styles.floating1}>🔒</div>
-        <div style={styles.floating2}>✉</div>
-        <div style={styles.floating3}>✔</div>
+        <div style={styles.card}>
+          <div style={styles.stepWrap}>
+            <div style={styles.stepCircle}>1</div>
 
-        <h1 style={styles.title}>
-          Forgot <span>Password?</span>
-        </h1>
-
-        <p style={styles.subtitle}>
-          No worries! Enter your email address and
-          we’ll send you an OTP to reset your password.
-        </p>
-
-      </div>
-
-      <div style={styles.card}>
-
-        <div style={styles.stepWrap}>
-
-          <div style={styles.stepCircle}>
-            1
+            <div>
+              <h3 style={styles.stepTitle}>Enter Email address</h3>
+              <p style={styles.stepSub}>We’ll send you a 6-digit OTP</p>
+            </div>
           </div>
 
-          <div>
+          <div style={styles.inputBox}>
+            <div style={styles.phoneIcon}>📞</div>
+            <div style={styles.countryCode}>✉</div>
 
-            <h3 style={styles.stepTitle}>
-              Enter Eamil address
-            </h3>
-
-            <p style={styles.stepSub}>
-              We’ll send you a 6-digit OTP
-            </p>
-
+            <input
+              type="email"
+              placeholder="Enter Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={styles.input}
+            />
           </div>
 
+          <button
+            style={styles.otpBtn}
+            onClick={sendOTP}
+            disabled={loading}
+          >
+            {loading ? "Sending..." : "Send OTP"}
+
+            <div style={styles.sendIcon}>➤</div>
+          </button>
         </div>
 
-        <div style={styles.inputBox}>
+        <div style={styles.card}>
+          <div style={styles.stepWrap}>
+            <div style={styles.stepCircle}>2</div>
 
-          <div style={styles.phoneIcon}>
-            📞
+            <div>
+              <h3 style={styles.stepTitle}>Enter OTP</h3>
+              <p style={styles.stepSub}>Enter the 6-digit code sent to your email</p>
+            </div>
           </div>
 
-          <div style={styles.countryCode}>
-            ✉
+          <div style={styles.otpRow}>
+            {otp.map((item, index) => (
+              <input
+                key={index}
+                id={`otp-${index}`}
+                maxLength={1}
+                value={item}
+                onChange={(e) => handleOtp(e.target.value, index)}
+                style={styles.otpInput}
+              />
+            ))}
           </div>
 
-          <input
-            type="email"
-            placeholder="Enter Eamil Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-          />
+          <div style={styles.resendRow}>
+            <span style={styles.grayText}>Didn’t receive code?</span>
 
+            <span style={styles.resend}>
+              Resend OTP
+              <span style={styles.timer}>
+                (00:{timer < 10 ? `0${timer}` : timer})
+              </span>
+            </span>
+          </div>
+
+          <button
+            style={styles.verifyBtn}
+            onClick={verifyOTP}
+            disabled={!otpSent || verifyLoading}
+          >
+            {verifyLoading ? "Verifying..." : "Verify OTP"}
+          </button>
+
+          {otpVerified && (
+            <div style={styles.resetBox}>
+              <h3 style={styles.resetTitle}>Create New Password</h3>
+
+              <input
+                type="password"
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                style={styles.resetInput}
+              />
+
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                style={styles.resetInput}
+              />
+
+              <button
+                style={styles.resetBtn}
+                onClick={resetPassword}
+                disabled={resetLoading}
+              >
+                {resetLoading ? "Resetting..." : "Reset Password"}
+              </button>
+            </div>
+          )}
         </div>
 
         <button
-          style={styles.otpBtn}
-          onClick={sendOTP}
+          style={styles.loginBtn}
+          onClick={() => navigate("/login")}
         >
-
-          {loading ? "Sending..." : "Send OTP"}
-
-          <div style={styles.sendIcon}>
-            ➤
-          </div>
-
+          <div style={styles.loginArrow}>‹</div>
+          Back to Login
         </button>
 
-      </div>
-
-      <div style={styles.card}>
-
-        <div style={styles.stepWrap}>
-
-          <div style={styles.stepCircle}>
-            2
+        <div style={styles.footer}>
+          <div style={styles.footerLeft}>
+            <div style={styles.footerIcon}>🛡</div>
+            <span>Your security is our priority.</span>
           </div>
 
-          <div>
-
-            <h3 style={styles.stepTitle}>
-              Enter OTP
-            </h3>
-
-            <p style={styles.stepSub}>
-              Enter the 6-digit code sent to your email
-            </p>
-
+          <div style={styles.footerRight}>
+            Safe • Secure • Trusted ✔
           </div>
-
-        </div>
-
-        <div style={styles.otpRow}>
-
-          {otp.map((item, index) => (
-
-            <input
-              key={index}
-              id={`otp-${index}`}
-              maxLength={1}
-              value={item}
-              onChange={(e) =>
-                handleOtp(e.target.value, index)
-              }
-              style={styles.otpInput}
-            />
-
-          ))}
-
-        </div>
-
-        <div style={styles.resendRow}>
-
-          <span style={styles.grayText}>
-            Didn’t receive code?
-          </span>
-
-          <span style={styles.resend}>
-
-            Resend OTP
-
-            <span style={styles.timer}>
-              (00:{timer < 10 ? `0${timer}` : timer})
-            </span>
-
-          </span>
-
         </div>
 
       </div>
-
-      <button
-      style={styles.otpBtn}
-       onClick={verifyOTP}
-      >
-       Verify OTP
-      </button>
-
-      {otpVerified && (
-  <div style={styles.resetBox}>
-    <h3 style={styles.resetTitle}>Create New Password</h3>
-
-    <input
-      type="password"
-      placeholder="New Password"
-      value={newPassword}
-      onChange={(e) => setNewPassword(e.target.value)}
-      style={styles.resetInput}
-    />
-
-    <input
-      type="password"
-      placeholder="Confirm Password"
-      value={confirmPassword}
-      onChange={(e) => setConfirmPassword(e.target.value)}
-      style={styles.resetInput}
-    />
-
-    <button style={styles.resetBtn} onClick={resetPassword}>
-      Reset Password
-    </button>
-  </div>
-)}
-
-      <button
-        style={styles.loginBtn}
-        onClick={() => navigate("/login")}
-      >
-
-        <div style={styles.loginArrow}>
-          ‹
-        </div>
-
-        Back to Login
-
-      </button>
-
-      <div style={styles.footer}>
-
-        <div style={styles.footerLeft}>
-
-          <div style={styles.footerIcon}>
-            🛡
-          </div>
-
-          <span>
-            Your security is our priority.
-          </span>
-
-        </div>
-
-        <div style={styles.footerRight}>
-          Safe • Secure • Trusted ✔
-        </div>
-
-      </div>
-
     </div>
-
-     </div>
-     
   );
 }
 
 const styles = {
-
   container: {
     minHeight: "100vh",
-    background: "#f6f3ff",
-    padding: "20px",
+    background: "linear-gradient(135deg,#eef6ff,#f7f1ff,#fff1f8)",
+    padding: "25px",
     position: "relative",
-    overflow: "hidden",
-    fontFamily: "Arial"
+    overflowY: "auto",
+    fontFamily: "Arial",
+    display: "flex",
+    justifyContent: "center"
   },
 
-  bgCircle1: {
-    position: "absolute",
-    width: "350px",
-    height: "350px",
-    borderRadius: "50%",
-    background: "rgba(168,85,247,0.08)",
-    top: "-120px",
-    left: "-120px"
-  },
-
-  bgCircle2: {
-    position: "absolute",
-    width: "350px",
-    height: "350px",
-    borderRadius: "50%",
-    background: "rgba(236,72,153,0.08)",
-    bottom: "-140px",
-    right: "-140px"
+  wrapper: {
+    width: "100%",
+    maxWidth: "760px",
+    position: "relative"
   },
 
   backBtn: {
@@ -590,7 +523,7 @@ const styles = {
   },
 
   countryCode: {
-    width: "110px",
+    width: "80px",
     textAlign: "center",
     fontWeight: "700",
     color: "#0f172a",
@@ -603,7 +536,7 @@ const styles = {
     border: "none",
     outline: "none",
     padding: "0 20px",
-    fontSize: "24px",
+    fontSize: "22px",
     color: "#0f172a",
     background: "transparent"
   },
@@ -614,7 +547,7 @@ const styles = {
     border: "none",
     borderRadius: "50px",
     marginTop: "25px",
-    background: "linear-gradient(135deg,#4f46e5,#ec4899)",
+    background: "linear-gradient(135deg,#2563eb,#ec4899)",
     color: "white",
     fontSize: "32px",
     fontWeight: "800",
@@ -680,41 +613,53 @@ const styles = {
     color: "#6b7280"
   },
 
+  verifyBtn: {
+    width: "100%",
+    height: "78px",
+    border: "none",
+    borderRadius: "50px",
+    marginTop: "25px",
+    background: "linear-gradient(135deg,#2563eb,#ec4899)",
+    color: "white",
+    fontSize: "30px",
+    fontWeight: "800"
+  },
+
   resetBox: {
-  marginTop: "25px",
-  padding: "24px",
-  borderRadius: "25px",
-  background: "white",
-  boxShadow: "0 10px 25px rgba(0,0,0,0.08)"
-},
+    marginTop: "25px",
+    padding: "24px",
+    borderRadius: "25px",
+    background: "white",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.08)"
+  },
 
-resetTitle: {
-  fontSize: "28px",
-  color: "#111827",
-  marginBottom: "18px"
-},
+  resetTitle: {
+    fontSize: "28px",
+    color: "#111827",
+    marginBottom: "18px"
+  },
 
-resetInput: {
-  width: "100%",
-  height: "60px",
-  borderRadius: "18px",
-  border: "2px solid #d8b4fe",
-  padding: "0 18px",
-  fontSize: "18px",
-  marginBottom: "14px",
-  outline: "none"
-},
+  resetInput: {
+    width: "100%",
+    height: "60px",
+    borderRadius: "18px",
+    border: "2px solid #d8b4fe",
+    padding: "0 18px",
+    fontSize: "18px",
+    marginBottom: "14px",
+    outline: "none"
+  },
 
-resetBtn: {
-  width: "100%",
-  height: "65px",
-  border: "none",
-  borderRadius: "25px",
-  background: "linear-gradient(90deg,#2563eb,#ec4899)",
-  color: "white",
-  fontSize: "22px",
-  fontWeight: "bold"
-},
+  resetBtn: {
+    width: "100%",
+    height: "65px",
+    border: "none",
+    borderRadius: "25px",
+    background: "linear-gradient(90deg,#2563eb,#ec4899)",
+    color: "white",
+    fontSize: "22px",
+    fontWeight: "bold"
+  },
 
   loginBtn: {
     width: "100%",
@@ -779,5 +724,4 @@ resetBtn: {
     fontSize: "20px",
     fontWeight: "600"
   }
-
 };
