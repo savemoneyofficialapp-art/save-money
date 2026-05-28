@@ -139,9 +139,7 @@ export default function Home() {
     }}
   >
     Logout
-  </button>
-
-        <button
+  </button>   <button
           style={styles.notificationButton}
           onClick={() => go("/notifications")}
         >
