@@ -128,18 +128,7 @@ export default function Home() {
           Welcome, {name}
         </h2>
 
-         <button
-    style={styles.logoutBtn}
-    onClick={() => {
-
-      localStorage.clear();
-
-      navigate("/login");
-
-    }}
-  >
-    Logout
-  </button>   <button
+           <button
           style={styles.notificationButton}
           onClick={() => go("/notifications")}
         >
@@ -151,6 +140,20 @@ export default function Home() {
             </small>
           )}
         </button>
+
+ <button
+    style={styles.logoutBtn}
+    onClick={() => {
+
+      localStorage.clear();
+
+      navigate("/login");
+
+    }}
+  >
+    Logout
+  </button>
+
       </div>
 
       {/* HERO PROFILE + WALLET */}
