@@ -268,7 +268,7 @@ export default function Home() {
           title="INVEST NOW"
           subtitle="Start Investing"
           gradient="invest"
-          onClick={() => go("/save-money")}
+          onClick={() => go("/invest-now")}
         />
 
         <PremiumActionButton

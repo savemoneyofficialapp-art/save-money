@@ -42,6 +42,8 @@ import AdvancedAdminAnalytics from "./pages/AdvancedAdminAnalytics";
 import AdminUserControl from "./pages/AdminUserControl";
 import AboutCompany from "./pages/AboutCompany";
 
+import InvestNow from "./pages/InvestNow";
+
 
 
 
@@ -113,6 +115,14 @@ function App() {
           }
         />
 
+<Route
+  path="/invest-now"
+  element={
+    <ProtectedRoute>
+      <InvestNow />
+    </ProtectedRoute>
+  }
+/>
         <Route
           path="/wallet"
           element={
