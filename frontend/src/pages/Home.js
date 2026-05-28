@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function Home() {
@@ -126,6 +127,19 @@ export default function Home() {
         <h2 style={styles.headerTitle}>
           Welcome, {name}
         </h2>
+
+         <button
+    style={styles.logoutBtn}
+    onClick={() => {
+
+      localStorage.clear();
+
+      navigate("/login");
+
+    }}
+  >
+    Logout
+  </button>
 
         <button
           style={styles.notificationButton}
@@ -682,6 +696,19 @@ const styles = {
     fontSize: "19px",
     fontWeight: "800"
   },
+
+  logoutBtn: {
+  height: "42px",
+  padding: "0 18px",
+  border: "none",
+  borderRadius: "14px",
+  background: "linear-gradient(135deg,#ef4444,#dc2626)",
+  color: "white",
+  fontWeight: "800",
+  fontSize: "14px",
+  boxShadow: "0 4px 14px rgba(239,68,68,0.35)",
+  cursor: "pointer"
+},
 
   notificationButton: {
     position: "relative",
