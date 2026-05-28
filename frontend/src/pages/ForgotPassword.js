@@ -303,45 +303,36 @@ const verifyOTP = async () => {
       </div>
 
       <button
-  style={styles.verifyBtn}
-  onClick={verifyOTP}
->
-  Verify OTP
-</button>
-
-{
-  otpVerified && (
-    <div style={styles.resetBox}>
-
-      <h3 style={styles.resetTitle}>
-        Create New Password
-      </h3>
-
-      <input
-        type="password"
-        placeholder="New Password"
-        value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
-        style={styles.resetInput}
-      />
-
-      <input
-        type="password"
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-        style={styles.resetInput}
-      />
-
-      <button
-        style={styles.resetBtn}
-        onClick={resetPassword}
+      style={styles.otpBtn}
+       onClick={verifyOTP}
       >
-        Reset Password
+       Verify OTP
       </button>
 
-    </div>
-  
+      {otpVerified && (
+  <div style={styles.resetBox}>
+    <h3 style={styles.resetTitle}>Create New Password</h3>
+
+    <input
+      type="password"
+      placeholder="New Password"
+      value={newPassword}
+      onChange={(e) => setNewPassword(e.target.value)}
+      style={styles.resetInput}
+    />
+
+    <input
+      type="password"
+      placeholder="Confirm Password"
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      style={styles.resetInput}
+    />
+
+    <button style={styles.resetBtn} onClick={resetPassword}>
+      Reset Password
+    </button>
+  </div>
 )}
 
       <button
@@ -689,16 +680,16 @@ const styles = {
     color: "#6b7280"
   },
 
- resetBox: {
+  resetBox: {
   marginTop: "25px",
   padding: "24px",
   borderRadius: "25px",
-  background: "#ffffff"
+  background: "white",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.08)"
 },
 
 resetTitle: {
-  fontSize: "26px",
-  fontWeight: "700",
+  fontSize: "28px",
   color: "#111827",
   marginBottom: "18px"
 },
@@ -709,21 +700,20 @@ resetInput: {
   borderRadius: "18px",
   border: "2px solid #d8b4fe",
   padding: "0 18px",
-  fontSize: "17px",
-  marginBottom: "15px",
+  fontSize: "18px",
+  marginBottom: "14px",
   outline: "none"
 },
 
 resetBtn: {
   width: "100%",
-  height: "62px",
+  height: "65px",
   border: "none",
-  borderRadius: "20px",
+  borderRadius: "25px",
   background: "linear-gradient(90deg,#2563eb,#ec4899)",
-  color: "#fff",
-  fontSize: "20px",
-  fontWeight: "700",
-  cursor: "pointer"
+  color: "white",
+  fontSize: "22px",
+  fontWeight: "bold"
 },
 
   loginBtn: {
