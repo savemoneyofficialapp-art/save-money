@@ -305,10 +305,10 @@ export default function Home() {
 
         <PremiumActionButton
           icon="🧾"
-          title="Transactions"
-          subtitle="All History"
+          title="Leaderboard"
+          subtitle="Top Referer"
           gradient="transaction"
-          onClick={() => go("/transactions")}
+          onClick={() => go("/Leaderboard")}
         />
       </section>
 
@@ -345,10 +345,10 @@ export default function Home() {
 
         <PremiumActionButton
           icon="📊"
-          title="Investment Plan"
-          subtitle="View All Plans"
-          gradient="plan"
-          onClick={() => go("/investment-plan")}
+          title="Investment Assistance"
+          subtitle="Need You Help"
+          gradient="help"
+          onClick={() => go("/InvestmentAssistant")}
         />
 
         <PremiumActionButton
