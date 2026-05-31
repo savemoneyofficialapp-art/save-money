@@ -348,7 +348,7 @@ export default function Home() {
           title="Investment Assistance"
           subtitle="Need You Help"
           gradient="help"
-          onClick={() => go("/InvestmentAssistant")}
+          onClick={() => go("/Investment-Assistant")}
         />
 
         <PremiumActionButton
