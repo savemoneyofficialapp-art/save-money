@@ -31,73 +31,53 @@ export default function MyInvestment() {
       const data = await res.json();
 
       if (data?.success) {
-        setInvestments(data.investments || []);
+        setInvestments(Array.isArray(data.investments) ? data.investments : []);
+      } else {
+        setInvestments([]);
       }
     } catch (err) {
-      console.log("MY INVESTMENTS ERROR:", err);
+      console.log("MY INVESTMENT ERROR:", err);
+      setInvestments([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const demoInvestments = [
-    {
-      planName: "Save Money",
-      planSub: "SIP Invest Plan",
-      planType: "save",
-      investmentId: "SM20240516001",
-      amount: 20000,
-      monthlyReturn: 1250,
-      years: 5,
-      startDate: "2024-05-16",
-      endDate: "2029-05-15",
-      renewDate: "2029-05-15",
-      returnRate: 12,
-      status: "Active",
-      totalReturn: 7500,
-      maturityAmount: 27500,
-      progress: 62
-    },
-    {
-      planName: "One Time Investment",
-      planSub: "Upgrade Money",
-      planType: "one",
-      investmentId: "OT20240516002",
-      amount: 28500,
-      monthlyReturn: 0,
-      years: 3,
-      startDate: "2024-05-16",
-      endDate: "2027-05-15",
-      renewDate: "2027-05-15",
-      returnRate: 10.5,
-      status: "Active",
-      totalReturn: 5250,
-      maturityAmount: 33750,
-      progress: 48
-    }
-  ];
+  const money = (n) => {
+    return `₹ ${Number(n || 0).toLocaleString("en-IN")}.00`;
+  };
 
-  const list = investments.length > 0 ? investments : demoInvestments;
+  const date = (d) => {
+    if (!d) return "N/A";
+
+    return new Date(d).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+  };
 
   const summary = useMemo(() => {
-    const totalInvestment = list.reduce(
+    const totalInvestment = investments.reduce(
       (sum, item) => sum + Number(item.amount || 0),
       0
     );
 
-    const totalReturn = list.reduce(
+    const totalReturn = investments.reduce(
       (sum, item) => sum + Number(item.totalReturn || 0),
       0
     );
 
-    const activeInvestments = list.filter(
-      (item) => String(item.status || "Active").toLowerCase() === "active"
+    const activeInvestments = investments.filter(
+      (item) => String(item.status || "").toLowerCase() === "active"
     ).length;
 
     const averageReturnRate =
-      list.length > 0
-        ? list.reduce((sum, item) => sum + Number(item.returnRate || 0), 0) /
-          list.length
+      investments.length > 0
+        ? investments.reduce(
+            (sum, item) => sum + Number(item.returnRate || item.interestRate || 0),
+            0
+          ) / investments.length
         : 0;
 
     return {
@@ -106,41 +86,43 @@ export default function MyInvestment() {
       activeInvestments,
       averageReturnRate
     };
-  }, [list]);
+  }, [investments]);
 
-  const money = (amount) => {
-    return `₹ ${Number(amount || 0).toLocaleString("en-IN")}.00`;
-  };
-
-  const formatDate = (value) => {
-    if (!value) return "N/A";
-
-    return new Date(value).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric"
-    });
-  };
-
-  const copyText = async (text) => {
+  const copyId = async (id) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(id);
       alert("Investment ID copied");
     } catch {
       alert("Copy failed");
     }
   };
 
+  const viewDetails = (inv) => {
+    alert(
+      `Plan: ${inv.planName || inv.plan || "Investment"}\nAmount: ${money(
+        inv.amount
+      )}\nStatus: ${inv.status || "Active"}`
+    );
+  };
+
+  const certificate = (inv) => {
+    alert("Investment Certificate feature coming soon");
+  };
+
+  const downloadStatement = (inv) => {
+    alert("Download Statement feature coming soon");
+  };
+
+  const renewNow = (inv) => {
+    alert("Renew request submitted / coming soon");
+  };
+
   if (loading) {
     return (
-      <div style={styles.loadingPage}>
-        <div style={styles.loadingCard}>
-          <div style={styles.loadingSafe}>
-            <PremiumSafe small />
-          </div>
-
-          <h2>Loading My Investment</h2>
-          <p>Please wait...</p>
+      <div style={styles.loading}>
+        <div style={styles.loadingBox}>
+          <h2>Loading My Investment...</h2>
+          <p>Please wait</p>
         </div>
       </div>
     );
@@ -148,9 +130,9 @@ export default function MyInvestment() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.app}>
+      <div style={styles.wrap}>
 
-        <header style={styles.header}>
+        <div style={styles.header}>
           <button style={styles.backBtn} onClick={() => navigate("/home")}>
             ←
           </button>
@@ -160,336 +142,198 @@ export default function MyInvestment() {
             <p>Track, manage & grow your wealth</p>
           </div>
 
-          <div style={styles.headerRight}>
-            <div style={styles.secureBadge}>
-              <span>🛡</span>
-              <b>100% Secure</b>
-            </div>
-
-            <button style={styles.bellBtn}>
+          <div style={styles.rightTop}>
+            <div style={styles.secureBadge}>🛡 100% Secure</div>
+            <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>
               🔔
               <span>3</span>
             </button>
           </div>
-        </header>
+        </div>
 
-        <section style={styles.heroCard}>
-          <HeroLines />
+        {investments.length === 0 ? (
+          <EmptyInvestment navigate={navigate} />
+        ) : (
+          <>
+            <SummaryHero summary={summary} money={money} />
 
-          <div style={styles.heroLeft}>
-            <HeroStat
-              icon="portfolio"
-              title="Total Investment"
-              value={money(summary.totalInvestment)}
-              color="#ffffff"
-            />
+            {investments.map((inv, index) => (
+              <InvestmentCard
+                key={inv._id || inv.investmentId || index}
+                inv={inv}
+                money={money}
+                date={date}
+                copyId={copyId}
+                viewDetails={viewDetails}
+                certificate={certificate}
+                downloadStatement={downloadStatement}
+                renewNow={renewNow}
+              />
+            ))}
 
-            <HeroDivider />
+            <BottomBanner />
+          </>
+        )}
 
-            <HeroStat
-              icon="growth"
-              title="Total Return (All Time)"
-              value={money(summary.totalReturn)}
-              color="#20e08a"
-            />
-          </div>
+      </div>
+    </div>
+  );
+}
+function EmptyInvestment({ navigate }) {
+  return (
+    <div style={styles.emptyBox}>
+      <div style={styles.emptyIcon}>📭</div>
+      <h1>No any investment start</h1>
+      <p>You have not started any investment yet.</p>
 
-          <div style={styles.heroCenter}>
-            <PremiumSafe />
-          </div>
+      <button style={styles.emptyBtn} onClick={() => navigate("/invest-now")}>
+        Start Investment
+      </button>
+    </div>
+  );
+}
 
-          <div style={styles.heroRight}>
-            <HeroStat
-              icon="chart"
-              title="Average Return Rate"
-              value={`${summary.averageReturnRate.toFixed(2)}%`}
-              color="#20e08a"
-            />
+function SummaryHero({ summary, money }) {
+  return (
+    <section style={styles.hero}>
+      <div style={styles.heroLeft}>
+        <HeroItem icon="💼" title="Total Investment" value={money(summary.totalInvestment)} />
+        <HeroItem icon="🌱" title="Total Return (All Time)" value={money(summary.totalReturn)} green />
+      </div>
 
-            <HeroDivider />
+      <div style={styles.safeArt}>
+        <div style={styles.safeBox}>▣</div>
+        <div style={styles.coin1}>₹</div>
+        <div style={styles.coin2}>₹</div>
+        <div style={styles.shield}>✓</div>
+      </div>
 
-            <HeroStat
-              icon="bag"
-              title="Active Investments"
-              value={summary.activeInvestments}
-              color="#ffffff"
-            />
-          </div>
+      <div style={styles.heroRight}>
+        <HeroItem icon="📊" title="Average Return Rate" value={`${summary.averageReturnRate.toFixed(2)}%`} green />
+        <HeroItem icon="💼" title="Active Investments" value={summary.activeInvestments} />
+      </div>
 
-          <div style={styles.heroBottom}>
-            🚀 Invest Today, <b>Secure Tomorrow</b>, Enjoy Freedom Forever.
-          </div>
-        </section>
+      <div style={styles.heroBottom}>
+        🚀 Invest Today, <b>Secure Tomorrow</b>, Enjoy Freedom Forever.
+      </div>
+    </section>
+  );
+}
 
-        <main style={styles.investmentList}>
-          {list.map((investment, index) => (
-            <InvestmentCard
-              key={investment.investmentId || index}
-              investment={investment}
-              money={money}
-              formatDate={formatDate}
-              copyText={copyText}
-            />
-          ))}
-        </main>
-
-        <section style={styles.bottomChoice}>
-          <div style={styles.trophyBox}>
-            <PremiumTrophy />
-          </div>
-
-          <div style={styles.choiceText}>
-            <h2>Great Choice!</h2>
-            <p>
-              You are building a secure future for you and your family.
-            </p>
-          </div>
-
-          <div style={styles.choiceBenefits}>
-            <Benefit icon="🎯" title="Disciplined" sub="Investing" />
-            <Benefit icon="📊" title="Better" sub="Returns" />
-            <Benefit icon="💎" title="Financial" sub="Freedom" />
-          </div>
-        </section>
-
+function HeroItem({ icon, title, value, green }) {
+  return (
+    <div style={styles.heroItem}>
+      <span>{icon}</span>
+      <div>
+        <p>{title}</p>
+        <h2 style={{ color: green ? "#20e58d" : "white" }}>{value}</h2>
       </div>
     </div>
   );
 }
 
 function InvestmentCard({
-  investment,
+  inv,
   money,
-  formatDate,
-  copyText
+  date,
+  copyId,
+  viewDetails,
+  certificate,
+  downloadStatement,
+  renewNow
 }) {
-  const isSave = investment.planType === "save";
+  const isSave =
+    String(inv.planType || inv.type || inv.planName || "")
+      .toLowerCase()
+      .includes("save");
 
   const theme = isSave
     ? {
-        primary: "#18c57a",
+        color: "#16c784",
         soft: "#effdf6",
-        badge: "#e8fff3",
-        progress: "#18c57a"
+        title: inv.planName || "Save Money",
+        sub: inv.planSub || "SIP Invest Plan",
+        icon: "plant"
       }
     : {
-        primary: "#1f6fff",
+        color: "#0969ff",
         soft: "#f1f6ff",
-        badge: "#edf4ff",
-        progress: "#1f6fff"
+        title: inv.planName || "One Time Investment",
+        sub: inv.planSub || "Upgrade Money",
+        icon: "rocket"
       };
 
+  const investmentId =
+    inv.investmentId || inv._id || `${isSave ? "SM" : "OT"}000000`;
+
+  const amount = inv.amount || inv.totalAmount || inv.investAmount || 0;
+  const monthlyReturn = inv.monthlyReturn || inv.monthlyEmi || inv.emi || 0;
+  const years = inv.years || inv.tenure || inv.duration || 0;
+  const returnRate = inv.returnRate || inv.interestRate || inv.rate || 0;
+  const status = inv.status || "Active";
+  const totalReturn = inv.totalReturn || inv.returnAmount || 0;
+  const maturityAmount = inv.maturityAmount || Number(amount) + Number(totalReturn);
+  const progress = inv.progress || 0;
+
   return (
-    <section style={styles.investmentCard}>
-      <div style={styles.cardTop}>
+    <section style={styles.card}>
+      <div style={styles.cardHeader}>
+        <div style={styles.planLogo}>
+          {theme.icon === "plant" ? <PlantIcon /> : <RocketIcon />}
+        </div>
 
-        <div style={styles.cardLeft}>
-          <div style={styles.planCircle}>
-            {isSave ? (
-              <PlantLogo />
-            ) : (
-              <RocketLogo />
-            )}
-          </div>
+        <div style={styles.planTitleArea}>
+          <h2 style={{ color: theme.color }}>
+            {theme.title} <span>({theme.sub})</span>
+          </h2>
 
-          <div>
-            <h2
-              style={{
-                ...styles.planTitle,
-                color: theme.primary
-              }}
-            >
-              {investment.planName}
-            </h2>
-
-            <h4
-              style={{
-                color: theme.primary,
-                marginTop: 6
-              }}
-            >
-              ({investment.planSub})
-            </h4>
-
-            <div
-              style={{
-                ...styles.activeBadge,
-                borderColor: theme.primary,
-                color: theme.primary,
-                background: theme.badge
-              }}
-            >
-              ✓ Active Investment
-            </div>
+          <div style={{ ...styles.activeBadge, color: theme.color, borderColor: theme.color }}>
+            ✅ Active Investment
           </div>
         </div>
 
-        <div style={styles.idCard}>
+        <button style={styles.idBox} onClick={() => copyId(investmentId)}>
           <p>Investment ID</p>
-
-          <div style={styles.idRow}>
-            <b>{investment.investmentId}</b>
-
-            <button
-              style={styles.copyBtn}
-              onClick={() =>
-                copyText(investment.investmentId)
-              }
-            >
-              📋
-            </button>
-          </div>
-        </div>
+          <b>{String(investmentId).slice(0, 14)}</b>
+          <span>📋 ›</span>
+        </button>
       </div>
 
       <div style={styles.detailsGrid}>
-        <InfoBox
-          icon="💰"
-          title="Amount"
-          value={money(investment.amount)}
-          color={theme.primary}
-        />
+        <Info icon="💰" title="Amount" value={money(amount)} color={theme.color} />
+        <Info icon="📅" title={isSave ? "EMI / Monthly Return" : "Monthly Return"} value={money(monthlyReturn)} color={theme.color} />
+        <Info icon="⌛" title="Years / Tenure" value={`${years} Years`} color={theme.color} />
 
-        <InfoBox
-          icon="📅"
-          title="EMI / Monthly Return"
-          value={money(investment.monthlyReturn)}
-          color={theme.primary}
-        />
+        <Info icon="🗓" title="Start Date" value={date(inv.startDate || inv.createdAt)} color="#8b5cf6" />
+        <Info icon="📅" title="End Date" value={date(inv.endDate || inv.maturityDate)} color="#ec4899" />
+        <Info icon="🔄" title="Renew Date" value={date(inv.renewDate || inv.endDate || inv.maturityDate)} color="#f59e0b" />
 
-        <InfoBox
-          icon="⌛"
-          title="Years / Tenure"
-          value={`${investment.years} Years`}
-          color={theme.primary}
-        />
-
-        <InfoBox
-          icon="📆"
-          title="Start Date"
-          value={formatDate(
-            investment.startDate
-          )}
-          color="#8b5cf6"
-        />
-
-        <InfoBox
-          icon="📆"
-          title="End Date"
-          value={formatDate(
-            investment.endDate
-          )}
-          color="#ff5ca8"
-        />
-
-        <InfoBox
-          icon="🔄"
-          title="Renew Date"
-          value={formatDate(
-            investment.renewDate
-          )}
-          color="#f59e0b"
-        />
-
-        <InfoBox
-          icon="%"
-          title="Return Rate"
-          value={`${investment.returnRate}%`}
-          color={theme.primary}
-        />
-
-        <InfoBox
-          icon="🛡"
-          title="Status"
-          value={investment.status}
-          color={theme.primary}
-        />
-
-        <InfoBox
-          icon="💵"
-          title="Total Return"
-          value={money(
-            investment.totalReturn
-          )}
-          color={theme.primary}
-        />
+        <Info icon="%" title="Return Rate" value={`${returnRate}%`} color={theme.color} />
+        <Info icon="🛡" title="Status" value={status} color={theme.color} />
+        <Info icon="💵" title="Total Return" value={money(totalReturn)} color={theme.color} />
       </div>
 
-      <div style={styles.progressSection}>
-        <div style={styles.progressHeader}>
-          <span>
-            📈 Your Investment is Growing
-            Steadily
-          </span>
-
-          <div
-            style={{
-              ...styles.progressPercent,
-              background:
-                theme.primary
-            }}
-          >
-            {investment.progress}%
-          </div>
+      <div style={{ ...styles.progressBox, background: theme.soft }}>
+        <div style={styles.progressTop}>
+          <span style={{ color: theme.color }}>📈 Your Investment is Growing Steadily</span>
+          <b style={{ background: theme.color }}>{progress}%</b>
         </div>
 
         <div style={styles.progressTrack}>
-          <div
-            style={{
-              ...styles.progressFill,
-              width: `${investment.progress}%`,
-              background:
-                theme.progress
-            }}
-          />
+          <div style={{ ...styles.progressFill, width: `${progress}%`, background: theme.color }} />
         </div>
 
-        <div style={styles.expectedBox}>
-          <div />
-
-          <div>
-            <p
-              style={{
-                color: "#64748b",
-                fontSize: 13
-              }}
-            >
-              Expected Maturity Amount
-            </p>
-
-            <h2
-              style={{
-                color: theme.primary
-              }}
-            >
-              {money(
-                investment.maturityAmount
-              )}
-            </h2>
-          </div>
+        <div style={styles.maturityBox}>
+          <p>Expected Maturity Amount</p>
+          <h2 style={{ color: theme.color }}>{money(maturityAmount)}</h2>
         </div>
       </div>
 
-      <div style={styles.actionRow}>
-        <button style={styles.actionBtn}>
-          👁 View Details
-        </button>
-
-        <button style={styles.actionBtn}>
-          🏅 Investment Certificate
-        </button>
-
-        <button style={styles.actionBtn}>
-          ⬇ Download Statement
-        </button>
-
-        <button
-          style={{
-            ...styles.renewBtn,
-            background:
-              theme.primary
-          }}
-        >
+      <div style={styles.actions}>
+        <button onClick={() => viewDetails(inv)}>👁 View Details</button>
+        <button onClick={() => certificate(inv)}>🏅 Investment Certificate</button>
+        <button onClick={() => downloadStatement(inv)}>⬇ Download Statement</button>
+        <button style={{ background: theme.color, color: "white" }} onClick={() => renewNow(inv)}>
           🔄 Renew Now
         </button>
       </div>
@@ -497,195 +341,90 @@ function InvestmentCard({
   );
 }
 
-function InfoBox({
-  icon,
-  title,
-  value,
-  color
-}) {
+function Info({ icon, title, value, color }) {
   return (
-    <div style={styles.infoBox}>
-      <div
-        style={{
-          ...styles.infoIcon,
-          color
-        }}
-      >
-        {icon}
-      </div>
-
+    <div style={styles.info}>
+      <div style={{ ...styles.infoIcon, color }}>{icon}</div>
       <div>
-        <p style={styles.infoTitle}>
-          {title}
-        </p>
-
-        <h3
-          style={{
-            color
-          }}
-        >
-          {value}
-        </h3>
+        <p>{title}</p>
+        <h3 style={{ color }}>{value}</h3>
       </div>
     </div>
   );
 }
 
-function Benefit({
-  icon,
-  title,
-  sub
-}) {
+function PlantIcon() {
   return (
-    <div style={styles.benefit}>
-      <div style={styles.benefitIcon}>
-        {icon}
+    <div style={styles.plantIcon}>
+      <span style={styles.leafA}></span>
+      <span style={styles.leafB}></span>
+      <span style={styles.stem}></span>
+      <span style={styles.pot}>₹</span>
+    </div>
+  );
+}
+
+function RocketIcon() {
+  return (
+    <div style={styles.rocketIcon}>
+      <span style={styles.rocketBody}></span>
+      <span style={styles.rocketWindow}></span>
+      <span style={styles.rocketFire}></span>
+    </div>
+  );
+}
+
+function BottomBanner() {
+  return (
+    <section style={styles.bottomBanner}>
+      <div style={styles.trophy}>🏆</div>
+
+      <div style={styles.bottomText}>
+        <h2>Great Choice!</h2>
+        <p>You are building a secure future for you and your family.</p>
       </div>
 
-      <div>
-        <b>{title}</b>
-        <p>{sub}</p>
+      <div style={styles.bottomBenefits}>
+        <div>🎯 <b>Disciplined<br />Investing</b></div>
+        <div>📊 <b>Better<br />Returns</b></div>
+        <div>💎 <b>Financial<br />Freedom</b></div>
       </div>
-    </div>
-  );
-}
-
-function HeroDivider() {
-  return (
-    <div
-      style={{
-        height: 1,
-        background:
-          "rgba(255,255,255,.15)",
-        margin: "14px 0"
-      }}
-    />
-  );
-}
-
-function HeroStat({
-  title,
-  value,
-  color
-}) {
-  return (
-    <div>
-      <p
-        style={{
-          color:
-            "rgba(255,255,255,.8)",
-          marginBottom: 8
-        }}
-      >
-        {title}
-      </p>
-
-      <h2
-        style={{
-          color,
-          fontSize: 34,
-          fontWeight: 800
-        }}
-      >
-        {value}
-      </h2>
-    </div>
-  );
-}
-function PremiumSafe({ small }) {
-  return (
-    <div style={small ? styles.safeSmall : styles.safeWrap}>
-      <div style={styles.safeBox3d}>
-        <div style={styles.safeDoor}>
-          <div style={styles.safeCircle}></div>
-          <div style={styles.safeHandle}></div>
-        </div>
-      </div>
-
-      {!small && (
-        <>
-          <div style={styles.coinStack1}>₹</div>
-          <div style={styles.coinStack2}>₹</div>
-          <div style={styles.shield3d}>✓</div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function PlantLogo() {
-  return (
-    <div style={styles.plantLogo}>
-      <div style={styles.leaf1}></div>
-      <div style={styles.leaf2}></div>
-      <div style={styles.stem}></div>
-      <div style={styles.pot}>₹</div>
-    </div>
-  );
-}
-
-function RocketLogo() {
-  return (
-    <div style={styles.rocketLogo}>
-      <div style={styles.rocketBody}></div>
-      <div style={styles.rocketWindow}></div>
-      <div style={styles.rocketFire}></div>
-    </div>
-  );
-}
-
-function PremiumTrophy() {
-  return <div style={styles.trophy3d}>🏆</div>;
-}
-
-function HeroLines() {
-  return (
-    <div style={styles.heroLines}>
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
+    </section>
   );
 }
 
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(180deg,#050b4f 0%,#102c9b 35%,#e9f3ff 100%)",
-    padding: "14px",
+    background: "linear-gradient(180deg,#050842 0%,#082a93 38%,#dbeafe 100%)",
+    padding: "16px",
     fontFamily: "Arial, sans-serif",
     color: "#101a3a"
   },
 
-  app: {
-    maxWidth: "1000px",
+  wrap: {
+    maxWidth: "980px",
     margin: "0 auto"
   },
 
-  loadingPage: {
+  loading: {
     minHeight: "100vh",
-    background: "#061463",
+    background: "#050842",
+    color: "white",
     display: "flex",
     justifyContent: "center",
-    alignItems: "center",
-    color: "white"
+    alignItems: "center"
   },
 
-  loadingCard: {
+  loadingBox: {
     background: "rgba(255,255,255,.12)",
-    padding: "30px",
+    padding: "28px",
     borderRadius: "28px",
-    textAlign: "center",
-    boxShadow: "0 18px 40px rgba(0,0,0,.25)"
-  },
-
-  loadingSafe: {
-    display: "flex",
-    justifyContent: "center"
+    textAlign: "center"
   },
 
   header: {
-    height: "82px",
+    height: "78px",
     display: "flex",
     alignItems: "center",
     gap: "14px",
@@ -693,8 +432,8 @@ const styles = {
   },
 
   backBtn: {
-    width: "55px",
-    height: "55px",
+    width: "54px",
+    height: "54px",
     borderRadius: "16px",
     border: "1px solid rgba(255,255,255,.45)",
     background: "rgba(255,255,255,.08)",
@@ -708,147 +447,143 @@ const styles = {
     textAlign: "center"
   },
 
-  headerRight: {
+  headerTitle_h1: {
+    margin: 0
+  },
+
+  rightTop: {
     display: "flex",
     alignItems: "center",
     gap: "12px"
   },
 
   secureBadge: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
     background: "rgba(255,255,255,.12)",
+    borderRadius: "16px",
     padding: "12px 18px",
-    borderRadius: "16px"
+    fontWeight: "900"
   },
 
   bellBtn: {
     position: "relative",
-    background: "transparent",
     border: "none",
+    background: "transparent",
     color: "white",
-    fontSize: "28px"
+    fontSize: "28px",
+    cursor: "pointer"
   },
 
-  heroCard: {
+  emptyBox: {
+    marginTop: "40px",
+    background: "white",
+    borderRadius: "30px",
+    padding: "45px 25px",
+    textAlign: "center",
+    boxShadow: "0 18px 35px rgba(15,23,42,.18)"
+  },
+
+  emptyIcon: {
+    fontSize: "80px"
+  },
+
+  emptyBtn: {
+    marginTop: "18px",
+    border: "none",
+    borderRadius: "18px",
+    padding: "15px 26px",
+    background: "linear-gradient(135deg,#16c784,#059669)",
+    color: "white",
+    fontWeight: "900",
+    fontSize: "17px",
+    cursor: "pointer"
+  },
+
+  hero: {
     position: "relative",
     overflow: "hidden",
+    background: "linear-gradient(135deg,#2e1065,#4615a8,#1e0b58)",
     borderRadius: "28px",
-    minHeight: "230px",
-    background: "linear-gradient(135deg,#32106f,#4e18a7,#24085e)",
-    boxShadow: "0 18px 35px rgba(0,0,0,.28)",
-    border: "1px solid rgba(255,255,255,.16)",
+    padding: "24px",
+    minHeight: "225px",
     color: "white",
     display: "grid",
-    gridTemplateColumns: "1fr 260px 1fr",
-    gap: "10px",
-    padding: "26px"
-  },
-
-  heroLines: {
-    position: "absolute",
-    inset: 0,
-    opacity: 0.18
+    gridTemplateColumns: "1fr 240px 1fr",
+    gap: "12px",
+    border: "1px solid rgba(255,255,255,.16)",
+    boxShadow: "0 18px 35px rgba(0,0,0,.28)"
   },
 
   heroLeft: {
     zIndex: 2
   },
 
-  heroCenter: {
-    zIndex: 2,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-
   heroRight: {
     zIndex: 2
+  },
+
+  heroItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    marginBottom: "20px"
   },
 
   heroBottom: {
     gridColumn: "1 / 4",
     textAlign: "center",
-    borderTop: "1px solid rgba(255,255,255,.16)",
+    borderTop: "1px solid rgba(255,255,255,.15)",
     paddingTop: "14px",
     fontSize: "18px",
     zIndex: 2
   },
 
-  safeWrap: {
+  safeArt: {
     position: "relative",
-    width: "220px",
-    height: "150px"
+    width: "230px",
+    height: "145px",
+    margin: "0 auto"
   },
 
-  safeSmall: {
-    position: "relative",
-    width: "120px",
-    height: "90px"
-  },
-
-  safeBox3d: {
-    width: "145px",
-    height: "120px",
+  safeBox: {
+    position: "absolute",
+    left: "62px",
+    top: "5px",
+    width: "110px",
+    height: "105px",
     borderRadius: "20px",
     background: "linear-gradient(135deg,#a855f7,#5b21b6)",
-    boxShadow: "inset -12px -12px 0 rgba(0,0,0,.18),0 18px 25px rgba(0,0,0,.28)"
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#ddd6fe",
+    fontSize: "60px",
+    boxShadow: "inset -12px -12px 0 rgba(0,0,0,.18),0 16px 22px rgba(0,0,0,.25)"
   },
 
-  safeDoor: {
-    width: "100px",
-    height: "90px",
-    borderRadius: "14px",
-    border: "5px solid rgba(255,255,255,.24)",
-    position: "absolute",
-    left: "22px",
-    top: "15px"
-  },
-
-  safeCircle: {
-    width: "38px",
-    height: "38px",
-    borderRadius: "50%",
-    border: "5px solid #ddd6fe",
-    position: "absolute",
-    left: "27px",
-    top: "22px"
-  },
-
-  safeHandle: {
-    width: "54px",
-    height: "5px",
-    background: "#ddd6fe",
+  coin1: {
     position: "absolute",
     left: "20px",
-    top: "40px"
-  },
-
-  coinStack1: {
-    position: "absolute",
-    left: "0",
-    bottom: "5px",
-    width: "48px",
-    height: "48px",
+    bottom: "18px",
+    width: "45px",
+    height: "45px",
     borderRadius: "50%",
-    background: "linear-gradient(135deg,#facc15,#f59e0b)",
+    background: "linear-gradient(135deg,#fde047,#f59e0b)",
     color: "#92400e",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontWeight: "900",
-    fontSize: "22px"
+    boxShadow: "0 8px 16px rgba(0,0,0,.25)"
   },
 
-  coinStack2: {
+  coin2: {
     position: "absolute",
-    left: "42px",
-    bottom: "18px",
-    width: "45px",
-    height: "45px",
+    left: "58px",
+    bottom: "4px",
+    width: "48px",
+    height: "48px",
     borderRadius: "50%",
-    background: "linear-gradient(135deg,#fde047,#f97316)",
+    background: "linear-gradient(135deg,#facc15,#f97316)",
     color: "#92400e",
     display: "flex",
     alignItems: "center",
@@ -856,51 +591,41 @@ const styles = {
     fontWeight: "900"
   },
 
-  shield3d: {
+  shield: {
     position: "absolute",
-    right: "0",
-    bottom: "18px",
-    width: "72px",
-    height: "85px",
-    borderRadius: "28px 28px 34px 34px",
+    right: "20px",
+    bottom: "10px",
+    width: "65px",
+    height: "78px",
+    borderRadius: "26px 26px 35px 35px",
     background: "linear-gradient(135deg,#bbf7d0,#10b981)",
     color: "white",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "45px",
+    fontSize: "42px",
     fontWeight: "900",
-    border: "5px solid #dcfce7"
+    border: "5px solid #dcfce7",
+    boxShadow: "0 10px 20px rgba(0,0,0,.22)"
   },
 
-  investmentList: {
-    marginTop: "14px"
-  },
-
-  investmentCard: {
+  card: {
     background: "linear-gradient(180deg,#ffffff,#f8fbff)",
     borderRadius: "28px",
     padding: "24px",
-    marginBottom: "14px",
+    marginTop: "14px",
     boxShadow: "0 15px 32px rgba(15,23,42,.14)",
     border: "1px solid rgba(255,255,255,.85)"
   },
 
-  cardTop: {
+  cardHeader: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: "18px",
     marginBottom: "18px"
   },
 
-  cardLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "18px"
-  },
-
-  planCircle: {
+  planLogo: {
     width: "98px",
     height: "98px",
     borderRadius: "50%",
@@ -911,10 +636,8 @@ const styles = {
     justifyContent: "center"
   },
 
-  planTitle: {
-    margin: 0,
-    fontSize: "28px",
-    fontWeight: "900"
+  planTitleArea: {
+    flex: 1
   },
 
   activeBadge: {
@@ -923,27 +646,20 @@ const styles = {
     padding: "8px 14px",
     borderRadius: "12px",
     border: "1px solid",
-    fontWeight: "900"
+    fontWeight: "900",
+    background: "#f8fffb"
   },
 
-  idCard: {
-    minWidth: "210px",
+  idBox: {
+    width: "245px",
+    minHeight: "68px",
     border: "1px solid #dbe3ef",
     borderRadius: "16px",
-    padding: "14px 16px",
-    background: "#f9fbff"
-  },
-
-  idRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-
-  copyBtn: {
-    border: "none",
-    background: "transparent",
-    fontSize: "18px"
+    background: "#f9fbff",
+    textAlign: "left",
+    padding: "12px 14px",
+    cursor: "pointer",
+    position: "relative"
   },
 
   detailsGrid: {
@@ -955,7 +671,7 @@ const styles = {
     background: "#ffffff"
   },
 
-  infoBox: {
+  info: {
     display: "flex",
     alignItems: "center",
     gap: "13px",
@@ -975,31 +691,16 @@ const styles = {
     fontWeight: "900"
   },
 
-  infoTitle: {
-    margin: 0,
-    color: "#64748b",
-    fontSize: "14px"
-  },
-
-  progressSection: {
+  progressBox: {
     marginTop: "14px",
-    background: "#eefaf3",
     borderRadius: "16px",
     padding: "14px"
   },
 
-  progressHeader: {
+  progressTop: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    fontWeight: "900",
-    color: "#16a34a"
-  },
-
-  progressPercent: {
-    color: "white",
-    borderRadius: "12px",
-    padding: "5px 10px"
+    fontWeight: "900"
   },
 
   progressTrack: {
@@ -1015,44 +716,49 @@ const styles = {
     borderRadius: "20px"
   },
 
-  expectedBox: {
-    display: "grid",
-    gridTemplateColumns: "1fr 230px",
-    alignItems: "center",
+  maturityBox: {
+    textAlign: "right",
     marginTop: "8px"
   },
 
-  actionRow: {
+  actions: {
     marginTop: "14px",
     display: "grid",
     gridTemplateColumns: "1fr 1.4fr 1.4fr 1fr",
     gap: "8px"
   },
 
-  actionBtn: {
-    height: "46px",
-    border: "none",
-    borderRadius: "14px",
-    background: "#f8fbff",
-    color: "#16a34a",
-    fontWeight: "900"
+  bottomBanner: {
+    marginTop: "14px",
+    background: "linear-gradient(135deg,#fff7df,#ffffff)",
+    borderRadius: "24px",
+    padding: "20px",
+    display: "flex",
+    alignItems: "center",
+    gap: "18px",
+    boxShadow: "0 12px 28px rgba(15,23,42,.10)"
   },
 
-  renewBtn: {
-    height: "46px",
-    border: "none",
-    borderRadius: "14px",
-    color: "white",
-    fontWeight: "900"
+  trophy: {
+    fontSize: "74px"
   },
 
-  plantLogo: {
+  bottomText: {
+    flex: 1
+  },
+
+  bottomBenefits: {
+    display: "flex",
+    gap: "26px"
+  },
+
+  plantIcon: {
     position: "relative",
     width: "70px",
     height: "70px"
   },
 
-  leaf1: {
+  leafA: {
     position: "absolute",
     width: "32px",
     height: "22px",
@@ -1062,7 +768,7 @@ const styles = {
     left: "10px"
   },
 
-  leaf2: {
+  leafB: {
     position: "absolute",
     width: "34px",
     height: "23px",
@@ -1097,7 +803,7 @@ const styles = {
     fontWeight: "900"
   },
 
-  rocketLogo: {
+  rocketIcon: {
     position: "relative",
     width: "70px",
     height: "70px"
@@ -1133,51 +839,5 @@ const styles = {
     left: "6px",
     bottom: "5px",
     transform: "rotate(25deg)"
-  },
-
-  bottomChoice: {
-    background: "linear-gradient(135deg,#fff7df,#ffffff)",
-    borderRadius: "24px",
-    padding: "20px",
-    display: "flex",
-    alignItems: "center",
-    gap: "18px",
-    marginBottom: "25px",
-    boxShadow: "0 12px 28px rgba(15,23,42,.10)"
-  },
-
-  trophyBox: {
-    width: "110px"
-  },
-
-  trophy3d: {
-    fontSize: "78px",
-    filter: "drop-shadow(0 10px 12px rgba(245,158,11,.28))"
-  },
-
-  choiceText: {
-    flex: 1
-  },
-
-  choiceBenefits: {
-    display: "flex",
-    gap: "28px"
-  },
-
-  benefit: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px"
-  },
-
-  benefitIcon: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "50%",
-    background: "#fef3c7",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "24px"
   }
 };
