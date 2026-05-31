@@ -283,7 +283,7 @@ function App() {
 />
 
 <Route
-  path="/assistant"
+  path="/investment-assistant"
   element={
     <ProtectedRoute>
       <InvestmentAssistant />
