@@ -9,6 +9,7 @@ export default function InvestNow() {
   const token = localStorage.getItem("token") || "";
 
   const [loading, setLoading] = useState(true);
+  const [showInvestment, setShowInvestment] = useState(true);
 
   const [summary, setSummary] = useState({
     totalInvestment: 0,
@@ -57,7 +58,12 @@ export default function InvestNow() {
 
   const money = (amount) => {
     return `₹ ${Number(amount || 0).toLocaleString("en-IN")}.00`;
+  
   };
+
+  const showMoney = (amount) => {
+  return showInvestment ? money(amount) : "₹ ••••••••";
+};
 
   const comingSoon = () => {
     alert("Temporary Unavailable - Coming Soon");
@@ -169,18 +175,21 @@ export default function InvestNow() {
                 Total Investment Value
               </p>
 
-              <span style={styles.eyeIcon}>
-                👁
-              </span>
+              <button
+  style={styles.eyeBtn}
+  onClick={() => setShowInvestment(!showInvestment)}
+>
+  {showInvestment ? "👁" : "🙈"}
+</button>
             </div>
 
             <h1 style={styles.heroAmount}>
-              {money(summary.totalInvestment)}
+              {showMoney(summary.totalInvestment)}
             </h1>
 
             <p style={styles.heroGain}>
-              +{money(summary.monthlyInvestment)}
-              {" "}
+              +{showInvestment ? money(summary.monthlyInvestment) : "₹ •••••"}    
+                        {" "}
               <span>
                 (▲ {summary.returnRate}%)
               </span>
@@ -410,8 +419,9 @@ function PlanCard({ plan }) {
 
         <div style={styles.planHeadingBox}>
           <h1>{plan.title}</h1>
-          <span>{plan.subtitle}</span>
-        </div>
+<span style={styles.planSubtitleYellow}>
+  {plan.subtitle}
+</span>        </div>
       </div>
 
       <div style={styles.planContent}>
@@ -1228,24 +1238,25 @@ const styles = {
     maxWidth: "320px"
   },
 
-  planButton: {
-    position: "absolute",
-    left: "22px",
-    right: "22px",
-    bottom: "18px",
-    height: "54px",
-    border: "none",
-    borderRadius: "17px",
-    background: "white",
-    fontSize: "20px",
-    fontWeight: "900",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 16px",
-    cursor: "pointer",
-    boxShadow: "0 10px 22px rgba(0,0,0,.18)"
-  },
+ planButton: {
+  position: "absolute",
+  left: "22px",
+  right: "22px",
+  bottom: "18px",
+  height: "54px",
+  border: "none",
+  borderRadius: "17px",
+  background: "white",
+  fontSize: "20px",
+  fontWeight: "900",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "0 16px",
+  cursor: "pointer",
+  boxShadow: "0 10px 22px rgba(0,0,0,.18)",
+  lineHeight: "normal"
+},
 
   comingGrid: {
     display: "grid",
@@ -1438,6 +1449,32 @@ const styles = {
     fontWeight: "900",
     fontSize: "18px"
   },
+
+  eyeBtn: {
+  border: "2px solid rgba(255,255,255,.7)",
+  background: "rgba(255,255,255,.12)",
+  color: "white",
+  width: "42px",
+  height: "30px",
+  borderRadius: "10px",
+  cursor: "pointer",
+  fontSize: "15px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center"
+},
+
+planSubtitleYellow: {
+  display: "inline-block",
+  marginTop: "8px",
+  background: "#facc15",
+  color: "#111827",
+  padding: "6px 14px",
+  borderRadius: "14px",
+  fontWeight: "900",
+  fontSize: "14px",
+  boxShadow: "0 6px 12px rgba(0,0,0,.12)"
+},
 
   "@media": {}
 };
