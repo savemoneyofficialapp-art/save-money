@@ -347,7 +347,7 @@ export default function Home() {
           icon="📊"
           title="Investment Assistance"
           subtitle="Need You Help"
-          gradient="help"
+          gradient="plan"
           onClick={() => go("/Investment-Assistant")}
         />
 
