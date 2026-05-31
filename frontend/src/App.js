@@ -17,6 +17,7 @@ import KYC from "./pages/KYC";
 import Notifications from "./pages/Notifications";
 import ForgotPassword from "./pages/ForgotPassword";
 import UserAnalytics from "./pages/UserAnalytics";
+import MyInvestment from "./pages/MyInvestment";
 
 import AdminKYC from "./pages/AdminKYC";
 import AdminNotification from "./pages/AdminNotification";
@@ -149,6 +150,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+  path="/my-investment"
+  element={
+    <ProtectedRoute>
+      <MyInvestment />
+    </ProtectedRoute>
+  }
+/>
 
         <Route
           path="/invest-history"
