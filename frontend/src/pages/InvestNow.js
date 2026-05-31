@@ -429,8 +429,8 @@ function PlanCard({ plan }) {
       </div>
 
       <div style={styles.planContent}>
-        <h2>{plan.heading}</h2>
-        <p>{plan.description}</p>
+<h2 style={styles.planContent_h2}>{plan.heading}</h2>
+<p style={styles.planContent_p}>{plan.description}</p>
       </div>
 
       <button
@@ -1238,9 +1238,24 @@ const styles = {
     position: "relative",
     zIndex: 2,
     color: "white",
-    marginTop: "28px",
-    maxWidth: "320px"
+    marginTop: "12px",
+    maxWidth: "320px",
+    paddingBottom: "65px"
   },
+
+  planContent_h2: {
+  margin: "0 0 10px 0",
+  fontSize: "28px",
+  lineHeight: "1.1",
+  fontWeight: "900"
+},
+
+planContent_p: {
+  margin: 0,
+  fontSize: "16px",
+  lineHeight: "1.35",
+  opacity: 0.95
+},
 
  planButton: {
   position: "absolute",
