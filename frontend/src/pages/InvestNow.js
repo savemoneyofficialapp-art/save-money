@@ -9,7 +9,7 @@ export default function InvestNow() {
   const token = localStorage.getItem("token") || "";
 
   const [loading, setLoading] = useState(true);
-  const [showInvestment, setShowInvestment] = useState(true);
+  const [showInvestment, setShowInvestment] = useState(false);
 
   const [summary, setSummary] = useState({
     totalInvestment: 0,
@@ -19,9 +19,13 @@ export default function InvestNow() {
     activePlan: 0
   });
 
-  useEffect(() => {
-    loadSummary();
-  }, []);
+ useEffect(() => {
+  loadSummary();
+
+  return () => {
+    setShowInvestment(false);
+  };
+}, []);
 
   const loadSummary = async () => {
     try {
@@ -1252,10 +1256,11 @@ const styles = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "0 16px",
+  paddingTop: "0",
+  paddingBottom: "0",
   cursor: "pointer",
   boxShadow: "0 10px 22px rgba(0,0,0,.18)",
-  lineHeight: "normal"
+  lineHeight: "1"
 },
 
   comingGrid: {
