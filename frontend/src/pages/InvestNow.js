@@ -76,15 +76,15 @@ export default function InvestNow() {
   const plans = useMemo(() => {
     return [
       {
-        type: "bank",
-        title: "PIGI BANK",
+        type: "save",
+        title: "SAVE MONEY",
         subtitle: "SIP Invest Plan",
         heading: "Start small, grow big",
         description:
           "Build your wealth step by step with our smart SIP saving plan.",
-        icon: "Pigi With Coin",
-        button: "Pigi Now",
-        onClick: () => navigate("/pigi-bank")
+        icon: "plant",
+        button: "Invest Now",
+        onClick: () => navigate("/save-money")
       },
       {
         type: "one",
@@ -393,10 +393,10 @@ function SectionTitle({ title }) {
 }
 
 function PlanCard({ plan }) {
-  const isSave = plan.type === "bank";
+  const isSave = plan.type === "save";
 
   return (
-    <div style={isBank ? styles.bankPlanCard : styles.onePlanCard}>
+    <div style={isSave ? styles.savePlanCard : styles.onePlanCard}>
       <div style={styles.planGlow}></div>
       <div style={styles.planPattern}></div>
 
