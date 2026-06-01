@@ -1,502 +1,944 @@
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { API } from "../config";
 
-
 export default function KYC() {
-  const email = localStorage.getItem("email");
+  const email = localStorage.getItem("email") || "";
+  const token = localStorage.getItem("token") || "";
 
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({});
-
-  const [mobileEdit, setMobileEdit] = useState(false);
-  const [newMobile, setNewMobile] = useState("");
+  const [aadhaarNumber, setAadhaarNumber] = useState("");
+  const [panNumber, setPanNumber] = useState("");
 
   const [aadhaarFile, setAadhaarFile] = useState(null);
   const [panFile, setPanFile] = useState(null);
-  const [photo, setPhoto] = useState(null);
-  const [aadhaar, setAadhaar] = useState("");
-  const [pan, setPan] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+
+  const [kycStatus, setKycStatus] = useState("Pending");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchUser();
+    loadKyc();
   }, []);
 
-  const fetchUser = async () => {
+  const loadKyc = async () => {
     try {
-      const res = await fetchWithAuth(`${API}/get-user-data`, {
+      const res = await fetch(`${API}/kyc-info`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
         body: JSON.stringify({ email })
       });
 
       const data = await res.json();
-      console.log(data);
 
-      if (data?.msg) {
-        toast.error(data.msg);
-        setLoading(false);
-        return;
+      if (data?.success) {
+        const u = data.user || {};
+
+        setUser(u);
+        setAadhaarNumber(u.aadhaarNumber || "");
+        setPanNumber(u.panNumber || "");
+        setKycStatus(u.kycStatus || "Pending");
       }
-
-      setUser(data || {});
-      setNewMobile(data?.mobile || "");
-      setAadhaar(data?.aadhaar || data?.aadhaarNumber || "");
-      setPan(data?.pan || data?.panNumber || "");
-      localStorage.setItem("user", JSON.stringify(data || {}));
-      setLoading(false);
     } catch (err) {
-      console.log("Fetch error:", err);
-      toast.error("User data load failed");
-      setLoading(false);
+      console.log("KYC INFO ERROR:", err);
     }
   };
 
-  const updateMobile = async () => {
-    if (!newMobile) {
-      toast.warning("Enter mobile number");
-      return;
+  const submitKyc = async () => {
+    if (!aadhaarNumber || aadhaarNumber.length !== 12) {
+      return alert("Enter valid 12 digit Aadhaar number");
+    }
+
+    if (!panNumber || panNumber.length !== 10) {
+      return alert("Enter valid 10 digit PAN number");
+    }
+
+    if (!aadhaarFile || !panFile || !photoFile) {
+      return alert("Please upload Aadhaar card, PAN card and photo");
     }
 
     try {
-      const res = await fetchWithAuth(`${API}/update-mobile`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, mobile: newMobile })
-      });
+      setLoading(true);
 
-      const data = await res.json();
-      toast.success(data.msg || "Mobile updated");
-
-      setMobileEdit(false);
-      fetchUser();
-    } catch (err) {
-      console.log(err);
-      toast.error("Mobile update failed");
-    }
-  };
-
-  const submitKYC = async () => {
-    setSubmitting(true);
-    if (user?.kycStatus === "approved") {
-      toast.info("Your KYC is already approved");
-      return;
-    }
-
-    if (!aadhaar || !pan) {
-  toast.warning("Please enter Aadhaar and PAN number");
-  return;
-}
-
-if (!aadhaarFile || !panFile || !photo) {
-  toast.warning("PLEASE UPLOAD ALL DOCUMENT");
-  return;
-}
-
-    try {
       const formData = new FormData();
       formData.append("email", email);
-      formData.append("aadhaarFile", aadhaarFile);
-      formData.append("panFile", panFile);
-      formData.append("photo", photo);
-      formData.append("aadhaar", aadhaar);
-      formData.append("pan", pan);
+      formData.append("aadhaarNumber", aadhaarNumber);
+      formData.append("panNumber", panNumber);
+      formData.append("aadhaarCard", aadhaarFile);
+      formData.append("panCard", panFile);
+      formData.append("photo", photoFile);
 
-      const res = await fetchWithAuth(`${API}/submit-kyc`, {
+      const res = await fetch(`${API}/submit-kyc`, {
         method: "POST",
+        headers: {
+          authorization: token || ""
+        },
         body: formData
       });
 
       const data = await res.json();
-      toast.success(data.msg || "KYC submitted");
 
-      setAadhaarFile(null);
-      setPanFile(null);
-      setPhoto(null);
+      alert(data.msg || "KYC submitted");
 
-      fetchUser();
+      if (data.success) {
+        setKycStatus("Reviewing");
+        loadKyc();
+      }
     } catch (err) {
-  console.log(err);
-  toast.error("KYC submit failed");
-} finally {
-  setSubmitting(false);
-}
+      console.log("SUBMIT KYC ERROR:", err);
+      alert("KYC submit failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <div style={styles.loading}>
-        Loading KYC...
-      </div>
-    );
-  }
+  const statusText = kycStatus || "Pending";
 
   return (
-    <div style={styles.container}>
+    <div style={styles.page}>
+      <div style={styles.bgGlowOne}></div>
+      <div style={styles.bgGlowTwo}></div>
 
-      <div style={styles.headerCard}>
-        <h2 style={styles.title}>KYC Verification</h2>
+      <div style={styles.wrapper}>
 
-        <div style={styles.statusPill}>
-          {user?.kycStatus === "approved" ? (
-            <span style={styles.approved}>✔ Approved</span>
-          ) : user?.kycStatus === "pending" ? (
-            <span style={styles.pending}>⏳ Pending</span>
-          ) : user?.kycStatus === "rejected" ? (
-            <span style={styles.rejected}>✖ Rejected</span>
-          ) : (
-            <span style={styles.notSubmitted}>❗ Not Submitted</span>
-          )}
-        </div>
-      </div>
+        {/* HEADER */}
+        <header style={styles.header}>
+          <button style={styles.backBtn} onClick={() => window.history.back()}>
+            ←
+          </button>
 
-      <div style={styles.card}>
-        <h3 style={styles.sectionTitle}>Registered Information</h3>
+          <div style={styles.headerShield}>
+            <ShieldLogo />
+          </div>
 
-        <Info label="Name" value={user?.name || user?.fullName || "N/A"} verified={user?.kycStatus === "approved"} />
-        <Info label="Email" value={user?.email || email || "N/A"} />
-        
-        <div style={styles.infoBox}>
-          <p style={styles.label}>Mobile Number</p>
+          <div style={styles.headerText}>
+            <h1>
+              KYC <span>Verification</span>
+            </h1>
+            <p>Secure your account. Complete KYC to unlock all features.</p>
+          </div>
 
-          {mobileEdit ? (
-            <div style={styles.mobileRow}>
-              <input
-                value={newMobile}
-                onChange={(e) => setNewMobile(e.target.value)}
-                style={styles.input}
-                placeholder="Enter mobile number"
+          <div style={styles.topIllustration}>
+            <KycHeroArt />
+          </div>
+        </header>
+
+        {/* PERSONAL INFORMATION */}
+        <section style={styles.personalCard}>
+          <div style={styles.cardHead}>
+            <div style={styles.sectionIcon}>👤</div>
+
+            <h2>Personal Information</h2>
+
+            <button style={styles.editBtn}>
+              ✎ Edit
+            </button>
+          </div>
+
+          <div style={styles.personalBody}>
+            <div style={styles.personalGrid}>
+              <PersonalInfo
+                icon="👤"
+                color="#6d5dfc"
+                title="Name"
+                value={user.name || "N/A"}
               />
 
-              <button onClick={updateMobile} style={styles.saveBtn}>
-                Save
-              </button>
-            </div>
-          ) : (
-            <div style={styles.mobileView}>
-              <b>{user?.mobile || user?.phone || "N/A"}</b>
+              <PersonalInfo
+                icon="✉️"
+                color="#0284c7"
+                title="Email"
+                value={user.email || email || "N/A"}
+              />
 
-              <button
-                onClick={() => setMobileEdit(true)}
-                style={styles.editBtn}
-              >
-                ✏ Edit
-              </button>
-            </div>
-          )}
-        </div>
+              <PersonalInfo
+                icon="📞"
+                color="#00b875"
+                title="Mobile"
+                value={user.mobile || user.phone || "N/A"}
+                editable
+              />
 
-        <Info label="PAN Number" value={user?.pan || user?.panNumber || "N/A"} />
-        <Info label="Aadhaar Number" value={user?.aadhaar || user?.aadhaarNumber || "N/A"} />
-        <Info label="Refer Code" value={user?.referCode || user?.referralCode || "N/A"} />
-        <Info label="Wallet ID" value={user?.walletId || "N/A"} />
-        {user?.kycStatus === "rejected" && (
-  <div style={styles.rejectBox}>
-    <b>KYC Rejected</b>
-    <p>{user?.kycRejectReason || "No reason provided"}</p>
-  </div>
-)}
+              <PersonalInfo
+                icon="🎁"
+                color="#ea580c"
+                title="Referral Code"
+                value={user.referralCode || user.referCode || "N/A"}
+              />
+
+              <PersonalInfo
+                icon="👛"
+                color="#7c3aed"
+                title="Wallet ID"
+                value={user.walletId || user.walletAddress || "N/A"}
+              />
+
+              <PersonalInfo
+                icon="📅"
+                color="#db2777"
+                title="Account Created Date"
+                value={
+                  user.createdAt
+                    ? new Date(user.createdAt).toLocaleString("en-IN")
+                    : "N/A"
+                }
+              />
+
+              <PersonalInfo
+                icon="🆔"
+                color="#f59e0b"
+                title="Aadhaar Number"
+                value={aadhaarNumber || "Not Added"}
+              />
+
+              <PersonalInfo
+                icon="💳"
+                color="#22c55e"
+                title="PAN Number"
+                value={panNumber || "Not Added"}
+              />
+
+              <KycStatus status={statusText} />
+            </div>
+
+            <div style={styles.sideKycArt}>
+              <IdCardArt />
+            </div>
+          </div>
+        </section>
+
+        {/* UPLOAD DOCUMENTS */}
+        <section style={styles.uploadCard}>
+          <div style={styles.uploadHead}>
+            <div style={styles.sectionIcon}>📄</div>
+
+            <div>
+              <h2>Upload Documents</h2>
+              <p>
+                Please upload clear and valid documents. All documents are secure and encrypted.
+              </p>
+            </div>
+          </div>
+
+          <UploadDocument
+            type="aadhaar"
+            title="Aadhaar Card"
+            desc="Upload front side of your Aadhaar card"
+            label="Aadhaar Number"
+            placeholder="Enter 12 digit Aadhaar number"
+            value={aadhaarNumber}
+            onChange={(v) => setAadhaarNumber(v.replace(/\D/g, "").slice(0, 12))}
+            file={aadhaarFile}
+            setFile={setAadhaarFile}
+          />
+
+          <UploadDocument
+            type="pan"
+            title="PAN Card"
+            desc="Upload front side of your PAN card"
+            label="PAN Number"
+            placeholder="Enter 10 digit PAN number"
+            value={panNumber}
+            onChange={(v) => setPanNumber(v.toUpperCase().slice(0, 10))}
+            file={panFile}
+            setFile={setPanFile}
+          />
+
+          <PhotoUpload
+            file={photoFile}
+            setFile={setPhotoFile}
+          />
+
+          <button style={styles.submitBtn} onClick={submitKyc} disabled={loading}>
+            <span>🛡</span>
+            {loading ? "Submitting..." : "Submit KYC"}
+            <b>➜</b>
+          </button>
+
+          <p style={styles.safeLine}>🔒 Your information is 100% secure and encrypted</p>
+        </section>
+
+        {/* PROCESS */}
+        <section style={styles.processCard}>
+          <div style={styles.processTitle}>
+            <span>🪄</span>
+            <h2>How KYC Process Works</h2>
+          </div>
+
+          <div style={styles.processSteps}>
+            <ProcessStep
+              no="1"
+              icon="☁️"
+              title="Upload Documents"
+              text="Upload clear images of your Aadhaar, PAN & Photo"
+              color="#1d9bf0"
+            />
+
+            <ProcessStep
+              no="2"
+              icon="📋"
+              title="Verify Details"
+              text="We will verify your information"
+              color="#9333ea"
+            />
+
+            <ProcessStep
+              no="3"
+              icon="🔍"
+              title="Under Review"
+              text="KYC usually takes 5-24 hours"
+              color="#14b8a6"
+            />
+
+            <ProcessStep
+              no="4"
+              icon="🛡"
+              title="Get Verified"
+              text="Once verified, enjoy all features & benefits"
+              color="#f59e0b"
+            />
+          </div>
+        </section>
+
+        {/* BOTTOM SECURITY */}
+        <section style={styles.securityRow}>
+          <SecurityMini
+            icon="🛡"
+            title="100% Secure"
+            text="Your data is safe with us"
+            color="#0969ff"
+          />
+
+          <SecurityMini
+            icon="🔐"
+            title="Data Encrypted"
+            text="End-to-end encrypted protection"
+            color="#22c55e"
+          />
+
+          <SecurityMini
+            icon="⏱"
+            title="Quick Verification"
+            text="KYC verification within 24 hours"
+            color="#7c3aed"
+          />
+
+          <SecurityMini
+            icon="✅"
+            title="Trusted Platform"
+            text="Millions of users trust us"
+            color="#f59e0b"
+          />
+        </section>
+
+      </div>
+    </div>
+  );
+}
+
+function PersonalInfo({ icon, color, title, value, editable }) {
+  return (
+    <div style={styles.infoItem}>
+      <div style={{ ...styles.infoIcon, background: color }}>
+        {icon}
       </div>
 
-      <div style={styles.card}>
-        <h3 style={styles.sectionTitle}>Upload Documents</h3>
-       <input
-  type="text"
-  style={styles.input}
-  placeholder="Enter Aadhaar Number"
-  value={aadhaar}
-  onChange={(e) => setAadhaar(e.target.value)}
-  disabled={user?.kycStatus === "approved"}
-/>
+      <div style={styles.infoText}>
+        <p>{title}</p>
+        <h3>{value}</h3>
+      </div>
 
-<input
-  type="text"
-  style={{ ...styles.input, marginTop: "12px" }}
-  placeholder="Enter PAN Number"
-  value={pan}
-  onChange={(e) => setPan(e.target.value.toUpperCase())}
-  disabled={user?.kycStatus === "approved"}
-/>
-
-        <UploadBox
-          title="Aadhaar Card"
-          file={aadhaarFile}
-          onChange={(e) => setAadhaarFile(e.target.files[0])}
-        />
-
-        <UploadBox
-          title="PAN Card"
-          file={panFile}
-          onChange={(e) => setPanFile(e.target.files[0])}
-        />
-
-        <UploadBox
-          title="Your Photo"
-          file={photo}
-          onChange={(e) => setPhoto(e.target.files[0])}
-        />
-
-        <button
-          style={{
-            ...styles.btn,
-            background: user?.kycStatus === "approved" ? "#64748b" : "#22c55e"
-          }}
-          onClick={submitKYC}
-          disabled={submitting}
-        >
-         {submitting
-  ? "Submitting KYC..."
-  : user?.kycStatus === "approved"
-  ? "KYC Already Approved"
-  : "Submit KYC"}
+      {editable && (
+        <button style={styles.smallEdit}>
+          ✎ Edit
         </button>
-      </div>
-
-      <div style={styles.notice}>
-        Your registered information is securely stored and used only for verification and account security purposes.
-      </div>
-
+      )}
     </div>
   );
 }
 
+function KycStatus({ status }) {
+  const normal = String(status || "Pending").toLowerCase();
 
+  const color =
+    normal === "approved"
+      ? "#22c55e"
+      : normal === "reviewing"
+      ? "#38bdf8"
+      : "#facc15";
 
-function Info({ label, value, verified }) {
+  const text =
+    normal === "approved"
+      ? "Approved"
+      : normal === "reviewing"
+      ? "Reviewing"
+      : "Pending";
+
   return (
-    <div style={styles.infoBox}>
-      <p style={styles.label}>{label}</p>
-      <div style={styles.infoValue}>
-        <b>{value}</b>
-        {verified && <span style={styles.blueTick}>✔</span>}
+    <div style={styles.infoItem}>
+      <div style={{ ...styles.infoIcon, background: "#16a34a" }}>
+        🛡
+      </div>
+
+      <div style={styles.infoText}>
+        <p>KYC Status</p>
+
+        <span
+          style={{
+            ...styles.statusPill,
+            color,
+            borderColor: color
+          }}
+        >
+          {text}
+        </span>
       </div>
     </div>
   );
 }
 
-function UploadBox({ title, file, onChange }) {
+function UploadDocument({
+  type,
+  title,
+  desc,
+  label,
+  placeholder,
+  value,
+  onChange,
+  file,
+  setFile
+}) {
   return (
-    <div style={styles.uploadBox}>
-      <p>{title}</p>
+    <div style={styles.uploadRow}>
+      <div style={styles.docPreview}>
+        {type === "aadhaar" ? (
+          <AadhaarArt />
+        ) : (
+          <PanArt />
+        )}
+      </div>
 
-      <label style={styles.fileLabel}>
-        Choose File
+      <div style={styles.uploadMiddle}>
+        <h3>{title}</h3>
+        <p>{desc}</p>
+
+        <label>{label}</label>
+
+        <input
+          style={styles.fieldInput}
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </div>
+
+      <label style={styles.fileBox}>
+        <div style={styles.cloudIcon}>☁️</div>
+        <h4>{file ? file.name : "Upload Image"}</h4>
+        <p>PNG, JPG (Max 2MB)</p>
+
         <input
           type="file"
+          hidden
           accept="image/*"
-          onChange={onChange}
-          style={{ display: "none" }}
+          onChange={(e) => setFile(e.target.files[0])}
         />
       </label>
+    </div>
+  );
+}
 
-      <small style={styles.fileName}>
-        {file ? file.name : "No file selected"}
-      </small>
+function PhotoUpload({ file, setFile }) {
+  return (
+    <div style={styles.uploadRow}>
+      <div style={styles.docPreview}>
+        <UserPhotoArt />
+      </div>
+
+      <div style={styles.uploadMiddle}>
+        <h3>Your Photo</h3>
+        <p>Upload your recent passport size photo</p>
+      </div>
+
+      <label style={styles.fileBox}>
+        <div style={styles.cloudIcon}>☁️</div>
+        <h4>{file ? file.name : "Upload Photo"}</h4>
+        <p>PNG, JPG (Max 2MB)</p>
+
+        <input
+          type="file"
+          hidden
+          accept="image/*"
+          onChange={(e) => setFile(e.target.files[0])}
+        />
+      </label>
+    </div>
+  );
+}
+
+function ProcessStep({ no, icon, title, text, color }) {
+  return (
+    <div style={styles.stepBox}>
+      <div style={styles.stepTop}>
+        <b style={{ background: color }}>{no}</b>
+        <span style={{ borderColor: color, color }}>
+          {icon}
+        </span>
+      </div>
+
+      <h4>{title}</h4>
+      <p>{text}</p>
+    </div>
+  );
+}
+
+function SecurityMini({ icon, title, text, color }) {
+  return (
+    <div style={styles.securityMini}>
+      <div style={{ ...styles.securityIcon, background: color }}>
+        {icon}
+      </div>
+
+      <div>
+        <h4>{title}</h4>
+        <p>{text}</p>
+      </div>
+    </div>
+  );
+}
+function ShieldLogo() {
+  return (
+    <div style={styles.shieldLogo}>
+      <span>✓</span>
+    </div>
+  );
+}
+
+function KycHeroArt() {
+  return (
+    <div style={styles.heroKycArt}>
+      <div style={styles.heroCard3d}>
+        <div style={styles.heroAvatar}></div>
+        <div style={styles.heroLine1}></div>
+        <div style={styles.heroLine2}></div>
+      </div>
+
+      <div style={styles.heroLock}>🔒</div>
+      <div style={styles.heroShield}>✓</div>
+      <div style={styles.heroGlow}></div>
+    </div>
+  );
+}
+
+function IdCardArt() {
+  return (
+    <div style={styles.idArt}>
+      <div style={styles.clip}></div>
+      <div style={styles.idAvatar}></div>
+      <div style={styles.idLine1}></div>
+      <div style={styles.idLine2}></div>
+      <div style={styles.idLock}>🔒</div>
+    </div>
+  );
+}
+
+function AadhaarArt() {
+  return (
+    <div style={styles.aadhaarArt}>
+      <div style={styles.aadhaarSun}></div>
+      <div style={styles.aadhaarArc1}></div>
+      <div style={styles.aadhaarArc2}></div>
+      <div style={styles.aadhaarArc3}></div>
+      <b>AADHAAR</b>
+    </div>
+  );
+}
+
+function PanArt() {
+  return (
+    <div style={styles.panArt}>
+      <div style={styles.panHeader}></div>
+      <div style={styles.panPhoto}></div>
+      <div style={styles.panLine1}></div>
+      <div style={styles.panLine2}></div>
+      <b>PAN</b>
+    </div>
+  );
+}
+
+function UserPhotoArt() {
+  return (
+    <div style={styles.userArt}>
+      <div style={styles.userHair}></div>
+      <div style={styles.userFace}></div>
+      <div style={styles.userBody}></div>
     </div>
   );
 }
 
 const styles = {
-  container: {
-    padding: "20px",
+  page: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg,#020617,#0f172a,#1e293b)",
-    color: "white"
+    background:
+      "radial-gradient(circle at top right,#45108a 0%,#170032 40%,#090018 100%)",
+    position: "relative",
+    overflow: "hidden",
+    padding: "25px",
+    color: "white",
+    fontFamily: "Arial, sans-serif"
   },
 
-  loading: {
-    minHeight: "100vh",
-    background: "#020617",
+  bgGlowOne: {
+    position: "absolute",
+    width: "500px",
+    height: "500px",
+    borderRadius: "50%",
+    background: "rgba(168,85,247,.15)",
+    top: "-200px",
+    right: "-150px",
+    filter: "blur(120px)"
+  },
+
+  bgGlowTwo: {
+    position: "absolute",
+    width: "400px",
+    height: "400px",
+    borderRadius: "50%",
+    background: "rgba(59,130,246,.10)",
+    bottom: "-150px",
+    left: "-150px",
+    filter: "blur(120px)"
+  },
+
+  wrapper: {
+    maxWidth: "1400px",
+    margin: "0 auto",
+    position: "relative",
+    zIndex: 2
+  },
+
+  header: {
+    display: "flex",
+    alignItems: "center",
+    gap: "20px",
+    marginBottom: "25px"
+  },
+
+  backBtn: {
+    width: "60px",
+    height: "60px",
+    borderRadius: "50%",
+    border: "1px solid rgba(255,255,255,.15)",
+    background: "rgba(255,255,255,.05)",
+    color: "#b794ff",
+    fontSize: "32px",
+    cursor: "pointer"
+  },
+
+  headerShield: {
+    width: "90px",
+    height: "90px"
+  },
+
+  shieldLogo: {
+    width: "90px",
+    height: "90px",
+    borderRadius: "30px",
+    background: "linear-gradient(135deg,#6d5dfc,#b84cff)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "42px",
+    fontWeight: "900",
+    boxShadow: "0 0 35px rgba(168,85,247,.4)"
+  },
+
+  headerText: {
+    flex: 1
+  },
+
+  topIllustration: {
+    width: "260px"
+  },
+
+  personalCard: {
+    background:
+      "linear-gradient(145deg,rgba(35,10,85,.92),rgba(8,0,35,.96))",
+    border: "1px solid rgba(168,85,247,.25)",
+    borderRadius: "28px",
+    padding: "28px",
+    marginBottom: "25px",
+    boxShadow: "0 0 35px rgba(168,85,247,.15)"
+  },
+
+  cardHead: {
+    display: "flex",
+    alignItems: "center",
+    gap: "15px",
+    marginBottom: "25px"
+  },
+
+  sectionIcon: {
+    width: "55px",
+    height: "55px",
+    borderRadius: "18px",
+    background: "linear-gradient(135deg,#6d5dfc,#b84cff)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "24px"
+  },
+
+  editBtn: {
+    marginLeft: "auto",
+    border: "none",
+    background: "#3b82f6",
     color: "white",
+    padding: "10px 18px",
+    borderRadius: "12px",
+    fontWeight: "bold"
+  },
+
+  personalBody: {
+    display: "grid",
+    gridTemplateColumns: "1fr 300px",
+    gap: "25px"
+  },
+
+  personalGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "15px"
+  },
+
+  infoItem: {
+    background: "rgba(255,255,255,.03)",
+    border: "1px solid rgba(255,255,255,.05)",
+    borderRadius: "18px",
+    padding: "16px",
+    display: "flex",
+    alignItems: "center",
+    gap: "14px"
+  },
+
+  infoIcon: {
+    width: "52px",
+    height: "52px",
+    borderRadius: "14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "white",
+    fontSize: "22px"
+  },
+
+  infoText: {
+    flex: 1
+  },
+
+  smallEdit: {
+    border: "none",
+    background: "#2563eb",
+    color: "white",
+    padding: "8px 12px",
+    borderRadius: "10px"
+  },
+
+  statusPill: {
+    display: "inline-block",
+    border: "1px solid",
+    padding: "7px 14px",
+    borderRadius: "20px",
+    fontWeight: "bold"
+  },
+
+  sideKycArt: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+
+  uploadCard: {
+    background:
+      "linear-gradient(145deg,rgba(35,10,85,.92),rgba(8,0,35,.96))",
+    border: "1px solid rgba(168,85,247,.25)",
+    borderRadius: "28px",
+    padding: "28px",
+    marginBottom: "25px"
+  },
+
+  uploadHead: {
+    display: "flex",
+    gap: "15px",
+    alignItems: "center",
+    marginBottom: "20px"
+  },
+
+  uploadRow: {
+    display: "grid",
+    gridTemplateColumns: "180px 1fr 300px",
+    gap: "25px",
+    alignItems: "center",
+    padding: "20px 0",
+    borderBottom: "1px solid rgba(255,255,255,.08)"
+  },
+
+  docPreview: {
+    height: "150px",
+    borderRadius: "20px",
+    background: "rgba(255,255,255,.03)",
+    border: "1px solid rgba(255,255,255,.06)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center"
   },
 
-  headerCard: {
-    background: "linear-gradient(135deg,#22c55e,#2563eb)",
-    color: "#020617",
-    padding: "22px",
-    borderRadius: "22px",
-    textAlign: "center",
-    boxShadow: "0 0 25px rgba(0,0,0,0.35)"
-  },
+  uploadMiddle: {},
 
-  title: {
-    margin: 0,
-    fontSize: "25px"
-  },
-
-  statusPill: {
-    marginTop: "12px"
-  },
-
-  card: {
-    background: "#1e293b",
-    padding: "20px",
-    borderRadius: "20px",
-    marginTop: "20px",
-    boxShadow: "0 0 18px rgba(0,0,0,0.35)",
-    border: "1px solid #334155"
-  },
-
-  sectionTitle: {
-    color: "#22c55e",
-    marginTop: 0
-  },
-
-  infoBox: {
-    background: "#0f172a",
-    padding: "13px",
-    borderRadius: "14px",
-    marginTop: "12px"
-  },
-
-  label: {
-    margin: 0,
-    color: "#94a3b8",
-    fontSize: "13px"
-  },
-
-  infoValue: {
-    marginTop: "6px",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px"
-  },
-
-  blueTick: {
-    background: "#2563eb",
-    color: "white",
-    borderRadius: "50%",
-    padding: "2px 7px",
-    fontSize: "12px"
-  },
-
-  mobileRow: {
-    display: "flex",
-    gap: "8px",
-    marginTop: "8px"
-  },
-
-  mobileView: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: "8px"
-  },
-
-  input: {
-    flex: 1,
-    padding: "12px",
-    borderRadius: "10px",
-    border: "none"
-  },
-
-  editBtn: {
-    padding: "8px 12px",
-    border: "none",
-    borderRadius: "10px",
-    background: "#3b82f6",
-    color: "white",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-
-  saveBtn: {
-    padding: "10px 14px",
-    background: "#22c55e",
-    border: "none",
-    borderRadius: "10px",
-    color: "#020617",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-
-  uploadBox: {
-    marginTop: "13px",
-    padding: "14px",
-    background: "#334155",
-    borderRadius: "14px"
-  },
-
-  fileLabel: {
-    display: "inline-block",
-    padding: "10px 14px",
-    background: "#3b82f6",
-    borderRadius: "10px",
-    color: "white",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-
-  fileName: {
-    display: "block",
-    marginTop: "8px",
-    color: "#cbd5e1"
-  },
-
-  btn: {
-    marginTop: "18px",
-    padding: "14px",
+  fieldInput: {
     width: "100%",
+    marginTop: "10px",
+    padding: "14px",
+    borderRadius: "12px",
+    border: "1px solid rgba(168,85,247,.35)",
+    background: "rgba(255,255,255,.05)",
+    color: "white",
+    outline: "none"
+  },
+
+  fileBox: {
+    height: "130px",
+    borderRadius: "20px",
+    border: "2px dashed #2563eb",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer"
+  },
+
+  cloudIcon: {
+    fontSize: "34px"
+  },
+
+  submitBtn: {
+    width: "100%",
+    height: "68px",
+    marginTop: "25px",
+    borderRadius: "18px",
     border: "none",
-    borderRadius: "14px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    color: "#020617"
-  },
-
-  approved: {
-    color: "#020617",
-    background: "#bbf7d0",
-    padding: "8px 15px",
-    borderRadius: "20px",
-    fontWeight: "bold"
-  },
-
-  pending: {
-    color: "#020617",
-    background: "#fde68a",
-    padding: "8px 15px",
-    borderRadius: "20px",
-    fontWeight: "bold"
-  },
-
-  rejected: {
+    background:
+      "linear-gradient(90deg,#6d5dfc,#ec168e)",
     color: "white",
-    background: "#ef4444",
-    padding: "8px 15px",
+    fontSize: "22px",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "12px"
+  },
+
+  safeLine: {
+    textAlign: "center",
+    color: "#bdb6d4",
+    marginTop: "12px"
+  },
+
+  processCard: {
+    background:
+      "linear-gradient(145deg,rgba(35,10,85,.92),rgba(8,0,35,.96))",
+    border: "1px solid rgba(168,85,247,.25)",
+    borderRadius: "28px",
+    padding: "25px",
+    marginBottom: "20px"
+  },
+
+  processTitle: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "20px"
+  },
+
+  processSteps: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
+    gap: "18px"
+  },
+
+  stepBox: {
+    textAlign: "center",
+    background: "rgba(255,255,255,.03)",
     borderRadius: "20px",
-    fontWeight: "bold"
+    padding: "20px"
   },
 
-  notSubmitted: {
-    color: "white",
-    background: "#ef4444",
-    padding: "8px 15px",
-    borderRadius: "20px",
-    fontWeight: "bold"
+  stepTop: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "10px",
+    marginBottom: "12px"
   },
 
-  notice: {
-    marginTop: "20px",
-    background: "#0f172a",
-    padding: "15px",
-    borderRadius: "14px",
-    color: "#cbd5e1",
-    lineHeight: "24px"
+  securityRow: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
+    gap: "15px"
   },
 
-rejectBox: {
-  background: "#7f1d1d",
-  color: "white",
-  padding: "14px",
-  borderRadius: "14px",
-  textAlign:"center",
-  marginTop: "15px",
-  border: "1px solid #ef4444"
-}
+  securityMini: {
+    background:
+      "linear-gradient(145deg,rgba(35,10,85,.92),rgba(8,0,35,.96))",
+    border: "1px solid rgba(168,85,247,.25)",
+    borderRadius: "22px",
+    padding: "18px",
+    display: "flex",
+    gap: "12px",
+    alignItems: "center"
+  },
+
+  securityIcon: {
+    width: "55px",
+    height: "55px",
+    borderRadius: "16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "white"
+  },
+
+  heroKycArt: { position: "relative", height: "180px" },
+  heroCard3d: { width: "140px", height: "95px", borderRadius: "18px", background: "#fff", margin: "0 auto" },
+  heroAvatar: { width: "40px", height: "40px", borderRadius: "50%", background: "#cbd5e1", margin: "10px auto" },
+  heroLine1: { width: "70%", height: "8px", background: "#e2e8f0", margin: "8px auto", borderRadius: "10px" },
+  heroLine2: { width: "50%", height: "8px", background: "#e2e8f0", margin: "8px auto", borderRadius: "10px" },
+  heroLock: { position: "absolute", right: "40px", top: "10px", fontSize: "40px" },
+  heroShield: { position: "absolute", left: "40px", bottom: "20px", fontSize: "38px", color: "#22c55e" },
+  heroGlow: { position: "absolute", inset: 0, background: "rgba(168,85,247,.15)", filter: "blur(60px)" },
+
+  idArt: { width: "200px", height: "250px", borderRadius: "20px", background: "#fff", position: "relative" },
+  clip: { width: "70px", height: "20px", background: "#94a3b8", borderRadius: "20px", margin: "10px auto" },
+  idAvatar: { width: "60px", height: "60px", borderRadius: "50%", background: "#cbd5e1", margin: "20px auto" },
+  idLine1: { width: "80%", height: "10px", background: "#e2e8f0", margin: "12px auto" },
+  idLine2: { width: "60%", height: "10px", background: "#e2e8f0", margin: "12px auto" },
+  idLock: { position: "absolute", right: "10px", bottom: "10px", fontSize: "32px" },
+
+  aadhaarArt: { textAlign: "center" },
+  aadhaarSun: { width: "50px", height: "50px", borderRadius: "50%", background: "#f59e0b", margin: "0 auto 10px" },
+  aadhaarArc1: { width: "70px", height: "4px", background: "#16a34a", margin: "4px auto" },
+  aadhaarArc2: { width: "90px", height: "4px", background: "#16a34a", margin: "4px auto" },
+  aadhaarArc3: { width: "110px", height: "4px", background: "#16a34a", margin: "4px auto" },
+
+  panArt: { position: "relative", width: "120px", height: "90px", background: "#60a5fa", borderRadius: "12px" },
+  panHeader: { height: "18px", background: "#1d4ed8" },
+  panPhoto: { width: "28px", height: "28px", borderRadius: "50%", background: "#fff", margin: "10px" },
+  panLine1: { width: "60px", height: "6px", background: "#fff", marginLeft: "50px" },
+  panLine2: { width: "45px", height: "6px", background: "#fff", marginLeft: "50px", marginTop: "8px" },
+
+  userArt: { position: "relative", width: "120px", height: "120px" },
+  userHair: { width: "55px", height: "25px", background: "#111827", borderRadius: "20px", margin: "0 auto" },
+  userFace: { width: "50px", height: "50px", borderRadius: "50%", background: "#fcd34d", margin: "0 auto" },
+  userBody: { width: "70px", height: "40px", background: "#2563eb", borderRadius: "20px", margin: "10px auto" }
 };
