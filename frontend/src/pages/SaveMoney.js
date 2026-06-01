@@ -8,7 +8,6 @@ export default function SaveMoney() {
   const email = localStorage.getItem("email");
   const token = localStorage.getItem("token");
 
-  const [myPlan, setMyPlan] = useState(null);
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState(2000);
   const [years, setYears] = useState(1);
@@ -28,17 +27,7 @@ export default function SaveMoney() {
   const totalReturn = totalInvest + interest;
 
   const load = async () => {
-    const planRes = await fetch(`${API}/my-plan`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: token
-      },
-      body: JSON.stringify({ email })
-    });
-
-    const planData = await planRes.json();
-    setMyPlan(planData && planData._id ? planData : null);
+   
 
     const dashRes = await fetch(`${API}/dashboard`, {
       method: "POST",
@@ -150,161 +139,7 @@ if (
     load();
   };
 
-  if (myPlan) {
-    const monthly = myPlan.monthlyAmount || myPlan.amount || 0;
-    const paidMonths = myPlan.monthsPaid || 1;
-    const investedNow = monthly * paidMonths;
-
-    const today = new Date();
-    const renewStart = new Date(myPlan.nextRenewDate);
-    const renewEnd = new Date(myPlan.nextRenewDate);
-    renewEnd.setDate(renewEnd.getDate() + 5);
-
-    const renewAllowed = today >= renewStart && today <= renewEnd;
-    const remainingDays = Math.ceil(
-      (renewStart - today) / (1000 * 60 * 60 * 24)
-    );
-    const overdue = today > renewEnd;
-
-    return (
-      <div style={styles.container}>
-        <h2 style={styles.title}>My Active Plan</h2>
-
-        <div style={styles.certificate}>
-          <h1>Save Money</h1>
-          <h3>Investment Certificate</h3>
-
-          <div style={styles.line}></div>
-
-          <p>Monthly Investment</p>
-          <h2>₹{monthly}</h2>
-
-          <div style={styles.infoGrid}>
-            <div>
-              <span>Tenure</span>
-              <b>{myPlan.years} Years</b>
-            </div>
-
-            <div>
-              <span>Rate</span>
-              <b>{myPlan.rate}%</b>
-            </div>
-
-            <div>
-              <span>Paid Months</span>
-              <b>{paidMonths}</b>
-            </div>
-
-            <div>
-              <span>Status</span>
-              <b>{myPlan.status}</b>
-            </div>
-          </div>
-
-          <div style={styles.result}>
-            <p>Total Invested Till Now: ₹{investedNow}</p>
-            <p>Total Plan Investment: ₹{myPlan.totalPlanAmount}</p>
-            <p>Total Interest: ₹{myPlan.totalInterest}</p>
-            <h2>Maturity Return: ₹{myPlan.maturityAmount}</h2>
-
-            <p>
-  <b>Renew Status:</b>{" "}
-
-  <span
-    style={{
-      color:
-        myPlan.renewStatus === "Overdue"
-          ? "#ef4444"
-          : myPlan.renewStatus === "Open"
-          ? "#22c55e"
-          : "#facc15",
-
-      fontWeight: "bold"
-    }}
-  >
-    {myPlan.renewStatus}
-  </span>
-</p>
-          </div>
-
-          <div style={styles.renewBox}>
-            <p>
-              <b>Next Renew Date:</b>{" "}
-              {new Date(myPlan.nextRenewDate).toLocaleDateString()}
-            </p>
-
-            <p>
-              <b>Renew Window:</b>{" "}
-              {renewStart.toLocaleDateString()} to{" "}
-              {renewEnd.toLocaleDateString()}
-            </p>
-
-            {renewAllowed && (
-              <p style={{ color: "#22c55e", fontWeight: "bold" }}>
-                Renew is open now
-              </p>
-            )}
-
-            {!renewAllowed && !overdue && (
-              <p style={{ color: "#facc15", fontWeight: "bold" }}>
-                Renew opens after {remainingDays} days
-              </p>
-            )}
-
-            {overdue && (
-              <p style={{ color: "#ef4444", fontWeight: "bold" }}>
-                Renew missed. Plan is overdue
-              </p>
-            )}
-          </div>
-
-          <button
-            style={styles.downloadBtn}
-            onClick={() =>
-              window.open(
-                `${API}/investment-certificate/${myPlan._id}`
-              )
-            }
-          >
-            Download Certificate
-          </button>
-
-          <button
-            style={{
-              ...styles.renewBtn,
-              background: renewAllowed ? "#3b82f6" : "#64748b"
-            }}
-            onClick={renewInvestment}
-          >
-            Renew Investment
-          </button>
-        </div>
-
-        <h3 style={styles.historyTitle}>Investment Payment History</h3>
-
-        {myPlan.history &&
-          myPlan.history.map((h, i) => (
-            <div key={i} style={styles.history}>
-              <div>
-                <b>₹{h.amount}</b>
-                <p>{new Date(h.date).toLocaleDateString()}</p>
-              </div>
-
-              <button
-                style={styles.smallSlipBtn}
-                onClick={() =>
-                  window.open(
-                    `${API}/investment-slip/${myPlan._id}/${h._id}`
-                  )
-                }
-              >
-                Download Slip
-              </button>
-            </div>
-          ))}
-      </div>
-    );
-  }
+ 
 
   return (
     <div style={styles.container}>

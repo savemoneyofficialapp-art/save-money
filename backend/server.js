@@ -1579,13 +1579,6 @@ if (!kyc.ok) {
   });
 }
 
-    // already active plan check
-    const oldPlan = await Investment.findOne({ email, status: "Active" });
-
-    if (oldPlan) {
-      return res.json({ msg: "Active plan already exists" });
-    }
-
     // rate
     let rate = 20;
     if (years == 1) rate = 11;
