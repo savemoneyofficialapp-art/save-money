@@ -2548,7 +2548,7 @@ app.post(
           aadhaarFile: req.files.aadhaarFile[0].path,
           panFile: req.files.panFile[0].path,
           photo: req.files.photo[0].path,
-          kycStatus: "pending"
+          kycStatus: "reviewing"
         }
       );
       await createNotification(email, "KYC Submitted Successfully");
@@ -2561,6 +2561,37 @@ app.post(
     }
   }
 );
+
+app.post("/kyc-info", async (req, res) => {
+
+  try {
+
+    const { email } = req.body;
+
+    const user =
+      await User.findOne({ email });
+
+    if (!user) {
+
+      return res.json({
+        success: false
+      });
+    }
+
+    res.json({
+      success: true,
+      user
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false
+    });
+  }
+});
 
 
 
