@@ -1,523 +1,1524 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { fetchWithAuth } from "../utils/fetchWithAuth";
+import { useEffect, useMemo, useState } from "react";
 import { API } from "../config";
 
-
-
 export default function Wallet() {
-  const navigate = useNavigate();
+  const email = localStorage.getItem("email") || "";
+  const token = localStorage.getItem("token") || "";
 
-const token = localStorage.getItem("token");
-  const email = localStorage.getItem("email");
+  const [loading, setLoading] = useState(true);
+  const [showBalance, setShowBalance] = useState(true);
 
-  const [data, setData] = useState(null);
-  const [error, setError] = useState("");
+  const [wallet, setWallet] = useState({
+    walletId: "",
+    name: "",
+    avatar: "",
+    balance: 0,
+    referral: 0,
+    performance: 0,
+    team: 0,
+    royalty: 0
+  });
 
-  const [showCash, setShowCash] = useState(false);
+  const [history, setHistory] = useState([]);
 
-  const [walletId, setWalletId] = useState("");
-  const [amount, setAmount] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [addAmount, setAddAmount] = useState("");
 
-  const [cashAmount, setCashAmount] = useState("");
-  const [utr, setUtr] = useState("");
-  const [screenshot, setScreenshot] = useState(null);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+
+  const [receiverWalletId, setReceiverWalletId] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+  const [receiverInfo, setReceiverInfo] = useState(null);
+  const [confirmTransferOpen, setConfirmTransferOpen] = useState(false);
+
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     loadWallet();
   }, []);
 
-  const handleSession = (d) => {
-    if (
-      d?.msg === "Token expired or invalid" ||
-      d?.msg === "No token" ||
-      d?.msg === "Invalid token"
-    ) {
-      localStorage.clear();
-      alert("Session expired. Please login again.");
-      window.location.href = "/login";
-      return true;
-    }
-    return false;
-  };
-
   const loadWallet = async () => {
-  try {
-    const api = process.env.REACT_APP_API;
-
-    if (!api) {
-      throw new Error("REACT_APP_API missing");
-    }
-
-    const res = await fetch(`${api}/wallet-data`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: token
-      },
-      body: JSON.stringify({ email })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.msg || "API failed");
-    }
-
-    if (data.msg) {
-      throw new Error(data.msg);
-    }
-
-    setData(data);
-
-  } catch (err) {
-    console.log("Wallet load error:", err);
-    alert("Wallet error: " + err.message);
-  }
-};
-
-
-  const copyAddress = () => {
-    navigator.clipboard.writeText("TRX89SHSHD7SHS7SHS7");
-    toast.success("Wallet Address Copied");
-  };
-
-  const addCash = async () => {
     try {
-      if (!cashAmount || !utr) {
-        toast.error("Amount and UTR required");
-        return;
-      }
+      setLoading(true);
 
-      const formData = new FormData();
-
-      formData.append("email", email);
-      formData.append("amount", cashAmount);
-      formData.append("utr", utr);
-
-      if (screenshot) {
-        formData.append("screenshot", screenshot);
-      }
-
-      const res = await fetchWithAuth(`${API}/add-cash`, {
-        method: "POST",
-        body: formData
-      });
-
-      if (!res) return;
-
-      const d = await res.json();
-
-      if (handleSession(d)) return;
-
-      toast.info(d.msg);
-
-      setShowCash(false);
-      setCashAmount("");
-      setUtr("");
-      setScreenshot(null);
-
-      load();
-    } catch (err) {
-      console.log(err);
-      toast.error("Add cash failed");
-    }
-  };
-
-  const transfer = async () => {
-    try {
-      if (!walletId || !amount) {
-        toast.error("Wallet ID and amount required");
-        return;
-      }
-
-      const res = await fetchWithAuth(`${API}/wallet-transfer`, {
+      const res = await fetch(`${API}/wallet-summary`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setWallet({
+          walletId: data.walletId || data.user?.walletId || "N/A",
+          name: data.name || data.user?.name || "User",
+          avatar: data.avatar || "",
+          balance: Number(data.balance || 0),
+          referral: Number(data.referral || 0),
+          performance: Number(data.performance || 0),
+          team: Number(data.team || 0),
+          royalty: Number(data.royalty || 0)
+        });
+
+        setHistory(Array.isArray(data.history) ? data.history : []);
+      }
+    } catch (err) {
+      console.log("WALLET LOAD ERROR:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const money = (n) => {
+    return `₹ ${Number(n || 0).toLocaleString("en-IN")}.00`;
+  };
+
+  const shortMoney = (n) => {
+    return `₹ ${Number(n || 0).toLocaleString("en-IN")}`;
+  };
+
+  const visibleBalance = showBalance ? money(wallet.balance) : "₹ ••••••••";
+
+  const copyWalletId = async () => {
+    try {
+      await navigator.clipboard.writeText(wallet.walletId);
+      alert("Wallet ID copied");
+    } catch {
+      alert("Copy failed");
+    }
+  };
+
+  const openAddCash = () => {
+    setAddAmount("");
+    setAddOpen(true);
+  };
+
+  const startUpiPayment = (appName) => {
+    if (!addAmount || Number(addAmount) <= 0) {
+      return alert("Enter valid amount");
+    }
+
+    const amount = Number(addAmount);
+    const upiId = "savemoney@upi";
+    const payee = "Save Money";
+    const note = "Save Money Wallet Add Cash";
+
+    const upiUrl =
+      `upi://pay?pa=${upiId}` +
+      `&pn=${encodeURIComponent(payee)}` +
+      `&am=${amount}` +
+      `&cu=INR` +
+      `&tn=${encodeURIComponent(note)}`;
+
+    window.location.href = upiUrl;
+
+    alert(
+      `${appName} open হবে। Payment complete করার পরে admin approval হলে balance add হবে।`
+    );
+
+    setAddOpen(false);
+  };
+
+  const checkReceiver = async () => {
+    if (!receiverWalletId.trim()) {
+      return alert("Enter receiver wallet ID");
+    }
+
+    if (!transferAmount || Number(transferAmount) <= 0) {
+      return alert("Enter valid amount");
+    }
+
+    try {
+      const res = await fetch(`${API}/wallet-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
         },
         body: JSON.stringify({
-          senderEmail: email,
-          walletId,
-          amount: Number(amount)
+          walletId: receiverWalletId.trim()
         })
       });
 
-      if (!res) return;
+      const data = await res.json();
 
-      const d = await res.json();
+      if (!data.success) {
+        return alert(data.msg || "Receiver not found");
+      }
 
-      if (handleSession(d)) return;
-
-      toast.info(d.msg);
-
-      setWalletId("");
-      setAmount("");
-
-      load();
+      setReceiverInfo(data.user);
+      setConfirmTransferOpen(true);
     } catch (err) {
-      console.log(err);
-      toast.error("Transfer failed");
+      console.log("RECEIVER CHECK ERROR:", err);
+      alert("Receiver check failed");
     }
   };
 
-  if (error) {
-    return (
-      <div style={styles.loading}>
-        <div style={styles.errorBox}>
-          <h3>{error}</h3>
-          <button style={styles.mainBtn} onClick={load}>
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const sendTransfer = async () => {
+    try {
+      const res = await fetch(`${API}/wallet-transfer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({
+          senderEmail: email,
+          receiverWalletId: receiverWalletId.trim(),
+          amount: Number(transferAmount)
+        })
+      });
 
-  if (!data) {
+      const data = await res.json();
+
+      alert(data.msg || "Transfer completed");
+
+      if (data.success) {
+        setReceiverWalletId("");
+        setTransferAmount("");
+        setReceiverInfo(null);
+        setConfirmTransferOpen(false);
+        loadWallet();
+      }
+    } catch (err) {
+      console.log("TRANSFER ERROR:", err);
+      alert("Transfer failed");
+    }
+  };
+
+  const inviteLink = useMemo(() => {
+    const ref = wallet.walletId || email;
+    return `${window.location.origin}/register?ref=${encodeURIComponent(ref)}`;
+  }, [wallet.walletId, email]);
+
+  const openInvite = async () => {
+    const text = `Join Save Money and start your saving journey.\n${inviteLink}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Save Money",
+          text,
+          url: inviteLink
+        });
+      } catch {
+        setShareOpen(true);
+      }
+    } else {
+      setShareOpen(true);
+    }
+  };
+
+  const copyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      alert("Referral link copied");
+    } catch {
+      alert("Copy failed");
+    }
+  };
+
+  if (loading) {
     return (
-      <div style={styles.loading}>
-        Loading Wallet...
+      <div style={styles.loadingPage}>
+        <div style={styles.loadingCard}>
+          <div style={styles.loadingIcon}>👛</div>
+          <h2>Loading Wallet...</h2>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.page}>
+      <div style={styles.app}>
 
-      <div style={styles.topCard}>
-        <p style={{ opacity: 0.8 }}>Wallet ID</p>
-        <h3>{data.walletId || "Not Available"}</h3>
-        <h1>₹ {data.wallet || 0}</h1>
-      </div>
+        <header style={styles.header}>
+          <div>
+            <h1 style={styles.pageTitle}>My Wallet</h1>
+            <div style={styles.titleWave}></div>
+            <p style={styles.pageSub}>
+              Manage your balance, track transactions and grow more.
+            </p>
+          </div>
 
-      <div style={styles.btnRow}>
-        <button
-          style={styles.addBtn}
-          onClick={() => setShowCash(true)}
-        >
-          Add Cash
-        </button>
+          <button style={styles.notifyBtn}>
+            🔔
+            <span>2</span>
+          </button>
 
-        <button style={styles.transferBtn}>
-          Withdraw
-        </button>
-      </div>
+          <div style={styles.avatar}>
+            {wallet.avatar ? (
+              <img src={wallet.avatar} alt="user" />
+            ) : (
+              "👨‍💼"
+            )}
+          </div>
+        </header>
 
-      <div style={styles.notice}>
-        <h2 style={{ marginBottom: "10px" }}>
-          Auto Withdrawal System
-        </h2>
+        <section style={styles.walletHero}>
+          <div style={styles.walletLeft}>
+            <p style={styles.heroLabel}>WALLET ID</p>
+
+            <h2 style={styles.walletId}>
+              {wallet.walletId}
+              <button onClick={copyWalletId}>📋</button>
+            </h2>
+
+            <div style={styles.dashedLine}></div>
+
+            <p style={styles.heroLabel}>AVAILABLE BALANCE</p>
+
+            <h1 style={styles.balanceText}>
+              {visibleBalance}
+            </h1>
+
+            <div style={styles.heroActions}>
+              <button style={styles.addCashBtn} onClick={openAddCash}>
+                <b>＋</b> Add Cash
+              </button>
+
+              <button
+                style={styles.withdrawBtn}
+                onClick={() => setWithdrawOpen(true)}
+              >
+                💳 Withdraw
+              </button>
+            </div>
+          </div>
+
+          <button
+            style={styles.eyeBtn}
+            onClick={() => setShowBalance(!showBalance)}
+          >
+            {showBalance ? "👁" : "🙈"}
+          </button>
+
+          <WalletIllustration />
+        </section>
+
+        <section style={styles.incomePanel}>
+          <IncomeCard
+            icon="👥"
+            title="REFERRAL"
+            amount={wallet.referral}
+            color="#10b981"
+          />
+
+          <IncomeCard
+            icon="📈"
+            title="PERFORMANCE"
+            amount={wallet.performance}
+            color="#f59e0b"
+          />
+
+          <IncomeCard
+            icon="👥"
+            title="TEAM"
+            amount={wallet.team}
+            color="#2563eb"
+          />
+
+          <IncomeCard
+            icon="👑"
+            title="ROYALTY"
+            amount={wallet.royalty}
+            color="#9333ea"
+          />
+
+          <IncomeCard
+            icon="👛"
+            title="BALANCE"
+            amount={wallet.balance}
+            color="#14b8a6"
+          />
+        </section>
+{/* Wallet Transfer + Invite */}
+
+        <section style={styles.middleGrid}>
+
+          <div style={styles.transferCard}>
+
+            <div style={styles.transferIcon}>
+              ✈️
+            </div>
+
+            <h2 style={styles.transferTitle}>
+              Wallet Transfer
+            </h2>
+
+            <p style={styles.transferSub}>
+              Send money to another wallet instantly
+            </p>
+
+            <label style={styles.label}>
+              Receiver Wallet ID
+            </label>
+
+            <div style={styles.inputWrap}>
+              <input
+                style={styles.transferInput}
+                value={receiverWalletId}
+                onChange={(e)=>
+                  setReceiverWalletId(e.target.value)
+                }
+                placeholder="Enter Receiver Wallet ID"
+              />
+
+              <span style={styles.inputIcon}>
+                👤
+              </span>
+            </div>
+
+            <label style={styles.label}>
+              Amount
+            </label>
+
+            <div style={styles.inputWrap}>
+              <input
+                type="number"
+                style={styles.transferInput}
+                value={transferAmount}
+                onChange={(e)=>
+                  setTransferAmount(e.target.value)
+                }
+                placeholder="Enter Amount"
+              />
+
+              <span style={styles.inputIcon}>
+                💳
+              </span>
+            </div>
+
+            <button
+              style={styles.transferBtn}
+              onClick={checkReceiver}
+            >
+              ✈️ Transfer Now
+            </button>
+
+          </div>
+
+          <div style={styles.inviteCard}>
+
+            <div style={styles.inviteTop}>
+              Grow More
+            </div>
+
+            <h2 style={styles.inviteTitle}>
+              Invite Your Friends
+            </h2>
+
+            <h3 style={styles.inviteTitle2}>
+              & Earn Unlimited Rewards
+            </h3>
+
+            <div style={styles.giftBox}>
+              🎁
+            </div>
+
+            <button
+              style={styles.inviteBtn}
+              onClick={openInvite}
+            >
+              Invite Now
+            </button>
+
+          </div>
+
+        </section>
+
+        {/* Wallet History */}
+
+        <section style={styles.historyCard}>
+
+          <div style={styles.historyHeader}>
+
+            <div>
+
+              <h2 style={styles.historyTitle}>
+                🛡 Wallet History
+              </h2>
+
+              <p style={styles.historySub}>
+                Your recent wallet transactions
+              </p>
+
+            </div>
+
+            <select style={styles.filterSelect}>
+              <option>All Transactions</option>
+              <option>Credit</option>
+              <option>Debit</option>
+            </select>
+
+          </div>
+
+          <div style={styles.tableHead}>
+
+            <div>TYPE</div>
+            <div>DESCRIPTION</div>
+            <div>AMOUNT</div>
+            <div>STATUS</div>
+            <div>DATE & TIME</div>
+
+          </div>
+
+          {history.length === 0 && (
+
+            <div style={styles.emptyHistory}>
+              No Wallet History Found
+            </div>
+
+          )}
+
+          {history.map((item,index)=>(
+
+            <div
+              key={index}
+              style={styles.historyRow}
+            >
+
+              <div>
+
+                <div
+                  style={{
+                    ...styles.typeCircle,
+
+                    background:
+                      item.type === "credit"
+                        ? "#dcfce7"
+                        : "#fee2e2"
+                  }}
+                >
+                  {item.type === "credit"
+                    ? "⬇"
+                    : "⬆"}
+                </div>
+
+              </div>
+
+              <div>
+
+                <div style={styles.rowTitle}>
+                  {item.title}
+                </div>
+
+                <div style={styles.rowSub}>
+                  {item.description}
+                </div>
+
+              </div>
+
+              <div>
+
+                <span
+                  style={{
+                    color:
+                      item.type === "credit"
+                        ? "#16a34a"
+                        : "#dc2626",
+
+                    fontWeight:"700"
+                  }}
+                >
+                  {item.type === "credit"
+                    ? "+"
+                    : "-"}{" "}
+
+                  ₹{Number(item.amount).toLocaleString()}
+                </span>
+
+              </div>
+
+              <div>
+
+                <span style={styles.successBadge}>
+                  Success
+                </span>
+
+              </div>
+
+              <div>
+
+                {new Date(
+                  item.date
+                ).toLocaleString()}
+
+              </div>
+
+            </div>
+
+          ))}
+
+          <div style={styles.viewMore}>
+            View More ▼
+          </div>
+
+        </section>
+
+        {/* Bottom */}
+
+        <section style={styles.bottomFeatures}>
+
+          <div style={styles.featureItem}>
+            🛡
+            <div>
+              <b>Secure Transactions</b>
+              <p>Your money is 100% safe</p>
+            </div>
+          </div>
+
+          <div style={styles.featureItem}>
+            ⚡
+            <div>
+              <b>Instant Payments</b>
+              <p>Quick transfer in seconds</p>
+            </div>
+          </div>
+
+          <div style={styles.featureItem}>
+            🏆
+            <div>
+              <b>Trusted Platform</b>
+              <p>Used by thousands of users</p>
+            </div>
+          </div>
+
+        </section>
+
+        {/* Add Cash Modal */}
+
+        {addOpen && (
+
+          <div style={styles.modalOverlay}>
+
+            <div style={styles.modal}>
+
+              <h2>
+                Add Cash
+              </h2>
+
+              <input
+                type="number"
+                style={styles.modalInput}
+                placeholder="Enter Amount"
+                value={addAmount}
+                onChange={(e)=>
+                  setAddAmount(e.target.value)
+                }
+              />
+
+              <div style={styles.upiGrid}>
+
+                <button
+                  style={styles.upiBtn}
+                  onClick={() =>
+                    startUpiPayment("Google Pay")
+                  }
+                >
+                  Google Pay
+                </button>
+
+                <button
+                  style={styles.upiBtn}
+                  onClick={() =>
+                    startUpiPayment("PhonePe")
+                  }
+                >
+                  PhonePe
+                </button>
+
+                <button
+                  style={styles.upiBtn}
+                  onClick={() =>
+                    startUpiPayment("Paytm")
+                  }
+                >
+                  Paytm
+                </button>
+
+              </div>
+
+              <button
+                style={styles.closeBtn}
+                onClick={() =>
+                  setAddOpen(false)
+                }
+              >
+                Close
+              </button>
+
+            </div>
+
+          </div>
+
+        )}
+
+        {/* Withdraw Popup */}
+
+        {withdrawOpen && (
+
+          <div style={styles.modalOverlay}>
+
+            <div style={styles.modal}>
+
+              <h2>
+                Auto Withdrawal
+              </h2>
+
+              <p
+                style={{
+                  lineHeight:"28px",
+                  color:"#64748b"
+                }}
+              >
+                Every month auto withdrawal
+                will be processed on the
+                5th date if your Save Money
+                investment is renewed on time.
+              </p>
+
+              <button
+                style={styles.closeBtn}
+                onClick={() =>
+                  setWithdrawOpen(false)
+                }
+              >
+                Okay
+              </button>
+
+            </div>
+
+          </div>
+
+        )}
+        {/* Transfer Confirm Modal */}
+
+{confirmTransferOpen && receiverInfo && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modal}>
+
+      <div style={styles.confirmTop}>
+        <div style={styles.confirmAvatar}>
+          👤
+        </div>
+
+        <h2>Confirm Transfer</h2>
 
         <p>
-          Every month auto withdrawal will be processed on the 5th date if your Save Money investment is renewed on time.
+          Verify receiver details before sending money
         </p>
       </div>
 
-      <div style={styles.grid}>
-        <div style={styles.incomeCard}>
-          <p>Referral</p>
-          <h3>₹{data.referralIncome || 0}</h3>
+      <div style={styles.receiverCard}>
+        <div>
+          <span>Receiver Name</span>
+          <h3>{receiverInfo.name}</h3>
         </div>
 
-        <div style={styles.incomeCard}>
-          <p>Performance</p>
-          <h3>₹{data.performanceIncome || 0}</h3>
+        <div>
+          <span>Wallet ID</span>
+          <h4>{receiverWalletId}</h4>
         </div>
 
-        <div style={styles.incomeCard}>
-          <p>Team</p>
-          <h3>₹{data.teamIncome || 0}</h3>
-        </div>
-
-        <div style={styles.incomeCard}>
-          <p>Royalty</p>
-          <h3>₹{data.royaltyIncome || 0}</h3>
+        <div>
+          <span>Amount</span>
+          <h2 style={{ color:"#16a34a" }}>
+            ₹{Number(transferAmount).toLocaleString()}
+          </h2>
         </div>
       </div>
 
-      <div style={styles.card}>
-        <h3>Wallet Transfer</h3>
+      <button
+        style={styles.sendMoneyBtn}
+        onClick={sendTransfer}
+      >
+        Send Money
+      </button>
 
-        <input
-          style={styles.input}
-          placeholder="Receiver Wallet ID"
-          value={walletId}
-          onChange={(e) => setWalletId(e.target.value)}
-        />
+      <button
+        style={styles.cancelBtn}
+        onClick={() =>
+          setConfirmTransferOpen(false)
+        }
+      >
+        Cancel
+      </button>
 
-        <input
-          style={styles.input}
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
+    </div>
+  </div>
+)}
 
-        <button style={styles.mainBtn} onClick={transfer}>
-          Transfer
-        </button>
+{/* Share Modal */}
+
+{shareOpen && (
+
+  <div style={styles.modalOverlay}>
+
+    <div style={styles.modal}>
+
+      <h2>Invite Friends</h2>
+
+      <p>
+        Share your referral link
+      </p>
+
+      <div style={styles.shareGrid}>
+
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(inviteLink)}`}
+          target="_blank"
+          rel="noreferrer"
+          style={styles.shareBtn}
+        >
+          WhatsApp
+        </a>
+
+        <a
+          href={`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}`}
+          target="_blank"
+          rel="noreferrer"
+          style={styles.shareBtn}
+        >
+          Telegram
+        </a>
 
         <button
-          style={styles.bonusBtn}
-          onClick={() => navigate("/bonus-history")}
+          style={styles.shareBtn}
+          onClick={copyInviteLink}
         >
-          Bonus History
+          Copy Link
         </button>
+
       </div>
 
-      <h3 style={{ marginTop: "20px" }}>
-        Wallet History
-      </h3>
+      <button
+        style={styles.closeBtn}
+        onClick={() => setShareOpen(false)}
+      >
+        Close
+      </button>
 
-      {(data.history || []).map((h, i) => (
-        <div key={i} style={styles.history}>
-          <div>
-            <b>{h.type}</b>
-            <p style={{ opacity: 0.7 }}>{h.note}</p>
-          </div>
+    </div>
 
-          <div>
-            <b>₹{h.amount}</b>
-            <p style={{ opacity: 0.7 }}>
-              {new Date(h.date).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-      ))}
+  </div>
 
-      {showCash && (
-        <div style={styles.popupBg}>
-          <div style={styles.popup}>
-            <h2>Add Cash</h2>
+)}
 
-            <div style={styles.addressBox}>
-              <p>USDT Wallet Address</p>
+</div>
+</div>
+);
+}
 
-              <h4>TRX89SHSHD7SHS7SHS7</h4>
+/* ---------- Components ---------- */
 
-              <button
-                style={styles.copyBtn}
-                onClick={copyAddress}
-              >
-                Copy Address
-              </button>
-            </div>
+function WalletIllustration() {
+  return (
+    <div style={styles.walletArt}>
 
-            <input
-              style={styles.input}
-              placeholder="Amount"
-              value={cashAmount}
-              onChange={(e) => setCashAmount(e.target.value)}
-            />
+      <div style={styles.moneyNote1}></div>
+      <div style={styles.moneyNote2}></div>
 
-            <input
-              style={styles.input}
-              placeholder="UTR Number"
-              value={utr}
-              onChange={(e) => setUtr(e.target.value)}
-            />
+      <div style={styles.walletBag}>
+        ₹
+      </div>
 
-            <input
-              type="file"
-              style={styles.input}
-              onChange={(e) => setScreenshot(e.target.files[0])}
-            />
+      <div style={styles.coin1}>₹</div>
+      <div style={styles.coin2}>₹</div>
 
-            <button
-              style={styles.mainBtn}
-              onClick={addCash}
-            >
-              Submit Request
-            </button>
+    </div>
+  );
+}
 
-            <button
-              style={styles.closeBtn}
-              onClick={() => setShowCash(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+function IncomeCard({
+  icon,
+  title,
+  amount,
+  color
+}) {
+  return (
+    <div style={styles.incomeCard}>
+
+      <div
+        style={{
+          ...styles.incomeIcon,
+          background: color
+        }}
+      >
+        {icon}
+      </div>
+
+      <h4>{title}</h4>
+
+      <h2>
+        ₹{Number(amount).toLocaleString()}
+      </h2>
+
+      <div
+        style={{
+          ...styles.incomeWave,
+          color
+        }}
+      >
+        ~~~
+      </div>
 
     </div>
   );
 }
 
 const styles = {
-  loading: {
+  loadingPage: {
     minHeight: "100vh",
-    background: "#020617",
-    color: "white",
+    background: "#f4f7ff",
     display: "flex",
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center"
+    fontFamily: "Arial"
   },
 
-  errorBox: {
-    background: "#1e293b",
-    padding: "20px",
-    borderRadius: "16px",
-    textAlign: "center"
-  },
-
-  notice: {
-    background: "linear-gradient(135deg,#3b82f6,#2563eb)",
-    padding: "18px",
-    borderRadius: "15px",
-    marginTop: "15px",
-    color: "white",
-    boxShadow: "0 0 15px rgba(0,0,0,0.3)",
-    textAlign: "center"
-  },
-
-  container: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg,#020617,#0f172a)",
-    padding: "20px",
-    color: "white"
-  },
-
-  topCard: {
-    background: "linear-gradient(135deg,#22c55e,#16a34a)",
-    borderRadius: "20px",
-    padding: "25px",
+  loadingCard: {
+    background: "white",
+    padding: "35px",
+    borderRadius: "30px",
     textAlign: "center",
-    color: "#020617",
-    boxShadow: "0 0 20px rgba(0,0,0,0.4)"
+    boxShadow: "0 18px 35px rgba(15,23,42,.12)"
   },
 
-  btnRow: {
+  loadingIcon: {
+    fontSize: "70px"
+  },
+
+  page: {
+    minHeight: "100vh",
+    background: "#f4f7ff",
+    padding: "26px",
+    fontFamily: "Arial, sans-serif",
+    color: "#071747"
+  },
+
+  app: {
+    maxWidth: "1040px",
+    margin: "0 auto"
+  },
+
+  header: {
     display: "flex",
-    gap: "10px",
-    marginTop: "15px"
+    alignItems: "center",
+    gap: "18px",
+    marginBottom: "22px"
   },
 
-  addBtn: {
-    flex: 1,
-    padding: "14px",
+  pageTitle: {
+    margin: 0,
+    fontSize: "38px",
+    fontWeight: "900",
+    color: "#071747"
+  },
+
+  titleWave: {
+    width: "105px",
+    height: "6px",
+    borderRadius: "50px",
+    background: "linear-gradient(90deg,#ff8a00,#ec4899,#7c3aed)",
+    marginTop: "8px"
+  },
+
+  pageSub: {
+    color: "#64748b",
+    fontSize: "16px",
+    marginTop: "9px"
+  },
+
+  notifyBtn: {
+    marginLeft: "auto",
+    width: "54px",
+    height: "54px",
+    borderRadius: "50%",
     border: "none",
-    borderRadius: "12px",
-    background: "#3b82f6",
-    color: "white",
-    fontWeight: "bold"
+    background: "white",
+    boxShadow: "0 10px 25px rgba(15,23,42,.08)",
+    fontSize: "24px",
+    position: "relative"
   },
 
-  transferBtn: {
-    flex: 1,
-    padding: "14px",
+  avatar: {
+    width: "58px",
+    height: "58px",
+    borderRadius: "50%",
+    background: "#ede9fe",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "30px",
+    boxShadow: "0 10px 25px rgba(124,58,237,.15)",
+    overflow: "hidden"
+  },
+
+  walletHero: {
+    position: "relative",
+    minHeight: "330px",
+    borderRadius: "30px",
+    padding: "38px",
+    color: "white",
+    overflow: "hidden",
+    background:
+      "radial-gradient(circle at 82% 20%,rgba(255,255,255,.22),transparent 20%),linear-gradient(135deg,#1614a8,#7c2cff,#ff4b78)",
+    boxShadow: "0 22px 42px rgba(94,42,210,.30)",
+    marginBottom: "24px"
+  },
+
+  walletLeft: {
+    width: "52%",
+    position: "relative",
+    zIndex: 5
+  },
+
+  heroLabel: {
+    letterSpacing: "2px",
+    fontSize: "13px",
+    fontWeight: "900",
+    opacity: 0.75
+  },
+
+  walletId: {
+    fontSize: "30px",
+    margin: "8px 0 0",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  },
+
+  dashedLine: {
+    borderTop: "1px dashed rgba(255,255,255,.45)",
+    margin: "22px 0"
+  },
+
+  balanceText: {
+    fontSize: "46px",
+    margin: "8px 0",
+    fontWeight: "900"
+  },
+
+  heroActions: {
+    display: "flex",
+    gap: "16px",
+    marginTop: "22px"
+  },
+
+  addCashBtn: {
+    minWidth: "145px",
+    height: "54px",
     border: "none",
-    borderRadius: "12px",
-    background: "#f59e0b",
-    color: "white",
-    fontWeight: "bold"
+    borderRadius: "18px",
+    background: "white",
+    color: "#1e1b9b",
+    fontWeight: "900",
+    fontSize: "16px",
+    boxShadow: "0 12px 25px rgba(0,0,0,.18)"
   },
 
-  grid: {
+  withdrawBtn: {
+    minWidth: "145px",
+    height: "54px",
+    border: "none",
+    borderRadius: "18px",
+    background: "linear-gradient(135deg,#ff4b63,#ff8a3d)",
+    color: "white",
+    fontWeight: "900",
+    fontSize: "16px",
+    boxShadow: "0 12px 25px rgba(255,80,90,.28)"
+  },
+
+  eyeBtn: {
+    position: "absolute",
+    top: "28px",
+    right: "28px",
+    width: "46px",
+    height: "46px",
+    borderRadius: "15px",
+    border: "1px solid rgba(255,255,255,.3)",
+    background: "rgba(255,255,255,.13)",
+    color: "white",
+    fontSize: "20px",
+    zIndex: 8
+  },
+
+  walletArt: {
+    position: "absolute",
+    right: "70px",
+    top: "70px",
+    width: "300px",
+    height: "230px",
+    zIndex: 2
+  },
+
+  moneyNote1: {
+    position: "absolute",
+    right: "78px",
+    top: "10px",
+    width: "100px",
+    height: "72px",
+    borderRadius: "15px",
+    background: "linear-gradient(135deg,#21d06b,#0ea55f)",
+    transform: "rotate(-16deg)",
+    boxShadow: "0 15px 22px rgba(0,0,0,.18)"
+  },
+
+  moneyNote2: {
+    position: "absolute",
+    right: "28px",
+    top: "28px",
+    width: "100px",
+    height: "72px",
+    borderRadius: "15px",
+    background: "linear-gradient(135deg,#41e6c3,#0ea5a0)",
+    transform: "rotate(18deg)",
+    boxShadow: "0 15px 22px rgba(0,0,0,.18)"
+  },
+
+  walletBag: {
+    position: "absolute",
+    right: "55px",
+    bottom: "30px",
+    width: "165px",
+    height: "132px",
+    borderRadius: "28px",
+    background: "linear-gradient(145deg,#7c2cff,#ba31ff)",
+    color: "#facc15",
+    fontSize: "52px",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "inset -14px -12px 0 rgba(0,0,0,.14),0 24px 32px rgba(0,0,0,.25)"
+  },
+
+  coin1: {
+    position: "absolute",
+    right: "18px",
+    bottom: "35px",
+    width: "58px",
+    height: "58px",
+    borderRadius: "50%",
+    background: "linear-gradient(135deg,#facc15,#f59e0b)",
+    color: "#92400e",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "900",
+    boxShadow: "0 12px 18px rgba(0,0,0,.18)"
+  },
+
+  coin2: {
+    position: "absolute",
+    right: "82px",
+    bottom: "0",
+    width: "62px",
+    height: "62px",
+    borderRadius: "50%",
+    background: "linear-gradient(135deg,#fde047,#f97316)",
+    color: "#92400e",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "900",
+    boxShadow: "0 12px 18px rgba(0,0,0,.18)"
+  },
+
+  incomePanel: {
+    background: "white",
+    borderRadius: "28px",
+    padding: "22px",
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "10px",
-    marginTop: "15px"
+    gridTemplateColumns: "repeat(5,1fr)",
+    gap: "8px",
+    boxShadow: "0 15px 30px rgba(15,23,42,.08)",
+    marginBottom: "24px"
   },
 
   incomeCard: {
-    background: "#1e293b",
-    padding: "15px",
-    borderRadius: "15px",
-    textAlign: "center"
-  },
-
-  card: {
-    background: "#1e293b",
-    padding: "15px",
-    borderRadius: "15px",
-    marginTop: "15px"
-  },
-
-  input: {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "10px",
-    border: "none",
-    marginTop: "10px"
-  },
-
-  mainBtn: {
-    width: "100%",
-    padding: "12px",
-    border: "none",
-    borderRadius: "10px",
-    background: "#22c55e",
-    color: "white",
-    fontWeight: "bold",
-    marginTop: "12px"
-  },
-
-  bonusBtn: {
-    width: "100%",
-    padding: "12px",
-    border: "none",
-    borderRadius: "10px",
-    background: "#8b5cf6",
-    color: "white",
-    fontWeight: "bold",
-    marginTop: "12px"
-  },
-
-  history: {
-    background: "#1e293b",
-    padding: "12px",
-    borderRadius: "12px",
-    marginTop: "10px",
-    display: "flex",
-    justifyContent: "space-between"
-  },
-
-  popupBg: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    background: "rgba(0,0,0,0.6)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-
-  popup: {
-    background: "#0f172a",
-    padding: "20px",
-    borderRadius: "20px",
-    width: "90%",
-    maxWidth: "400px"
-  },
-
-  addressBox: {
-    background: "#1e293b",
-    padding: "15px",
-    borderRadius: "12px",
     textAlign: "center",
-    marginTop: "10px"
+    padding: "12px 8px",
+    borderRight: "1px dashed #d9e1f2"
   },
 
-  copyBtn: {
-    marginTop: "10px",
-    padding: "10px",
+  incomeIcon: {
+    width: "58px",
+    height: "58px",
+    margin: "0 auto 10px",
+    borderRadius: "50%",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "26px",
+    boxShadow: "0 10px 20px rgba(15,23,42,.12)"
+  },
+
+  incomeWave: {
+    fontSize: "30px",
+    fontWeight: "900",
+    marginTop: "-6px"
+  },
+
+  middleGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "22px",
+    marginBottom: "24px"
+  },
+
+  transferCard: {
+    background: "#070a55",
+    color: "white",
+    borderRadius: "28px",
+    padding: "30px",
+    boxShadow: "0 18px 32px rgba(7,10,85,.22)"
+  },
+
+  transferIcon: {
+    width: "60px",
+    height: "60px",
+    borderRadius: "18px",
+    background: "linear-gradient(135deg,#2563eb,#06b6d4)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "28px",
+    marginBottom: "12px"
+  },
+
+  transferTitle: {
+    margin: 0,
+    fontSize: "28px"
+  },
+
+  transferSub: {
+    color: "#aab1d6",
+    marginBottom: "22px"
+  },
+
+  label: {
+    display: "block",
+    fontWeight: "900",
+    marginBottom: "8px"
+  },
+
+  inputWrap: {
+    height: "56px",
+    borderRadius: "16px",
+    background: "white",
+    display: "flex",
+    alignItems: "center",
+    padding: "0 15px",
+    marginBottom: "18px"
+  },
+
+  transferInput: {
+    flex: 1,
     border: "none",
-    borderRadius: "10px",
-    background: "#3b82f6",
-    color: "white"
+    outline: "none",
+    fontSize: "16px"
+  },
+
+  inputIcon: {
+    fontSize: "22px"
+  },
+
+  transferBtn: {
+    width: "100%",
+    height: "58px",
+    border: "none",
+    borderRadius: "18px",
+    background: "linear-gradient(135deg,#ff7a35,#ec168e)",
+    color: "white",
+    fontSize: "18px",
+    fontWeight: "900",
+    boxShadow: "0 12px 24px rgba(236,22,142,.25)"
+  },
+
+  inviteCard: {
+    background: "linear-gradient(135deg,#fff4d9,#ffffff)",
+    borderRadius: "28px",
+    padding: "30px",
+    position: "relative",
+    overflow: "hidden",
+    boxShadow: "0 15px 30px rgba(15,23,42,.08)"
+  },
+
+  inviteTop: {
+    color: "#f59e0b",
+    fontWeight: "900",
+    fontSize: "18px"
+  },
+
+  inviteTitle: {
+    fontSize: "32px",
+    margin: "10px 0 0"
+  },
+
+  inviteTitle2: {
+    color: "#6d28d9",
+    fontSize: "24px",
+    margin: "6px 0"
+  },
+
+  giftBox: {
+    fontSize: "115px",
+    textAlign: "right",
+    filter: "drop-shadow(0 14px 18px rgba(245,158,11,.22))"
+  },
+
+  inviteBtn: {
+    position: "absolute",
+    left: "30px",
+    bottom: "30px",
+    height: "52px",
+    minWidth: "140px",
+    border: "none",
+    borderRadius: "18px",
+    background: "linear-gradient(135deg,#6d28d9,#ec4899)",
+    color: "white",
+    fontWeight: "900",
+    fontSize: "16px"
+  },
+
+  historyCard: {
+    background: "white",
+    borderRadius: "28px",
+    padding: "24px",
+    boxShadow: "0 15px 30px rgba(15,23,42,.08)",
+    marginBottom: "20px"
+  },
+
+  historyHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "18px"
+  },
+
+  historyTitle: {
+    margin: 0,
+    fontSize: "28px"
+  },
+
+  historySub: {
+    color: "#64748b"
+  },
+
+  filterSelect: {
+    height: "44px",
+    borderRadius: "14px",
+    border: "1px solid #dbe3ef",
+    padding: "0 14px",
+    fontWeight: "900"
+  },
+
+  tableHead: {
+    display: "grid",
+    gridTemplateColumns: "70px 1.6fr 1fr 1fr 1.2fr",
+    color: "#94a3b8",
+    fontSize: "13px",
+    fontWeight: "900",
+    padding: "12px 0",
+    borderBottom: "1px solid #eef2ff"
+  },
+
+  historyRow: {
+    display: "grid",
+    gridTemplateColumns: "70px 1.6fr 1fr 1fr 1.2fr",
+    alignItems: "center",
+    padding: "14px 0",
+    borderBottom: "1px solid #eef2ff"
+  },
+
+  typeCircle: {
+    width: "46px",
+    height: "46px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "22px"
+  },
+
+  rowTitle: {
+    fontWeight: "900",
+    color: "#071747"
+  },
+
+  rowSub: {
+    color: "#64748b",
+    fontSize: "13px"
+  },
+
+  successBadge: {
+    display: "inline-block",
+    background: "#dcfce7",
+    color: "#16a34a",
+    padding: "8px 14px",
+    borderRadius: "14px",
+    fontWeight: "900",
+    fontSize: "13px"
+  },
+
+  emptyHistory: {
+    textAlign: "center",
+    padding: "35px",
+    color: "#64748b",
+    fontWeight: "900"
+  },
+
+  viewMore: {
+    textAlign: "center",
+    color: "#6d28d9",
+    fontWeight: "900",
+    marginTop: "18px"
+  },
+
+  bottomFeatures: {
+    background: "white",
+    borderRadius: "22px",
+    padding: "18px",
+    display: "grid",
+    gridTemplateColumns: "repeat(3,1fr)",
+    gap: "15px",
+    boxShadow: "0 12px 25px rgba(15,23,42,.07)"
+  },
+
+  featureItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px"
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,.45)",
+    zIndex: 9999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  modal: {
+    width: "90%",
+    maxWidth: "430px",
+    background: "white",
+    borderRadius: "26px",
+    padding: "26px",
+    color: "#071747",
+    boxShadow: "0 25px 50px rgba(0,0,0,.25)"
+  },
+
+  modalInput: {
+    width: "100%",
+    height: "55px",
+    borderRadius: "15px",
+    border: "1px solid #dbe3ef",
+    padding: "0 15px",
+    fontSize: "18px",
+    outline: "none"
+  },
+
+  upiGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "12px",
+    marginTop: "18px"
+  },
+
+  upiBtn: {
+    height: "48px",
+    border: "none",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg,#2563eb,#7c3aed)",
+    color: "white",
+    fontWeight: "900"
   },
 
   closeBtn: {
     width: "100%",
-    padding: "12px",
+    height: "50px",
+    marginTop: "14px",
     border: "none",
-    borderRadius: "10px",
-    background: "#ef4444",
+    borderRadius: "14px",
+    background: "#e5e7eb",
+    color: "#071747",
+    fontWeight: "900"
+  },
+
+  confirmTop: {
+    textAlign: "center"
+  },
+
+  confirmAvatar: {
+    width: "70px",
+    height: "70px",
+    borderRadius: "50%",
+    background: "#ede9fe",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto",
+    fontSize: "34px"
+  },
+
+  receiverCard: {
+    background: "#f8fafc",
+    borderRadius: "18px",
+    padding: "18px",
+    marginTop: "16px",
+    textAlign: "center"
+  },
+
+  sendMoneyBtn: {
+    width: "100%",
+    height: "52px",
+    border: "none",
+    borderRadius: "15px",
+    background: "#16a34a",
     color: "white",
+    fontWeight: "900",
+    marginTop: "15px"
+  },
+
+  cancelBtn: {
+    width: "100%",
+    height: "48px",
+    border: "none",
+    borderRadius: "15px",
+    background: "#fee2e2",
+    color: "#dc2626",
+    fontWeight: "900",
     marginTop: "10px"
+  },
+
+  shareGrid: {
+    display: "grid",
+    gap: "12px",
+    marginTop: "18px"
+  },
+
+  shareBtn: {
+    height: "50px",
+    borderRadius: "15px",
+    border: "none",
+    background: "linear-gradient(135deg,#22c55e,#16a34a)",
+    color: "white",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    textDecoration: "none"
   }
 };

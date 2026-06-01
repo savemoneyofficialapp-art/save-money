@@ -42,6 +42,8 @@ const app = express();
 console.log("SERVER VERSION: CORS TEST ACTIVE");
 
 
+
+
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
@@ -65,6 +67,28 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const server = http.createServer(app);
+
+const walletTransactionSchema = new mongoose.Schema(
+  {
+    email: String,
+    walletId: String,
+    type: String, // credit / debit
+    title: String,
+    description: String,
+    amount: Number,
+    status: {
+      type: String,
+      default: "Success"
+    },
+    fromWalletId: String,
+    toWalletId: String
+  },
+  { timestamps: true }
+);
+
+const WalletTransaction =
+  mongoose.models.WalletTransaction ||
+  mongoose.model("WalletTransaction", walletTransactionSchema);
 
 // ================= CORS =================
 
@@ -1951,6 +1975,86 @@ app.post("/royalty-data", async (req, res) => {
   }
 });
 
+app.post("/wallet-summary", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({
+      email: email?.toLowerCase()
+    });
+
+    if (!user) {
+      return res.json({
+        success: false,
+        msg: "User not found"
+      });
+    }
+
+    const history = await WalletTransaction.find({
+      email: email.toLowerCase()
+    })
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    res.json({
+      success: true,
+      user,
+      name: user.name,
+      walletId: user.walletId || user.referralCode || user._id.toString(),
+      balance: Number(user.balance || user.wallet || 0),
+      referral: Number(user.referralIncome || 0),
+      performance: Number(user.performanceBonus || 0),
+      team: Number(user.teamIncome || 0),
+      royalty: Number(user.royaltyIncome || user.realityIncome || 0),
+      history
+    });
+
+  } catch (err) {
+    console.log("WALLET SUMMARY ERROR:", err);
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+  }
+});
+
+app.post("/wallet-user", async (req, res) => {
+  try {
+    const { walletId } = req.body;
+
+    const user = await User.findOne({
+      $or: [
+        { walletId: walletId },
+        { referralCode: walletId },
+        { _id: mongoose.Types.ObjectId.isValid(walletId) ? walletId : null }
+      ]
+    });
+
+    if (!user) {
+      return res.json({
+        success: false,
+        msg: "Receiver wallet not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        name: user.name,
+        email: user.email,
+        walletId: user.walletId || user.referralCode || user._id.toString()
+      }
+    });
+
+  } catch (err) {
+    console.log("WALLET USER ERROR:", err);
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+  }
+});
+
 app.post("/wallet-data", auth, async (req, res) => {
 
   try {
@@ -2285,69 +2389,106 @@ app.post("/user-dashboard-chart", auth, async (req, res) => {
 });
 
 app.post("/wallet-transfer", async (req, res) => {
+  try {
+    const { senderEmail, receiverWalletId, amount } = req.body;
 
-  const { senderEmail, walletId, amount } = req.body;
+    const transferAmount = Number(amount);
 
-  const kyc = await checkKYC(senderEmail);
+    if (!senderEmail || !receiverWalletId || transferAmount <= 0) {
+      return res.json({
+        success: false,
+        msg: "Invalid transfer data"
+      });
+    }
 
-if (!kyc.ok) {
-  return res.json({
-    msg: kyc.msg
-  });
-}
+    const sender = await User.findOne({
+      email: senderEmail.toLowerCase()
+    });
 
-  const sender = await User.findOne({
-    email: senderEmail
-  });
+    if (!sender) {
+      return res.json({
+        success: false,
+        msg: "Sender not found"
+      });
+    }
 
-  if (sender.freezeWallet) {
-  return res.json({
-    msg: "Wallet is frozen by admin"
-  });
-}
+    const receiver = await User.findOne({
+      $or: [
+        { walletId: receiverWalletId },
+        { referralCode: receiverWalletId },
+        {
+          _id: mongoose.Types.ObjectId.isValid(receiverWalletId)
+            ? receiverWalletId
+            : null
+        }
+      ]
+    });
 
-  const receiver = await User.findOne({
-    walletId
-  });
+    if (!receiver) {
+      return res.json({
+        success: false,
+        msg: "Receiver not found"
+      });
+    }
 
-  if (!receiver) {
-    return res.json({
-      msg: "Receiver not found"
+    if (sender.email === receiver.email) {
+      return res.json({
+        success: false,
+        msg: "You cannot transfer to your own wallet"
+      });
+    }
+
+    const senderBalance = Number(sender.balance || sender.wallet || 0);
+
+    if (senderBalance < transferAmount) {
+      return res.json({
+        success: false,
+        msg: "Insufficient wallet balance"
+      });
+    }
+
+    sender.balance = senderBalance - transferAmount;
+    receiver.balance = Number(receiver.balance || receiver.wallet || 0) + transferAmount;
+
+    await sender.save();
+    await receiver.save();
+
+    await WalletTransaction.create({
+      email: sender.email,
+      walletId: sender.walletId || sender.referralCode || sender._id.toString(),
+      type: "debit",
+      title: "Wallet Transfer",
+      description: `Transfer to ${receiver.name}`,
+      amount: transferAmount,
+      status: "Success",
+      fromWalletId: sender.walletId || sender.referralCode || sender._id.toString(),
+      toWalletId: receiver.walletId || receiver.referralCode || receiver._id.toString()
+    });
+
+    await WalletTransaction.create({
+      email: receiver.email,
+      walletId: receiver.walletId || receiver.referralCode || receiver._id.toString(),
+      type: "credit",
+      title: "Wallet Received",
+      description: `Received from ${sender.name}`,
+      amount: transferAmount,
+      status: "Success",
+      fromWalletId: sender.walletId || sender.referralCode || sender._id.toString(),
+      toWalletId: receiver.walletId || receiver.referralCode || receiver._id.toString()
+    });
+
+    res.json({
+      success: true,
+      msg: "Transfer successful"
+    });
+
+  } catch (err) {
+    console.log("WALLET TRANSFER ERROR:", err);
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
     });
   }
-
-  if (sender.wallet < amount) {
-    return res.json({
-      msg: "Low balance"
-    });
-  }
-
-  sender.wallet -= amount;
-  receiver.wallet += Number(amount);
-
-  await sender.save();
-  await receiver.save();
-
-  // sender history
-  await WalletHistory.create({
-    email: sender.email,
-    type: "Wallet Transfer Sent",
-    amount,
-    note: receiver.walletId
-  });
-
-  // receiver history
-  await WalletHistory.create({
-    email: receiver.email,
-    type: "Wallet Transfer Received",
-    amount,
-    note: sender.walletId
-  });
-
-  res.json({
-    msg: "Transfer Successful"
-  });
-
 });
 
 app.post("/my-plan", auth, async (req, res) => {
