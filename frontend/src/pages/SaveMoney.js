@@ -10,8 +10,8 @@ export default function SaveMoney() {
   const [years, setYears] = useState(5);
   const [accepted, setAccepted] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadBalance();
