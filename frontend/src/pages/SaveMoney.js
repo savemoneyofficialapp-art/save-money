@@ -534,16 +534,17 @@ const styles = {
     color: "#071747"
   },
 
-  mobileFrame: {
-    width: "100%",
-    maxWidth: "520px",
-    minHeight: "100vh",
-    background: "linear-gradient(135deg,#ffffff 0%,#f7f3ff 48%,#fff1f7 100%)",
-    position: "relative",
-    overflowX: "hidden",
-    padding: "16px 12px 24px",
-    boxSizing: "border-box"
-  },
+ mobileFrame: {
+  width: "100%",
+  maxWidth: "100%",
+  minHeight: "100vh",
+  background:
+    "linear-gradient(180deg,#ffffff 0%,#faf5ff 100%)",
+  position: "relative",
+  overflow: "hidden",
+  padding: "16px",
+  boxSizing: "border-box"
+},
 
   leftBgArt: {
     position: "absolute",
@@ -988,25 +989,20 @@ const styles = {
     cursor: "pointer"
   },
 
-  bottomFeatures: {
-    marginTop: "18px",
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: "10px",
-    position: "relative",
-    zIndex: 4
-  },
+ bottomFeatures: {
+  display: "grid",
+  gridTemplateColumns: "repeat(3,1fr)",
+  gap: "8px",
+  marginTop: "15px"
+},
 
-  featureItem: {
-    background: "linear-gradient(135deg,#ffffff,#f7f2ff)",
-    borderRadius: "17px",
-    padding: "13px",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    boxShadow: "0 10px 20px rgba(15,23,42,.06)",
-    border: "1px solid rgba(124,58,237,.08)"
-  },
+ featureItem: {
+  background: "#fff",
+  borderRadius: "18px",
+  padding: "10px",
+  textAlign: "center",
+  boxShadow: "0 8px 20px rgba(0,0,0,.05)"
+},
 
   featureIcon: {
     width: "42px",
@@ -1106,6 +1102,47 @@ helpModal: {
   padding: "22px",
   boxShadow: "0 25px 50px rgba(0,0,0,.25)",
   lineHeight: "25px"
+},
+
+returnsGrid: {
+  display: "grid",
+  gridTemplateColumns: "repeat(4,1fr)",
+  gap: "10px",
+  marginTop: "15px"
+},
+
+sipCard: {
+  width: "100%",
+  background: "#fff",
+  borderRadius: "24px",
+  padding: "18px",
+  boxSizing: "border-box",
+  boxShadow: "0 10px 30px rgba(0,0,0,.05)"
+},
+
+walletCard: {
+  width: "100%",
+  borderRadius: "22px",
+  padding: "18px",
+  boxSizing: "border-box",
+  background:
+    "linear-gradient(135deg,#2156ff,#8b2cf5,#ff2fa8)",
+  color: "#fff",
+  marginBottom: "16px"
+},
+
+container: {
+  width: "100%",
+  minHeight: "100vh",
+  background: "#f7f8fc",
+  display: "flex",
+  justifyContent: "center"
+},
+
+'@media (max-width: 480px)': {
+  returnsGrid: {
+    gridTemplateColumns: "repeat(4,1fr)"
+  }
 }
 
 };
