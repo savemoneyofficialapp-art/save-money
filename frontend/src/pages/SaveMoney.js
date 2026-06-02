@@ -11,6 +11,7 @@ export default function SaveMoney() {
   const [accepted, setAccepted] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     loadBalance();
@@ -170,14 +171,12 @@ export default function SaveMoney() {
             ←
           </button>
 
-          <button
-            style={styles.helpBtn}
-            onClick={() =>
-              (window.location.href = "/investment-assistant")
-            }
-          >
-            ?
-          </button>
+         <button
+  style={styles.helpBtn}
+  onClick={() => setHelpOpen(true)}
+>
+  ?
+</button>
         </div>
 
         <header style={styles.brandHeader}>
@@ -454,6 +453,37 @@ export default function SaveMoney() {
   );
 }
 
+{helpOpen && (
+  <div style={styles.overlay}>
+    <div style={styles.helpModal}>
+      <h2>Investment Assistant</h2>
+
+      <p>
+        Save Money SIP plan আপনাকে প্রতি মাসে নিয়মিত saving করতে সাহায্য করবে।
+      </p>
+
+      <p>
+        Minimum monthly SIP amount হলো ₹2000। Amount লিখে duration select করলে নিচে estimated return দেখতে পাবেন।
+      </p>
+
+      <p>
+        1 Year = 11%, 3 Years = 14%, 5+ Years = 20% থেকে 30% পর্যন্ত estimated return দেখানো হবে।
+      </p>
+
+      <p>
+        SIP start করার আগে wallet balance থাকতে হবে এবং Terms & Conditions accept করতে হবে।
+      </p>
+
+      <button
+        style={styles.acceptBtn}
+        onClick={() => setHelpOpen(false)}
+      >
+        Okay, I Understand
+      </button>
+    </div>
+  </div>
+)}
+
 function ReturnItem({ icon, title, value, color, bg }) {
   return (
     <div style={styles.returnItem}>
@@ -503,12 +533,12 @@ const styles = {
 
   mobileFrame: {
     width: "100%",
-    maxWidth: "430px",
+    maxWidth: "520px",
     minHeight: "100vh",
     background: "linear-gradient(135deg,#ffffff 0%,#f7f3ff 48%,#fff1f7 100%)",
     position: "relative",
     overflowX: "hidden",
-    padding: "18px 14px 28px",
+    padding: "16px 12px 24px",
     boxSizing: "border-box"
   },
 
@@ -1028,5 +1058,51 @@ const styles = {
     fontWeight: "900",
     fontSize: "16px",
     cursor: "pointer"
-  }
+  },
+
+bottomFeatures: {
+  marginTop: "14px",
+  display: "grid",
+  gridTemplateColumns: "repeat(3,1fr)",
+  gap: "8px",
+  position: "relative",
+  zIndex: 4
+},
+
+featureItem: {
+  background: "linear-gradient(135deg,#ffffff,#f7f2ff)",
+  borderRadius: "14px",
+  padding: "10px 6px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  textAlign: "center",
+  gap: "6px",
+  boxShadow: "0 8px 16px rgba(15,23,42,.05)",
+  border: "1px solid rgba(124,58,237,.08)",
+  fontSize: "11px"
+},
+
+featureIcon: {
+  width: "34px",
+  height: "34px",
+  borderRadius: "12px",
+  background: "#ede9fe",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "20px"
+},
+
+helpModal: {
+  width: "100%",
+  maxWidth: "390px",
+  background: "linear-gradient(145deg,#ffffff,#f7f2ff)",
+  color: "#071747",
+  borderRadius: "22px",
+  padding: "22px",
+  boxShadow: "0 25px 50px rgba(0,0,0,.25)",
+  lineHeight: "25px"
+}
+
 };
