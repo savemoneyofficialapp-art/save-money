@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { API } from "../config";
 
-import walletLogo from "../assets/sip-wallet-logo.png";
-import leftBg from "../assets/sip-left-bg.png";
-import rightBg from "../assets/sip-right-bg.png";
-import starRecommend from "../assets/star-recommend.png";
-
 export default function SaveMoney() {
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
@@ -15,8 +10,6 @@ export default function SaveMoney() {
   const [years, setYears] = useState(5);
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const durations = [1, 3, 5, 10, 15, 20];
 
   useEffect(() => {
     loadBalance();
@@ -36,7 +29,7 @@ export default function SaveMoney() {
       const data = await res.json();
       setBalance(Number(data.balance || data.wallet || 0));
     } catch (err) {
-      console.log("BALANCE LOAD ERROR:", err);
+      console.log("BALANCE ERROR:", err);
     }
   };
 
@@ -70,17 +63,9 @@ export default function SaveMoney() {
     })}`;
 
   const confirmSip = async () => {
-    if (Number(amount) < 2000) {
-      return alert("Minimum SIP amount ₹2000 required");
-    }
-
-    if (!accepted) {
-      return alert("Please accept Terms & Conditions");
-    }
-
-    if (balance < Number(amount)) {
-      return alert("Insufficient wallet balance. Please add money first.");
-    }
+    if (Number(amount) < 2000) return alert("Minimum SIP amount ₹2000 required");
+    if (!accepted) return alert("Please accept Terms & Conditions");
+    if (balance < Number(amount)) return alert("Insufficient wallet balance");
 
     try {
       setLoading(true);
@@ -122,10 +107,14 @@ export default function SaveMoney() {
     }
   };
 
+  const goWallet = () => {
+    window.location.href = "/wallet";
+  };
+
   return (
     <div style={styles.page}>
-      <img src={leftBg} alt="" style={styles.leftBg} />
-      <img src={rightBg} alt="" style={styles.rightBg} />
+      <div style={styles.bgLeft}>📈<br />🪙</div>
+      <div style={styles.bgRight}>₹<br />🌱</div>
 
       <div style={styles.wrap}>
         <div style={styles.topBar}>
@@ -137,13 +126,16 @@ export default function SaveMoney() {
         </div>
 
         <div style={styles.brand}>
-          <img src={walletLogo} alt="Save Money" style={styles.logo} />
+          <div style={styles.logoWallet}>
+            <div style={styles.logoNotes}>💵</div>
+            <div style={styles.logoCoin}>₹</div>
+          </div>
 
           <h1>
             SAVE <span>MONEY</span>
           </h1>
 
-          <div style={styles.subTitle}>
+          <div style={styles.subLine}>
             <span></span>
             <b>START SIP INVESTMENT</b>
             <span></span>
@@ -153,40 +145,35 @@ export default function SaveMoney() {
         <section style={styles.balanceCard}>
           <div style={styles.walletIcon}>👛</div>
 
-          <div style={styles.balanceInfo}>
+          <div style={styles.balanceText}>
             <p>WALLET BALANCE</p>
             <h2>{money(balance)}</h2>
             <span>Available Balance</span>
           </div>
 
-          <div style={styles.balanceDivider}></div>
+          <div style={styles.divider}></div>
 
-          <button
-            style={styles.addMoney}
-            onClick={() => (window.location.href = "/wallet")}
-          >
+          <button style={styles.addMoneyBtn} onClick={goWallet}>
             ＋ Add Money
           </button>
         </section>
 
         <section style={styles.card}>
-          <div style={styles.cardTitle}>
-            <div style={styles.sipIcon}>🌱</div>
+          <div style={styles.sectionTitle}>
+            <div style={styles.roundIcon}>🌱</div>
             <h2>SIP DETAILS</h2>
           </div>
 
           <label style={styles.label}>Monthly SIP Amount</label>
 
-          <div style={styles.amountInput}>
+          <div style={styles.amountBox}>
             <span>₹</span>
-
             <input
               value={amount}
               type="number"
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter Amount"
             />
-
             <b>Min ₹2000</b>
           </div>
 
@@ -196,34 +183,32 @@ export default function SaveMoney() {
 
           <label style={styles.label}>SIP Duration</label>
 
-          <div style={styles.durationGrid}>
-            {durations.map((d) => (
+          <div style={styles.yearGrid}>
+            {[1, 3, 5, 10, 15, 20].map((y) => (
               <button
-                key={d}
-                onClick={() => setYears(d)}
+                key={y}
                 style={{
-                  ...styles.durationBtn,
-                  ...(years === d ? styles.activeDuration : {})
+                  ...styles.yearBtn,
+                  ...(years === y ? styles.yearActive : {})
                 }}
+                onClick={() => setYears(y)}
               >
-                {d} {d === 1 ? "Year" : "Years"}
-
-                {years === d && <span style={styles.tick}>✓</span>}
+                {y} {y === 1 ? "Year" : "Years"}
+                {years === y && <span>✓</span>}
               </button>
             ))}
           </div>
 
-          <div style={styles.recommend}>
-            <img src={starRecommend} alt="" />
+          <div style={styles.recommendBox}>
+            <div style={styles.star}>⭐</div>
             <p>
-              <b>Recommended:</b> 5 Years is ideal for better returns & wealth
-              growth.
+              <b>Recommended:</b> 5 Years is ideal for better returns & wealth growth.
             </p>
           </div>
         </section>
 
         <section style={styles.card}>
-          <h3 style={styles.estimateTitle}>ESTIMATED RETURNS</h3>
+          <h3 style={styles.estimatedTitle}>ESTIMATED RETURNS</h3>
 
           <div style={styles.returnGrid}>
             <ReturnBox
@@ -260,13 +245,12 @@ export default function SaveMoney() {
           </div>
 
           <div style={styles.note}>
-            ℹ The above values are estimated and may vary based on market
-            performance.
+            ℹ The above values are estimated and may vary based on market performance.
           </div>
         </section>
 
-        <section style={styles.terms}>
-          <label style={styles.check}>
+        <section style={styles.termsBox}>
+          <label style={styles.checkBox}>
             <input
               type="checkbox"
               checked={accepted}
@@ -279,10 +263,10 @@ export default function SaveMoney() {
             I have read and agree to the <b>Terms & Conditions</b>
           </p>
 
-          <div style={styles.termDoc}>📄</div>
+          <div style={styles.docIcon}>📄</div>
         </section>
 
-        <button style={styles.confirm} onClick={confirmSip} disabled={loading}>
+        <button style={styles.confirmBtn} onClick={confirmSip} disabled={loading}>
           🛡 {loading ? "Starting SIP..." : "Confirm & Start SIP"}
         </button>
 
@@ -322,12 +306,12 @@ const styles = {
   page: {
     minHeight: "100vh",
     background:
-      "linear-gradient(135deg,#ffffff 0%,#fbf7ff 45%,#fff1f7 100%)",
+      "linear-gradient(135deg,#ffffff 0%,#f8f5ff 45%,#fff1f7 100%)",
     position: "relative",
     overflow: "hidden",
     padding: "26px",
     fontFamily: "Arial, sans-serif",
-    color: "#071747"
+    color: "#070d3d"
   },
 
   wrap: {
@@ -337,22 +321,22 @@ const styles = {
     zIndex: 3
   },
 
-  leftBg: {
+  bgLeft: {
     position: "absolute",
-    left: "-20px",
-    top: "230px",
-    width: "260px",
-    opacity: 0.18,
-    zIndex: 1
+    left: "-10px",
+    top: "210px",
+    fontSize: "80px",
+    opacity: 0.12,
+    color: "#7c3aed"
   },
 
-  rightBg: {
+  bgRight: {
     position: "absolute",
-    right: "-5px",
-    top: "195px",
-    width: "270px",
-    opacity: 0.22,
-    zIndex: 1
+    right: "20px",
+    top: "240px",
+    fontSize: "85px",
+    opacity: 0.16,
+    color: "#7c3aed"
   },
 
   topBar: {
@@ -387,26 +371,49 @@ const styles = {
 
   brand: {
     textAlign: "center",
-    marginTop: "-28px",
-    marginBottom: "34px"
+    marginTop: "-25px",
+    marginBottom: "35px"
   },
 
-  logo: {
-    width: "122px",
+  logoWallet: {
+    width: "115px",
     height: "96px",
-    objectFit: "contain",
-    verticalAlign: "middle",
-    marginRight: "18px"
+    borderRadius: "18px",
+    background: "linear-gradient(145deg,#5b21ff,#b92cff)",
+    margin: "0 auto -5px",
+    position: "relative",
+    boxShadow: "0 18px 30px rgba(124,58,237,.25)"
   },
 
-  subTitle: {
+  logoNotes: {
+    position: "absolute",
+    top: "-18px",
+    left: "28px",
+    fontSize: "38px"
+  },
+
+  logoCoin: {
+    position: "absolute",
+    right: "-12px",
+    bottom: "8px",
+    width: "40px",
+    height: "40px",
+    borderRadius: "50%",
+    background: "#f59e0b",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "900"
+  },
+
+  subLine: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "16px",
     letterSpacing: "5px",
-    fontSize: "20px",
-    color: "#071747"
+    fontSize: "20px"
   },
 
   balanceCard: {
@@ -435,16 +442,16 @@ const styles = {
     fontSize: "55px"
   },
 
-  balanceInfo: {
+  balanceText: {
     textAlign: "left"
   },
 
-  balanceDivider: {
+  divider: {
     height: "115px",
     background: "rgba(255,255,255,.24)"
   },
 
-  addMoney: {
+  addMoneyBtn: {
     height: "70px",
     borderRadius: "18px",
     border: "none",
@@ -452,8 +459,7 @@ const styles = {
     color: "#6d28d9",
     fontSize: "22px",
     fontWeight: "900",
-    boxShadow: "0 14px 25px rgba(0,0,0,.12)",
-    cursor: "pointer"
+    boxShadow: "0 14px 25px rgba(0,0,0,.12)"
   },
 
   card: {
@@ -464,14 +470,14 @@ const styles = {
     boxShadow: "0 15px 35px rgba(15,23,42,.08)"
   },
 
-  cardTitle: {
+  sectionTitle: {
     display: "flex",
     alignItems: "center",
     gap: "18px",
     marginBottom: "26px"
   },
 
-  sipIcon: {
+  roundIcon: {
     width: "62px",
     height: "62px",
     borderRadius: "50%",
@@ -489,7 +495,7 @@ const styles = {
     margin: "20px 0 12px"
   },
 
-  amountInput: {
+  amountBox: {
     height: "78px",
     borderRadius: "16px",
     border: "1px solid #d9ddea",
@@ -501,16 +507,16 @@ const styles = {
 
   error: {
     color: "#ef4444",
-    fontWeight: "900"
+    fontWeight: "800"
   },
 
-  durationGrid: {
+  yearGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(6,1fr)",
     gap: "20px"
   },
 
-  durationBtn: {
+  yearBtn: {
     height: "64px",
     borderRadius: "14px",
     border: "1px solid #d9ddea",
@@ -518,34 +524,17 @@ const styles = {
     fontSize: "17px",
     fontWeight: "800",
     color: "#071747",
-    position: "relative",
-    cursor: "pointer"
+    position: "relative"
   },
 
-  activeDuration: {
+  yearActive: {
     background: "linear-gradient(135deg,#5b21ff,#a21caf)",
     color: "white",
     border: "none",
     boxShadow: "0 10px 25px rgba(124,58,237,.25)"
   },
 
-  tick: {
-    position: "absolute",
-    top: "-13px",
-    right: "-10px",
-    width: "30px",
-    height: "30px",
-    borderRadius: "50%",
-    background: "white",
-    color: "#6d28d9",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "900",
-    boxShadow: "0 8px 15px rgba(15,23,42,.15)"
-  },
-
-  recommend: {
+  recommendBox: {
     marginTop: "28px",
     background: "#fff0f8",
     borderRadius: "16px",
@@ -553,11 +542,15 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "20px",
-    color: "#5b21ff",
-    fontWeight: "800"
+    color: "#5b21ff"
   },
 
-  estimateTitle: {
+  star: {
+    fontSize: "48px",
+    filter: "drop-shadow(0 8px 10px rgba(245,158,11,.25))"
+  },
+
+  estimatedTitle: {
     color: "#6d28d9",
     letterSpacing: "1px"
   },
@@ -595,7 +588,7 @@ const styles = {
     fontSize: "17px"
   },
 
-  terms: {
+  termsBox: {
     background: "white",
     borderRadius: "20px",
     padding: "28px",
@@ -607,17 +600,17 @@ const styles = {
     boxShadow: "0 12px 25px rgba(15,23,42,.06)"
   },
 
-  check: {
+  checkBox: {
     width: "36px",
     height: "36px"
   },
 
-  termDoc: {
+  docIcon: {
     marginLeft: "auto",
     fontSize: "42px"
   },
 
-  confirm: {
+  confirmBtn: {
     width: "100%",
     height: "78px",
     borderRadius: "18px",
@@ -626,8 +619,7 @@ const styles = {
     color: "white",
     fontSize: "28px",
     fontWeight: "900",
-    boxShadow: "0 18px 35px rgba(236,22,142,.22)",
-    cursor: "pointer"
+    boxShadow: "0 18px 35px rgba(236,22,142,.22)"
   },
 
   bottom: {
