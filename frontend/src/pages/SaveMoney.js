@@ -451,7 +451,6 @@ export default function SaveMoney() {
       </div>
     </div>
   );
-}
 
 {helpOpen && (
   <div style={styles.overlay}>
@@ -483,6 +482,10 @@ export default function SaveMoney() {
     </div>
   </div>
 )}
+
+}
+
+
 
 function ReturnItem({ icon, title, value, color, bg }) {
   return (
