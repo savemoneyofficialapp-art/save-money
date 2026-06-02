@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { API } from "../config";
 
-import walletLogo from "../assets/sip-wallet-logo.jpg";
-import leftBg from "../assets/sip-left-bg.jpg";
-import rightBg from "../assets/sip-right-bg.jpg";
-import starRecommend from "../assets/star-recommend.jpg";
+import walletLogo from "../assets/sip-wallet-logo.png";
+import leftBg from "../assets/sip-left-bg.png";
+import rightBg from "../assets/sip-right-bg.png";
+import starRecommend from "../assets/star-recommend.png";
 
 export default function SaveMoney() {
   const email = localStorage.getItem("email") || "";
@@ -36,7 +36,7 @@ export default function SaveMoney() {
       const data = await res.json();
       setBalance(Number(data.balance || data.wallet || 0));
     } catch (err) {
-      console.log("BALANCE ERROR:", err);
+      console.log("BALANCE LOAD ERROR:", err);
     }
   };
 
@@ -55,6 +55,7 @@ export default function SaveMoney() {
     const totalReturn = totalInvestment + totalInterest;
 
     return {
+      monthly,
       totalInvestment,
       totalInterest,
       totalReturn,
@@ -99,6 +100,13 @@ export default function SaveMoney() {
 
       const data = await res.json();
 
+      if (data.msg === "Token expired or invalid") {
+        localStorage.clear();
+        alert("Session expired. Please login again.");
+        window.location.href = "/login";
+        return;
+      }
+
       alert(data.msg || "SIP started successfully");
 
       if (data.success) {
@@ -116,8 +124,8 @@ export default function SaveMoney() {
 
   return (
     <div style={styles.page}>
-      <img src={leftBg} style={styles.leftBg} alt="" />
-      <img src={rightBg} style={styles.rightBg} alt="" />
+      <img src={leftBg} alt="" style={styles.leftBg} />
+      <img src={rightBg} alt="" style={styles.rightBg} />
 
       <div style={styles.wrap}>
         <div style={styles.topBar}>
@@ -129,29 +137,29 @@ export default function SaveMoney() {
         </div>
 
         <div style={styles.brand}>
-          <img src={walletLogo} style={styles.logo} alt="wallet" />
+          <img src={walletLogo} alt="Save Money" style={styles.logo} />
 
           <h1>
             SAVE <span>MONEY</span>
           </h1>
 
-          <div style={styles.subtitle}>
-            <i></i>
+          <div style={styles.subTitle}>
+            <span></span>
             <b>START SIP INVESTMENT</b>
-            <i></i>
+            <span></span>
           </div>
         </div>
 
         <section style={styles.balanceCard}>
           <div style={styles.walletIcon}>👛</div>
 
-          <div>
+          <div style={styles.balanceInfo}>
             <p>WALLET BALANCE</p>
             <h2>{money(balance)}</h2>
             <span>Available Balance</span>
           </div>
 
-          <div style={styles.divider}></div>
+          <div style={styles.balanceDivider}></div>
 
           <button
             style={styles.addMoney}
@@ -162,21 +170,23 @@ export default function SaveMoney() {
         </section>
 
         <section style={styles.card}>
-          <div style={styles.sectionTitle}>
+          <div style={styles.cardTitle}>
             <div style={styles.sipIcon}>🌱</div>
             <h2>SIP DETAILS</h2>
           </div>
 
           <label style={styles.label}>Monthly SIP Amount</label>
 
-          <div style={styles.amountBox}>
+          <div style={styles.amountInput}>
             <span>₹</span>
+
             <input
-              type="number"
               value={amount}
-              placeholder="Enter Amount"
+              type="number"
               onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter Amount"
             />
+
             <b>Min ₹2000</b>
           </div>
 
@@ -186,18 +196,19 @@ export default function SaveMoney() {
 
           <label style={styles.label}>SIP Duration</label>
 
-          <div style={styles.yearGrid}>
-            {durations.map((y) => (
+          <div style={styles.durationGrid}>
+            {durations.map((d) => (
               <button
-                key={y}
-                onClick={() => setYears(y)}
+                key={d}
+                onClick={() => setYears(d)}
                 style={{
-                  ...styles.yearBtn,
-                  ...(years === y ? styles.yearActive : {})
+                  ...styles.durationBtn,
+                  ...(years === d ? styles.activeDuration : {})
                 }}
               >
-                {y} {y === 1 ? "Year" : "Years"}
-                {years === y && <span style={styles.tick}>✓</span>}
+                {d} {d === 1 ? "Year" : "Years"}
+
+                {years === d && <span style={styles.tick}>✓</span>}
               </button>
             ))}
           </div>
@@ -205,10 +216,12 @@ export default function SaveMoney() {
           <div style={styles.recommend}>
             <img src={starRecommend} alt="" />
             <p>
-              <b>Recommended:</b> 5 Years is ideal for better returns & wealth growth.
+              <b>Recommended:</b> 5 Years is ideal for better returns & wealth
+              growth.
             </p>
           </div>
         </section>
+
         <section style={styles.card}>
           <h3 style={styles.estimateTitle}>ESTIMATED RETURNS</h3>
 
@@ -247,39 +260,33 @@ export default function SaveMoney() {
           </div>
 
           <div style={styles.note}>
-            ℹ The above values are estimated and may vary based on market performance.
+            ℹ The above values are estimated and may vary based on market
+            performance.
           </div>
         </section>
 
-        <section style={styles.termsBox}>
-          <label style={styles.customCheck}>
+        <section style={styles.terms}>
+          <label style={styles.check}>
             <input
               type="checkbox"
               checked={accepted}
               onChange={(e) => setAccepted(e.target.checked)}
             />
-            <span>{accepted ? "✓" : ""}</span>
+            <span></span>
           </label>
 
           <p>
             I have read and agree to the <b>Terms & Conditions</b>
           </p>
 
-          <div style={styles.docIcon}>📄</div>
+          <div style={styles.termDoc}>📄</div>
         </section>
 
-        <button
-          style={{
-            ...styles.confirmBtn,
-            opacity: loading ? 0.65 : 1
-          }}
-          onClick={confirmSip}
-          disabled={loading}
-        >
+        <button style={styles.confirm} onClick={confirmSip} disabled={loading}>
           🛡 {loading ? "Starting SIP..." : "Confirm & Start SIP"}
         </button>
 
-        <section style={styles.bottomFeatures}>
+        <section style={styles.bottom}>
           <Feature icon="🛡" title="Secure & Trusted" sub="100% Safe Investment" />
           <Feature icon="🌱" title="Grow Your Wealth" sub="Start Small, Grow Big" />
           <Feature icon="⏱" title="Flexible & Easy" sub="Choose & Invest Easily" />
@@ -292,10 +299,7 @@ export default function SaveMoney() {
 function ReturnBox({ icon, title, value, color, bg }) {
   return (
     <div style={styles.returnBox}>
-      <div style={{ ...styles.returnIcon, background: bg, color }}>
-        {icon}
-      </div>
-
+      <div style={{ ...styles.returnIcon, background: bg, color }}>{icon}</div>
       <p>{title}</p>
       <h2 style={{ color }}>{value}</h2>
     </div>
@@ -305,11 +309,11 @@ function ReturnBox({ icon, title, value, color, bg }) {
 function Feature({ icon, title, sub }) {
   return (
     <div style={styles.feature}>
-      <div style={styles.featureIcon}>{icon}</div>
-      <div>
+      <div>{icon}</div>
+      <span>
         <b>{title}</b>
         <p>{sub}</p>
-      </div>
+      </span>
     </div>
   );
 }
@@ -318,7 +322,7 @@ const styles = {
   page: {
     minHeight: "100vh",
     background:
-      "linear-gradient(135deg,#ffffff 0%,#faf7ff 46%,#fff1f8 100%)",
+      "linear-gradient(135deg,#ffffff 0%,#fbf7ff 45%,#fff1f7 100%)",
     position: "relative",
     overflow: "hidden",
     padding: "26px",
@@ -330,31 +334,28 @@ const styles = {
     maxWidth: "1080px",
     margin: "0 auto",
     position: "relative",
-    zIndex: 5
+    zIndex: 3
   },
 
   leftBg: {
     position: "absolute",
-    left: "-15px",
-    top: "255px",
-    width: "285px",
-    opacity: 0.16,
-    zIndex: 1,
-    pointerEvents: "none"
+    left: "-20px",
+    top: "230px",
+    width: "260px",
+    opacity: 0.18,
+    zIndex: 1
   },
 
   rightBg: {
     position: "absolute",
-    right: "-20px",
-    top: "220px",
-    width: "300px",
-    opacity: 0.2,
-    zIndex: 1,
-    pointerEvents: "none"
+    right: "-5px",
+    top: "195px",
+    width: "270px",
+    opacity: 0.22,
+    zIndex: 1
   },
 
   topBar: {
-    height: "62px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center"
@@ -381,50 +382,46 @@ const styles = {
     color: "#071747",
     fontSize: "30px",
     fontWeight: "900",
-    boxShadow: "0 12px 25px rgba(15,23,42,.08)",
-    cursor: "pointer"
+    boxShadow: "0 12px 25px rgba(15,23,42,.08)"
   },
 
   brand: {
     textAlign: "center",
-    marginTop: "-18px",
-    marginBottom: "36px"
+    marginTop: "-28px",
+    marginBottom: "34px"
   },
 
   logo: {
-    width: "118px",
-    height: "92px",
+    width: "122px",
+    height: "96px",
     objectFit: "contain",
-    marginRight: "16px",
     verticalAlign: "middle",
-    filter: "drop-shadow(0 16px 18px rgba(124,58,237,.25))"
+    marginRight: "18px"
   },
 
-  subtitle: {
-    marginTop: "4px",
+  subTitle: {
     display: "flex",
-    justifyContent: "center",
     alignItems: "center",
-    gap: "18px",
+    justifyContent: "center",
+    gap: "16px",
     letterSpacing: "5px",
-    color: "#071747",
-    fontSize: "20px"
+    fontSize: "20px",
+    color: "#071747"
   },
 
   balanceCard: {
     width: "78%",
     margin: "0 auto 30px",
-    minHeight: "174px",
-    background:
-      "radial-gradient(circle at 88% 18%,rgba(255,255,255,.18),transparent 22%),linear-gradient(135deg,#1420c8,#6b20e7,#be22d5)",
+    minHeight: "170px",
+    background: "linear-gradient(135deg,#1422c9,#6e23ea,#c221d9)",
     borderRadius: "24px",
     color: "white",
     display: "grid",
     gridTemplateColumns: "115px 1fr 2px 250px",
     alignItems: "center",
-    gap: "28px",
+    gap: "26px",
     padding: "32px",
-    boxShadow: "0 20px 42px rgba(88,45,220,.30)"
+    boxShadow: "0 20px 40px rgba(82,45,220,.28)"
   },
 
   walletIcon: {
@@ -435,13 +432,16 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "55px",
-    boxShadow: "inset 0 0 30px rgba(255,255,255,.08)"
+    fontSize: "55px"
   },
 
-  divider: {
-    height: "118px",
-    background: "rgba(255,255,255,.25)"
+  balanceInfo: {
+    textAlign: "left"
+  },
+
+  balanceDivider: {
+    height: "115px",
+    background: "rgba(255,255,255,.24)"
   },
 
   addMoney: {
@@ -457,15 +457,14 @@ const styles = {
   },
 
   card: {
-    background: "rgba(255,255,255,.96)",
+    background: "white",
     borderRadius: "24px",
     padding: "32px",
     marginBottom: "24px",
-    boxShadow: "0 15px 35px rgba(15,23,42,.08)",
-    border: "1px solid rgba(255,255,255,.9)"
+    boxShadow: "0 15px 35px rgba(15,23,42,.08)"
   },
 
-  sectionTitle: {
+  cardTitle: {
     display: "flex",
     alignItems: "center",
     gap: "18px",
@@ -490,30 +489,28 @@ const styles = {
     margin: "20px 0 12px"
   },
 
-  amountBox: {
+  amountInput: {
     height: "78px",
     borderRadius: "16px",
     border: "1px solid #d9ddea",
     display: "flex",
     alignItems: "center",
     padding: "0 24px",
-    gap: "18px",
-    background: "white"
+    gap: "18px"
   },
 
   error: {
     color: "#ef4444",
-    fontWeight: "900",
-    marginTop: "10px"
+    fontWeight: "900"
   },
 
-  yearGrid: {
+  durationGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(6,1fr)",
     gap: "20px"
   },
 
-  yearBtn: {
+  durationBtn: {
     height: "64px",
     borderRadius: "14px",
     border: "1px solid #d9ddea",
@@ -525,7 +522,7 @@ const styles = {
     cursor: "pointer"
   },
 
-  yearActive: {
+  activeDuration: {
     background: "linear-gradient(135deg,#5b21ff,#a21caf)",
     color: "white",
     border: "none",
@@ -598,7 +595,7 @@ const styles = {
     fontSize: "17px"
   },
 
-  termsBox: {
+  terms: {
     background: "white",
     borderRadius: "20px",
     padding: "28px",
@@ -610,18 +607,17 @@ const styles = {
     boxShadow: "0 12px 25px rgba(15,23,42,.06)"
   },
 
-  customCheck: {
-    width: "38px",
-    height: "38px",
-    position: "relative"
+  check: {
+    width: "36px",
+    height: "36px"
   },
 
-  docIcon: {
+  termDoc: {
     marginLeft: "auto",
     fontSize: "42px"
   },
 
-  confirmBtn: {
+  confirm: {
     width: "100%",
     height: "78px",
     borderRadius: "18px",
@@ -634,7 +630,7 @@ const styles = {
     cursor: "pointer"
   },
 
-  bottomFeatures: {
+  bottom: {
     marginTop: "28px",
     display: "grid",
     gridTemplateColumns: "repeat(3,1fr)",
@@ -646,16 +642,5 @@ const styles = {
     alignItems: "center",
     gap: "15px",
     justifyContent: "center"
-  },
-
-  featureIcon: {
-    width: "54px",
-    height: "54px",
-    borderRadius: "50%",
-    background: "#ede9fe",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "26px"
   }
 };
