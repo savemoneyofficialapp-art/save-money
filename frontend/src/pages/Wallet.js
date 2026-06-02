@@ -33,6 +33,11 @@ export default function Wallet() {
 
   const [shareOpen, setShareOpen] = useState(false);
 
+
+  const [historyFilter, setHistoryFilter] = useState("all");
+const [showAllHistory, setShowAllHistory] = useState(false);
+
+
   useEffect(() => {
     loadWallet();
   }, []);
@@ -56,8 +61,13 @@ export default function Wallet() {
         setWallet({
           walletId: data.walletId || data.user?.walletId || "N/A",
           name: data.name || data.user?.name || "User",
-          avatar: data.avatar || "",
-          balance: Number(data.balance || 0),
+avatar:
+  data.avatar ||
+  data.user?.photo ||
+  data.user?.photoImage ||
+  "",
+photo: data.user?.photo || "",
+photoImage: data.user?.photoImage || "",          balance: Number(data.balance || 0),
           referral: Number(data.referral || 0),
           performance: Number(data.performance || 0),
           team: Number(data.team || 0),
@@ -284,6 +294,15 @@ export default function Wallet() {
     );
   }
 
+  const filteredHistory = history.filter((item) => {
+  if (historyFilter === "all") return true;
+  return String(item.type).toLowerCase() === historyFilter;
+});
+
+const visibleHistory = showAllHistory
+  ? filteredHistory
+  : filteredHistory.slice(0, 5);
+
   return (
     <div style={styles.page}>
       <div style={styles.app}>
@@ -297,18 +316,29 @@ export default function Wallet() {
             </p>
           </div>
 
-          <button style={styles.notifyBtn}>
-            🔔
-            <span>2</span>
-          </button>
+         <button
+  style={styles.notifyBtn}
+  onClick={() => window.location.href = "/notifications"}
+>
+  🔔
+  <span style={styles.notifyCount}></span>
+</button>
 
-          <div style={styles.avatar}>
-            {wallet.avatar ? (
-              <img src={wallet.avatar} alt="user" />
-            ) : (
-              "👨‍💼"
-            )}
-          </div>
+<div style={styles.avatar}>
+  {wallet.avatar || wallet.photo || wallet.photoImage ? (
+    <img
+      src={
+        wallet.avatar ||
+        wallet.photo ||
+        `${API}/${wallet.photoImage}`
+      }
+      alt="user"
+      style={styles.avatarImg}
+    />
+  ) : (
+    "👨‍💼"
+  )}
+</div>
         </header>
 
         <section style={styles.walletHero}>
@@ -317,7 +347,7 @@ export default function Wallet() {
 
             <h2 style={styles.walletId}>
               {wallet.walletId}
-              <button onClick={copyWalletId}>📋</button>
+              <button onClick={copyWalletId}>©☑️</button>
             </h2>
 
             <div style={styles.dashedLine}></div>
@@ -501,11 +531,18 @@ export default function Wallet() {
 
             </div>
 
-            <select style={styles.filterSelect}>
-              <option>All Transactions</option>
-              <option>Credit</option>
-              <option>Debit</option>
-            </select>
+           <select
+  style={styles.filterSelect}
+  value={historyFilter}
+  onChange={(e) => {
+    setHistoryFilter(e.target.value);
+    setShowAllHistory(false);
+  }}
+>
+  <option value="all">All Transactions</option>
+  <option value="credit">Credit</option>
+  <option value="debit">Debit</option>
+</select>
 
           </div>
 
@@ -527,7 +564,7 @@ export default function Wallet() {
 
           )}
 
-          {history.map((item,index)=>(
+{visibleHistory.map((item,index)=>(
 
             <div
               key={index}
@@ -596,9 +633,9 @@ export default function Wallet() {
 
               <div>
 
-                {new Date(
-                  item.date
-                ).toLocaleString()}
+               {item.createdAt || item.date
+  ? new Date(item.createdAt || item.date).toLocaleString("en-IN")
+  : "N/A"}
 
               </div>
 
@@ -606,9 +643,14 @@ export default function Wallet() {
 
           ))}
 
-          <div style={styles.viewMore}>
-            View More ▼
-          </div>
+         {filteredHistory.length > 5 && (
+  <button
+    style={styles.viewMore}
+    onClick={() => setShowAllHistory(!showAllHistory)}
+  >
+    {showAllHistory ? "Show Less ▲" : "View More ▼"}
+  </button>
+)}
 
         </section>
 
@@ -1551,5 +1593,29 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     textDecoration: "none"
-  }
+  },
+
+notifyCount: {
+  position: "absolute",
+  top: "-5px",
+  right: "-5px",
+  background: "#ef4444",
+  color: "white",
+  width: "20px",
+  height: "20px",
+  borderRadius: "50%",
+  fontSize: "12px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: "900"
+},
+
+avatarImg: {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  borderRadius: "50%"
+}
+
 };
