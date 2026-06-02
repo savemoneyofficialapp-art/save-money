@@ -29,6 +29,7 @@
     "nodemailer": "^8.0.9",
     "pdfkit": "^0.18.0",
     "qrcode": "^1.5.4",
+    "razorpay": "^2.9.6",
     "server.js": "^1.0.0",
     "socket.io": "^4.8.3",
     "twilio": "^6.0.0",

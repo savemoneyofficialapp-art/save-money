@@ -97,31 +97,82 @@ export default function Wallet() {
     setAddOpen(true);
   };
 
-  const startUpiPayment = (appName) => {
-    if (!addAmount || Number(addAmount) <= 0) {
-      return alert("Enter valid amount");
+ const startUpiPayment = async () => {
+  if (!addAmount || Number(addAmount) <= 0) {
+    return alert("Enter valid amount");
+  }
+
+  try {
+    const orderRes = await fetch(`${API}/create-razorpay-order`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: token || ""
+      },
+      body: JSON.stringify({
+        email,
+        amount: Number(addAmount)
+      })
+    });
+
+    const orderData = await orderRes.json();
+
+    if (!orderData.success) {
+      return alert(orderData.msg || "Order create failed");
     }
 
-    const amount = Number(addAmount);
-    const upiId = "savemoney@upi";
-    const payee = "Save Money";
-    const note = "Save Money Wallet Add Cash";
+    const options = {
+      key: orderData.key,
+      amount: orderData.order.amount,
+      currency: "INR",
+      name: "Save Money",
+      description: "Wallet Add Cash",
+      order_id: orderData.order.id,
 
-    const upiUrl =
-      `upi://pay?pa=${upiId}` +
-      `&pn=${encodeURIComponent(payee)}` +
-      `&am=${amount}` +
-      `&cu=INR` +
-      `&tn=${encodeURIComponent(note)}`;
+      handler: async function (response) {
+        const verifyRes = await fetch(`${API}/verify-razorpay-payment`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: token || ""
+          },
+          body: JSON.stringify({
+            email,
+            amount: Number(addAmount),
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          })
+        });
 
-    window.location.href = upiUrl;
+        const verifyData = await verifyRes.json();
 
-    alert(
-      `${appName} open হবে। Payment complete করার পরে admin approval হলে balance add হবে।`
-    );
+        alert(verifyData.msg);
 
-    setAddOpen(false);
-  };
+        if (verifyData.success) {
+          setAddOpen(false);
+          setAddAmount("");
+          loadWallet();
+        }
+      },
+
+      prefill: {
+        name: wallet.name,
+        email
+      },
+
+      theme: {
+        color: "#7c3aed"
+      }
+    };
+
+    const razor = new window.Razorpay(options);
+    razor.open();
+  } catch (err) {
+    console.log("RAZORPAY FRONTEND ERROR:", err);
+    alert("Payment failed");
+  }
+};
 
   const checkReceiver = async () => {
     if (!receiverWalletId.trim()) {
@@ -615,34 +666,14 @@ export default function Wallet() {
 
               <div style={styles.upiGrid}>
 
-                <button
-                  style={styles.upiBtn}
-                  onClick={() =>
-                    startUpiPayment("Google Pay")
-                  }
-                >
-                  Google Pay
-                </button>
+             <button
+              style={styles.upiBtn}
+               onClick={startUpiPayment}
+              >
+                Pay with UPI / Card / Wallet
+               </button>
 
-                <button
-                  style={styles.upiBtn}
-                  onClick={() =>
-                    startUpiPayment("PhonePe")
-                  }
-                >
-                  PhonePe
-                </button>
-
-                <button
-                  style={styles.upiBtn}
-                  onClick={() =>
-                    startUpiPayment("Paytm")
-                  }
-                >
-                  Paytm
-                </button>
-
-              </div>
+               </div>
 
               <button
                 style={styles.closeBtn}

@@ -37,7 +37,17 @@ const helmet = require("helmet");
 const validator = require("validator");
 const sanitize = require("mongo-sanitize");
 
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
+
+
+
 const app = express();
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
 
 console.log("SERVER VERSION: CORS TEST ACTIVE");
 
@@ -62,6 +72,44 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "authorization"]
 }));
 
+app.post("/razorpay-webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  try {
+    const signature = req.headers["x-razorpay-signature"];
+
+    const expected = crypto
+      .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
+      .update(req.body)
+      .digest("hex");
+
+    if (signature !== expected) {
+      return res.status(400).send("Invalid webhook signature");
+    }
+
+    const event = JSON.parse(req.body.toString());
+
+    if (event.event === "payment.failed") {
+      const payment = event.payload.payment.entity;
+
+      await WalletTransaction.updateOne(
+        { razorpayOrderId: payment.order_id },
+        {
+          $set: {
+            status: "Failed",
+            description: payment.error_description || "Payment failed",
+            razorpayPaymentId: payment.id
+          }
+        }
+      );
+    }
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.log("WEBHOOK ERROR:", err);
+    res.status(500).send("Webhook error");
+  }
+});
+
 app.use(express.json());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -72,19 +120,30 @@ const walletTransactionSchema = new mongoose.Schema(
   {
     email: String,
     walletId: String,
-    type: String, // credit / debit
+    type: String,
     title: String,
     description: String,
     amount: Number,
-    status: {
-      type: String,
-      default: "Success"
-    },
+    status: { type: String, default: "Pending" },
+
+    openingBalance: { type: Number, default: 0 },
+    closingBalance: { type: Number, default: 0 },
+
     fromWalletId: String,
-    toWalletId: String
+    toWalletId: String,
+
+    razorpayOrderId: String,
+    razorpayPaymentId: {
+      type: String,
+      unique: true,
+      sparse: true
+    },
+    razorpaySignature: String
   },
   { timestamps: true }
 );
+
+
 
 const WalletTransaction =
   mongoose.models.WalletTransaction ||
@@ -3586,6 +3645,45 @@ async (req, res) => {
 
 });
 
+app.get("/admin/finance-report", async (req, res) => {
+  try {
+    const totalCredit = await WalletTransaction.aggregate([
+      { $match: { type: "credit", status: "Success" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    const totalDebit = await WalletTransaction.aggregate([
+      { $match: { type: "debit", status: "Success" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    const pendingPayments = await WalletTransaction.countDocuments({
+      status: "Pending"
+    });
+
+    const failedPayments = await WalletTransaction.countDocuments({
+      status: "Failed"
+    });
+
+    const recent = await WalletTransaction.find()
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.json({
+      success: true,
+      totalCredit: totalCredit[0]?.total || 0,
+      totalDebit: totalDebit[0]?.total || 0,
+      pendingPayments,
+      failedPayments,
+      recent
+    });
+
+  } catch (err) {
+    console.log("ADMIN FINANCE REPORT ERROR:", err);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
 app.post("/admin-user-tree", auth, adminAuth, async (req, res) => {
   try {
     const { email, filter } = req.body;
@@ -4109,6 +4207,154 @@ app.post("/investment-summary", async (req, res) => {
   }
 });
 
+app.post("/create-razorpay-order", async (req, res) => {
+  try {
+    const { email, amount } = req.body;
+    const addAmount = Number(amount);
+
+    if (!email || addAmount < 100) {
+      return res.json({ success: false, msg: "Minimum add cash ₹100" });
+    }
+
+    if (addAmount > 50000) {
+      return res.json({ success: false, msg: "Maximum add cash ₹50,000" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.json({ success: false, msg: "User not found" });
+    }
+
+    const order = await razorpay.orders.create({
+      amount: addAmount * 100,
+      currency: "INR",
+      receipt: `wallet_${Date.now()}`
+    });
+
+    await WalletTransaction.create({
+      email: user.email,
+      walletId: user.walletId || user.referralCode || user._id.toString(),
+      type: "credit",
+      title: "Add Cash",
+      description: "Razorpay payment initiated",
+      amount: addAmount,
+      status: "Pending",
+      openingBalance: Number(user.balance || 0),
+      closingBalance: Number(user.balance || 0),
+      razorpayOrderId: order.id
+    });
+
+    res.json({
+      success: true,
+      key: process.env.RAZORPAY_KEY_ID,
+      order
+    });
+
+  } catch (err) {
+    console.log("RAZORPAY ORDER ERROR:", err);
+    res.status(500).json({ success: false, msg: "Order create failed" });
+  }
+});
+
+app.post("/verify-razorpay-payment", async (req, res) => {
+  try {
+    const {
+      email,
+      amount,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    } = req.body;
+
+    const alreadyPaid = await WalletTransaction.findOne({
+      razorpayPaymentId: razorpay_payment_id
+    });
+
+    if (alreadyPaid) {
+      return res.json({
+        success: false,
+        msg: "This payment is already credited"
+      });
+    }
+
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(razorpay_order_id + "|" + razorpay_payment_id)
+      .digest("hex");
+
+    if (expectedSign !== razorpay_signature) {
+      await WalletTransaction.updateOne(
+        { razorpayOrderId: razorpay_order_id },
+        { $set: { status: "Failed", description: "Signature verification failed" } }
+      );
+
+      return res.json({ success: false, msg: "Payment verification failed" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.json({ success: false, msg: "User not found" });
+    }
+
+    const openingBalance = Number(user.balance || 0);
+    const closingBalance = openingBalance + Number(amount);
+
+    user.balance = closingBalance;
+    await user.save();
+
+    await WalletTransaction.updateOne(
+      { razorpayOrderId: razorpay_order_id },
+      {
+        $set: {
+          status: "Success",
+          description: "Wallet cash added by Razorpay",
+          openingBalance,
+          closingBalance,
+          razorpayPaymentId: razorpay_payment_id,
+          razorpaySignature: razorpay_signature
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      msg: "Wallet balance added successfully"
+    });
+
+  } catch (err) {
+    console.log("RAZORPAY VERIFY ERROR:", err);
+
+    if (err.code === 11000) {
+      return res.json({ success: false, msg: "Duplicate payment detected" });
+    }
+
+    res.status(500).json({ success: false, msg: "Payment verify failed" });
+  }
+});
+
+
+
+
+app.post("/wallet-history", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const history = await WalletTransaction.find({
+      email: email.toLowerCase()
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      history
+    });
+
+  } catch (err) {
+    console.log("WALLET HISTORY ERROR:", err);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
 
 
 
