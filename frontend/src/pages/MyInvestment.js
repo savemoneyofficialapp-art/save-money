@@ -491,7 +491,7 @@ function InvestmentCard({
           <p>Expected Maturity Amount</p>
           <h2 style={{ color: theme.color }}>{money(maturityAmount)}</h2>
           <div style={styles.daysLeftBox}>
-  ⏳ Renew payment starts soon — {plan.daysLeft || 0} Days Left
+  ⏳ Renew payment starts soon — {inv?.daysLeft || 0} Days Left
 </div>
         </div>
       </div>
