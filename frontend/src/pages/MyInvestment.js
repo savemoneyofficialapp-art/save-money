@@ -101,8 +101,9 @@ const renewDateText = () => {
   return `${formatDate(start)} to ${formatDate(end)}`;
 };
 
-const downloadCertificate = (plan) => {
-  window.open(`${API}/investment-certificate/${plan._id || plan.investmentId}`, "_blank");
+const openRenewInfo = (plan) => {
+  setSelectedPlan(plan);
+  setRenewOpen(true);
 };
 
 const openStatement = (plan) => {
@@ -110,9 +111,9 @@ const openStatement = (plan) => {
   setStatementOpen(true);
 };
 
-const openRenewInfo = (plan) => {
-  setSelectedPlan(plan);
-  setRenewOpen(true);
+const downloadCertificate = (plan) => {
+  const id = plan._id || plan.investmentId;
+  window.open(`${API}/investment-certificate/${id}`, "_blank");
 };
 
 const downloadSlip = (planId, historyId) => {
