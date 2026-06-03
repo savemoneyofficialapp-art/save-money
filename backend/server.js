@@ -2548,12 +2548,53 @@ app.post("/renew", async (req, res) => {
   }
 });
 
-app.post("/my-investments", async (req, res) => {
-  const { email } = req.body;
+app.post("/my-investments", auth, async (req, res) => {
+  try {
+    const { email } = req.body;
 
-  const data = await Investment.find({ email }).sort({ startDate: -1 });
+    const investments = await Investment.find({
+      email: email.toLowerCase(),
+      status: "Active"
+    }).sort({ createdAt: -1 });
 
-  res.json(data);
+    const fixedInvestments = investments.map((i) => ({
+      _id: i._id,
+      investmentId: i._id,
+      planType: "save",
+      planName: "Save Money",
+      planSub: "SIP Invest Plan",
+
+      amount: i.monthlyAmount || i.amount || 0,
+      monthlyReturn: i.monthlyAmount || i.amount || 0,
+      years: i.years || 0,
+      returnRate: i.rate || 0,
+
+      totalReturn: i.totalInterest || 0,
+      maturityAmount: i.maturityAmount || 0,
+
+      startDate: i.startDate || i.createdAt,
+      endDate: i.endDate || i.maturityDate,
+      renewDate: i.nextRenewDate,
+
+      status: i.status || "Active",
+      progress: i.monthsPaid
+        ? Math.min(Math.floor((i.monthsPaid / (i.years * 12)) * 100), 100)
+        : 1
+    }));
+
+    res.json({
+      success: true,
+      investments: fixedInvestments
+    });
+
+  } catch (err) {
+    console.log("MY INVESTMENTS ERROR:", err);
+
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+  }
 });
 
 app.post("/kyc-upload", upload.fields([
