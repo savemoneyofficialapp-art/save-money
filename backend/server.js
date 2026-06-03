@@ -1628,186 +1628,206 @@ app.post("/invest", async (req, res) => {
   }
 });
 
-app.post("/start-invest", auth, async (req, res) => {
+app.post("/start-invest", async (req, res) => {
   try {
-    const { email, amount, years } = req.body;
+    const {
+      email,
+      amount,
+      years,
+      rate,
+      totalInterest,
+      maturityAmount
+    } = req.body;
 
-    if (!email || !amount || !years) {
-      return res.json({
-        success: false,
-        msg: "Missing investment data"
+    if (!email) {
+      return res.status(400).json({
+        msg: "Email required"
       });
     }
 
-    const investAmount = Number(amount);
-    const investYears = Number(years);
-
-    if (investAmount < 2000) {
-      return res.json({
-        success: false,
-        msg: "Minimum ₹2000 required"
+    if (!amount || amount < 2000) {
+      return res.status(400).json({
+        msg: "Minimum investment is ₹2000"
       });
     }
 
-    const user = await User.findOne({
-      email: email.toLowerCase()
-    });
+    const user = await User.findOne({ email });
 
     if (!user) {
-      return res.json({
-        success: false,
+      return res.status(404).json({
         msg: "User not found"
       });
     }
 
-    const walletBalance = Number(user.balance || user.wallet || 0);
+    const walletBalance =
+      Number(user.walletBalance || 0);
 
-    if (walletBalance < investAmount) {
-      return res.json({
-        success: false,
+    if (walletBalance < amount) {
+      return res.status(400).json({
         msg: "Insufficient wallet balance"
       });
     }
 
-    let rate = 20;
-    if (investYears === 1) rate = 11;
-    if (investYears === 3) rate = 14;
-    if (investYears === 5) rate = 20;
-    if (investYears === 10) rate = 24;
-    if (investYears === 15) rate = 27;
-    if (investYears === 20) rate = 30;
+    user.walletBalance =
+      walletBalance - Number(amount);
 
-    const totalPlanAmount = investAmount * 12 * investYears;
-    const totalInterest = Math.floor((totalPlanAmount * rate) / 100);
-    const maturityAmount = totalPlanAmount + totalInterest;
-
-    const nextRenewDate = new Date();
-    nextRenewDate.setDate(nextRenewDate.getDate() + 30);
-
-    const inv = await Investment.create({
-      email: email.toLowerCase(),
-      monthlyAmount: investAmount,
-      amount: investAmount,
-      years: investYears,
-      rate,
-      totalPlanAmount,
-      totalInterest,
-      maturityAmount,
-      monthsPaid: 1,
-      startDate: new Date(),
-      nextRenewDate,
-      lastRenewDate: new Date(),
-      renewStatus: "Waiting",
-      status: "Active",
-      referralBonusGiven: false,
-      history: [
-        {
-          amount: investAmount,
-          date: new Date()
-        }
-      ]
-    });
-
-    user.balance = walletBalance - investAmount;
-    user.wallet = Number(user.balance || 0);
     await user.save();
+
+    const certificateNo =
+      "SM-CERT-" +
+      Date.now();
+
+    const slipNo =
+      "SM-SLIP-" +
+      Date.now();
+
+    const nextRenewDate =
+      new Date(
+        Date.now() +
+        30 * 24 * 60 * 60 * 1000
+      );
+
+    const investment =
+      await Investment.create({
+        email,
+
+        monthlyAmount: amount,
+        amount,
+
+        years,
+        rate,
+
+        totalInterest,
+        maturityAmount,
+
+        certificateNo,
+
+        startDate: new Date(),
+
+        nextRenewDate,
+
+        renewCount: 0,
+
+        status: "Active",
+
+        history: [
+          {
+            type: "START SIP",
+            amount,
+            date: new Date(),
+            slipNo
+          }
+        ]
+      });
+
+    await Transaction.create({
+      email,
+
+      amount,
+
+      type: "debit",
+
+      status: "success",
+
+      description:
+        "Save Money SIP Started"
+    });
 
     res.json({
       success: true,
-      msg: "SIP started successfully",
-      investment: inv
-    });
 
+      msg:
+        "Investment Started Successfully",
+
+      investmentId:
+        investment._id,
+
+      certificateNo,
+
+      slipNo
+    });
   } catch (err) {
-    console.log("START INVEST ERROR:", err);
+    console.log(err);
 
     res.status(500).json({
-      success: false,
       msg: "Server error"
     });
   }
 });
 
-app.post("/renew-invest", auth, async (req, res) => {
+app.post("/renew-invest", async (req, res) => {
   try {
-    const { email } = req.body;
+    const { investmentId } = req.body;
 
-    const user = await User.findOne({ email });
-    const inv = await Investment.findOne({ email, status: "Active" });
+    const investment = await Investment.findById(investmentId);
 
-    if (user.disableInvestment) {
-  return res.json({
-    msg: "Renew disabled by admin"
-  });
-}
+    if (!investment) {
+      return res.status(404).json({
+        success: false,
+        msg: "Investment not found"
+      });
+    }
 
-    if (!inv) return res.json({ msg: "No active plan" });
-
+    // Renew only between 1st and 3rd
     const today = new Date();
-    const renewStart = new Date(inv.nextRenewDate);
-    const renewEnd = new Date(inv.nextRenewDate);
-    renewEnd.setDate(renewEnd.getDate() + 5);
+    const currentDay = today.getDate();
 
-    if (today < renewStart) {
-      return res.json({ msg: "Renew time not started yet" });
+    if (currentDay < 1 || currentDay > 3) {
+      return res.status(400).json({
+        success: false,
+        msg: "Renew allowed only between 1st and 3rd date"
+      });
     }
 
-    if (today > renewEnd) {
-      inv.renewStatus = "Overdue";
-      await inv.save();
-      return res.json({ msg: "Renew date missed. Plan is overdue" });
-    }
-
-    if (user.wallet < inv.monthlyAmount) {
-      return res.json({ msg: "Low wallet balance" });
-    }
-
-    user.wallet -= inv.monthlyAmount;
-    await user.save();
-
-    inv.monthsPaid += 1;
-
-    inv.history.push({
-      amount: inv.monthlyAmount,
-      date: new Date()
+    // Add Renew History
+    investment.history.push({
+      type: "RENEW",
+      amount: investment.monthlyAmount || investment.amount,
+      date: new Date(),
+      slipNo: "RN-" + Date.now()
     });
 
-    inv.lastRenewDate = new Date();
+    investment.renewCount =
+      (investment.renewCount || 0) + 1;
 
-    const nextDate = new Date(inv.nextRenewDate);
-    nextDate.setDate(nextDate.getDate() + 30);
-    inv.nextRenewDate = nextDate;
+    investment.lastRenewDate =
+      new Date();
 
-    inv.renewStatus = "Waiting";
+    // Next renew date = next month 1st
+    const nextRenew = new Date();
 
-    await User.updateOne(
-  { email },
-  {
-    accountActive: true,
-    activeStatus: "Active"
-  }
-);
+    nextRenew.setMonth(
+      nextRenew.getMonth() + 1
+    );
 
-    if (inv.monthsPaid >= inv.years * 12) {
-      inv.status = "Completed";
-      inv.renewStatus = "Completed";
-    }
+    nextRenew.setDate(1);
 
-    await inv.save();
+    investment.nextRenewDate =
+      nextRenew;
 
-    await processRenewBonuses(email, inv);
+    investment.renewStatus =
+      "Renewed";
 
-    await sendEmail(
-  email,
-  "Investment Renewed",
-  `Your monthly Save Money investment has been renewed successfully.`
-);
+    await investment.save();
 
-    res.json({ msg: "Renew Successful" });
+    res.json({
+      success: true,
+      msg: "Investment renewed successfully",
+      nextRenewDate:
+        investment.nextRenewDate,
+      renewCount:
+        investment.renewCount
+    });
 
   } catch (err) {
+
     console.log(err);
-    res.status(500).json({ msg: "Server error" });
+
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+
   }
 });
 
@@ -4541,64 +4561,7 @@ app.get("/notifications/:email", async (req, res) => {
   }
 });
 
-app.get("/investment-certificate/:id", async (req, res) => {
-  const inv = await Investment.findById(req.params.id);
-  if (!inv) return res.send("Investment not found");
 
-  const PDFDocument = require("pdfkit");
-  const doc = new PDFDocument({ size: "A4", margin: 40 });
-
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=investment-certificate.pdf"
-  );
-
-  doc.pipe(res);
-
-  doc.rect(0, 0, 595, 842).fill("#020617");
-  doc.rect(30, 30, 535, 782).lineWidth(4).stroke("#22c55e");
-
-  doc.fillColor("#22c55e").fontSize(32).text("SAVE MONEY", 0, 70, {
-    align: "center"
-  });
-
-  doc.fillColor("#ffffff").fontSize(20).text("OFFICIAL INVESTMENT CERTIFICATE", {
-    align: "center"
-  });
-
-  doc.moveDown(2);
-
-  doc.fillColor("#facc15").fontSize(14).text(`Certificate ID: CERT-${inv._id}`);
-  doc.fillColor("#ffffff").text(`Email: ${inv.email}`);
-  doc.text(`Monthly Investment: INR ${inv.monthlyAmount}`);
-  doc.text(`Tenure: ${inv.years} Years`);
-  doc.text(`Interest Rate: ${inv.rate}%`);
-  doc.text(`Total Investment: INR ${inv.totalPlanAmount}`);
-  doc.text(`Total Interest: INR ${inv.totalInterest}`);
-
-  doc.moveDown(2);
-
-  doc.fillColor("#22c55e").fontSize(24).text(
-    `Maturity Return: INR ${inv.maturityAmount}`,
-    { align: "center" }
-  );
-
-  doc.moveDown(3);
-
-  doc.fillColor("#94a3b8").fontSize(12).text(
-    "This certificate confirms your Save Money investment plan.",
-    { align: "center" }
-  );
-
-  doc.fillColor("#22c55e").fontSize(14).text(
-    "Authorized Signature",
-    360,
-    760
-  );
-
-  doc.end();
-});
 
 app.get("/leaderboard", async (req, res) => {
 
@@ -4621,65 +4584,106 @@ app.get("/admin-tickets", auth, adminAuth, async (req, res) => {
   res.json(tickets);
 });
 
-app.get("/investment-slip/:investmentId/:paymentId", async (req, res) => {
-  const { investmentId, paymentId } = req.params;
+app.get(
+"/investment-certificate/:id",
+async (req,res)=>{
 
-  const inv = await Investment.findById(investmentId);
-  if (!inv) return res.send("Investment not found");
+const investment =
+await Investment.findById(req.params.id);
 
-  const payment = inv.history.find(
-    h => h._id.toString() === paymentId
-  );
+if(!investment){
+return res.status(404).send("Not found");
+}
 
-  if (!payment) return res.send("Payment not found");
+const html = `
+<html>
+<body>
 
-  const PDFDocument = require("pdfkit");
-  const doc = new PDFDocument({ size: "A4", margin: 40 });
+<h1>SAVE MONEY</h1>
 
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename=payment-slip-${paymentId}.pdf`
-  );
+<h2>INVESTMENT CERTIFICATE</h2>
 
-  doc.pipe(res);
+<p>Certificate No :
+${investment.certificateNo}</p>
 
-  doc.rect(0, 0, 595, 842).fill("#f8fafc");
-  doc.rect(40, 40, 515, 760).lineWidth(3).stroke("#22c55e");
+<p>Investment Amount :
+₹${investment.amount}</p>
 
-  doc.fillColor("#020617").fontSize(30).text("SAVE MONEY", {
-    align: "center"
-  });
+<p>Tenure :
+${investment.years} Years</p>
 
-  doc.fillColor("#16a34a").fontSize(20).text("OFFICIAL PAYMENT RECEIPT", {
-    align: "center"
-  });
+<p>Return :
+${investment.returnRate}%</p>
 
-  doc.moveDown(2);
+<p>Status :
+${investment.status}</p>
 
-  doc.fillColor("#020617").fontSize(14).text(`Receipt ID: PAY-${payment._id}`);
-  doc.text(`Email: ${inv.email}`);
-  doc.text(`Amount Paid: INR ${payment.amount}`);
-  doc.text(`Payment Date: ${new Date(payment.date).toLocaleDateString()}`);
-  doc.text(`Plan: ${inv.years} Years`);
-  doc.text(`Monthly Amount: INR ${inv.monthlyAmount}`);
+</body>
+</html>
+`;
 
-  doc.moveDown(2);
+res.send(html);
 
-  doc.fillColor("#22c55e").fontSize(24).text("STATUS: SUCCESS", {
-    align: "center"
-  });
-
-  doc.moveDown(3);
-
-  doc.fillColor("#64748b").fontSize(12).text(
-    "This is a system generated official payment receipt.",
-    { align: "center" }
-  );
-
-  doc.end();
 });
 
+app.get(
+"/investment-slip/:planId/:historyId",
+async(req,res)=>{
+
+const investment =
+await Investment.findById(req.params.planId);
+
+const history =
+investment.history.id(req.params.historyId);
+
+const html = `
+<html>
+<body>
+
+<h2>PAYMENT SLIP</h2>
+
+<p>Slip :
+${history.slipNo}</p>
+
+<p>Type :
+${history.type}</p>
+
+<p>Amount :
+₹${history.amount}</p>
+
+<p>Date :
+${history.date}</p>
+
+</body>
+</html>
+`;
+
+res.send(html);
+
+});
+
+app.get(
+"/renew-days-left/:id",
+async(req,res)=>{
+
+const investment =
+await Investment.findById(req.params.id);
+
+const now = new Date();
+
+const renew =
+new Date(investment.nextRenewDate);
+
+const diff =
+Math.ceil(
+(renew-now)/(1000*60*60*24)
+);
+
+res.json({
+daysLeft: diff
+});
+
+});
 
 
 

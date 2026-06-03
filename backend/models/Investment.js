@@ -1,48 +1,69 @@
 const mongoose = require("mongoose");
 
-const schema = new mongoose.Schema({
-  email: String,
+const schema = new mongoose.Schema(
+  {
+    email: String,
 
-  monthlyAmount: Number,
-  years: Number,
-  rate: Number,
+    monthlyAmount: Number,
+    amount: Number,
+    years: Number,
+    rate: Number,
 
-  totalPlanAmount: Number,
-  totalInterest: Number,
-  maturityAmount: Number,
+    totalPlanAmount: Number,
+    totalInterest: Number,
+    maturityAmount: Number,
 
-  monthsPaid: {
-    type: Number,
-    default: 1
-  },
+    monthsPaid: {
+      type: Number,
+      default: 1
+    },
 
-nextRenewDate: Date,
+    renewCount: {
+      type: Number,
+      default: 0
+    },
 
-lastRenewDate: Date,
+    certificateNo: {
+      type: String,
+      default: ""
+    },
 
-renewStatus: {
-  type: String,
-  default: "Waiting" // Waiting / Open / Overdue / Completed
-},
+    nextRenewDate: Date,
+    lastRenewDate: Date,
+    startDate: Date,
 
-  history: [
-    {
-      amount: Number,
-      date: Date
+    renewStatus: {
+      type: String,
+      default: "Waiting" // Waiting / Open / Overdue / Completed
+    },
+
+    
+
+    history: [
+      {
+        type: {
+          type: String,
+          default: "START SIP"
+        },
+        amount: Number,
+        date: Date,
+        slipNo: String
+      }
+    ],
+
+    status: {
+      type: String,
+      default: "Active"
+    },
+
+    referralBonusGiven: {
+      type: Boolean,
+      default: false
     }
-  ],
-
-  startDate: Date,
-
-  status: {
-    type: String,
-    default: "Active"
   },
-
-  referralBonusGiven: {
-    type: Boolean,
-    default: false
+  {
+    timestamps: true
   }
-});
+);
 
 module.exports = mongoose.model("Investment", schema);

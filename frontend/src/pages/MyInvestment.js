@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API } from "../config";
+import axios from "axios";
 
 export default function MyInvestment() {
   const navigate = useNavigate();
@@ -10,6 +11,25 @@ export default function MyInvestment() {
 
   const [loading, setLoading] = useState(true);
   const [investments, setInvestments] = useState([]);
+
+  const [statementOpen, setStatementOpen] = useState(false);
+const [renewOpen, setRenewOpen] = useState(false);
+const [selectedPlan, setSelectedPlan] = useState(null);
+
+const getDaysLeft = (renewDate) => {
+
+  if (!renewDate) return 0;
+
+  const today = new Date();
+
+  const renew = new Date(renewDate);
+
+  const diff = Math.ceil(
+    (renew - today) / (1000 * 60 * 60 * 24)
+  );
+
+  return diff > 0 ? diff : 0;
+};
 
   useEffect(() => {
     loadInvestments();
@@ -56,6 +76,48 @@ export default function MyInvestment() {
       year: "numeric"
     });
   };
+
+  const formatDate = (d) => {
+  if (!d) return "N/A";
+  return new Date(d).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+};
+
+const daysLeftForRenew = () => {
+  const today = new Date();
+  const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  const diff = Math.ceil((nextMonth - today) / (1000 * 60 * 60 * 24));
+  return diff < 0 ? 0 : diff;
+};
+
+const renewDateText = () => {
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  const end = new Date(today.getFullYear(), today.getMonth() + 1, 3);
+
+  return `${formatDate(start)} to ${formatDate(end)}`;
+};
+
+const downloadCertificate = (plan) => {
+  window.open(`${API}/investment-certificate/${plan._id || plan.investmentId}`, "_blank");
+};
+
+const openStatement = (plan) => {
+  setSelectedPlan(plan);
+  setStatementOpen(true);
+};
+
+const openRenewInfo = (plan) => {
+  setSelectedPlan(plan);
+  setRenewOpen(true);
+};
+
+const downloadSlip = (planId, historyId) => {
+  window.open(`${API}/investment-slip/${planId}/${historyId}`, "_blank");
+};
 
   const summary = useMemo(() => {
     const totalInvestment = investments.reduce(
@@ -106,16 +168,19 @@ export default function MyInvestment() {
   };
 
   const certificate = (inv) => {
-    alert("Investment Certificate feature coming soon");
-  };
+  setSelectedInvestment(inv);
+  window.open(`/certificate/${inv._id}`, "_blank");
+};
 
-  const downloadStatement = (inv) => {
-    alert("Download Statement feature coming soon");
-  };
+const downloadStatement = (inv) => {
+  setSelectedInvestment(inv);
+  setShowStatement(true);
+};
 
-  const renewNow = (inv) => {
-    alert("Renew request submitted / coming soon");
-  };
+const renewNow = (inv) => {
+  setSelectedInvestment(inv);
+  setShowRenew(true);
+};
 
   if (loading) {
     return (
@@ -146,7 +211,7 @@ export default function MyInvestment() {
             <div style={styles.secureBadge}>🛡 100% Secure</div>
             <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>
               🔔
-              <span>3</span>
+              <span></span>
             </button>
           </div>
         </div>
@@ -168,6 +233,7 @@ export default function MyInvestment() {
                 certificate={certificate}
                 downloadStatement={downloadStatement}
                 renewNow={renewNow}
+                daysLeft={getDaysLeft(inv.renewDate)}
               />
             ))}
 
@@ -176,6 +242,100 @@ export default function MyInvestment() {
         )}
 
       </div>
+      {statementOpen && selectedPlan && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      <h2>Payment Statement</h2>
+      <p>Start SIP payment and all renew payments are listed below.</p>
+
+      {(selectedPlan.history || []).length === 0 ? (
+        <p>No payment slip found</p>
+      ) : (
+        selectedPlan.history.map((h, i) => (
+          <div key={i} style={styles.slipRow}>
+            <div>
+              <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
+              <p>{formatDate(h.date)}</p>
+              <h3>₹ {Number(h.amount || 0).toLocaleString("en-IN")}</h3>
+            </div>
+
+            <button
+              style={styles.greenBtn}
+              onClick={() =>
+                downloadSlip(selectedPlan._id || selectedPlan.investmentId, h._id)
+              }
+            >
+              Download Slip
+            </button>
+          </div>
+        ))
+      )}
+
+      <button style={styles.closeBtn} onClick={() => setStatementOpen(false)}>
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
+{renewOpen && selectedPlan && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      <h2>Renew Information</h2>
+
+      <p>
+        Your SIP renew window will be open every month from
+        <b> 1st date to 3rd date</b>.
+      </p>
+
+      <h3>Next Renew Date</h3>
+      <h2 style={{ color: "#16a34a" }}>{renewDateText()}</h2>
+
+      <h3>Days Left For Renew</h3>
+      <h1 style={{ color: "#7c3aed" }}>{daysLeftForRenew()} Days</h1>
+
+      <p>
+        Please renew your Save Money investment on time. If renewal is not done
+        between 1st to 3rd date, bonus and auto withdrawal benefits may be affected.
+      </p>
+
+      <button
+  style={styles.greenBtn}
+  onClick={async () => {
+    try {
+
+      const res = await axios.post(
+        `${API}/renew-invest`,
+        {
+          investmentId: selectedPlan._id
+        }
+      );
+
+      alert(res.data.msg);
+
+      setRenewOpen(false);
+
+      loadInvestments(); // page reload function
+
+    } catch (err) {
+
+      alert(
+        err?.response?.data?.msg ||
+        "Renew failed"
+      );
+
+    }
+  }}
+>
+  Renew Payment
+</button>
+
+      <button style={styles.closeBtn} onClick={() => setRenewOpen(false)}>
+        Close
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
@@ -240,7 +400,8 @@ function InvestmentCard({
   viewDetails,
   certificate,
   downloadStatement,
-  renewNow
+  renewNow,
+  daysLeft
 }) {
   const isSave =
     String(inv.planType || inv.type || inv.planName || "")
@@ -274,6 +435,7 @@ function InvestmentCard({
   const totalReturn = inv.totalReturn || inv.returnAmount || 0;
   const maturityAmount = inv.maturityAmount || Number(amount) + Number(totalReturn);
   const progress = inv.progress || 0;
+  const renewDays = daysLeft || 0;
 
   return (
     <section style={styles.card}>
@@ -306,6 +468,7 @@ function InvestmentCard({
 
         <Info icon="🗓" title="Start Date" value={date(inv.startDate || inv.createdAt)} color="#8b5cf6" />
         <Info icon="📅" title="End Date" value={date(inv.endDate || inv.maturityDate)} color="#ec4899" />
+        <Info icon="⏳"title="Days Left"value={`${daysLeft} Days`}color={daysLeft <= 5? "#ef4444": "#16a34a"}/>
         <Info icon="🔄" title="Renew Date" value={date(inv.renewDate || inv.endDate || inv.maturityDate)} color="#f59e0b" />
 
         <Info icon="%" title="Return Rate" value={`${returnRate}%`} color={theme.color} />
@@ -331,11 +494,33 @@ function InvestmentCard({
 
       <div style={styles.actions}>
         <button onClick={() => viewDetails(inv)}>👁 View Details</button>
-        <button onClick={() => certificate(inv)}>🏅 Investment Certificate</button>
-        <button onClick={() => downloadStatement(inv)}>⬇ Download Statement</button>
-        <button style={{ background: theme.color, color: "white" }} onClick={() => renewNow(inv)}>
-          🔄 Renew Now
-        </button>
+       <button
+onClick={() =>
+window.open(
+`${API}/investment-certificate/${plan._id}`
+)
+}
+>
+🏅 Certificate
+</button>
+
+<button
+onClick={() => {
+setSelectedPlan(plan);
+setStatementOpen(true);
+}}
+>
+📄 Statement
+</button>
+
+<button
+onClick={()=>{
+setSelectedPlan(plan);
+setRenewOpen(true);
+}}
+>
+🔄 Renew Now
+</button>
       </div>
     </section>
   );
@@ -839,5 +1024,58 @@ const styles = {
     left: "6px",
     bottom: "5px",
     transform: "rotate(25deg)"
-  }
+  },
+
+  modalOverlay: {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,.55)",
+  zIndex: 9999,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "16px"
+},
+
+modalBox: {
+  width: "100%",
+  maxWidth: "430px",
+  background: "white",
+  borderRadius: "22px",
+  padding: "22px",
+  color: "#071747",
+  boxShadow: "0 25px 50px rgba(0,0,0,.25)"
+},
+
+slipRow: {
+  background: "#f8fafc",
+  borderRadius: "16px",
+  padding: "14px",
+  marginTop: "12px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "10px"
+},
+
+greenBtn: {
+  border: "none",
+  borderRadius: "12px",
+  padding: "11px 14px",
+  background: "#16a34a",
+  color: "white",
+  fontWeight: "900"
+},
+
+closeBtn: {
+  width: "100%",
+  marginTop: "16px",
+  border: "none",
+  borderRadius: "12px",
+  padding: "13px",
+  background: "#e5e7eb",
+  color: "#071747",
+  fontWeight: "900"
+}
+
 };
