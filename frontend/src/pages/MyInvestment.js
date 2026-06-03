@@ -256,7 +256,9 @@ const renewNow = (inv) => {
             <div>
               <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
               <p>{formatDate(h.date)}</p>
-              <h3>₹ {Number(h.amount || 0).toLocaleString("en-IN")}</h3>
+<h3 style={{ color: "#16a34a", fontWeight: "800" }}>
+ ₹ {Number(plan.amount || 0).toLocaleString("en-IN")}
+</h3>
             </div>
 
             <button
@@ -468,7 +470,6 @@ function InvestmentCard({
 
         <Info icon="🗓" title="Start Date" value={date(inv.startDate || inv.createdAt)} color="#8b5cf6" />
         <Info icon="📅" title="End Date" value={date(inv.endDate || inv.maturityDate)} color="#ec4899" />
-        <Info icon="⏳"title="Days Left"value={`${daysLeft} Days`}color={daysLeft <= 5? "#ef4444": "#16a34a"}/>
         <Info icon="🔄" title="Renew Date" value={date(inv.renewDate || inv.endDate || inv.maturityDate)} color="#f59e0b" />
 
         <Info icon="%" title="Return Rate" value={`${returnRate}%`} color={theme.color} />
@@ -489,37 +490,25 @@ function InvestmentCard({
         <div style={styles.maturityBox}>
           <p>Expected Maturity Amount</p>
           <h2 style={{ color: theme.color }}>{money(maturityAmount)}</h2>
+          <div style={styles.daysLeftBox}>
+  ⏳ Renew payment starts soon — {plan.daysLeft || 0} Days Left
+</div>
         </div>
       </div>
 
       <div style={styles.actions}>
         <button onClick={() => viewDetails(inv)}>👁 View Details</button>
-       <button
-onClick={() =>
-window.open(
-`${API}/investment-certificate/${plan._id}`
-)
-}
->
-🏅 Certificate
+      
+       <button onClick={() => downloadCertificate(plan)}>
+  🏅 Certificate
 </button>
 
-<button
-onClick={() => {
-setSelectedPlan(plan);
-setStatementOpen(true);
-}}
->
-📄 Statement
+<button onClick={() => openStatement(plan)}>
+  ⬇️ Statement
 </button>
 
-<button
-onClick={()=>{
-setSelectedPlan(plan);
-setRenewOpen(true);
-}}
->
-🔄 Renew Now
+<button onClick={() => openRenewInfo(plan)}>
+  🔄 Renew Now
 </button>
       </div>
     </section>
@@ -1065,6 +1054,17 @@ greenBtn: {
   background: "#16a34a",
   color: "white",
   fontWeight: "900"
+},
+
+daysLeftBox: {
+  marginTop: "12px",
+  background: "#fef3c7",
+  color: "#92400e",
+  border: "1px solid #facc15",
+  borderRadius: "14px",
+  padding: "12px",
+  fontWeight: "900",
+  textAlign: "center"
 },
 
 closeBtn: {

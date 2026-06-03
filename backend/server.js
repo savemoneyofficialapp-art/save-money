@@ -2577,30 +2577,54 @@ app.post("/my-investments", auth, async (req, res) => {
       status: "Active"
     }).sort({ createdAt: -1 });
 
-    const fixedInvestments = investments.map((i) => ({
-      _id: i._id,
-      investmentId: i._id,
-      planType: "save",
-      planName: "Save Money",
-      planSub: "SIP Invest Plan",
+   const fixedInvestments = investments.map((i, index) => {
+  const monthly = Number(i.monthlyAmount || i.amount || 0);
+  const years = Number(i.years || 0);
+  const totalInvestment = monthly * 12 * years;
 
-      amount: i.monthlyAmount || i.amount || 0,
-      monthlyReturn: i.monthlyAmount || i.amount || 0,
-      years: i.years || 0,
-      returnRate: i.rate || 0,
+ const startDate = i.startDate || i.createdAt;
 
-      totalReturn: i.totalInterest || 0,
-      maturityAmount: i.maturityAmount || 0,
+const endDate = new Date(startDate);
 
-      startDate: i.startDate || i.createdAt,
-      endDate: i.endDate || i.maturityDate,
-      renewDate: i.nextRenewDate,
+endDate.setFullYear(
+  endDate.getFullYear() + Number(i.years || 0)
+);
 
-      status: i.status || "Active",
-      progress: i.monthsPaid
-        ? Math.min(Math.floor((i.monthsPaid / (i.years * 12)) * 100), 100)
-        : 1
-    }));
+  return {
+    _id: i._id,
+    investmentId: `SM${new Date(startDate).getFullYear()}${String(index + 1).padStart(4, "0")}${String(i._id).slice(-4)}`,
+    planType: "save",
+    planName: "Save Money",
+    planSub: "SIP Invest Plan",
+
+    monthlyAmount: monthly,
+    amount: totalInvestment,
+    monthlyReturn: monthly,
+    years,
+    returnRate: i.rate || 0,
+
+    totalReturn: i.totalInterest || 0,
+    maturityAmount: i.maturityAmount || 0,
+
+    startDate,
+    endDate,
+    renewDate: i.nextRenewDate,
+
+    daysLeft: i.nextRenewDate
+      ? Math.max(
+          0,
+          Math.ceil((new Date(i.nextRenewDate) - new Date()) / (1000 * 60 * 60 * 24))
+        )
+      : 0,
+
+    status: i.status || "Active",
+    progress: i.monthsPaid
+      ? Math.min(Math.floor((i.monthsPaid / (years * 12)) * 100), 100)
+      : 1,
+
+    history: i.history || []
+  };
+});
 
     res.json({
       success: true,
