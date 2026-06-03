@@ -2580,7 +2580,8 @@ app.post("/my-investments", auth, async (req, res) => {
    const fixedInvestments = investments.map((i, index) => {
   const monthly = Number(i.monthlyAmount || i.amount || 0);
   const years = Number(i.years || 0);
-  const totalInvestment = monthly * 12 * years;
+  const requiredInvestment = monthly * 12 * years;
+const investedAmount = monthly * Number(i.monthsPaid || 1);
 
  const startDate = i.startDate || i.createdAt;
 
@@ -2597,8 +2598,10 @@ endDate.setFullYear(
     planName: "Save Money",
     planSub: "SIP Invest Plan",
 
-    monthlyAmount: monthly,
-    amount: totalInvestment,
+    requiredInvestment,
+investedAmount,
+amount: requiredInvestment,
+monthlyAmount: monthly,
     monthlyReturn: monthly,
     years,
     returnRate: i.rate || 0,
@@ -2626,10 +2629,38 @@ endDate.setFullYear(
   };
 });
 
-    res.json({
-      success: true,
-      investments: fixedInvestments
-    });
+   const summary = {
+  totalInvestment: fixedInvestments.reduce(
+    (a, b) => a + (b.requiredInvestment || 0),
+    0
+  ),
+
+  investedAmount: fixedInvestments.reduce(
+    (a, b) => a + (b.investedAmount || 0),
+    0
+  ),
+
+  totalReturn: fixedInvestments.reduce(
+    (a, b) => a + (b.totalReturn || 0),
+    0
+  ),
+
+  activeInvestments: fixedInvestments.length,
+
+  averageReturnRate:
+    fixedInvestments.length > 0
+      ? fixedInvestments.reduce(
+          (a, b) => a + (b.returnRate || 0),
+          0
+        ) / fixedInvestments.length
+      : 0
+};
+
+res.json({
+  success: true,
+  investments: fixedInvestments,
+  summary
+});
 
   } catch (err) {
     console.log("MY INVESTMENTS ERROR:", err);

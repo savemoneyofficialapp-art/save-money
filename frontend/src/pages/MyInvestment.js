@@ -257,7 +257,7 @@ const renewNow = (inv) => {
               <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
               <p>{formatDate(h.date)}</p>
 <h3 style={{ color: "#16a34a", fontWeight: "800" }}>
- ₹ {Number(plan.amount || 0).toLocaleString("en-IN")}
+ ₹ {Number(h.amount || 0).toLocaleString("en-IN")}
 </h3>
             </div>
 
@@ -359,8 +359,23 @@ function SummaryHero({ summary, money }) {
   return (
     <section style={styles.hero}>
       <div style={styles.heroLeft}>
-        <HeroItem icon="💼" title="Total Investment" value={money(summary.totalInvestment)} />
-        <HeroItem icon="🌱" title="Total Return (All Time)" value={money(summary.totalReturn)} green />
+        <HeroItem
+  icon="💼"
+  title="Required Investment"
+  value={money(summary.totalInvestment)}
+/>
+
+<HeroItem
+  icon="💰"
+  title="Invested Amount"
+  value={money(summary.investedAmount || 0)}
+/>
+
+<HeroItem
+  icon="🌱"
+  title="Total Return (All Time)"
+  value={money(summary.totalReturn)}
+ green />
       </div>
 
       <div style={styles.safeArt}>
@@ -403,7 +418,9 @@ function InvestmentCard({
   certificate,
   downloadStatement,
   renewNow,
-  daysLeft
+  daysLeft,
+  requiredInvestment,
+  investedAmount
 }) {
   const isSave =
     String(inv.planType || inv.type || inv.planName || "")
@@ -464,7 +481,20 @@ function InvestmentCard({
       </div>
 
       <div style={styles.detailsGrid}>
-        <Info icon="💰" title="Amount" value={money(amount)} color={theme.color} />
+<Info
+ icon="💰"
+ title="Required Investment"
+ value={money(requiredInvestment || amount)}
+ color={theme.color}
+/>
+
+<Info
+ icon="🪙"
+ title="Invested Amount"
+ value={money(investedAmount || monthlyReturn)}
+ color={theme.color}
+/>
+
         <Info icon="📅" title={isSave ? "EMI / Monthly Return" : "Monthly Return"} value={money(monthlyReturn)} color={theme.color} />
         <Info icon="⌛" title="Years / Tenure" value={`${years} Years`} color={theme.color} />
 
@@ -499,18 +529,18 @@ function InvestmentCard({
       <div style={styles.actions}>
         <button onClick={() => viewDetails(inv)}>👁 View Details</button>
       
-       <button onClick={() => downloadCertificate(plan)}>
-  🏅 Certificate
-</button>
+     <button style={styles.actionBtn} onClick={() => downloadCertificate(plan)}>
+    🏅 Certificate
+  </button>
 
-<button onClick={() => openStatement(plan)}>
-  ⬇️ Statement
-</button>
+  <button style={styles.actionBtn} onClick={() => openStatement(plan)}>
+    ⬇️ Statement
+  </button>
 
-<button onClick={() => openRenewInfo(plan)}>
-  🔄 Renew Now
-</button>
-      </div>
+  <button style={styles.renewBtn} onClick={() => openRenewInfo(plan)}>
+    🔄 Renew Now
+  </button>
+</div>
     </section>
   );
 }
