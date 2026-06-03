@@ -1629,174 +1629,103 @@ app.post("/invest", async (req, res) => {
 });
 
 app.post("/start-invest", auth, async (req, res) => {
-
   try {
-
     const { email, amount, years } = req.body;
 
-    const kyc = await checkKYC(email);
-
-if (!kyc.ok) {
-  return res.json({
-    msg: kyc.msg
-  });
-}
-
-    if (amount < 2000) {
-      return res.json({ msg: "Minimum 2000 required" });
+    if (!email || !amount || !years) {
+      return res.json({
+        success: false,
+        msg: "Missing investment data"
+      });
     }
 
-    const user = await User.findOne({ email });
+    const investAmount = Number(amount);
+    const investYears = Number(years);
+
+    if (investAmount < 2000) {
+      return res.json({
+        success: false,
+        msg: "Minimum ₹2000 required"
+      });
+    }
+
+    const user = await User.findOne({
+      email: email.toLowerCase()
+    });
 
     if (!user) {
-      return res.json({ msg: "User not found" });
+      return res.json({
+        success: false,
+        msg: "User not found"
+      });
     }
 
-    if (user.wallet < amount) {
-      return res.json({ msg: "Low balance" });
+    const walletBalance = Number(user.balance || user.wallet || 0);
+
+    if (walletBalance < investAmount) {
+      return res.json({
+        success: false,
+        msg: "Insufficient wallet balance"
+      });
     }
 
-    if (user.disableInvestment) {
-  return res.json({
-    msg: "Investment disabled by admin"
-  });
-}
-
-    // rate
     let rate = 20;
-    if (years == 1) rate = 11;
-    if (years == 3) rate = 14;
+    if (investYears === 1) rate = 11;
+    if (investYears === 3) rate = 14;
+    if (investYears === 5) rate = 20;
+    if (investYears === 10) rate = 24;
+    if (investYears === 15) rate = 27;
+    if (investYears === 20) rate = 30;
 
-    const totalPlan = amount * 12 * years;
-    const interest = Math.floor(totalPlan * rate / 100);
-    const maturity = totalPlan + interest;
+    const totalPlanAmount = investAmount * 12 * investYears;
+    const totalInterest = Math.floor((totalPlanAmount * rate) / 100);
+    const maturityAmount = totalPlanAmount + totalInterest;
 
     const nextRenewDate = new Date();
-nextRenewDate.setDate(nextRenewDate.getDate() + 30);
+    nextRenewDate.setDate(nextRenewDate.getDate() + 30);
 
-const previousInvest = await Investment.countDocuments({ email });
-
-    // create investment
     const inv = await Investment.create({
-      email,
-      monthlyAmount: amount,
-      years,
+      email: email.toLowerCase(),
+      monthlyAmount: investAmount,
+      amount: investAmount,
+      years: investYears,
       rate,
-      totalPlanAmount: totalPlan,
-      totalInterest: interest,
-      maturityAmount: maturity,
+      totalPlanAmount,
+      totalInterest,
+      maturityAmount,
       monthsPaid: 1,
       startDate: new Date(),
+      nextRenewDate,
+      lastRenewDate: new Date(),
+      renewStatus: "Waiting",
       status: "Active",
       referralBonusGiven: false,
-nextRenewDate,
-lastRenewDate: new Date(),
-renewStatus: "Waiting",
-
-         history: [
+      history: [
         {
-          amount,
+          amount: investAmount,
           date: new Date()
         }
       ]
     });
 
-    await sendEmail(
-  email,
-  "Investment Successful",
-  `Your Save Money investment of ₹${amount} per month has been started successfully for ${years} years.`
-);
-
-    if (previousInvest === 0) {
-  await processFirstInvestmentBonuses(email, inv);
-}
-
-    await User.updateOne(
-  { email },
-  {
-    accountActive: true,
-    activeStatus: "Active"
-  }
-);
-
-    await payRoyaltyBonus(email, amount);
-
-    const oldTeam = await TeamBonus.findOne({ email });
-
-if (!oldTeam) {
-  await TeamBonus.create({
-    email,
-    challengeStart: new Date()
-  });
-}
-
-await payTeamBonus(email);
-
-    // deduct wallet
-    user.wallet -= amount;
+    user.balance = walletBalance - investAmount;
+    user.wallet = Number(user.balance || 0);
     await user.save();
 
-    const existPB = await PerformanceBonus.findOne({ email });
-
-    
-
-if (!existPB) {
-  await PerformanceBonus.create({
-    email,
-    challengeStart: new Date()
-  });
-}
-
-    // ================= REFERRAL BONUS =================
-    if (user.referredBy && inv.referralBonusGiven === false) {
-
-      const refUser = await User.findOne({ referCode: user.referredBy });
-
-      if (refUser) {
-
-        refUser.referralIncome = (refUser.referralIncome || 0) + 499;
-        refUser.wallet = (refUser.wallet || 0) + 499;
-
-        await refUser.save();
-
-        inv.referralBonusGiven = true;
-        await inv.save();
-
-        // notification
-        if (typeof createNotification === "function") {
-          await createNotification(
-            refUser.email,
-            `You received ₹499 referral income from ${user.name}`
-          );
-        }
-      }
-    }
-
-    // user notification
-    if (typeof createNotification === "function") {
-      await createNotification(
-        email,
-        "Your Save Money investment started successfully"
-      );
-    }
-
-    await sendNotification(
-
-  email,
-
-  "Investment Successful",
-
-  `Your investment of ₹${amount} is successful`
-
-);
-
-    res.json({ msg: "Investment Started" });
+    res.json({
+      success: true,
+      msg: "SIP started successfully",
+      investment: inv
+    });
 
   } catch (err) {
     console.log("START INVEST ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
-  }
 
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+  }
 });
 
 app.post("/renew-invest", auth, async (req, res) => {
