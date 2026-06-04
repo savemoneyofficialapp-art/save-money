@@ -271,8 +271,8 @@ const renewNow = (inv) => {
                 certificate={certificate}
                 downloadStatement={downloadStatement}
                 renewNow={renewNow}
-                daysLeft={getDaysLeft(inv.renewDate)}
-              />
+                daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
+                isOverdue={isOverdue}            />
             ))}
 
             <BottomBanner />
@@ -467,8 +467,10 @@ function InvestmentCard({
   downloadStatement,
   renewNow,
   daysLeft,
+  isOverdue,
   requiredInvestment,
-  investedAmount
+  investedAmount,
+
 }) {
   const isSave =
     String(inv.planType || inv.type || inv.planName || "")
