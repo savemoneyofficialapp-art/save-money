@@ -32,6 +32,16 @@ const getDaysLeft = (renewDate) => {
   return diff > 0 ? diff : 0;
 };
 
+const formatDate = (d) => {
+  if (!d) return "N/A";
+
+  return new Date(d).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+};
+
 const isOverdue = (renewDate) => {
   if (!renewDate) return false;
 
