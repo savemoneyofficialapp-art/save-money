@@ -1713,9 +1713,9 @@ app.post("/start-invest", async (req, res) => {
         history: [
           {
             type: "START SIP",
-            amount,
+            amount: investAmount,
             date: new Date(),
-            slipNo
+            slipNo: "SM-SIP-" + Date.now()
           }
         ]
       });
@@ -4639,82 +4639,107 @@ app.get("/admin-tickets", auth, adminAuth, async (req, res) => {
   res.json(tickets);
 });
 
-app.get(
-"/investment-certificate/:id",
-async (req,res)=>{
+app.get("/investment-certificate/:id", async (req, res) => {
+  try {
+    const investment = await Investment.findById(req.params.id);
 
-const investment =
-await Investment.findById(req.params.id);
+    if (!investment) return res.status(404).send("Investment not found");
 
-if(!investment){
-return res.status(404).send("Not found");
-}
+    const amount = investment.monthlyAmount || investment.amount || 0;
+    const rate = investment.rate || investment.returnRate || 0;
+    const certNo = investment.certificateNo || `SMCERT-${investment._id}`;
 
-const html = `
-<html>
-<body>
+    const html = `
+      <html>
+        <head>
+          <title>Investment Certificate</title>
+          <style>
+            body{font-family:Arial;background:#f4f7ff;padding:30px;color:#071747}
+            .card{max-width:750px;margin:auto;background:white;border-radius:24px;padding:35px;border:3px solid #16a34a;box-shadow:0 20px 40px rgba(0,0,0,.12)}
+            h1{text-align:center;color:#16a34a;font-size:42px}
+            h2{text-align:center;color:#071747}
+            .row{display:flex;justify-content:space-between;border-bottom:1px solid #e5e7eb;padding:14px 0;font-size:18px}
+            .seal{text-align:center;margin-top:25px;color:#16a34a;font-weight:bold}
+            button{margin-top:25px;width:100%;padding:14px;border:none;border-radius:12px;background:#16a34a;color:white;font-weight:bold;font-size:16px}
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>SAVE MONEY</h1>
+            <h2>INVESTMENT CERTIFICATE</h2>
 
-<h1>SAVE MONEY</h1>
+            <div class="row"><b>Certificate No</b><span>${certNo}</span></div>
+            <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
+            <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
+            <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
+            <div class="row"><b>Total Plan Amount</b><span>₹${investment.totalPlanAmount || 0}</span></div>
+            <div class="row"><b>Total Interest</b><span>₹${investment.totalInterest || 0}</span></div>
+            <div class="row"><b>Maturity Amount</b><span>₹${investment.maturityAmount || 0}</span></div>
+            <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
 
-<h2>INVESTMENT CERTIFICATE</h2>
+            <p class="seal">✅ Verified Save Money Investment</p>
+            <button onclick="window.print()">Download / Print Certificate</button>
+          </div>
+        </body>
+      </html>
+    `;
 
-<p>Certificate No :
-${investment.certificateNo}</p>
-
-<p>Investment Amount :
-₹${investment.amount}</p>
-
-<p>Tenure :
-${investment.years} Years</p>
-
-<p>Return :
-${investment.returnRate}%</p>
-
-<p>Status :
-${investment.status}</p>
-
-</body>
-</html>
-`;
-
-res.send(html);
-
+    res.send(html);
+  } catch (err) {
+    console.log("CERTIFICATE ERROR:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-app.get(
-"/investment-slip/:planId/:historyId",
-async(req,res)=>{
+app.get("/investment-slip/:planId/:historyId", async (req, res) => {
+  try {
+    const investment = await Investment.findById(req.params.planId);
 
-const investment =
-await Investment.findById(req.params.planId);
+    if (!investment) return res.status(404).send("Investment not found");
 
-const history =
-investment.history.id(req.params.historyId);
+    const history = investment.history.id(req.params.historyId);
 
-const html = `
-<html>
-<body>
+    if (!history) return res.status(404).send("Slip not found");
 
-<h2>PAYMENT SLIP</h2>
+    const slipNo = history.slipNo || `SMSLIP-${history._id || Date.now()}`;
+    const type = history.type || "START SIP";
+    const amount = history.amount || investment.monthlyAmount || investment.amount || 0;
 
-<p>Slip :
-${history.slipNo}</p>
+    const html = `
+      <html>
+        <head>
+          <title>Payment Slip</title>
+          <style>
+            body{font-family:Arial;background:#f4f7ff;padding:30px;color:#071747}
+            .slip{max-width:600px;margin:auto;background:white;border-radius:24px;padding:30px;border:2px solid #2563eb;box-shadow:0 20px 40px rgba(0,0,0,.12)}
+            h1{text-align:center;color:#2563eb}
+            .row{display:flex;justify-content:space-between;border-bottom:1px solid #e5e7eb;padding:14px 0;font-size:18px}
+            .success{text-align:center;color:#16a34a;font-weight:bold;margin-top:20px}
+            button{margin-top:25px;width:100%;padding:14px;border:none;border-radius:12px;background:#2563eb;color:white;font-weight:bold;font-size:16px}
+          </style>
+        </head>
+        <body>
+          <div class="slip">
+            <h1>PAYMENT SLIP</h1>
 
-<p>Type :
-${history.type}</p>
+            <div class="row"><b>Slip No</b><span>${slipNo}</span></div>
+            <div class="row"><b>Payment Type</b><span>${type}</span></div>
+            <div class="row"><b>Amount</b><span>₹${amount}</span></div>
+            <div class="row"><b>Date</b><span>${new Date(history.date).toLocaleString("en-IN")}</span></div>
+            <div class="row"><b>Status</b><span>Success</span></div>
 
-<p>Amount :
-₹${history.amount}</p>
+            <p class="success">✅ Payment Successfully Recorded</p>
+            <button onclick="window.print()">Download / Print Slip</button>
+          </div>
+        </body>
+      </html>
+    `;
 
-<p>Date :
-${history.date}</p>
-
-</body>
-</html>
-`;
-
-res.send(html);
-
+    res.send(html);
+  } catch (err) {
+    console.log("SLIP ERROR:", err);
+    res.status(500).send("Server error");
+  }
 });
 
 app.get(
