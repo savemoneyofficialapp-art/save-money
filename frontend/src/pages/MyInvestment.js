@@ -88,9 +88,18 @@ const getDaysLeft = (renewDate) => {
 
 const daysLeftForRenew = () => {
   const today = new Date();
-  const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-  const diff = Math.ceil((nextMonth - today) / (1000 * 60 * 60 * 24));
-  return diff < 0 ? 0 : diff;
+
+  const nextRenew = new Date(
+    today.getFullYear(),
+    today.getMonth() + 1,
+    1
+  );
+
+  const diff = Math.ceil(
+    (nextRenew - today) / (1000 * 60 * 60 * 24)
+  );
+
+  return diff > 0 ? diff : 0;
 };
 
 const renewDateText = () => {
