@@ -1659,8 +1659,13 @@ app.post("/start-invest", async (req, res) => {
       });
     }
 
-    const walletBalance =
-      Number(user.walletBalance || 0);
+   const walletBalance = Number(
+  user.balance ??
+  user.wallet ??
+  user.walletBalance ??
+  user.amount ??
+  0
+);
 
     if (walletBalance < amount) {
       return res.status(400).json({
@@ -1668,10 +1673,13 @@ app.post("/start-invest", async (req, res) => {
       });
     }
 
-    user.walletBalance =
-      walletBalance - Number(amount);
+   const newBalance = walletBalance - investAmount;
 
-    await user.save();
+user.balance = newBalance;
+user.wallet = newBalance;
+user.walletBalance = newBalance;
+
+await user.save();
 
     const certificateNo =
       "SM-CERT-" +
@@ -2975,7 +2983,13 @@ app.post("/dashboard", auth, async (req, res) => {
       name: user.name,
       email: user.email,
       mobile: user.mobile,
-      wallet: user.wallet || 0,
+wallet: Number(
+  user.balance ??
+  user.wallet ??
+  user.walletBalance ??
+  user.amount ??
+  0
+),
       walletId: user.walletId,
       referCode: user.referCode,
       kycStatus: user.kycStatus,
