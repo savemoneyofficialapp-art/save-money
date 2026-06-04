@@ -290,39 +290,7 @@ const renewNow = (inv) => {
   </div>
 )}
 
-{statementOpen && selectedPlan && (
-  <div style={styles.modalOverlay}>
-    <div style={styles.modalBox}>
-      <h2>Payment Statement</h2>
 
-      {(selectedPlan.history || []).map((h, i) => (
-        <div key={i} style={styles.slipRow}>
-          <div>
-            <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
-            <p>{new Date(h.date).toLocaleDateString("en-IN")}</p>
-            <h3>₹ {Number(h.amount || 0).toLocaleString("en-IN")}</h3>
-          </div>
-
-          <button
-            style={styles.greenBtn}
-            onClick={() =>
-              window.open(
-                `${API}/investment-slip/${selectedPlan._id || selectedPlan.investmentId}/${h._id}`,
-                "_blank"
-              )
-            }
-          >
-            Download Slip
-          </button>
-        </div>
-      ))}
-
-      <button style={styles.closeBtn} onClick={() => setStatementOpen(false)}>
-        Close
-      </button>
-    </div>
-  </div>
-)}
 
 {renewOpen && selectedPlan && (
   <div style={styles.modalOverlay}>
