@@ -28,15 +28,11 @@ const BonusLedger = require("./models/BonusLedger");
 const cloudinary = require("cloudinary").v2;
 const Otp = require("./models/Otp");
 const axios = require("axios");
-
 const { CloudinaryStorage } =
 require("multer-storage-cloudinary");
-
 const helmet = require("helmet");
-
 const validator = require("validator");
 const sanitize = require("mongo-sanitize");
-
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
@@ -1744,14 +1740,14 @@ app.post("/start-invest", async (req, res) => {
       ]
     });
 
-    await Transaction.create({
-      email,
-      amount: investAmount,
-      type: "debit",
-      status: "success",
-      description:
-        "Save Money SIP Started"
-    });
+   await WalletHistory.create({
+  email,
+  amount: investAmount,
+  type: "debit",
+  status: "success",
+  description: "Save Money SIP Started",
+  date: new Date()
+});
 
     return res.status(200).json({
       success: true,
