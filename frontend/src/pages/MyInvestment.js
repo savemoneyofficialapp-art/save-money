@@ -247,18 +247,6 @@ const renewNow = (inv) => {
               />
             ))}
 
-             <button style={styles.actionBtn} onClick={() => downloadCertificate(plan)}>
-    🏅 Certificate
-  </button>
-
-  <button style={styles.actionBtn} onClick={() => openStatement(plan)}>
-    ⬇️ Statement
-  </button>
-
-  <button style={styles.renewBtn} onClick={() => openRenewInfo(plan)}>
-    🔄 Renew Now
-  </button>
-
             <BottomBanner />
           </>
         )}
@@ -550,6 +538,18 @@ function InvestmentCard({
 
       <div style={styles.actions}>
         <button onClick={() => viewDetails(inv)}>👁 View Details</button>
+
+         <button style={styles.actionBtn} onClick={() => certificate(inv)}>
+    🏅 Certificate
+  </button>
+
+  <button style={styles.actionBtn} onClick={() => downloadStatement(inv)}>
+    ⬇️ Statement
+  </button>
+
+  <button style={styles.renewBtn} onClick={() => renewNow(inv)}>
+    🔄 Renew Now
+  </button>
       
     
 </div>
