@@ -177,19 +177,25 @@ const downloadSlip = (planId, historyId) => {
     );
   };
 
-  const certificate = (inv) => {
-  setSelectedInvestment(inv);
-  window.open(`/certificate/${inv._id}`, "_blank");
+ const certificate = (inv) => {
+  const id = inv?._id || inv?.investmentId;
+
+  if (!id) {
+    alert("Investment ID not found");
+    return;
+  }
+
+  window.open(`${API}/investment-certificate/${id}`, "_blank");
 };
 
 const downloadStatement = (inv) => {
-  setSelectedInvestment(inv);
-  setShowStatement(true);
+  setSelectedPlan(inv);
+  setStatementOpen(true);
 };
 
 const renewNow = (inv) => {
-  setSelectedInvestment(inv);
-  setShowRenew(true);
+  setSelectedPlan(inv);
+  setRenewOpen(true);
 };
 
   if (loading) {
