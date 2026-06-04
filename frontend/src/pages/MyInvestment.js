@@ -247,6 +247,18 @@ const renewNow = (inv) => {
               />
             ))}
 
+             <button style={styles.actionBtn} onClick={() => downloadCertificate(plan)}>
+    🏅 Certificate
+  </button>
+
+  <button style={styles.actionBtn} onClick={() => openStatement(plan)}>
+    ⬇️ Statement
+  </button>
+
+  <button style={styles.renewBtn} onClick={() => openRenewInfo(plan)}>
+    🔄 Renew Now
+  </button>
+
             <BottomBanner />
           </>
         )}
@@ -290,42 +302,64 @@ const renewNow = (inv) => {
   </div>
 )}
 
-{statementOpen && selectedPlan && (
+{renewOpen && selectedPlan && (
   <div style={styles.modalOverlay}>
     <div style={styles.modalBox}>
-      <h2>Payment Statement</h2>
+      <h2>Renew Information</h2>
 
-      {(selectedPlan.history || []).map((h, i) => (
-        <div key={i} style={styles.slipRow}>
-          <div>
-            <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
-            <p>{new Date(h.date).toLocaleDateString("en-IN")}</p>
-            <h3>₹ {Number(h.amount || 0).toLocaleString("en-IN")}</h3>
-          </div>
+      <p>
+        Your SIP renew window will be open every month from
+        <b> 1st date to 3rd date</b>.
+      </p>
 
-          <button
-            style={styles.greenBtn}
-            onClick={() =>
-              window.open(
-                `${API}/investment-slip/${selectedPlan._id || selectedPlan.investmentId}/${h._id}`,
-                "_blank"
-              )
-            }
-          >
-            Download Slip
-          </button>
-        </div>
-      ))}
+      <h3>Next Renew Date</h3>
+      <h2 style={{ color: "#16a34a" }}>{renewDateText()}</h2>
 
-      <button style={styles.closeBtn} onClick={() => setStatementOpen(false)}>
+      <h3>Days Left For Renew</h3>
+      <h1 style={{ color: "#7c3aed" }}>{daysLeftForRenew()} Days</h1>
+
+      <p>
+        Please renew your Save Money investment on time. If renewal is not done
+        between 1st to 3rd date, bonus and auto withdrawal benefits may be affected.
+      </p>
+
+      <button
+  style={styles.greenBtn}
+  onClick={async () => {
+    try {
+
+      const res = await axios.post(
+        `${API}/renew-invest`,
+        {
+          investmentId: selectedPlan._id
+        }
+      );
+
+      alert(res.data.msg);
+
+      setRenewOpen(false);
+
+      loadInvestments(); // page reload function
+
+    } catch (err) {
+
+      alert(
+        err?.response?.data?.msg ||
+        "Renew failed"
+      );
+
+    }
+  }}
+>
+  Renew Payment
+</button>
+
+      <button style={styles.closeBtn} onClick={() => setRenewOpen(false)}>
         Close
       </button>
     </div>
   </div>
 )}
-
-
-   
     </div>
   );
 }
@@ -517,34 +551,7 @@ function InvestmentCard({
       <div style={styles.actions}>
         <button onClick={() => viewDetails(inv)}>👁 View Details</button>
       
-     <button
-  onClick={() => {
-    const id = plan._id || plan.investmentId;
-    if (!id) return alert("Investment ID not found");
-
-    window.open(`${API}/investment-certificate/${id}`, "_blank");
-  }}
->
-  🏅 Certificate
-</button>
-
-<button
-  onClick={() => {
-    setSelectedPlan(plan);
-    setStatementOpen(true);
-  }}
->
-  ⬇️ Statement
-</button>
-
-<button
-  onClick={() => {
-    setSelectedPlan(plan);
-    setRenewOpen(true);
-  }}
->
-  🔄 Renew Now
-</button>
+    
 </div>
     </section>
   );
