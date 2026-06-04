@@ -290,80 +290,42 @@ const renewNow = (inv) => {
   </div>
 )}
 
-
-
-{renewOpen && selectedPlan && (
+{statementOpen && selectedPlan && (
   <div style={styles.modalOverlay}>
     <div style={styles.modalBox}>
-      <h2>Renew Information</h2>
-      <p>Renew payment প্রতি মাসের 1 থেকে 3 তারিখ পর্যন্ত করা যাবে।</p>
-      <h2 style={{ color: "#16a34a" }}>29 Days Left</h2>
+      <h2>Payment Statement</h2>
 
-      <button style={styles.closeBtn} onClick={() => setRenewOpen(false)}>
+      {(selectedPlan.history || []).map((h, i) => (
+        <div key={i} style={styles.slipRow}>
+          <div>
+            <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
+            <p>{new Date(h.date).toLocaleDateString("en-IN")}</p>
+            <h3>₹ {Number(h.amount || 0).toLocaleString("en-IN")}</h3>
+          </div>
+
+          <button
+            style={styles.greenBtn}
+            onClick={() =>
+              window.open(
+                `${API}/investment-slip/${selectedPlan._id || selectedPlan.investmentId}/${h._id}`,
+                "_blank"
+              )
+            }
+          >
+            Download Slip
+          </button>
+        </div>
+      ))}
+
+      <button style={styles.closeBtn} onClick={() => setStatementOpen(false)}>
         Close
       </button>
     </div>
   </div>
 )}
 
-{renewOpen && selectedPlan && (
-  <div style={styles.modalOverlay}>
-    <div style={styles.modalBox}>
-      <h2>Renew Information</h2>
 
-      <p>
-        Your SIP renew window will be open every month from
-        <b> 1st date to 3rd date</b>.
-      </p>
-
-      <h3>Next Renew Date</h3>
-      <h2 style={{ color: "#16a34a" }}>{renewDateText()}</h2>
-
-      <h3>Days Left For Renew</h3>
-      <h1 style={{ color: "#7c3aed" }}>{daysLeftForRenew()} Days</h1>
-
-      <p>
-        Please renew your Save Money investment on time. If renewal is not done
-        between 1st to 3rd date, bonus and auto withdrawal benefits may be affected.
-      </p>
-
-      <button
-  style={styles.greenBtn}
-  onClick={async () => {
-    try {
-
-      const res = await axios.post(
-        `${API}/renew-invest`,
-        {
-          investmentId: selectedPlan._id
-        }
-      );
-
-      alert(res.data.msg);
-
-      setRenewOpen(false);
-
-      loadInvestments(); // page reload function
-
-    } catch (err) {
-
-      alert(
-        err?.response?.data?.msg ||
-        "Renew failed"
-      );
-
-    }
-  }}
->
-  Renew Payment
-</button>
-
-      <button style={styles.closeBtn} onClick={() => setRenewOpen(false)}>
-        Close
-      </button>
-    </div>
-  </div>
-)}
+   
     </div>
   );
 }
