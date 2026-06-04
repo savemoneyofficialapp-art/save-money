@@ -344,7 +344,7 @@ const renewNow = (inv) => {
   <h1 style={{ color: "#ef4444" }}>Overdue</h1>
 ) : (
   <h1 style={{ color: "#7c3aed" }}>
-    {daysLeft} Days
+{getDaysLeft(selectedPlan?.renewDate || selectedPlan?.nextRenewDate)} Days
   </h1>
 )}
 
