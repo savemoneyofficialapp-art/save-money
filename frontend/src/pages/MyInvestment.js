@@ -290,6 +290,54 @@ const renewNow = (inv) => {
   </div>
 )}
 
+{statementOpen && selectedPlan && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      <h2>Payment Statement</h2>
+
+      {(selectedPlan.history || []).map((h, i) => (
+        <div key={i} style={styles.slipRow}>
+          <div>
+            <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
+            <p>{new Date(h.date).toLocaleDateString("en-IN")}</p>
+            <h3>₹ {Number(h.amount || 0).toLocaleString("en-IN")}</h3>
+          </div>
+
+          <button
+            style={styles.greenBtn}
+            onClick={() =>
+              window.open(
+                `${API}/investment-slip/${selectedPlan._id || selectedPlan.investmentId}/${h._id}`,
+                "_blank"
+              )
+            }
+          >
+            Download Slip
+          </button>
+        </div>
+      ))}
+
+      <button style={styles.closeBtn} onClick={() => setStatementOpen(false)}>
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
+{renewOpen && selectedPlan && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      <h2>Renew Information</h2>
+      <p>Renew payment প্রতি মাসের 1 থেকে 3 তারিখ পর্যন্ত করা যাবে।</p>
+      <h2 style={{ color: "#16a34a" }}>29 Days Left</h2>
+
+      <button style={styles.closeBtn} onClick={() => setRenewOpen(false)}>
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
 {renewOpen && selectedPlan && (
   <div style={styles.modalOverlay}>
     <div style={styles.modalBox}>
@@ -539,17 +587,34 @@ function InvestmentCard({
       <div style={styles.actions}>
         <button onClick={() => viewDetails(inv)}>👁 View Details</button>
       
-     <button style={styles.actionBtn} onClick={() => downloadCertificate(plan)}>
-    🏅 Certificate
-  </button>
+     <button
+  onClick={() => {
+    const id = plan._id || plan.investmentId;
+    if (!id) return alert("Investment ID not found");
 
-  <button style={styles.actionBtn} onClick={() => openStatement(plan)}>
-    ⬇️ Statement
-  </button>
+    window.open(`${API}/investment-certificate/${id}`, "_blank");
+  }}
+>
+  🏅 Certificate
+</button>
 
-  <button style={styles.renewBtn} onClick={() => openRenewInfo(plan)}>
-    🔄 Renew Now
-  </button>
+<button
+  onClick={() => {
+    setSelectedPlan(plan);
+    setStatementOpen(true);
+  }}
+>
+  ⬇️ Statement
+</button>
+
+<button
+  onClick={() => {
+    setSelectedPlan(plan);
+    setRenewOpen(true);
+  }}
+>
+  🔄 Renew Now
+</button>
 </div>
     </section>
   );
