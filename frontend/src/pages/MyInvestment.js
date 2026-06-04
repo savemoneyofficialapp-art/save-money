@@ -101,9 +101,18 @@ const renewDateText = () => {
   return `${formatDate(start)} to ${formatDate(end)}`;
 };
 
-const openRenewInfo = (plan) => {
-  setSelectedPlan(plan);
-  setRenewOpen(true);
+const downloadCertificate = (plan) => {
+  const id = plan?._id || plan?.investmentId;
+
+  if (!id) {
+    alert("Investment ID not found");
+    return;
+  }
+
+  window.open(
+    `${API}/investment-certificate/${id}`,
+    "_blank"
+  );
 };
 
 const openStatement = (plan) => {
@@ -111,9 +120,9 @@ const openStatement = (plan) => {
   setStatementOpen(true);
 };
 
-const downloadCertificate = (plan) => {
-  const id = plan._id || plan.investmentId;
-  window.open(`${API}/investment-certificate/${id}`, "_blank");
+const openRenewInfo = (plan) => {
+  setSelectedPlan(plan);
+  setRenewOpen(true);
 };
 
 const downloadSlip = (planId, historyId) => {
