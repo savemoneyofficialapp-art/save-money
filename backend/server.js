@@ -1,4 +1,7 @@
 require("dotenv").config();
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -205,7 +208,7 @@ app.get("/", (req, res) => {
 
 app.get("/cors-test", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.json({ msg: "CORS OK" });
+  res.json({ toast: "CORS OK" });
 });
 
 // ================= SOCKET USERS =================
@@ -248,7 +251,7 @@ const auth = async (req, res, next) => {
     let token = req.headers.authorization;
 
     if (!token) {
-      return res.status(401).json({ msg: "No token" });
+      return res.status(401).json({ toast: "No token" });
     }
 
     if (token.startsWith("Bearer ")) {
@@ -260,12 +263,12 @@ const auth = async (req, res, next) => {
     const user = await User.findById(decoded.id);
 
     if (!user) {
-      return res.status(401).json({ msg: "User not found" });
+      return res.status(401).json({ toast: "User not found" });
     }
 
     if (user.banned) {
       return res.status(403).json({
-        msg: "Your account is banned",
+        toast: "Your account is banned",
         reason: user.banReason || ""
       });
     }
@@ -275,7 +278,7 @@ const auth = async (req, res, next) => {
 
   } catch (err) {
     return res.status(401).json({
-      msg: "Token expired or invalid"
+      toast: "Token expired or invalid"
     });
   }
 };
@@ -288,19 +291,19 @@ const adminAuth = async (req, res, next) => {
 
     if (!user) {
       return res.status(401).json({
-        msg: "User not found"
+        toast: "User not found"
       });
     }
 
     if (user.role !== "admin") {
       return res.status(403).json({
-        msg: "Admin access only"
+        toast: "Admin access only"
       });
     }
 
     if (user.banned) {
       return res.status(403).json({
-        msg: "Admin banned"
+        toast: "Admin banned"
       });
     }
 
@@ -309,7 +312,7 @@ const adminAuth = async (req, res, next) => {
   } catch (err) {
 
     return res.status(500).json({
-      msg: "Admin auth failed"
+      toast: "Admin auth failed"
     });
 
   }
@@ -394,7 +397,7 @@ async function checkKYC(email) {
   if (!user) {
     return {
       ok: false,
-      msg: "User not found"
+      toast: "User not found"
     };
   }
 
@@ -402,7 +405,7 @@ async function checkKYC(email) {
 
     return {
       ok: false,
-      msg: "Please Complete Your KYC First"
+      toast: "Please Complete Your KYC First"
     };
 
   }
@@ -944,7 +947,7 @@ async function sendEmail(to, subject, message) {
   console.log("BREVO API EMAIL ERROR:", mailErr.response?.data || mailErr.message);
 
   return res.status(500).json({
-    msg: "Email send failed"
+    toast: "Email send failed"
   });
 }
 }
@@ -958,7 +961,7 @@ app.post("/send-email-otp", async (req, res) => {
     if (!email) {
       return res.json({
         success: false,
-        msg: "Email required"
+        toast: "Email required"
       });
     }
 
@@ -978,7 +981,7 @@ app.post("/send-email-otp", async (req, res) => {
 
     res.json({
       success: true,
-      msg: "OTP sent successfully"
+      toast: "OTP sent successfully"
     });
 
   } catch (err) {
@@ -987,7 +990,7 @@ app.post("/send-email-otp", async (req, res) => {
 
     res.json({
       success: false,
-      msg: "OTP send failed"
+      toast: "OTP send failed"
     });
 
   }
@@ -1009,14 +1012,14 @@ app.post("/verify-email-otp", async (req, res) => {
 
       return res.json({
         success: true,
-        msg: "OTP verified"
+        toast: "OTP verified"
       });
 
     }
 
     res.json({
       success: false,
-      msg: "Invalid OTP"
+      toast: "Invalid OTP"
     });
 
   } catch (err) {
@@ -1025,7 +1028,7 @@ app.post("/verify-email-otp", async (req, res) => {
 
     res.json({
       success: false,
-      msg: "Verification failed"
+      toast: "Verification failed"
     });
 
   }
@@ -1138,14 +1141,14 @@ app.post("/register", async (req, res) => {
       !walletAddress
     ) {
       return res.status(400).json({
-        msg: "Please fill all required fields"
+        toast: "Please fill all required fields"
       });
     }
 
     // email validate
     if (!validator.isEmail(email)) {
       return res.status(400).json({
-        msg: "Invalid email"
+        toast: "Invalid email"
       });
     }
 
@@ -1160,7 +1163,7 @@ app.post("/register", async (req, res) => {
       })
     ) {
       return res.status(400).json({
-        msg: "Password must contain letters and numbers"
+        toast: "Password must contain letters and numbers"
       });
     }
 
@@ -1172,7 +1175,7 @@ app.post("/register", async (req, res) => {
 
     if (existingUser) {
       return res.status(400).json({
-        msg: "Email already registered"
+        toast: "Email already registered"
       });
     }
 
@@ -1184,7 +1187,7 @@ app.post("/register", async (req, res) => {
 
     if (existingMobile) {
       return res.status(400).json({
-        msg: "Mobile already registered"
+        toast: "Mobile already registered"
       });
     }
 
@@ -1295,7 +1298,7 @@ app.post("/register", async (req, res) => {
 
       success: true,
 
-      msg: "Registered Successfully"
+      toast: "Registered Successfully"
 
     });
 
@@ -1305,7 +1308,7 @@ app.post("/register", async (req, res) => {
 
     return res.status(500).json({
 
-      msg: "Server error",
+      toast: "Server error",
 
       error:
         process.env.NODE_ENV === "development"
@@ -1328,7 +1331,7 @@ app.post("/login", async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({
-        msg: "Email and password required"
+        toast: "Email and password required"
       });
     }
 
@@ -1338,13 +1341,13 @@ app.post("/login", async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        msg: "User not found"
+        toast: "User not found"
       });
     }
 
     if (user.banned) {
       return res.status(403).json({
-        msg: "Your account is banned"
+        toast: "Your account is banned"
       });
     }
 
@@ -1360,7 +1363,7 @@ app.post("/login", async (req, res) => {
 
     if (!isMatch) {
       return res.status(401).json({
-        msg: "Wrong password"
+        toast: "Wrong password"
       });
     }
 
@@ -1377,7 +1380,7 @@ app.post("/login", async (req, res) => {
 
     return res.json({
       success: true,
-      msg: "Login Successful",
+      toast: "Login Successful",
       token,
       role: user.role || "user",
       email: user.email,
@@ -1392,7 +1395,7 @@ app.post("/login", async (req, res) => {
     console.log(err);
 
     return res.status(500).json({
-      msg: err.message || "Server error"
+      toast: err.message || "Server error"
     });
   }
 });
@@ -1421,7 +1424,7 @@ app.post("/send-otp", async (req, res) => {
     `Your OTP is ${otp}. Valid for 5 minutes.`
   );
 
-  res.json({ msg: "OTP Sent" });
+  res.json({ toast: "OTP Sent" });
 });
 
 // SEND FORGOT PASSWORD OTP BY EMAIL
@@ -1432,7 +1435,7 @@ app.post("/send-forgot-otp", async (req, res) => {
 
     if (!email) {
       return res.status(400).json({
-        msg: "Email required"
+        toast: "Email required"
       });
     }
 
@@ -1442,7 +1445,7 @@ app.post("/send-forgot-otp", async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        msg: "User not found"
+        toast: "User not found"
       });
     }
 
@@ -1484,13 +1487,13 @@ try {
       );
 
       return res.status(500).json({
-        msg: "Email send failed"
+        toast: "Email send failed"
       });
     }
 
     return res.json({
       success: true,
-      msg: "OTP sent successfully"
+      toast: "OTP sent successfully"
     });
 
   } catch (err) {
@@ -1501,7 +1504,7 @@ try {
     );
 
     return res.status(500).json({
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 });
@@ -1513,7 +1516,7 @@ app.post("/verify-forgot-otp", async (req, res) => {
     const { email, otp } = req.body;
 
     if (!email || !otp) {
-      return res.status(400).json({ msg: "Email and OTP required" });
+      return res.status(400).json({ toast: "Email and OTP required" });
     }
 
     const user = await User.findOne({
@@ -1521,25 +1524,25 @@ app.post("/verify-forgot-otp", async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ toast: "User not found" });
     }
 
     if (!user.resetOtp || user.resetOtp !== otp) {
-      return res.status(400).json({ msg: "Invalid OTP" });
+      return res.status(400).json({ toast: "Invalid OTP" });
     }
 
     if (!user.resetOtpExpire || user.resetOtpExpire < new Date()) {
-      return res.status(400).json({ msg: "OTP expired" });
+      return res.status(400).json({ toast: "OTP expired" });
     }
 
     return res.json({
       success: true,
-      msg: "OTP verified successfully"
+      toast: "OTP verified successfully"
     });
 
   } catch (err) {
     console.log("VERIFY OTP ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -1551,7 +1554,7 @@ app.post("/reset-password", async (req, res) => {
 
     if (!email || !otp || !newPassword) {
       return res.status(400).json({
-        msg: "Email, OTP and new password required"
+        toast: "Email, OTP and new password required"
       });
     }
 
@@ -1560,15 +1563,15 @@ app.post("/reset-password", async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ toast: "User not found" });
     }
 
     if (!user.resetOtp || user.resetOtp !== otp) {
-      return res.status(400).json({ msg: "Invalid OTP" });
+      return res.status(400).json({ toast: "Invalid OTP" });
     }
 
     if (!user.resetOtpExpire || user.resetOtpExpire < new Date()) {
-      return res.status(400).json({ msg: "OTP expired" });
+      return res.status(400).json({ toast: "OTP expired" });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -1581,12 +1584,12 @@ app.post("/reset-password", async (req, res) => {
 
     return res.json({
       success: true,
-      msg: "Password reset successfully"
+      toast: "Password reset successfully"
     });
 
   } catch (err) {
     console.log("RESET PASSWORD ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -1602,7 +1605,7 @@ app.post("/invest", async (req, res) => {
     });
 
     if (existing) {
-      return res.json({ msg: "Already have active investment" });
+      return res.json({ toast: "Already have active investment" });
     }
 
     const totalInvest = amount * 12 * years;
@@ -1620,11 +1623,11 @@ app.post("/invest", async (req, res) => {
       maturityDate
     });
 
-    res.json({ msg: "Investment Started" });
+    res.json({ toast: "Investment Started" });
 
   } catch (err) {
     console.log(err);
-    res.json({ msg: "Error" });
+    res.json({ toast: "Error" });
   }
 });
 
@@ -1641,13 +1644,13 @@ app.post("/start-invest", async (req, res) => {
 
     if (!email) {
       return res.status(400).json({
-        msg: "Email required"
+        toast: "Email required"
       });
     }
 
     if (!amount || amount < 2000) {
       return res.status(400).json({
-        msg: "Minimum investment is ₹2000"
+        toast: "Minimum investment is ₹2000"
       });
     }
 
@@ -1655,7 +1658,7 @@ app.post("/start-invest", async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        msg: "User not found"
+        toast: "User not found"
       });
     }
 
@@ -1664,7 +1667,7 @@ app.post("/start-invest", async (req, res) => {
 
     if (walletBalance < amount) {
       return res.status(400).json({
-        msg: "Insufficient wallet balance"
+        toast: "Insufficient wallet balance"
       });
     }
 
@@ -1737,7 +1740,7 @@ nextRenewDate.setDate(nextRenewDate.getDate() + 30);
     res.json({
       success: true,
 
-      msg:
+      toast:
         "Investment Started Successfully",
 
       investmentId:
@@ -1751,7 +1754,7 @@ nextRenewDate.setDate(nextRenewDate.getDate() + 30);
     console.log(err);
 
     res.status(500).json({
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 });
@@ -1765,7 +1768,7 @@ app.post("/renew-invest", async (req, res) => {
     if (!investment) {
       return res.status(404).json({
         success: false,
-        msg: "Investment not found"
+        toast: "Investment not found"
       });
     }
 
@@ -1776,7 +1779,7 @@ app.post("/renew-invest", async (req, res) => {
     if (currentDay < 1 || currentDay > 3) {
       return res.status(400).json({
         success: false,
-        msg: "Renew allowed only between 1st and 3rd date"
+        toast: "Please ComeBack After 30 Days"
       });
     }
 
@@ -1813,7 +1816,7 @@ app.post("/renew-invest", async (req, res) => {
 
     res.json({
       success: true,
-      msg: "Investment renewed successfully",
+      toast: "Investment renewed successfully",
       nextRenewDate:
         investment.nextRenewDate,
       renewCount:
@@ -1826,7 +1829,7 @@ app.post("/renew-invest", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      msg: "Server error"
+      toast: "Server error"
     });
 
   }
@@ -1841,7 +1844,7 @@ app.post("/team-bonus-data", async (req, res) => {
     if (!tb) {
       return res.json({
         started: false,
-        msg: "Please complete your first investment first"
+        toast: "Please complete your first investment first"
       });
     }
 
@@ -1858,7 +1861,7 @@ app.post("/team-bonus-data", async (req, res) => {
     const me = await User.findOne({ email });
 
     if (!me) {
-      return res.json({ started: false, msg: "User not found" });
+      return res.json({ started: false, toast: "User not found" });
     }
 
     const level1 = await User.find({ referredBy: me.referCode });
@@ -1935,7 +1938,7 @@ app.post("/team-bonus-data", async (req, res) => {
 
   } catch (err) {
     console.log("TEAM BONUS DATA ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -1980,7 +1983,7 @@ app.post("/royalty-data", async (req, res) => {
 
   } catch (err) {
     console.log("ROYALTY DATA ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -1995,7 +1998,7 @@ app.post("/wallet-summary", async (req, res) => {
     if (!user) {
       return res.json({
         success: false,
-        msg: "User not found"
+        toast: "User not found"
       });
     }
 
@@ -2022,7 +2025,7 @@ app.post("/wallet-summary", async (req, res) => {
     console.log("WALLET SUMMARY ERROR:", err);
     res.status(500).json({
       success: false,
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 });
@@ -2042,7 +2045,7 @@ app.post("/wallet-user", async (req, res) => {
     if (!user) {
       return res.json({
         success: false,
-        msg: "Receiver wallet not found"
+        toast: "Receiver wallet not found"
       });
     }
 
@@ -2059,7 +2062,7 @@ app.post("/wallet-user", async (req, res) => {
     console.log("WALLET USER ERROR:", err);
     res.status(500).json({
       success: false,
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 });
@@ -2074,7 +2077,7 @@ app.post("/wallet-data", auth, async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        msg: "User not found"
+        toast: "User not found"
       });
     }
 
@@ -2113,7 +2116,7 @@ app.post("/wallet-data", auth, async (req, res) => {
     console.log("WALLET DATA ERROR:", err);
 
     res.status(500).json({
-      msg: "Wallet data loading failed"
+      toast: "Wallet data loading failed"
     });
 
   }
@@ -2150,7 +2153,7 @@ app.post(
       });
 
       res.json({
-        msg: "Request Submitted"
+        toast: "Request Submitted"
       });
 
     } catch (err) {
@@ -2158,7 +2161,7 @@ app.post(
       console.log(err);
 
       res.status(500).json({
-        msg: "Upload failed"
+        toast: "Upload failed"
       });
 
     }
@@ -2173,7 +2176,7 @@ app.post("/refresh-token", async (req, res) => {
   if (!refreshToken) {
 
     return res.status(401).json({
-      msg: "No refresh token"
+      toast: "No refresh token"
     });
 
   }
@@ -2195,7 +2198,7 @@ app.post("/refresh-token", async (req, res) => {
     ) {
 
       return res.status(403).json({
-        msg: "Invalid refresh token"
+        toast: "Invalid refresh token"
       });
 
     }
@@ -2219,7 +2222,7 @@ app.post("/refresh-token", async (req, res) => {
   } catch {
 
     res.status(403).json({
-      msg: "Token expired"
+      toast: "Token expired"
     });
 
   }
@@ -2237,7 +2240,7 @@ app.post("/logout", auth, async (req, res) => {
   await user.save();
 
   res.json({
-    msg: "Logout success"
+    toast: "Logout success"
   });
 
 });
@@ -2252,7 +2255,7 @@ app.post("/user-dashboard-chart", auth, async (req, res) => {
 
     if (!user) {
       return res.json({
-        msg: "User not found"
+        toast: "User not found"
       });
     }
 
@@ -2390,7 +2393,7 @@ app.post("/user-dashboard-chart", auth, async (req, res) => {
     console.log(err);
 
     res.status(500).json({
-      msg: "Server error"
+      toast: "Server error"
     });
 
   }
@@ -2406,7 +2409,7 @@ app.post("/wallet-transfer", async (req, res) => {
     if (!senderEmail || !receiverWalletId || transferAmount <= 0) {
       return res.json({
         success: false,
-        msg: "Invalid transfer data"
+        toast: "Invalid transfer data"
       });
     }
 
@@ -2417,7 +2420,7 @@ app.post("/wallet-transfer", async (req, res) => {
     if (!sender) {
       return res.json({
         success: false,
-        msg: "Sender not found"
+        toast: "Sender not found"
       });
     }
 
@@ -2436,14 +2439,14 @@ app.post("/wallet-transfer", async (req, res) => {
     if (!receiver) {
       return res.json({
         success: false,
-        msg: "Receiver not found"
+        toast: "Receiver not found"
       });
     }
 
     if (sender.email === receiver.email) {
       return res.json({
         success: false,
-        msg: "You cannot transfer to your own wallet"
+        toast: "You cannot transfer to your own wallet"
       });
     }
 
@@ -2452,7 +2455,7 @@ app.post("/wallet-transfer", async (req, res) => {
     if (senderBalance < transferAmount) {
       return res.json({
         success: false,
-        msg: "Insufficient wallet balance"
+        toast: "Insufficient wallet balance"
       });
     }
 
@@ -2488,14 +2491,14 @@ app.post("/wallet-transfer", async (req, res) => {
 
     res.json({
       success: true,
-      msg: "Transfer successful"
+      toast: "Transfer successful"
     });
 
   } catch (err) {
     console.log("WALLET TRANSFER ERROR:", err);
     res.status(500).json({
       success: false,
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 });
@@ -2561,11 +2564,11 @@ app.post("/renew", async (req, res) => {
       status: "Active"
     });
 
-    res.json({ msg: "Investment Renewed" });
+    res.json({ toast: "Investment Renewed" });
 
   } catch (err) {
     console.log(err);
-    res.json({ msg: "Error" });
+    res.json({ toast: "Error" });
   }
 });
 
@@ -2679,7 +2682,7 @@ res.json({
 
     res.status(500).json({
       success: false,
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 });
@@ -2707,7 +2710,7 @@ const photo = req.files["photo"][0].path;
     }
   );
 
-  res.json({ msg: "KYC submitted again" });
+  res.json({ toast: "KYC submitted again" });
 });
 
 app.post("/get-user", async (req, res) => {
@@ -2717,7 +2720,7 @@ app.post("/get-user", async (req, res) => {
   const user = await User.findOne({ email });
 
   if (!user) {
-    return res.json({ msg: "User not found" });
+    return res.json({ toast: "User not found" });
   }
 
   res.json(user);
@@ -2734,7 +2737,7 @@ app.post("/get-user-data", auth, async (req, res) => {
 
     if (!user) {
       return res.json({
-        msg: "User not found"
+        toast: "User not found"
       });
     }
 
@@ -2745,7 +2748,7 @@ app.post("/get-user-data", auth, async (req, res) => {
     console.log(err);
 
     res.status(500).json({
-      msg: "Server error"
+      toast: "Server error"
     });
 
   }
@@ -2780,7 +2783,7 @@ app.post("/update-mobile", async (req, res) => {
     { mobile }
   );
 
-  res.json({ msg: "Mobile updated" });
+  res.json({ toast: "Mobile updated" });
 });
 
 app.post(
@@ -2810,11 +2813,11 @@ app.post(
       );
       await createNotification(email, "KYC Submitted Successfully");
 
-      res.json({ msg: "KYC Submitted Successfully" });
+      res.json({ toast: "KYC Submitted Successfully" });
 
     } catch (err) {
       console.log("KYC ERROR:", err);
-      res.status(500).json({ msg: "Server error" });
+      res.status(500).json({ toast: "Server error" });
     }
   }
 );
@@ -2866,7 +2869,7 @@ app.post("/reject-kyc", auth, adminAuth, async (req, res) => {
     const { userId, reason } = req.body;
 
     if (!reason) {
-      return res.status(400).json({ msg: "Reject reason required" });
+      return res.status(400).json({ toast: "Reject reason required" });
     }
 
     const user = await User.findByIdAndUpdate(
@@ -2885,10 +2888,10 @@ app.post("/reject-kyc", auth, adminAuth, async (req, res) => {
       read: false
     });
 
-    res.json({ msg: "KYC Rejected" });
+    res.json({ toast: "KYC Rejected" });
 
   } catch (err) {
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -2903,7 +2906,7 @@ app.post("/dashboard", auth, async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        msg: "User not found"
+        toast: "User not found"
       });
     }
 
@@ -2990,7 +2993,7 @@ app.post("/dashboard", auth, async (req, res) => {
   } catch (err) {
     console.log("DASHBOARD ERROR:", err);
     res.status(500).json({
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 });
@@ -3010,7 +3013,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
   await txn.save();
 
-  res.json({ msg: "Uploaded" });
+  res.json({ toast: "Uploaded" });
 });
 
 // ================= ADMIN =================
@@ -3021,7 +3024,7 @@ app.post("/admin/approve", async (req, res) => {
   const txn = await Txn.findById(id);
 
   if (!txn) {
-    return res.json({ msg: "Transaction not found" });
+    return res.json({ toast: "Transaction not found" });
   }
 
   txn.status = "Approved";
@@ -3065,7 +3068,7 @@ app.post("/admin/approve", async (req, res) => {
     }
   }
 
-  res.json({ msg: "Approved" });
+  res.json({ toast: "Approved" });
 });
 
 app.post("/add-cash", async (req, res) => {
@@ -3079,7 +3082,7 @@ app.post("/add-cash", async (req, res) => {
     status: "Pending"
   });
 
-  res.json({ msg: "Request Submitted" });
+  res.json({ toast: "Request Submitted" });
 });
 
 
@@ -3185,7 +3188,7 @@ app.get("/pending-kyc", auth, adminAuth, async (req, res) => {
 
     res.json(users);
   } catch (err) {
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -3197,10 +3200,10 @@ app.post("/approve-kyc", auth, adminAuth, async (req, res) => {
       kycStatus: "approved"
     });
 
-    res.json({ msg: "KYC Approved" });
+    res.json({ toast: "KYC Approved" });
 
   } catch (err) {
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 app.post("/reply-ticket", auth, adminAuth, async (req, res) => {
@@ -3210,7 +3213,7 @@ app.post("/reply-ticket", auth, adminAuth, async (req, res) => {
     const ticket = await SupportTicket.findById(ticketId);
 
     if (!ticket) {
-      return res.json({ msg: "Ticket not found" });
+      return res.json({ toast: "Ticket not found" });
     }
 
     ticket.replies.push({
@@ -3234,11 +3237,11 @@ app.post("/reply-ticket", auth, adminAuth, async (req, res) => {
   `Admin has replied to your support ticket: ${message}`
 );
 
-    res.json({ msg: "Reply sent" });
+    res.json({ toast: "Reply sent" });
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -3260,7 +3263,7 @@ app.post(
       if (!user) {
 
         return res.json({
-          msg: "User not found"
+          toast: "User not found"
         });
 
       }
@@ -3273,7 +3276,7 @@ app.post(
       await user.save();
 
       res.json({
-        msg: "User banned successfully"
+        toast: "User banned successfully"
       });
 
     } catch (err) {
@@ -3281,7 +3284,7 @@ app.post(
       console.log(err);
 
       res.status(500).json({
-        msg: "Server error"
+        toast: "Server error"
       });
 
     }
@@ -3302,7 +3305,7 @@ app.post(
     if (!user) {
 
       return res.json({
-        msg: "User not found"
+        toast: "User not found"
       });
 
     }
@@ -3314,7 +3317,7 @@ app.post(
     await user.save();
 
     res.json({
-      msg: "User unbanned successfully"
+      toast: "User unbanned successfully"
     });
 
   }
@@ -3328,7 +3331,7 @@ app.post("/admin-freeze-wallet", auth, adminAuth, async (req, res) => {
 
   if (!user) {
     return res.json({
-      msg: "User not found"
+      toast: "User not found"
     });
   }
 
@@ -3337,7 +3340,7 @@ app.post("/admin-freeze-wallet", auth, adminAuth, async (req, res) => {
   await user.save();
 
   res.json({
-    msg: freeze
+    toast: freeze
       ? "Wallet frozen"
       : "Wallet unfrozen"
   });
@@ -3352,7 +3355,7 @@ app.post("/admin-disable-investment", auth, adminAuth, async (req, res) => {
 
   if (!user) {
     return res.json({
-      msg: "User not found"
+      toast: "User not found"
     });
   }
 
@@ -3361,7 +3364,7 @@ app.post("/admin-disable-investment", auth, adminAuth, async (req, res) => {
   await user.save();
 
   res.json({
-    msg: disable
+    toast: disable
       ? "Investment disabled"
       : "Investment enabled"
   });
@@ -3376,7 +3379,7 @@ app.post("/admin-disable-withdrawal", auth, adminAuth, async (req, res) => {
 
   if (!user) {
     return res.json({
-      msg: "User not found"
+      toast: "User not found"
     });
   }
 
@@ -3385,7 +3388,7 @@ app.post("/admin-disable-withdrawal", auth, adminAuth, async (req, res) => {
   await user.save();
 
   res.json({
-    msg: disable
+    toast: disable
       ? "Withdrawal disabled"
       : "Withdrawal enabled"
   });
@@ -3400,7 +3403,7 @@ app.post("/admin-disable-bonus", auth, adminAuth, async (req, res) => {
 
   if (!user) {
     return res.json({
-      msg: "User not found"
+      toast: "User not found"
     });
   }
 
@@ -3409,7 +3412,7 @@ app.post("/admin-disable-bonus", auth, adminAuth, async (req, res) => {
   await user.save();
 
   res.json({
-    msg: disable
+    toast: disable
       ? "Bonus disabled"
       : "Bonus enabled"
   });
@@ -3446,7 +3449,7 @@ app.post("/admin-search-users", auth, adminAuth, async (req, res) => {
 
   } catch (err) {
     console.log("ADMIN SEARCH ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -3545,7 +3548,7 @@ app.get("/admin-advanced-analytics", auth, adminAuth, async (req, res) => {
 
   } catch (err) {
     console.log("ADVANCED ANALYTICS ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -3593,7 +3596,7 @@ app.post("/admin-search-users", auth, adminAuth, async (req, res) => {
 
   } catch (err) {
     console.log("SEARCH ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -3603,13 +3606,13 @@ app.post("/close-ticket", auth, async (req, res) => {
   const ticket = await SupportTicket.findById(ticketId);
 
   if (!ticket) {
-    return res.json({ msg: "Ticket not found" });
+    return res.json({ toast: "Ticket not found" });
   }
 
   ticket.status = "Closed";
   await ticket.save();
 
-  res.json({ msg: "Ticket closed" });
+  res.json({ toast: "Ticket closed" });
 });
 
 app.post("/approve-kyc",
@@ -3626,7 +3629,7 @@ async (req, res) => {
   await user.save();
 
   res.json({
-    msg: "KYC Approved"
+    toast: "KYC Approved"
   });
 
 });
@@ -3645,7 +3648,7 @@ async (req, res) => {
   await user.save();
 
   res.json({
-    msg: "KYC Rejected"
+    toast: "KYC Rejected"
   });
 
 });
@@ -3667,7 +3670,7 @@ async (req, res) => {
   if (!reqData) {
 
     return res.json({
-      msg: "Request not found"
+      toast: "Request not found"
     });
 
   }
@@ -3697,7 +3700,7 @@ async (req, res) => {
   });
 
   res.json({
-    msg: "Cash Approved"
+    toast: "Cash Approved"
   });
 
 });
@@ -3737,7 +3740,7 @@ app.get("/admin/finance-report", async (req, res) => {
 
   } catch (err) {
     console.log("ADMIN FINANCE REPORT ERROR:", err);
-    res.status(500).json({ success: false, msg: "Server error" });
+    res.status(500).json({ success: false, toast: "Server error" });
   }
 });
 
@@ -3748,7 +3751,7 @@ app.post("/admin-user-tree", auth, adminAuth, async (req, res) => {
     const rootUser = await User.findOne({ email });
 
     if (!rootUser) {
-      return res.json({ msg: "User not found" });
+      return res.json({ toast: "User not found" });
     }
 
     async function buildTree(user, level) {
@@ -3797,7 +3800,7 @@ app.post("/admin-user-tree", auth, adminAuth, async (req, res) => {
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -3815,7 +3818,7 @@ async (req, res) => {
   await user.save();
 
   res.json({
-    msg: "User Banned"
+    toast: "User Banned"
   });
 
 });
@@ -3855,7 +3858,7 @@ async (req, res) => {
   }
 
   res.json({
-    msg:"Broadcast Sent"
+    toast:"Broadcast Sent"
   });
 
 });
@@ -3875,7 +3878,7 @@ app.post("/send-notification", async (req, res) => {
     io.to(users[email]).emit("new-notification", newNotification);
   }
 
-  res.json({ msg: "Notification sent" });
+  res.json({ toast: "Notification sent" });
 });
 
 app.post("/get-notifications", auth, async (req, res) => {
@@ -3896,7 +3899,7 @@ app.post("/get-notifications", auth, async (req, res) => {
 
   } catch (err) {
     console.log("GET NOTIFICATION ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -3942,7 +3945,7 @@ app.post("/my-referrals", auth, async (req, res) => {
   } catch (err) {
     console.log("REFERRAL ERROR:", err);
     res.status(500).json({
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 });
@@ -3969,7 +3972,7 @@ app.post("/performance-data", async (req, res) => {
 
     if (!pb) {
       return res.json({
-        msg: "No challenge started"
+        toast: "No challenge started"
       });
     }
 
@@ -3988,7 +3991,7 @@ app.post("/performance-data", async (req, res) => {
     console.log("PERFORMANCE API ERROR:", err);
 
     res.status(500).json({
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 
@@ -4014,7 +4017,7 @@ app.post("/user-data", auth, async (req, res) => {
   const user = await User.findOne({ email }).select("-password");
 
   if (!user) {
-    return res.json({ msg: "User not found" });
+    return res.json({ toast: "User not found" });
   }
 
   res.json(user);
@@ -4034,7 +4037,7 @@ async (req, res) => {
   );
 
   res.json({
-    msg:"done"
+    toast:"done"
   });
 
 });
@@ -4044,7 +4047,7 @@ app.post("/create-ticket", auth, async (req, res) => {
     const { email, subject, message } = req.body;
 
     if (!subject || !message) {
-      return res.json({ msg: "Subject and message required" });
+      return res.json({ toast: "Subject and message required" });
     }
 
     await SupportTicket.create({
@@ -4059,11 +4062,11 @@ app.post("/create-ticket", auth, async (req, res) => {
       ]
     });
 
-    res.json({ msg: "Ticket created successfully" });
+    res.json({ toast: "Ticket created successfully" });
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -4084,7 +4087,7 @@ app.post("/referral-tree", auth, async (req, res) => {
     const rootUser = await User.findOne({ email });
 
     if (!rootUser) {
-      return res.json({ msg: "User not found" });
+      return res.json({ toast: "User not found" });
     }
 
     let analytics = {
@@ -4182,7 +4185,7 @@ app.post("/referral-tree", auth, async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      msg: "Server error"
+      toast: "Server error"
     });
   }
 });
@@ -4201,7 +4204,7 @@ app.post("/investment-summary", async (req, res) => {
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({ msg: "Email required" });
+      return res.status(400).json({ toast: "Email required" });
     }
 
     const investments = await Investment.find({
@@ -4260,7 +4263,7 @@ app.post("/investment-summary", async (req, res) => {
 
   } catch (err) {
     console.log("INVESTMENT SUMMARY ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -4270,17 +4273,17 @@ app.post("/create-razorpay-order", async (req, res) => {
     const addAmount = Number(amount);
 
     if (!email || addAmount < 100) {
-      return res.json({ success: false, msg: "Minimum add cash ₹100" });
+      return res.json({ success: false, toast: "Minimum add cash ₹100" });
     }
 
     if (addAmount > 50000) {
-      return res.json({ success: false, msg: "Maximum add cash ₹50,000" });
+      return res.json({ success: false, toast: "Maximum add cash ₹50,000" });
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      return res.json({ success: false, msg: "User not found" });
+      return res.json({ success: false, toast: "User not found" });
     }
 
     const order = await razorpay.orders.create({
@@ -4310,7 +4313,7 @@ app.post("/create-razorpay-order", async (req, res) => {
 
   } catch (err) {
     console.log("RAZORPAY ORDER ERROR:", err);
-    res.status(500).json({ success: false, msg: "Order create failed" });
+    res.status(500).json({ success: false, toast: "Order create failed" });
   }
 });
 
@@ -4331,7 +4334,7 @@ app.post("/verify-razorpay-payment", async (req, res) => {
     if (alreadyPaid) {
       return res.json({
         success: false,
-        msg: "This payment is already credited"
+        toast: "This payment is already credited"
       });
     }
 
@@ -4346,13 +4349,13 @@ app.post("/verify-razorpay-payment", async (req, res) => {
         { $set: { status: "Failed", description: "Signature verification failed" } }
       );
 
-      return res.json({ success: false, msg: "Payment verification failed" });
+      return res.json({ success: false, toast: "Payment verification failed" });
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      return res.json({ success: false, msg: "User not found" });
+      return res.json({ success: false, toast: "User not found" });
     }
 
     const openingBalance = Number(user.balance || 0);
@@ -4377,17 +4380,17 @@ app.post("/verify-razorpay-payment", async (req, res) => {
 
     res.json({
       success: true,
-      msg: "Wallet balance added successfully"
+      toast: "Wallet balance added successfully"
     });
 
   } catch (err) {
     console.log("RAZORPAY VERIFY ERROR:", err);
 
     if (err.code === 11000) {
-      return res.json({ success: false, msg: "Duplicate payment detected" });
+      return res.json({ success: false, toast: "Duplicate payment detected" });
     }
 
-    res.status(500).json({ success: false, msg: "Payment verify failed" });
+    res.status(500).json({ success: false, toast: "Payment verify failed" });
   }
 });
 
@@ -4409,7 +4412,7 @@ app.post("/wallet-history", async (req, res) => {
 
   } catch (err) {
     console.log("WALLET HISTORY ERROR:", err);
-    res.status(500).json({ success: false, msg: "Server error" });
+    res.status(500).json({ success: false, toast: "Server error" });
   }
 });
 
@@ -4420,7 +4423,7 @@ app.post("/daily-reward", auth, async (req, res) => {
     const { email } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.json({ msg: "User not found" });
+    if (!user) return res.json({ toast: "User not found" });
 
     let reward = await DailyReward.findOne({ email });
 
@@ -4439,7 +4442,7 @@ app.post("/daily-reward", auth, async (req, res) => {
       new Date(reward.lastClaimDate).toDateString() === today
     ) {
       return res.json({
-        msg: "Today reward already claimed",
+        toast: "Today reward already claimed",
         reward
       });
     }
@@ -4473,7 +4476,7 @@ app.post("/daily-reward", auth, async (req, res) => {
     });
 
     res.json({
-  msg: "Reward Claimed Successfully",
+  toast: "Reward Claimed Successfully",
   amount: rewardAmount,
   special: isSpecial,
   reward
@@ -4481,7 +4484,7 @@ app.post("/daily-reward", auth, async (req, res) => {
 
   } catch (err) {
     console.log("DAILY REWARD ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -4586,14 +4589,14 @@ app.get("/user/:email", async (req, res) => {
     const user = await User.findOne({ email: req.params.email });
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ toast: "User not found" });
     }
 
     res.json(user);
 
   } catch (err) {
     console.log("USER FETCH ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -4624,7 +4627,7 @@ app.get("/notifications/:email", async (req, res) => {
 
   } catch (err) {
     console.log("NOTIFICATION ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ toast: "Server error" });
   }
 });
 
@@ -4904,7 +4907,7 @@ app.use((err, req, res, next) => {
   console.log("GLOBAL ERROR:", err);
 
   res.status(500).json({
-    msg: "Internal server error"
+    toast: "Internal server error"
   });
 
 });
