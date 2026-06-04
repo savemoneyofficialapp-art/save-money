@@ -1639,14 +1639,18 @@ app.post("/start-invest", async (req, res) => {
       maturityAmount
     } = req.body;
 
+    const investAmount = Number(amount);
+
     if (!email) {
       return res.status(400).json({
+        success: false,
         msg: "Email required"
       });
     }
 
-    if (!amount || amount < 2000) {
+    if (!investAmount || investAmount < 2000) {
       return res.status(400).json({
+        success: false,
         msg: "Minimum investment is ₹2000"
       });
     }
@@ -1655,115 +1659,125 @@ app.post("/start-invest", async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
+        success: false,
         msg: "User not found"
       });
     }
 
-   const walletBalance = Number(
-  user.balance ??
-  user.wallet ??
-  user.walletBalance ??
-  user.amount ??
-  0
-);
+    const walletBalance = Number(
+      user.balance ??
+      user.wallet ??
+      user.walletBalance ??
+      user.amount ??
+      0
+    );
 
-const investAmount = Number(amount);
-
-
-    if (walletBalance < amount) {
+    if (walletBalance < investAmount) {
       return res.status(400).json({
+        success: false,
         msg: "Insufficient wallet balance"
       });
     }
 
+    // Balance deduct
+    const newBalance = walletBalance - investAmount;
 
-const newBalance = walletBalance - investAmount;
+    user.balance = newBalance;
+    user.wallet = newBalance;
+    user.walletBalance = newBalance;
 
-user.balance = newBalance;
-user.wallet = newBalance;
-user.walletBalance = newBalance;
-
-await user.save();
+    await user.save();
 
     const certificateNo =
-      "SM-CERT-" +
-      Date.now();
+      "SM-CERT-" + Date.now();
 
     const slipNo =
-      "SM-SLIP-" +
-      Date.now();
+      "SM-SLIP-" + Date.now();
 
     const startDate = new Date();
 
-const nextRenewDate = new Date(startDate);
-nextRenewDate.setDate(nextRenewDate.getDate() + 30);
+    const nextRenewDate = new Date(startDate);
+    nextRenewDate.setDate(
+      nextRenewDate.getDate() + 30
+    );
 
-    const investment =
-      await Investment.create({
-        email,
+    const investment = await Investment.create({
+      email,
 
-        monthlyAmount: amount,
-        amount,
+      planName: "Save Money SIP",
 
-        years,
-        rate,
+      monthlyAmount: investAmount,
+      amount: investAmount,
 
-        totalInterest,
-        maturityAmount,
+      years: Number(years || 1),
 
-        certificateNo,
+      rate: Number(rate || 0),
 
-        startDate,
+      totalInterest:
+        Number(totalInterest || 0),
 
-        nextRenewDate,
+      maturityAmount:
+        Number(maturityAmount || 0),
 
-        renewCount: 0,
+      certificateNo,
+      slipNo,
 
-        renewStatus: "Waiting",
+      startDate,
 
-        status: "Active",
+      nextRenewDate,
 
-        history: [
-          {
-            type: "START SIP",
-            amount: investAmount,
-            date: new Date(),
-            slipNo: "SM-SIP-" + Date.now()
-          }
-        ]
-      });
+      renewCount: 0,
+
+      renewStatus: "Waiting",
+
+      status: "Active",
+
+      lastRenewDate: startDate,
+
+      history: [
+        {
+          type: "START SIP",
+          amount: investAmount,
+          date: startDate,
+          slipNo
+        }
+      ]
+    });
 
     await Transaction.create({
       email,
-
-      amount,
-
+      amount: investAmount,
       type: "debit",
-
       status: "success",
-
       description:
         "Save Money SIP Started"
     });
 
-    res.json({
+    return res.status(200).json({
       success: true,
-
-      msg:
-        "Investment Started Successfully",
+      msg: "Investment Started Successfully",
 
       investmentId:
         investment._id,
 
       certificateNo,
+      slipNo,
 
-      slipNo
+      walletBalance: newBalance,
+
+      investment
     });
-  } catch (err) {
-    console.log(err);
 
-    res.status(500).json({
-      msg: "Server error"
+  } catch (err) {
+    console.log(
+      "START INVEST ERROR:",
+      err
+    );
+
+    return res.status(500).json({
+      success: false,
+      msg: "Server error",
+      error: err.message
     });
   }
 });
