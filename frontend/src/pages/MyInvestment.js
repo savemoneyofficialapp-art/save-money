@@ -344,7 +344,7 @@ const renewNow = (inv) => {
   <h1 style={{ color: "#ef4444" }}>Overdue</h1>
 ) : (
   <h1 style={{ color: "#7c3aed" }}>
-    {getDaysLeft(selectedPlan?.renewDate || selectedPlan?.nextRenewDate)} Days
+    {daysLeft} Days
   </h1>
 )}
 
@@ -585,9 +585,9 @@ const overdue =
     <>⚠️ Renew overdue — Investment inactive</>
   ) : (
     <>
-      ⏳ Renew due on {formatDate(inv?.renewDate || inv?.nextRenewDate)}
+      ⏳ Renew due on {new Date(inv?.renewDate || inv?.nextRenewDate).toLocaleDateString("en-GB")}
       {" — "}
-      {getDaysLeft(inv?.renewDate || inv?.nextRenewDate)} Days Left
+     {daysLeft} Days Left
     </>
   )}
 </div>
