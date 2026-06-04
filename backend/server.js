@@ -1667,13 +1667,17 @@ app.post("/start-invest", async (req, res) => {
   0
 );
 
+const investAmount = Number(amount);
+
+
     if (walletBalance < amount) {
       return res.status(400).json({
         msg: "Insufficient wallet balance"
       });
     }
 
-   const newBalance = walletBalance - investAmount;
+
+const newBalance = walletBalance - investAmount;
 
 user.balance = newBalance;
 user.wallet = newBalance;
