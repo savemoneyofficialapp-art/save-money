@@ -17,18 +17,31 @@ const [renewOpen, setRenewOpen] = useState(false);
 const [selectedPlan, setSelectedPlan] = useState(null);
 
 const getDaysLeft = (renewDate) => {
-
   if (!renewDate) return 0;
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const renew = new Date(renewDate);
+  renew.setHours(0, 0, 0, 0);
 
   const diff = Math.ceil(
     (renew - today) / (1000 * 60 * 60 * 24)
   );
 
   return diff > 0 ? diff : 0;
+};
+
+const isOverdue = (renewDate) => {
+  if (!renewDate) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const renew = new Date(renewDate);
+  renew.setHours(0, 0, 0, 0);
+
+  return today > renew;
 };
 
   useEffect(() => {
@@ -103,11 +116,11 @@ const daysLeftForRenew = () => {
 };
 
 const renewDateText = () => {
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-  const end = new Date(today.getFullYear(), today.getMonth() + 1, 3);
+  if (!selectedPlan?.renewDate && !selectedPlan?.nextRenewDate) return "N/A";
 
-  return `${formatDate(start)} to ${formatDate(end)}`;
+  return formatDate(
+    selectedPlan.renewDate || selectedPlan.nextRenewDate
+  );
 };
 
 const downloadCertificate = (plan) => {
@@ -311,20 +324,30 @@ const renewNow = (inv) => {
       <h2>Renew Information</h2>
 
       <p>
-        Your SIP renew window will be open every month from
-        <b> 1st date to 3rd date</b>.
-      </p>
+  Your SIP renewal is due exactly after 30 days from your investment start date.
+</p>
 
-      <h3>Next Renew Date</h3>
-      <h2 style={{ color: "#16a34a" }}>{renewDateText()}</h2>
+<h3>Renew Due Date</h3>
 
-      <h3>Days Left For Renew</h3>
-      <h1 style={{ color: "#7c3aed" }}>{daysLeftForRenew()} Days</h1>
+<h2 style={{ color: "#16a34a" }}>
+  {renewDateText()}
+</h2>
 
-      <p>
-        Please renew your Save Money investment on time. If renewal is not done
-        between 1st to 3rd date, bonus and auto withdrawal benefits may be affected.
-      </p>
+<h3>Days Left For Renew</h3>
+
+{isOverdue(selectedPlan?.renewDate || selectedPlan?.nextRenewDate) ? (
+  <h1 style={{ color: "#ef4444" }}>Overdue</h1>
+) : (
+  <h1 style={{ color: "#7c3aed" }}>
+    {getDaysLeft(selectedPlan?.renewDate || selectedPlan?.nextRenewDate)} Days
+  </h1>
+)}
+
+<p>
+  Please renew on or before your renew due date. If the renew date is missed,
+  your investment status may become inactive and bonus / auto withdrawal benefits
+  may be affected.
+</p>
 
       <button
   style={styles.greenBtn}
@@ -480,6 +503,11 @@ function InvestmentCard({
   const maturityAmount = inv.maturityAmount || Number(amount) + Number(totalReturn);
   const progress = inv.progress || 0;
   const renewDays = daysLeft || 0;
+const renewDateValue = inv?.renewDate || inv?.nextRenewDate;
+
+const overdue =
+  renewDateValue && new Date() > new Date(renewDateValue);
+
 
   return (
     <section style={styles.card}>
@@ -546,7 +574,15 @@ function InvestmentCard({
           <p>Expected Maturity Amount</p>
           <h2 style={{ color: theme.color }}>{money(maturityAmount)}</h2>
           <div style={styles.daysLeftBox}>
-  ⏳ Renew payment starts soon — {inv?.daysLeft || 0} Days Left
+  {isOverdue(inv?.renewDate || inv?.nextRenewDate) ? (
+    <>⚠️ Renew overdue — Investment inactive</>
+  ) : (
+    <>
+      ⏳ Renew due on {formatDate(inv?.renewDate || inv?.nextRenewDate)}
+      {" — "}
+      {getDaysLeft(inv?.renewDate || inv?.nextRenewDate)} Days Left
+    </>
+  )}
 </div>
         </div>
       </div>

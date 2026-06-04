@@ -1681,11 +1681,10 @@ app.post("/start-invest", async (req, res) => {
       "SM-SLIP-" +
       Date.now();
 
-    const nextRenewDate =
-      new Date(
-        Date.now() +
-        30 * 24 * 60 * 60 * 1000
-      );
+    const startDate = new Date();
+
+const nextRenewDate = new Date(startDate);
+nextRenewDate.setDate(nextRenewDate.getDate() + 30);
 
     const investment =
       await Investment.create({
@@ -1702,11 +1701,13 @@ app.post("/start-invest", async (req, res) => {
 
         certificateNo,
 
-        startDate: new Date(),
+        startDate,
 
         nextRenewDate,
 
         renewCount: 0,
+
+        renewStatus: "Waiting",
 
         status: "Active",
 
@@ -2573,9 +2574,20 @@ app.post("/my-investments", auth, async (req, res) => {
     const { email } = req.body;
 
     const investments = await Investment.find({
-      email: email.toLowerCase(),
-      status: "Active"
-    }).sort({ createdAt: -1 });
+  email: email.toLowerCase()
+}).sort({ createdAt: -1 });
+
+for (const inv of investments) {
+  if (
+    inv.nextRenewDate &&
+    new Date() > new Date(inv.nextRenewDate) &&
+    inv.status === "Active"
+  ) {
+    inv.status = "Inactive";
+    inv.renewStatus = "Overdue";
+    await inv.save();
+  }
+}
 
    const fixedInvestments = investments.map((i, index) => {
   const monthly = Number(i.monthlyAmount || i.amount || 0);
