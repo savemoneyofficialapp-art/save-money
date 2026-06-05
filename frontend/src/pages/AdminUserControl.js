@@ -11,6 +11,7 @@ export default function AdminUserControl() {
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
+
   const [adjustAmount, setAdjustAmount] = useState("");
 const [adjustReason, setAdjustReason] = useState("");
 const [bonusOpen, setBonusOpen] = useState(false);
@@ -62,6 +63,8 @@ const [selectedUser, setSelectedUser] = useState(null);
 };
 
 const walletAdjust = async (type) => {
+alert(type + "clicked");
+
   if (!user?._id) return alert("User not selected");
   if (!adjustAmount || Number(adjustAmount) <= 0) {
     return alert("Enter valid amount");
