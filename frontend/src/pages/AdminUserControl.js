@@ -50,7 +50,7 @@ const [selectedUser, setSelectedUser] = useState(null);
       authorization: localStorage.getItem("token") || ""
     },
     body: JSON.stringify({
-      userId: selectedUser._id,
+      userId: u._id,
       ...bonus
     })
   });
@@ -62,10 +62,10 @@ const [selectedUser, setSelectedUser] = useState(null);
   setBonusOpen(false);
 };
 
-const walletAdjust = async (type) => {
-  console.log("WALLET CLICK:", type, selectedUser || user);
+const walletAdjust = async (type, targetUser) => {
+  const currentUser = targetUser || selectedUser;
 
-  const currentUser = selectedUser || user;
+  console.log("WALLET CLICK:", type, currentUser);
 
   if (!currentUser?._id) {
     return alert("User ID not found");
@@ -87,7 +87,7 @@ const walletAdjust = async (type) => {
         authorization: localStorage.getItem("token") || ""
       },
       body: JSON.stringify({
-        userId: currentUser._id,
+        userId: u._id,
         amount: Number(adjustAmount),
         reason: adjustReason,
         type
@@ -246,14 +246,14 @@ const walletAdjust = async (type) => {
   <div style={styles.rowBtns}>
    <button
   style={styles.addBtn}
-  onClick={() => walletAdjust("add")}
+  onClick={() => walletAdjust("add", u)}
 >
   Add Money
 </button>
 
 <button
   style={styles.deductBtn}
-  onClick={() => walletAdjust("deduct")}
+  onClick={() => walletAdjust("deduct", u)}
 >
   Deduct Money
 </button>
@@ -327,21 +327,15 @@ const walletAdjust = async (type) => {
               {u.disableWithdrawal ? "Enable Withdrawal" : "Disable Withdrawal"}
             </button>
 
-           <button
+          <button
   style={styles.yellowBtn}
   onClick={() => {
-    const currentUser = selectedUser || user;
-
-    if (!currentUser?._id) {
-      return alert("User not selected");
-    }
-
-    setSelectedUser(currentUser);
+    setSelectedUser(u);
 
     setBonus({
-      performanceBonusEnabled: !!currentUser.performanceBonusEnabled,
-      teamBonusEnabled: !!currentUser.teamBonusEnabled,
-      royaltyBonusEnabled: !!currentUser.royaltyBonusEnabled
+      performanceBonusEnabled: !!u.performanceBonusEnabled,
+      teamBonusEnabled: !!u.teamBonusEnabled,
+      royaltyBonusEnabled: !!u.royaltyBonusEnabled
     });
 
     setBonusOpen(true);
