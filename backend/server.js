@@ -3829,6 +3829,100 @@ app.post("/admin-user-tree", auth, adminAuth, async (req, res) => {
   }
 });
 
+app.post("/admin/update-bonus-status", async (req, res) => {
+  try {
+    const {
+      userId,
+      performanceBonusEnabled,
+      teamBonusEnabled,
+      royaltyBonusEnabled
+    } = req.body;
+
+    await User.findByIdAndUpdate(userId, {
+      performanceBonusEnabled,
+      teamBonusEnabled,
+      royaltyBonusEnabled
+    });
+
+    res.json({
+      success: true
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false
+    });
+  }
+});
+
+app.post("/admin/wallet-adjust", async (req, res) => {
+  try {
+
+    const {
+      userId,
+      amount,
+      reason,
+      type
+    } = req.body;
+
+    const user =
+      await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        msg: "User not found"
+      });
+    }
+
+    if (type === "add") {
+      user.wallet =
+        Number(user.wallet || 0) +
+        Number(amount);
+    }
+
+    if (type === "deduct") {
+      user.wallet =
+        Number(user.wallet || 0) -
+        Number(amount);
+    }
+
+    await user.save();
+
+    await WalletHistory.create({
+      email: user.email,
+      amount,
+      type:
+        type === "add"
+          ? "Admin Credit"
+          : "Admin Debit",
+
+      note: reason,
+
+      date: new Date()
+    });
+
+    await Notification.create({
+      email: user.email,
+
+      title: "Wallet Updated",
+
+      message:
+        type === "add"
+          ? `₹${amount} added by admin. Reason: ${reason}`
+          : `₹${amount} deducted by admin. Reason: ${reason}`
+    });
+
+    res.json({
+      success: true
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false
+    });
+  }
+});
+
 app.post("/ban-user",
 auth,
 adminAuth,

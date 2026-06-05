@@ -237,6 +237,21 @@ resetOtp: {
 resetOtpExpire: {
   type: Date,
   default: null
+},
+
+performanceBonusEnabled: {
+  type: Boolean,
+  default: false
+},
+
+teamBonusEnabled: {
+  type: Boolean,
+  default: false
+},
+
+royaltyBonusEnabled: {
+  type: Boolean,
+  default: false
 }
 
 });
