@@ -30,12 +30,14 @@ export default function Wallet() {
   const [transferAmount, setTransferAmount] = useState("");
   const [receiverInfo, setReceiverInfo] = useState(null);
   const [confirmTransferOpen, setConfirmTransferOpen] = useState(false);
+  const [depositTxnId, setDepositTxnId] = useState("");
+  const [depositScreenshot, setDepositScreenshot] = useState(null);
 
   const [shareOpen, setShareOpen] = useState(false);
 
 
   const [historyFilter, setHistoryFilter] = useState("all");
-const [showAllHistory, setShowAllHistory] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
 
   useEffect(() => {
@@ -107,80 +109,52 @@ photoImage: data.user?.photoImage || "",          balance: Number(data.balance |
     setAddOpen(true);
   };
 
- const startUpiPayment = async () => {
+ const DEPOSIT_ADDRESS = "YOUR_USDT_TRC20_WALLET_ADDRESS";
+
+const submitDepositRequest = async () => {
   if (!addAmount || Number(addAmount) <= 0) {
     return alert("Enter valid amount");
   }
 
+  if (!depositTxnId.trim()) {
+    return alert("Enter transaction ID");
+  }
+
+  if (!depositScreenshot) {
+    return alert("Upload payment screenshot");
+  }
+
+  const formData = new FormData();
+  formData.append("email", email);
+  formData.append("amount", Number(addAmount));
+  formData.append("txnId", depositTxnId);
+  formData.append("screenshot", depositScreenshot);
+
   try {
-    const orderRes = await fetch(`${API}/create-razorpay-order`, {
+    const res = await fetch(`${API}/deposit-request`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         authorization: token || ""
       },
-      body: JSON.stringify({
-        email,
-        amount: Number(addAmount)
-      })
+      body: formData
     });
 
-    const orderData = await orderRes.json();
+    const data = await res.json();
 
-    if (!orderData.success) {
-      return alert(orderData.msg || "Order create failed");
+    if (!res.ok || !data.success) {
+      return alert(data.msg || "Deposit request failed");
     }
 
-    const options = {
-      key: orderData.key,
-      amount: orderData.order.amount,
-      currency: "INR",
-      name: "Save Money",
-      description: "Wallet Add Cash",
-      order_id: orderData.order.id,
+    alert("Deposit request submitted. Admin approval pending.");
 
-      handler: async function (response) {
-        const verifyRes = await fetch(`${API}/verify-razorpay-payment`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            authorization: token || ""
-          },
-          body: JSON.stringify({
-            email,
-            amount: Number(addAmount),
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature
-          })
-        });
-
-        const verifyData = await verifyRes.json();
-
-        alert(verifyData.msg);
-
-        if (verifyData.success) {
-          setAddOpen(false);
-          setAddAmount("");
-          loadWallet();
-        }
-      },
-
-      prefill: {
-        name: wallet.name,
-        email
-      },
-
-      theme: {
-        color: "#7c3aed"
-      }
-    };
-
-    const razor = new window.Razorpay(options);
-    razor.open();
+    setAddOpen(false);
+    setAddAmount("");
+    setDepositTxnId("");
+    setDepositScreenshot(null);
+    loadWallet();
   } catch (err) {
-    console.log("RAZORPAY FRONTEND ERROR:", err);
-    alert("Payment failed");
+    console.log("DEPOSIT ERROR:", err);
+    alert("Server error");
   }
 };
 
@@ -702,52 +676,61 @@ const visibleHistory = showAllHistory
 
         {/* Add Cash Modal */}
 
-        {addOpen && (
+{addOpen && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      <h2>Add Cash</h2>
 
-          <div style={styles.modalOverlay}>
+      <label>Wallet Address</label>
+      <div style={styles.addressBox}>
+        <span>{DEPOSIT_ADDRESS}</span>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(DEPOSIT_ADDRESS);
+            alert("Wallet address copied");
+          }}
+        >
+          Copy
+        </button>
+      </div>
 
-            <div style={styles.modal}>
+      <label>Amount</label>
+      <input
+        type="number"
+        placeholder="Enter amount"
+        value={addAmount}
+        onChange={(e) => setAddAmount(e.target.value)}
+        style={styles.modalInput}
+      />
 
-              <h2>
-                Add Cash
-              </h2>
+      <label>Transaction ID</label>
+      <input
+        type="text"
+        placeholder="Enter transaction ID"
+        value={depositTxnId}
+        onChange={(e) => setDepositTxnId(e.target.value)}
+        style={styles.modalInput}
+      />
 
-              <input
-                type="number"
-                style={styles.modalInput}
-                placeholder="Enter Amount"
-                value={addAmount}
-                onChange={(e)=>
-                  setAddAmount(e.target.value)
-                }
-              />
+      <label>Payment Screenshot</label>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setDepositScreenshot(e.target.files[0])}
+        style={styles.modalInput}
+      />
 
-              <div style={styles.upiGrid}>
+      <button style={styles.addBtn} onClick={submitDepositRequest}>
+        Submit Deposit Request
+      </button>
 
-             <button
-              style={styles.upiBtn}
-               onClick={startUpiPayment}
-              >
-                Pay with UPI / Card / Wallet
-               </button>
-
-               </div>
-
-              <button
-                style={styles.closeBtn}
-                onClick={() =>
-                  setAddOpen(false)
-                }
-              >
-                Close
-              </button>
-
-            </div>
-
-          </div>
-
-        )}
-
+      <button style={styles.closeBtn} onClick={() => setAddOpen(false)}>
+        Close
+      </button>
+    </div>
+  </div>
+)}
+        
         {/* Withdraw Popup */}
 
         {withdrawOpen && (

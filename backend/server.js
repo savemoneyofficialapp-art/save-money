@@ -1109,6 +1109,18 @@ const Txn = mongoose.model("Txn", {
 // helper
 const makeCode = () => Math.random().toString(36).substring(2, 8);
 
+async function generateShortWalletId() {
+  let walletId;
+  let exists = true;
+
+  while (exists) {
+    walletId = "WLT" + Math.floor(10000 + Math.random() * 90000);
+    exists = await User.findOne({ walletId });
+  }
+
+  return walletId;
+}
+
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
 
@@ -1196,9 +1208,7 @@ app.post("/register", async (req, res) => {
       );
 
     // create wallet id
-    const walletId =
-      "WLT" +
-      Date.now();
+   const walletId = await generateShortWalletId();
 
     // referred by user
     let referredBy = "";
@@ -1233,7 +1243,7 @@ app.post("/register", async (req, res) => {
 
       referredBy,
 
-      walletId,
+      walletId: walletId,
 
       role: "user",
 
@@ -2142,51 +2152,46 @@ app.post("/wallet-data", auth, async (req, res) => {
 
 });
 
-app.post(
-  "/add-cash",
-  upload.single("screenshot"),
-  async (req, res) => {
+app.post("/deposit-request", upload.single("screenshot"), async (req, res) => {
+  try {
+    const { email, amount, txnId } = req.body;
 
-    try {
-
-      const { email, amount, utr } = req.body;
-
-      const screenshot =
-        req.file
-          ? req.file.filename
-          : "";
-
-      await AddCash.create({
-        email,
-        amount,
-        utr,
-        screenshot
+    if (!email || !amount || !txnId || !req.file) {
+      return res.status(400).json({
+        success: false,
+        msg: "All fields required"
       });
-
-      await WalletHistory.create({
-        email,
-        type: "Add Cash Request",
-        amount,
-        status: "pending",
-        note: utr
-      });
-
-      res.json({
-        msg: "Request Submitted"
-      });
-
-    } catch (err) {
-
-      console.log(err);
-
-      res.status(500).json({
-        msg: "Upload failed"
-      });
-
     }
 
+    await DepositRequest.create({
+      email: String(email).toLowerCase(),
+      amount: Number(amount),
+      txnId,
+      screenshot: req.file.path,
+      status: "pending",
+      date: new Date()
+    });
+
+    await Notification.create({
+      email: String(email).toLowerCase(),
+      title: "Deposit Request Submitted",
+      message: `Your deposit request of ₹${amount} is pending admin approval.`,
+      read: false,
+      date: new Date()
+    });
+
+    res.json({
+      success: true,
+      msg: "Deposit request submitted"
+    });
+  } catch (err) {
+    console.log("DEPOSIT REQUEST ERROR:", err);
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
   }
-);
+});
 
 app.post("/refresh-token", async (req, res) => {
 
@@ -3095,21 +3100,6 @@ app.post("/admin/approve", async (req, res) => {
 
   res.json({ msg: "Approved" });
 });
-
-app.post("/add-cash", async (req, res) => {
-  const { email, amount, utr, screenshot } = req.body;
-
-  await AddCash.create({
-    email,
-    amount,
-    utr,
-    screenshot,
-    status: "Pending"
-  });
-
-  res.json({ msg: "Request Submitted" });
-});
-
 
 app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
 
