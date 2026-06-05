@@ -63,35 +63,50 @@ const [selectedUser, setSelectedUser] = useState(null);
 };
 
 const walletAdjust = async (type) => {
+  console.log("WALLET CLICK:", type, selectedUser || user);
 
-  if (!user?._id) return alert("User not selected");
+  const currentUser = selectedUser || user;
+
+  if (!currentUser?._id) {
+    return alert("User ID not found");
+  }
+
   if (!adjustAmount || Number(adjustAmount) <= 0) {
     return alert("Enter valid amount");
   }
+
   if (!adjustReason) {
     return alert("Reason required");
   }
 
-  const res = await fetch(`${API}/admin/wallet-adjust`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: localStorage.getItem("token") || ""
-    },
-    body: JSON.stringify({
-      userId: user._id,
-      amount: Number(adjustAmount),
-      reason: adjustReason,
-      type
-    })
-  });
+  try {
+    const res = await fetch(`${API}/admin/wallet-adjust`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: localStorage.getItem("token") || ""
+      },
+      body: JSON.stringify({
+        userId: currentUser._id,
+        amount: Number(adjustAmount),
+        reason: adjustReason,
+        type
+      })
+    });
 
-  const data = await res.json();
-  alert(data.msg || "Wallet updated");
+    const data = await res.json();
+    console.log("WALLET RESPONSE:", data);
 
-  setAdjustAmount("");
-  setAdjustReason("");
-  searchUser();
+    alert(data.msg || "Wallet updated successfully");
+
+    setAdjustAmount("");
+    setAdjustReason("");
+
+    searchUser();
+  } catch (err) {
+    console.log("WALLET ADJUST ERROR:", err);
+    alert("Wallet update failed");
+  }
 };
 
   const searchUsers = async () => {
@@ -229,19 +244,19 @@ const walletAdjust = async (type) => {
   />
 
   <div style={styles.rowBtns}>
-    <button
-      style={styles.addBtn}
-      onClick={() => walletAdjust("add")}
-    >
-      Add Money
-    </button>
+   <button
+  style={styles.addBtn}
+  onClick={() => walletAdjust("add")}
+>
+  Add Money
+</button>
 
-    <button
-      style={styles.deductBtn}
-      onClick={() => walletAdjust("deduct")}
-    >
-      Deduct Money
-    </button>
+<button
+  style={styles.deductBtn}
+  onClick={() => walletAdjust("deduct")}
+>
+  Deduct Money
+</button>
   </div>
 </div>
 
@@ -315,13 +330,18 @@ const walletAdjust = async (type) => {
            <button
   style={styles.yellowBtn}
   onClick={() => {
-    alert("bonus clicked");
-    setSelectedUser(user);
+    const currentUser = selectedUser || user;
+
+    if (!currentUser?._id) {
+      return alert("User not selected");
+    }
+
+    setSelectedUser(currentUser);
 
     setBonus({
-      performanceBonusEnabled: !!user.performanceBonusEnabled,
-      teamBonusEnabled: !!user.teamBonusEnabled,
-      royaltyBonusEnabled: !!user.royaltyBonusEnabled
+      performanceBonusEnabled: !!currentUser.performanceBonusEnabled,
+      teamBonusEnabled: !!currentUser.teamBonusEnabled,
+      royaltyBonusEnabled: !!currentUser.royaltyBonusEnabled
     });
 
     setBonusOpen(true);
@@ -329,6 +349,7 @@ const walletAdjust = async (type) => {
 >
   Bonus Management
 </button>
+
           </div>
         </div>
       ))}
