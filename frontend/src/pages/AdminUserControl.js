@@ -41,43 +41,38 @@ const [selectedUser, setSelectedUser] = useState(null);
   };
 
   const saveBonus = async () => {
-  if (!selectedUser) return;
+  if (!selectedUser?._id) return alert("User not selected");
 
-  const res = await fetch(`${API}/admin/update-bonus-status`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: localStorage.getItem("token") || ""
-    },
-    body: JSON.stringify({
-      userId: u._id,
-      ...bonus
-    })
-  });
+  try {
+    const res = await fetch(`${API}/admin/update-bonus-status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: localStorage.getItem("token") || ""
+      },
+      body: JSON.stringify({
+        userId: selectedUser._id,
+        ...bonus
+      })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
+    alert(data.msg || "Bonus settings updated");
 
-  alert(data.msg || "Bonus Updated");
-
-  setBonusOpen(false);
+    setBonusOpen(false);
+    searchUser();
+  } catch (err) {
+    console.log("BONUS SAVE ERROR:", err);
+    alert("Bonus update failed");
+  }
 };
 
-const walletAdjust = async (type, targetUser) => {
-  const currentUser = targetUser || selectedUser;
+const walletAdjust = async (type, userData) => {
+  console.log("WALLET CLICK:", type, userData);
 
-  console.log("WALLET CLICK:", type, currentUser);
-
-  if (!currentUser?._id) {
-    return alert("User ID not found");
-  }
-
-  if (!adjustAmount || Number(adjustAmount) <= 0) {
-    return alert("Enter valid amount");
-  }
-
-  if (!adjustReason) {
-    return alert("Reason required");
-  }
+  if (!userData?._id) return alert("User ID not found");
+  if (!adjustAmount || Number(adjustAmount) <= 0) return alert("Enter amount");
+  if (!adjustReason) return alert("Reason required");
 
   try {
     const res = await fetch(`${API}/admin/wallet-adjust`, {
@@ -87,7 +82,7 @@ const walletAdjust = async (type, targetUser) => {
         authorization: localStorage.getItem("token") || ""
       },
       body: JSON.stringify({
-        userId: u._id,
+        userId: userData._id,
         amount: Number(adjustAmount),
         reason: adjustReason,
         type
@@ -95,13 +90,10 @@ const walletAdjust = async (type, targetUser) => {
     });
 
     const data = await res.json();
-    console.log("WALLET RESPONSE:", data);
-
-    alert(data.msg || "Wallet updated successfully");
+    alert(data.msg || "Wallet updated");
 
     setAdjustAmount("");
     setAdjustReason("");
-
     searchUser();
   } catch (err) {
     console.log("WALLET ADJUST ERROR:", err);
@@ -378,8 +370,8 @@ const walletAdjust = async (type, targetUser) => {
       ))}
 
       <button style={styles.addBtn} onClick={saveBonus}>
-        Save Bonus Settings
-      </button>
+  Save Bonus Settings
+</button>
 
       <button
         style={styles.closeBtn}
