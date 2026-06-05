@@ -3846,6 +3846,53 @@ app.post("/admin/update-bonus-status", async (req, res) => {
   }
 });
 
+app.post("/admin/approve-deposit", async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    const request = await DepositRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({ success: false, msg: "Request not found" });
+    }
+
+    if (request.status !== "pending") {
+      return res.status(400).json({ success: false, msg: "Already processed" });
+    }
+
+    const user = await User.findOne({ email: request.email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found" });
+    }
+
+    const oldBalance = Number(user.balance ?? user.wallet ?? user.walletBalance ?? 0);
+    const newBalance = oldBalance + Number(request.amount);
+
+    user.balance = newBalance;
+    user.wallet = newBalance;
+    user.walletBalance = newBalance;
+    await user.save();
+
+    request.status = "approved";
+    request.approvedAt = new Date();
+    await request.save();
+
+    await WalletHistory.create({
+      email: request.email.toLowerCase(),
+      amount: Number(request.amount),
+      type: "credit",
+      description: `Deposit approved. TXN: ${request.txnId}`,
+      note: `Deposit approved by admin`,
+      status: "success",
+      date: new Date()
+    });
+
+    res.json({ success: true, msg: "Deposit approved", balance: newBalance });
+  } catch (err) {
+    console.log("APPROVE DEPOSIT ERROR:", err);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
 app.post("/admin/wallet-adjust", async (req, res) => {
   try {
     const { userId, amount, reason, type } = req.body;
@@ -4793,6 +4840,16 @@ app.get("/admin-tickets", auth, adminAuth, async (req, res) => {
 
   res.json(tickets);
 });
+
+app.get("/admin/deposit-requests", async (req, res) => {
+  try {
+    const requests = await DepositRequest.find({ status: "pending" }).sort({ date: -1 });
+    res.json({ success: true, requests });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
 
 app.get("/investment-certificate/:id", async (req, res) => {
   try {

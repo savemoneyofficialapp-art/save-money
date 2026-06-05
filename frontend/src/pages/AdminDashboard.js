@@ -99,8 +99,8 @@ export default function AdminDashboard() {
       const kData = await apiGet("/pending-kyc");
       setKyc(Array.isArray(kData) ? kData : []);
 
-      const cData = await apiGet("/cash-requests");
-      setCash(Array.isArray(cData) ? cData : []);
+const cData = await apiGet("/admin/deposit-requests");
+setCash(cData?.requests || []);
 
       const uData = await apiGet("/all-users");
       setUsers(Array.isArray(uData) ? uData : []);
