@@ -677,14 +677,19 @@ const visibleHistory = showAllHistory
         {/* Add Cash Modal */}
 
 {addOpen && (
-  <div style={styles.modalOverlay}>
-    <div style={styles.modalBox}>
-      <h2>Add Cash</h2>
+  <div style={styles.depositOverlay}>
+    <div style={styles.depositModal}>
+      <button style={styles.depositCloseX} onClick={() => setAddOpen(false)}>×</button>
 
-      <label>Wallet Address</label>
-      <div style={styles.addressBox}>
-        <span>{DEPOSIT_ADDRESS}</span>
+      <div style={styles.depositIcon}>💳</div>
+      <h2 style={styles.depositTitle}>Add Cash</h2>
+      <p style={styles.depositSub}>Send payment, upload proof & wait for admin approval.</p>
+
+      <label style={styles.depositLabel}>Wallet Address</label>
+      <div style={styles.depositAddressBox}>
+        <span style={styles.depositAddress}>{DEPOSIT_ADDRESS}</span>
         <button
+          style={styles.copyBtn}
           onClick={() => {
             navigator.clipboard.writeText(DEPOSIT_ADDRESS);
             alert("Wallet address copied");
@@ -694,38 +699,37 @@ const visibleHistory = showAllHistory
         </button>
       </div>
 
-      <label>Amount</label>
+      <label style={styles.depositLabel}>Amount</label>
       <input
+        style={styles.depositInput}
         type="number"
         placeholder="Enter amount"
         value={addAmount}
         onChange={(e) => setAddAmount(e.target.value)}
-        style={styles.modalInput}
       />
 
-      <label>Transaction ID</label>
+      <label style={styles.depositLabel}>Transaction ID</label>
       <input
+        style={styles.depositInput}
         type="text"
         placeholder="Enter transaction ID"
         value={depositTxnId}
         onChange={(e) => setDepositTxnId(e.target.value)}
-        style={styles.modalInput}
       />
 
-      <label>Payment Screenshot</label>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => setDepositScreenshot(e.target.files[0])}
-        style={styles.modalInput}
-      />
+      <label style={styles.depositLabel}>Payment Screenshot</label>
+      <label style={styles.fileBox}>
+        <span>{depositScreenshot ? depositScreenshot.name : "📤 Upload Screenshot"}</span>
+        <input
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => setDepositScreenshot(e.target.files[0])}
+        />
+      </label>
 
-      <button style={styles.addBtn} onClick={submitDepositRequest}>
+      <button style={styles.submitDepositBtn} onClick={submitDepositRequest}>
         Submit Deposit Request
-      </button>
-
-      <button style={styles.closeBtn} onClick={() => setAddOpen(false)}>
-        Close
       </button>
     </div>
   </div>
@@ -1615,6 +1619,145 @@ avatarImg: {
   height: "100%",
   objectFit: "cover",
   borderRadius: "50%"
+},
+
+depositOverlay: {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(5, 10, 30, 0.65)",
+  backdropFilter: "blur(10px)",
+  zIndex: 9999,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 18
+},
+
+depositModal: {
+  width: "100%",
+  maxWidth: 390,
+  background: "linear-gradient(145deg, #ffffff, #f7f2ff)",
+  borderRadius: 28,
+  padding: 22,
+  boxShadow: "0 30px 80px rgba(70, 30, 180, 0.35)",
+  position: "relative",
+  border: "1px solid rgba(255,255,255,0.8)"
+},
+
+depositCloseX: {
+  position: "absolute",
+  top: 14,
+  right: 16,
+  width: 34,
+  height: 34,
+  borderRadius: "50%",
+  border: "none",
+  background: "#f1eaff",
+  color: "#6d28d9",
+  fontSize: 22,
+  fontWeight: 900
+},
+
+depositIcon: {
+  width: 62,
+  height: 62,
+  borderRadius: 20,
+  background: "linear-gradient(135deg,#2563eb,#9333ea,#ec4899)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 30,
+  color: "#fff",
+  marginBottom: 12
+},
+
+depositTitle: {
+  margin: 0,
+  fontSize: 26,
+  fontWeight: 900,
+  color: "#101a44"
+},
+
+depositSub: {
+  margin: "6px 0 18px",
+  color: "#6b7280",
+  fontSize: 13,
+  lineHeight: 1.4
+},
+
+depositLabel: {
+  display: "block",
+  fontSize: 13,
+  fontWeight: 800,
+  color: "#18204a",
+  margin: "12px 0 7px"
+},
+
+depositAddressBox: {
+  display: "flex",
+  gap: 8,
+  alignItems: "center",
+  background: "#f4f0ff",
+  border: "1px dashed #8b5cf6",
+  borderRadius: 15,
+  padding: "12px 10px"
+},
+
+depositAddress: {
+  flex: 1,
+  fontSize: 12,
+  fontWeight: 800,
+  color: "#4c1d95",
+  wordBreak: "break-all"
+},
+
+copyBtn: {
+  border: "none",
+  borderRadius: 12,
+  padding: "9px 12px",
+  background: "linear-gradient(135deg,#6d28d9,#ec4899)",
+  color: "#fff",
+  fontWeight: 900
+},
+
+depositInput: {
+  width: "100%",
+  height: 50,
+  borderRadius: 15,
+  border: "1px solid #e5e7eb",
+  outline: "none",
+  padding: "0 14px",
+  fontSize: 15,
+  fontWeight: 700,
+  background: "#fff",
+  boxSizing: "border-box"
+},
+
+fileBox: {
+  height: 54,
+  borderRadius: 16,
+  border: "2px dashed #60a5fa",
+  background: "#eff6ff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#2563eb",
+  fontWeight: 900,
+  fontSize: 14,
+  cursor: "pointer"
+},
+
+submitDepositBtn: {
+  width: "100%",
+  height: 54,
+  border: "none",
+  borderRadius: 17,
+  marginTop: 18,
+  background: "linear-gradient(135deg,#2563eb,#7c3aed,#ec4899)",
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: 900,
+  boxShadow: "0 16px 35px rgba(124,58,237,.35)"
 }
 
 };
