@@ -11,6 +11,16 @@ export default function AdminUserControl() {
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
+  const [adjustAmount, setAdjustAmount] = useState("");
+const [adjustReason, setAdjustReason] = useState("");
+const [bonusOpen, setBonusOpen] = useState(false);
+
+const [bonus, setBonus] = useState({
+  performanceBonusEnabled: false,
+  teamBonusEnabled: false,
+  royaltyBonusEnabled: false
+});
+const [selectedUser, setSelectedUser] = useState(null);
 
   const handleAuthError = (data) => {
     if (
@@ -28,6 +38,59 @@ export default function AdminUserControl() {
 
     return false;
   };
+
+  const saveBonus = async () => {
+  if (!selectedUser) return;
+
+  const res = await fetch(`${API}/admin/update-bonus-status`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: localStorage.getItem("token") || ""
+    },
+    body: JSON.stringify({
+      userId: selectedUser._id,
+      ...bonus
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.msg || "Bonus Updated");
+
+  setBonusOpen(false);
+};
+
+const walletAdjust = async (type) => {
+  if (!user?._id) return alert("User not selected");
+  if (!adjustAmount || Number(adjustAmount) <= 0) {
+    return alert("Enter valid amount");
+  }
+  if (!adjustReason) {
+    return alert("Reason required");
+  }
+
+  const res = await fetch(`${API}/admin/wallet-adjust`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: localStorage.getItem("token") || ""
+    },
+    body: JSON.stringify({
+      userId: user._id,
+      amount: Number(adjustAmount),
+      reason: adjustReason,
+      type
+    })
+  });
+
+  const data = await res.json();
+  alert(data.msg || "Wallet updated");
+
+  setAdjustAmount("");
+  setAdjustReason("");
+  searchUser();
+};
 
   const searchUsers = async () => {
     try {
@@ -145,6 +208,41 @@ export default function AdminUserControl() {
             </div>
           </div>
 
+          <div style={styles.walletManageBox}>
+  <h3>Wallet Management</h3>
+
+  <input
+    style={styles.input}
+    type="number"
+    placeholder="Amount"
+    value={adjustAmount}
+    onChange={(e) => setAdjustAmount(e.target.value)}
+  />
+
+  <input
+    style={styles.input}
+    placeholder="Reason / Note"
+    value={adjustReason}
+    onChange={(e) => setAdjustReason(e.target.value)}
+  />
+
+  <div style={styles.rowBtns}>
+    <button
+      style={styles.addBtn}
+      onClick={() => walletAdjust("add")}
+    >
+      Add Money
+    </button>
+
+    <button
+      style={styles.deductBtn}
+      onClick={() => walletAdjust("deduct")}
+    >
+      Deduct Money
+    </button>
+  </div>
+</div>
+
           <input
             style={styles.input}
             placeholder="Ban reason"
@@ -212,20 +310,68 @@ export default function AdminUserControl() {
               {u.disableWithdrawal ? "Enable Withdrawal" : "Disable Withdrawal"}
             </button>
 
-            <button
-              style={styles.yellowBtn}
-              onClick={() =>
-                action("admin-disable-bonus", {
-                  email: u.email,
-                  disable: !u.disableBonus
-                })
-              }
-            >
-              {u.disableBonus ? "Enable Bonus" : "Disable Bonus"}
-            </button>
+           <button
+  style={styles.yellowBtn}
+  onClick={() => {
+    setSelectedUser(user);
+
+    setBonus({
+      performanceBonusEnabled: !!user.performanceBonusEnabled,
+      teamBonusEnabled: !!user.teamBonusEnabled,
+      royaltyBonusEnabled: !!user.royaltyBonusEnabled
+    });
+
+    setBonusOpen(true);
+  }}
+>
+  Bonus Management
+</button>
           </div>
         </div>
       ))}
+      {bonusOpen && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      <h2>Bonus Management</h2>
+
+      {[
+        ["performanceBonusEnabled", "Performance Bonus"],
+        ["teamBonusEnabled", "Team Bonus"],
+        ["royaltyBonusEnabled", "Royalty Bonus"]
+      ].map(([key, label]) => (
+        <div key={key} style={styles.bonusRow}>
+          <b>{label}</b>
+
+          <button
+            style={{
+              ...styles.toggleBtn,
+              background: bonus[key] ? "#22c55e" : "#ef4444"
+            }}
+            onClick={() =>
+              setBonus({
+                ...bonus,
+                [key]: !bonus[key]
+              })
+            }
+          >
+            {bonus[key] ? "Active" : "Inactive"}
+          </button>
+        </div>
+      ))}
+
+      <button style={styles.addBtn} onClick={saveBonus}>
+        Save Bonus Settings
+      </button>
+
+      <button
+        style={styles.closeBtn}
+        onClick={() => setBonusOpen(false)}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
@@ -328,6 +474,102 @@ const styles = {
     gap: "10px",
     marginTop: "15px"
   },
+
+  walletManageBox: {
+  marginTop: "20px",
+  padding: "15px",
+  borderRadius: "14px",
+  background: "#0f172a",
+  border: "1px solid #334155"
+},
+
+input: {
+  width: "100%",
+  padding: "12px",
+  marginTop: "10px",
+  borderRadius: "10px",
+  border: "none"
+},
+
+rowBtns: {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: "10px",
+  marginTop: "10px"
+},
+
+addBtn: {
+  padding: "12px",
+  border: "none",
+  borderRadius: "10px",
+  background: "#22c55e",
+  color: "white",
+  fontWeight: "bold"
+},
+
+deductBtn: {
+  padding: "12px",
+  border: "none",
+  borderRadius: "10px",
+  background: "#ef4444",
+  color: "white",
+  fontWeight: "bold"
+},
+
+yellowBtn: {
+  padding: "12px",
+  border: "none",
+  borderRadius: "10px",
+  background: "#facc15",
+  color: "#111827",
+  fontWeight: "bold"
+},
+
+modalOverlay: {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,.65)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 9999
+},
+
+modalBox: {
+  width: "90%",
+  maxWidth: "420px",
+  background: "#0f172a",
+  padding: "22px",
+  borderRadius: "18px",
+  color: "white"
+},
+
+bonusRow: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: "12px 0",
+  borderBottom: "1px solid #334155"
+},
+
+toggleBtn: {
+  border: "none",
+  borderRadius: "10px",
+  padding: "9px 14px",
+  color: "white",
+  fontWeight: "bold"
+},
+
+closeBtn: {
+  width: "100%",
+  marginTop: "12px",
+  padding: "12px",
+  border: "none",
+  borderRadius: "10px",
+  background: "#64748b",
+  color: "white",
+  fontWeight: "bold"
+},
 
   redBtn: btn("#ef4444"),
   greenBtn: btn("#22c55e", "#020617"),
