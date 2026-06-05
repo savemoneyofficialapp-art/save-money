@@ -63,7 +63,6 @@ const [selectedUser, setSelectedUser] = useState(null);
 };
 
 const walletAdjust = async (type) => {
-alert(type + "clicked");
 
   if (!user?._id) return alert("User not selected");
   if (!adjustAmount || Number(adjustAmount) <= 0) {
@@ -316,6 +315,7 @@ alert(type + "clicked");
            <button
   style={styles.yellowBtn}
   onClick={() => {
+    alert("bonus clicked");
     setSelectedUser(user);
 
     setBonus({
@@ -332,7 +332,7 @@ alert(type + "clicked");
           </div>
         </div>
       ))}
-      {bonusOpen && (
+      {bonusOpen && selectedUser && (
   <div style={styles.modalOverlay}>
     <div style={styles.modalBox}>
       <h2>Bonus Management</h2>
