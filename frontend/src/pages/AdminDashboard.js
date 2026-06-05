@@ -393,78 +393,75 @@ const fileUrl = (file) => {
       <div style={styles.section}>
         <h2>Cash Requests</h2>
 
-        {cash.length === 0 ? (
-  <p>No cash requests</p>
-) : (
-  cash.map((r) => (
-    <div key={r._id} style={styles.card}>
-      <h3>{r.email}</h3>
+       <div className="cash-table-wrapper">
+  <table className="cash-table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Amount</th>
+        <th>Transaction ID</th>
+        <th>Screenshot</th>
+        <th>Action</th>
+      </tr>
+    </thead>
 
-      <p><b>Amount:</b> ₹{r.amount}</p>
-
-      <p>
-        <b>Transaction ID:</b>{" "}
-        {r.txnId || r.transactionId || r.utr || "N/A"}
-      </p>
-
-      {r.screenshot ? (
-        <div>
-          <p><b>Payment Screenshot:</b></p>
-          <a
-            href={r.screenshot}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <img
-              src={r.screenshot}
-              alt="payment screenshot"
-              style={{
-                width: "180px",
-                height: "120px",
-                objectFit: "cover",
-                borderRadius: "12px",
-                border: "2px solid #22c55e",
-                marginTop: "8px"
-              }}
-            />
-          </a>
-        </div>
+    <tbody>
+      {cash.length === 0 ? (
+        <tr>
+          <td colSpan="5">No Cash Requests</td>
+        </tr>
       ) : (
-        <p>No screenshot</p>
+        cash.map((r) => (
+          <tr key={r._id}>
+            <td>{r.email}</td>
+
+            <td>₹{r.amount}</td>
+
+            <td>
+              {r.txnId ||
+                r.transactionId ||
+                "N/A"}
+            </td>
+
+            <td>
+              <button
+                className="view-btn"
+                onClick={() =>
+                  window.open(
+                    r.screenshot,
+                    "_blank"
+                  )
+                }
+              >
+                View
+              </button>
+            </td>
+
+            <td>
+              <button
+                className="approve-btn"
+                onClick={() =>
+                  approveDeposit(r._id)
+                }
+              >
+                Approve
+              </button>
+
+              <button
+                className="reject-btn"
+                onClick={() =>
+                  rejectDeposit(r._id)
+                }
+              >
+                Reject
+              </button>
+            </td>
+          </tr>
+        ))
       )}
-
-      <div style={{ display: "flex", gap: "12px", marginTop: "15px" }}>
-        <button
-          style={{
-            background: "#22c55e",
-            color: "#fff",
-            border: "none",
-            padding: "10px 18px",
-            borderRadius: "10px",
-            fontWeight: "700"
-          }}
-          onClick={() => approveDeposit(r._id)}
-        >
-          Approve
-        </button>
-
-        <button
-          style={{
-            background: "#ef4444",
-            color: "#fff",
-            border: "none",
-            padding: "10px 18px",
-            borderRadius: "10px",
-            fontWeight: "700"
-          }}
-          onClick={() => rejectDeposit(r._id)}
-        >
-          Reject
-        </button>
-      </div>
-    </div>
-  ))
-)}
+    </tbody>
+  </table>
+</div>
         
       </div>
 
@@ -662,6 +659,8 @@ spinner: {
   borderRadius: "50%",
   margin: "0 auto 18px",
   animation: "spin 1s linear infinite"
-}
+},
+
+ 
 
 };

@@ -67,3 +67,61 @@
     box-shadow: 0 0 5px #38bdf8;
   }
 }
+
+.cash-table-wrapper{
+  overflow-x:auto;
+  margin-top:15px;
+}
+
+.cash-table{
+  width:100%;
+  border-collapse:collapse;
+  background:#0f172a;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.cash-table th{
+  background:#1e293b;
+  color:white;
+  padding:14px;
+  text-align:left;
+}
+
+.cash-table td{
+  padding:14px;
+  border-bottom:1px solid #334155;
+  color:white;
+}
+
+.cash-table tr:hover{
+  background:#16213e;
+}
+
+.view-btn{
+  background:#3b82f6;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.approve-btn{
+  background:#22c55e;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:8px;
+  margin-right:8px;
+  cursor:pointer;
+}
+
+.reject-btn{
+  background:#ef4444;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:8px;
+  cursor:pointer;
+}
