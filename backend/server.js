@@ -3857,68 +3857,97 @@ app.post("/admin/update-bonus-status", async (req, res) => {
 
 app.post("/admin/wallet-adjust", async (req, res) => {
   try {
+    const { userId, amount, reason, type } = req.body;
 
-    const {
-      userId,
-      amount,
-      reason,
-      type
-    } = req.body;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        msg: "User ID required"
+      });
+    }
 
-    const user =
-      await User.findById(userId);
+    if (!amount || Number(amount) <= 0) {
+      return res.status(400).json({
+        success: false,
+        msg: "Valid amount required"
+      });
+    }
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        msg: "Reason required"
+      });
+    }
+
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
+        success: false,
         msg: "User not found"
       });
     }
 
+    const oldBalance = Number(
+      user.balance ??
+      user.wallet ??
+      user.walletBalance ??
+      0
+    );
+
+    let newBalance = oldBalance;
+
     if (type === "add") {
-      user.wallet =
-        Number(user.wallet || 0) +
-        Number(amount);
+      newBalance = oldBalance + Number(amount);
+    } else if (type === "deduct") {
+      newBalance = oldBalance - Number(amount);
+    } else {
+      return res.status(400).json({
+        success: false,
+        msg: "Invalid type"
+      });
     }
 
-    if (type === "deduct") {
-      user.wallet =
-        Number(user.wallet || 0) -
-        Number(amount);
-    }
+    user.balance = newBalance;
+    user.wallet = newBalance;
+    user.walletBalance = newBalance;
 
     await user.save();
 
     await WalletHistory.create({
       email: user.email,
-      amount,
-      type:
-        type === "add"
-          ? "Admin Credit"
-          : "Admin Debit",
-
+      amount: Number(amount),
+      type: type === "add" ? "Admin Credit" : "Admin Debit",
       note: reason,
-
+      status: "success",
       date: new Date()
     });
 
     await Notification.create({
       email: user.email,
-
       title: "Wallet Updated",
-
       message:
         type === "add"
           ? `₹${amount} added by admin. Reason: ${reason}`
-          : `₹${amount} deducted by admin. Reason: ${reason}`
+          : `₹${amount} deducted by admin. Reason: ${reason}`,
+      date: new Date(),
+      read: false
     });
 
-    res.json({
-      success: true
+    return res.json({
+      success: true,
+      msg: "Wallet updated",
+      wallet: newBalance,
+      balance: newBalance,
+      walletBalance: newBalance
     });
-
   } catch (err) {
-    res.status(500).json({
-      success: false
+    console.log("ADMIN WALLET ADJUST ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      msg: err.message || "Wallet update failed"
     });
   }
 });

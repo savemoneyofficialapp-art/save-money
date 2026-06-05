@@ -40,64 +40,72 @@ const [selectedUser, setSelectedUser] = useState(null);
     return false;
   };
 
-  const saveBonus = async () => {
+ const saveBonus = async () => {
   if (!selectedUser?._id) return alert("User not selected");
 
+  const res = await fetch(`${API}/admin/update-bonus-status`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: localStorage.getItem("token") || ""
+    },
+    body: JSON.stringify({
+      userId: selectedUser._id,
+      ...bonus
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    return alert(data.msg || "Bonus update failed");
+  }
+
+  alert(data.msg || "Bonus settings updated");
+
+  setBonusOpen(false);
+
   try {
-    const res = await fetch(`${API}/admin/update-bonus-status`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: localStorage.getItem("token") || ""
-      },
-      body: JSON.stringify({
-        userId: selectedUser._id,
-        ...bonus
-      })
-    });
-
-    const data = await res.json();
-    alert(data.msg || "Bonus settings updated");
-
-    setBonusOpen(false);
-    searchUser();
-  } catch (err) {
-    console.log("BONUS SAVE ERROR:", err);
-    alert("Bonus update failed");
+    await searchUser();
+  } catch (e) {
+    console.log("search refresh failed", e);
   }
 };
 
 const walletAdjust = async (type, userData) => {
-  console.log("WALLET CLICK:", type, userData);
-
   if (!userData?._id) return alert("User ID not found");
   if (!adjustAmount || Number(adjustAmount) <= 0) return alert("Enter amount");
   if (!adjustReason) return alert("Reason required");
 
+  const res = await fetch(`${API}/admin/wallet-adjust`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: localStorage.getItem("token") || ""
+    },
+    body: JSON.stringify({
+      userId: userData._id,
+      amount: Number(adjustAmount),
+      reason: adjustReason,
+      type
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    return alert(data.msg || "Wallet update failed");
+  }
+
+  alert(data.msg || "Wallet updated");
+
+  setAdjustAmount("");
+  setAdjustReason("");
+
   try {
-    const res = await fetch(`${API}/admin/wallet-adjust`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: localStorage.getItem("token") || ""
-      },
-      body: JSON.stringify({
-        userId: userData._id,
-        amount: Number(adjustAmount),
-        reason: adjustReason,
-        type
-      })
-    });
-
-    const data = await res.json();
-    alert(data.msg || "Wallet updated");
-
-    setAdjustAmount("");
-    setAdjustReason("");
-    searchUser();
-  } catch (err) {
-    console.log("WALLET ADJUST ERROR:", err);
-    alert("Wallet update failed");
+    await searchUser();
+  } catch (e) {
+    console.log("search refresh failed", e);
   }
 };
 
