@@ -2021,11 +2021,11 @@ app.post("/wallet-summary", async (req, res) => {
       });
     }
 
-    const history = await WalletTransaction.find({
-      email: email.toLowerCase()
-    })
-      .sort({ createdAt: -1 })
-      .limit(20);
+   const history = await WalletHistory.find({
+  email: email.toLowerCase()
+})
+.sort({ date: -1 })
+.limit(20);
 
     res.json({
       success: true,
@@ -3916,9 +3916,10 @@ app.post("/admin/wallet-adjust", async (req, res) => {
     await user.save();
 
     await WalletHistory.create({
-      email: user.email,
+  email: String(user.email).toLowerCase(),
       amount: Number(amount),
       type: type === "add" ? "Admin Credit" : "Admin Debit",
+      description: reason,
       note: reason,
       status: "success",
       date: new Date()
@@ -4549,9 +4550,9 @@ app.post("/wallet-history", async (req, res) => {
   try {
     const { email } = req.body;
 
-    const history = await WalletTransaction.find({
-      email: email.toLowerCase()
-    }).sort({ createdAt: -1 });
+    const history = await WalletHistory.find({
+  email: email.toLowerCase()
+}).sort({ date: -1 });
 
     res.json({
       success: true,
