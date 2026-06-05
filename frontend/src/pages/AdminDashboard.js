@@ -397,28 +397,56 @@ const fileUrl = (file) => {
   <table className="cash-table">
     <thead>
       <tr>
-        <td>
-  {new Date(r.createdAt).toLocaleString()}
-</td>
+ <div className="cash-table-wrapper">
+  <table className="cash-table">
+    <thead>
+      <tr>
         <th>Email</th>
         <th>Amount</th>
         <th>Transaction ID</th>
         <th>Screenshot</th>
+        <th>Date</th>
+        <th>Status</th>
         <th>Action</th>
-        <td>
-  <span
-    style={{
-      color:
-        r.status === "approved"
-          ? "#22c55e"
-          : r.status === "rejected"
-          ? "#ef4444"
-          : "#facc15"
-    }}
-  >
-    {r.status}
-  </span>
-</td>
+      </tr>
+    </thead>
+
+    <tbody>
+      {cash.map((r) => (
+        <tr key={r._id}>
+          <td>{r.email}</td>
+          <td>₹{r.amount}</td>
+          <td>{r.transactionId || r.utr || "N/A"}</td>
+          <td>
+            <button onClick={() => window.open(r.screenshot || r.screenshotUrl, "_blank")}>
+              View
+            </button>
+          </td>
+          <td>{r.createdAt ? new Date(r.createdAt).toLocaleString() : "N/A"}</td>
+          <td>
+            <span
+              style={{
+                color:
+                  r.status === "approved"
+                    ? "#22c55e"
+                    : r.status === "rejected"
+                    ? "#ef4444"
+                    : "#facc15",
+                fontWeight: "800",
+              }}
+            >
+              {r.status || "pending"}
+            </span>
+          </td>
+          <td>
+            <button onClick={() => approveCash(r._id)}>Approve</button>
+            <button onClick={() => rejectCash(r._id)}>Reject</button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
       </tr>
     </thead>
 
