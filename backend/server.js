@@ -3893,6 +3893,39 @@ app.post("/admin/approve-deposit", async (req, res) => {
   }
 });
 
+app.post("/admin/reject-deposit", async (req, res) => {
+  try {
+    const { id, reason } = req.body;
+
+    const request = await DepositRequest.findById(id);
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        msg: "Request not found"
+      });
+    }
+
+    request.status = "rejected";
+    request.rejectReason = reason || "Rejected by admin";
+    request.rejectedAt = new Date();
+
+    await request.save();
+
+    res.json({
+      success: true,
+      msg: "Deposit request rejected"
+    });
+  } catch (err) {
+    console.log("REJECT DEPOSIT ERROR:", err);
+
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+  }
+});
+
 app.post("/admin/wallet-adjust", async (req, res) => {
   try {
     const { userId, amount, reason, type } = req.body;

@@ -111,6 +111,25 @@ setCash(cData?.requests || []);
     }
   };
 
+  const approveDeposit = async (id) => {
+  const d = await apiPost("/admin/approve-deposit", { id });
+
+  alert(d?.msg || "Approved");
+  load();
+};
+
+const rejectDeposit = async (id) => {
+  const reason = prompt("Reject reason লিখুন");
+
+  const d = await apiPost("/admin/reject-deposit", {
+    id,
+    reason: reason || "Rejected by admin"
+  });
+
+  alert(d?.msg || "Rejected");
+  load();
+};
+
   const approveKYC = async (id) => {
   const d = await apiPost("/approve-kyc", { userId: id });
 
@@ -374,21 +393,79 @@ const fileUrl = (file) => {
       <div style={styles.section}>
         <h2>Cash Requests</h2>
 
-        {cash.length === 0 && <p>No cash requests</p>}
+        {cash.length === 0 ? (
+  <p>No cash requests</p>
+) : (
+  cash.map((r) => (
+    <div key={r._id} style={styles.card}>
+      <h3>{r.email}</h3>
 
-        {cash.map((c) => (
-          <div key={c._id} style={styles.row}>
-            <div>
-              <b>{c.email}</b>
-              <p>₹{c.amount}</p>
-              <p>UTR: {c.utr}</p>
-            </div>
+      <p><b>Amount:</b> ₹{r.amount}</p>
 
-            <button style={styles.green} onClick={() => approveCash(c._id)}>
-              Approve
-            </button>
-          </div>
-        ))}
+      <p>
+        <b>Transaction ID:</b>{" "}
+        {r.txnId || r.transactionId || r.utr || "N/A"}
+      </p>
+
+      {r.screenshot ? (
+        <div>
+          <p><b>Payment Screenshot:</b></p>
+          <a
+            href={r.screenshot}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <img
+              src={r.screenshot}
+              alt="payment screenshot"
+              style={{
+                width: "180px",
+                height: "120px",
+                objectFit: "cover",
+                borderRadius: "12px",
+                border: "2px solid #22c55e",
+                marginTop: "8px"
+              }}
+            />
+          </a>
+        </div>
+      ) : (
+        <p>No screenshot</p>
+      )}
+
+      <div style={{ display: "flex", gap: "12px", marginTop: "15px" }}>
+        <button
+          style={{
+            background: "#22c55e",
+            color: "#fff",
+            border: "none",
+            padding: "10px 18px",
+            borderRadius: "10px",
+            fontWeight: "700"
+          }}
+          onClick={() => approveDeposit(r._id)}
+        >
+          Approve
+        </button>
+
+        <button
+          style={{
+            background: "#ef4444",
+            color: "#fff",
+            border: "none",
+            padding: "10px 18px",
+            borderRadius: "10px",
+            fontWeight: "700"
+          }}
+          onClick={() => rejectDeposit(r._id)}
+        >
+          Reject
+        </button>
+      </div>
+    </div>
+  ))
+)}
+        
       </div>
 
       <div style={styles.section}>

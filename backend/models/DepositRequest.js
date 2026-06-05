@@ -4,7 +4,9 @@ const DepositRequestSchema = new mongoose.Schema({
   email: String,
   amount: Number,
   txnId: String,
+  transactionId: String,
   screenshot: String,
+  rejectReason: String,
   status: {
     type: String,
     default: "pending"
