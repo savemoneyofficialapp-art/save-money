@@ -564,8 +564,25 @@ const visibleHistory = showAllHistory
 
           )}
 
-{visibleHistory.map((item,index)=>(
+{visibleHistory.map((item,index)=>{
 
+  const rawType = String(item.type || "").toLowerCase();
+
+  const isCredit =
+    rawType.includes("credit") ||
+    rawType.includes("add") ||
+    rawType.includes("deposit") ||
+    rawType.includes("bonus");
+
+  const desc =
+    item.description ||
+    item.note ||
+    item.message ||
+    item.remark ||
+    item.type ||
+    "Wallet Transaction";
+
+  return (
             <div
               key={index}
               style={styles.historyRow}
@@ -583,9 +600,7 @@ const visibleHistory = showAllHistory
                         : "#fee2e2"
                   }}
                 >
-                  {item.type === "credit"
-                    ? "⬇"
-                    : "⬆"}
+                 {isCredit ? "↓" : "↑"}
                 </div>
 
               </div>
@@ -593,11 +608,11 @@ const visibleHistory = showAllHistory
               <div>
 
                 <div style={styles.rowTitle}>
-                  {item.title}
+                  {desc}
                 </div>
 
                 <div style={styles.rowSub}>
-                  {item.description}
+                  {item.note || ""}
                 </div>
 
               </div>
@@ -607,14 +622,14 @@ const visibleHistory = showAllHistory
                 <span
                   style={{
                     color:
-                      item.type === "credit"
+                      isCredit
                         ? "#16a34a"
                         : "#dc2626",
 
                     fontWeight:"700"
                   }}
                 >
-                  {item.type === "credit"
+                  {isCredit
                     ? "+"
                     : "-"}{" "}
 
@@ -641,7 +656,8 @@ const visibleHistory = showAllHistory
 
             </div>
 
-          ))}
+               );
+              })}
 
          {filteredHistory.length > 5 && (
   <button
