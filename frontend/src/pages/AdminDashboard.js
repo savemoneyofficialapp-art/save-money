@@ -397,11 +397,28 @@ const fileUrl = (file) => {
   <table className="cash-table">
     <thead>
       <tr>
+        <td>
+  {new Date(r.createdAt).toLocaleString()}
+</td>
         <th>Email</th>
         <th>Amount</th>
         <th>Transaction ID</th>
         <th>Screenshot</th>
         <th>Action</th>
+        <td>
+  <span
+    style={{
+      color:
+        r.status === "approved"
+          ? "#22c55e"
+          : r.status === "rejected"
+          ? "#ef4444"
+          : "#facc15"
+    }}
+  >
+    {r.status}
+  </span>
+</td>
       </tr>
     </thead>
 

@@ -75,6 +75,7 @@
 
 .cash-table{
   width:100%;
+  min-width: 900px;
   border-collapse:collapse;
   background:#0f172a;
   border-radius:12px;
@@ -100,28 +101,25 @@
 
 .view-btn{
   background:#3b82f6;
-  color:white;
+  color:#fff;
   border:none;
   padding:8px 14px;
   border-radius:8px;
-  cursor:pointer;
-}
+font-weight: 600;}
 
 .approve-btn{
   background:#22c55e;
-  color:white;
+  color:#fff;
   border:none;
   padding:8px 14px;
   border-radius:8px;
-  margin-right:8px;
-  cursor:pointer;
+ font-weight: 600;
 }
 
 .reject-btn{
   background:#ef4444;
-  color:white;
+  color:#fff;
   border:none;
   padding:8px 14px;
   border-radius:8px;
-  cursor:pointer;
-}
+font-weight: 600;}
