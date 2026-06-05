@@ -17,6 +17,7 @@ const TeamBonus = require("./models/TeamBonus");
 const RoyaltyBonus = require("./models/RoyaltyBonus");
 const WalletHistory = require("./models/WalletHistory");
 const AddCash = require("./models/AddCash");
+const DepositRequest = require("./models/DepositRequest");
 const multer = require("multer");
 const path = require("path");
 const bcrypt = require("bcryptjs");
