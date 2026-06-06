@@ -14,6 +14,7 @@ export default function Refer() {
 
   const [bonusModal, setBonusModal] = useState(null);
   const [treeOpen, setTreeOpen] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
   useEffect(() => {
     loadReferData();
@@ -145,6 +146,11 @@ const shareTelegram = () => {
 
   const finalHistory = history.length ? history : demoHistory;
 
+  const visibleHistory =
+  showAllHistory
+    ? referHistory
+    : referHistory.slice(0, 3);
+
   if (loading) {
     return (
       <div style={styles.loadingPage}>
@@ -177,8 +183,8 @@ const shareTelegram = () => {
         <p style={styles.welcome}>Welcome to</p>
 
         <h1 style={styles.mainTitle}>
-  <span style={styles.walletLogo}>🎀</span>
-  SAVE MONEY
+  <span style={styles.walletLogo}>🎁</span>
+     SAVE MONEY
 </h1>
 
 <h2 style={styles.referWorld}>
@@ -212,7 +218,12 @@ const shareTelegram = () => {
             <h2>{user.name || "Save Money User"}</h2>
 
 <span style={styles.activeMember}>
-  <span style={styles.greenDot}></span>
+  <span
+  style={{
+    ...styles.greenDot,
+    background: userStatus === "Active" ? "#22c55e" : "#ef4444"
+  }}
+></span>
   Active Member
 </span>
             <p style={styles.smallText}>Refer ID</p>
@@ -220,7 +231,7 @@ const shareTelegram = () => {
             <div style={styles.referIdBox}>
               <span>{referCode}</span>
 
-              <button onClick={() => copyText(referCode)}>⧉</button>
+              <button onClick={() => copyText(referCode)}>🗊</button>
             </div>
           </div>
         </div>
@@ -228,7 +239,7 @@ const shareTelegram = () => {
         <div style={styles.heroLine}></div>
 
         <div style={styles.heroRight}>
-          <div style={styles.walletRound}>👛</div>
+          <div style={styles.walletRound}>💸</div>
 
           <p>Refer Wallet Balance</p>
 
@@ -322,7 +333,6 @@ const shareTelegram = () => {
                 <th style={styles.th}>User</th>
                 <th style={styles.th}>Refer ID</th>
                 <th style={styles.th}>Join Date</th>
-                <th style={styles.th}>Package</th>
                 <th style={styles.th}>Status</th>
                 <th style={styles.th}>Earning</th>
                 <th style={styles.th}></th>
@@ -330,7 +340,7 @@ const shareTelegram = () => {
             </thead>
 
             <tbody>
-              {finalHistory.map((r, i) => (
+              {visibleHistory.map((r, i) => (
                 <tr key={i}>
                   <td style={styles.td}>
                     <div style={styles.userCell}>
@@ -360,7 +370,6 @@ const shareTelegram = () => {
                     <small>{r.time || "10:30 AM"}</small>
                   </td>
 
-                  <td style={styles.td}>🏅 {r.package || "Silver"}</td>
 
                   <td style={styles.td}>
                     <span
@@ -391,8 +400,10 @@ const shareTelegram = () => {
           </table>
         </div>
 
-        <button style={styles.viewMore}>View More⌄</button>
-      </section>
+      <button onClick={() => setShowAllHistory(!showAllHistory)}>
+  {showAllHistory ? "Show Less" : "View More"}
+</button>  
+          </section>
 
       <section style={styles.bottomBanner}>
         <div style={styles.bottomGift}>🎁</div>
