@@ -1751,6 +1751,74 @@ app.post("/start-invest", async (req, res) => {
       ]
     });
 
+    // Referral bonus only if referrer has active Save Money investment
+try {
+  const investor = await User.findOne({
+    email: email.toLowerCase()
+  });
+
+  const refCode =
+    investor.referredBy ||
+    investor.referBy ||
+    investor.refBy ||
+    investor.sponsorCode;
+
+  if (refCode) {
+    const referrer = await User.findOne({
+      $or: [
+        { referCode: refCode },
+        { referralCode: refCode },
+        { walletId: refCode }
+      ]
+    });
+
+    if (referrer) {
+      const referrerActiveInvestment =
+        await Investment.findOne({
+          email: referrer.email.toLowerCase(),
+          status: "Active"
+        });
+
+      if (referrerActiveInvestment) {
+        const bonusAmount = 499; // তোমার referral bonus amount
+
+        const oldBalance = Number(
+          referrer.balance ??
+          referrer.wallet ??
+          referrer.walletBalance ??
+          0
+        );
+
+        const newBalance = oldBalance + bonusAmount;
+
+        referrer.balance = newBalance;
+        referrer.wallet = newBalance;
+        referrer.walletBalance = newBalance;
+        referrer.referralIncome =
+          Number(referrer.referralIncome || 0) + bonusAmount;
+
+        await referrer.save();
+
+        await WalletHistory.create({
+          email: referrer.email.toLowerCase(),
+          amount: bonusAmount,
+          type: "credit",
+          description: `Referral bonus received from ${investor.name || investor.email}`,
+          note: "Referral bonus",
+          status: "success",
+          date: new Date()
+        });
+      } else {
+        console.log(
+          "Referral bonus skipped: Referrer has no active Save Money investment"
+        );
+      }
+    }
+  }
+} catch (bonusErr) {
+  console.log("REFERRAL BONUS ERROR:", bonusErr.message);
+}
+
    await WalletHistory.create({
   email,
   amount: investAmount,

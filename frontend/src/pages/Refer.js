@@ -73,20 +73,15 @@ export default function Refer() {
     }
   };
 
-  const shareWhatsapp = () => {
-    const text = `Join SAVE MONEY with my refer link: ${referLink}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-  };
+ const shareWhatsapp = () => {
+  const text = `Join SAVE MONEY using my refer link: ${referLink}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+};
 
-  const shareTelegram = () => {
-    const text = `Join SAVE MONEY with my refer link`;
-    window.open(
-      `https://t.me/share/url?url=${encodeURIComponent(
-        referLink
-      )}&text=${encodeURIComponent(text)}`,
-      "_blank"
-    );
-  };
+const shareTelegram = () => {
+  const text = `Join SAVE MONEY using my refer link: ${referLink}`;
+  window.open(`https://t.me/share/url?url=${encodeURIComponent(referLink)}&text=${encodeURIComponent(text)}`, "_blank");
+};
 
   const bonusCards = [
     {
@@ -172,7 +167,7 @@ export default function Refer() {
   onClick={() => (window.location.href = "/notifications")}
 >
   🔔
-  <span style={styles.bellCount}>3</span>
+  <span style={styles.bellCount}></span>
 </button>
 
       <div style={styles.bgGift}>🎁</div>
@@ -182,10 +177,15 @@ export default function Refer() {
         <p style={styles.welcome}>Welcome to</p>
 
         <h1 style={styles.mainTitle}>
-          SAVE <span>MONEY</span>
-        </h1>
+  <span style={styles.walletLogo}>🎀</span>
+  SAVE MONEY
+</h1>
 
-        <h2 style={styles.referWorld}>Refer World</h2>
+<h2 style={styles.referWorld}>
+  <span style={styles.titleLine}></span>
+  Refer World
+  <span style={styles.titleLine}></span>
+</h2>
 
         <p style={styles.tagline}>
           Refer More, Earn More, Grow Together!
@@ -211,8 +211,10 @@ export default function Refer() {
           <div style={styles.userInfo}>
             <h2>{user.name || "Save Money User"}</h2>
 
-            <div style={styles.activeMember}>● Active Member</div>
-
+<span style={styles.activeMember}>
+  <span style={styles.greenDot}></span>
+  Active Member
+</span>
             <p style={styles.smallText}>Refer ID</p>
 
             <div style={styles.referIdBox}>
@@ -232,7 +234,6 @@ export default function Refer() {
 
           <h1>{money(user.referWallet || user.referralIncome || 0)}</h1>
 
-          <button style={styles.withdrawBtn}>Withdraw</button>
         </div>
       </section>
 
@@ -245,9 +246,9 @@ export default function Refer() {
           <div style={styles.copyBox}>
             <span>{referLink}</span>
 
-            <button onClick={() => copyText(referLink)}>
-              ⧉ Copy Link
-            </button>
+           <button style={styles.copyLinkBtn} onClick={() => copyText(referLink)}>
+               🔗 Copy Link
+           </button>
           </div>
         </div>
 
@@ -255,11 +256,11 @@ export default function Refer() {
           <h3>Share via</h3>
 
           <button style={styles.whatsapp} onClick={shareWhatsapp}>
-            ☘
+            🌍
           </button>
 
           <button style={styles.telegram} onClick={shareTelegram}>
-            ✈
+            ⌲
           </button>
         </div>
       </section>
@@ -572,10 +573,22 @@ const styles = {
   },
 
   referWorld: {
-    margin: "-5px 0 0",
-    fontSize: 38,
-    fontWeight: 800
-  },
+  margin: "-5px 0 0",
+  fontSize: 38,
+  fontWeight: 800,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 18
+},
+
+walletLogo: {
+  display: "inline-block",
+  fontSize: 58,
+  marginRight: 16,
+  verticalAlign: "middle",
+  filter: "drop-shadow(0 10px 18px rgba(124,58,237,.3))"
+},
 
   tagline: {
     color: "#62678c",
@@ -647,17 +660,31 @@ const styles = {
     opacity: 0.9
   },
 
-  referIdBox: {
-    border: "1px dashed rgba(255,255,255,.75)",
-    borderRadius: 14,
-    padding: "12px 16px",
-    fontSize: 22,
-    fontWeight: 800,
-    display: "flex",
-    gap: 18,
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
+ referIdBox: {
+  border: "1px dashed rgba(255,255,255,.85)",
+  borderRadius: 14,
+  padding: "12px 16px",
+  fontSize: 22,
+  fontWeight: 900,
+  display: "flex",
+  gap: 18,
+  alignItems: "center",
+  justifyContent: "space-between",
+  background: "linear-gradient(90deg,#ffffff33,#ffffff18)",
+  color: "#fff",
+  boxShadow: "inset 0 0 0 1px rgba(255,255,255,.12)"
+},
+
+copyLinkBtn: {
+  border: "none",
+  borderRadius: 12,
+  padding: "12px 22px",
+  background: "linear-gradient(90deg,#7c3aed,#d946ef)",
+  color: "#fff",
+  fontWeight: 900,
+  cursor: "pointer",
+  whiteSpace: "nowrap"
+},
 
   copySmall: {},
 
@@ -683,16 +710,7 @@ const styles = {
 
   balance: {},
 
-  withdrawBtn: {
-    border: "1px solid rgba(255,255,255,.55)",
-    background: "transparent",
-    color: "white",
-    borderRadius: 14,
-    padding: "14px 42px",
-    fontSize: 20,
-    fontWeight: 800,
-    cursor: "pointer"
-  },
+ 
 
   linkCard: {
     width: "min(1120px, 94vw)",
@@ -737,25 +755,27 @@ const styles = {
   },
 
   whatsapp: {
-    width: 58,
-    height: 58,
-    border: "none",
-    borderRadius: "50%",
-    background: "#18c96f",
-    color: "white",
-    fontSize: 30,
-    marginRight: 12
-  },
+  width: 58,
+  height: 58,
+  border: "none",
+  borderRadius: "50%",
+  background: "#16c768",
+  color: "white",
+  fontSize: 30,
+  marginRight: 12,
+  cursor: "pointer"
+},
 
   telegram: {
-    width: 58,
-    height: 58,
-    border: "none",
-    borderRadius: "50%",
-    background: "#2c9bef",
-    color: "white",
-    fontSize: 30
-  },
+  width: 58,
+  height: 58,
+  border: "none",
+  borderRadius: "50%",
+  background: "#2196f3",
+  color: "white",
+  fontSize: 30,
+  cursor: "pointer"
+},
 
   bonusGrid: {
     width: "min(1120px, 94vw)",
@@ -784,12 +804,18 @@ const styles = {
   },
 
   detailBtn: {
-    border: "1px solid currentColor",
-    borderRadius: 12,
-    background: "white",
-    padding: "12px 24px",
-    fontWeight: 900
-  },
+  border: "1px solid currentColor",
+  borderRadius: 12,
+  background: "white",
+  padding: "12px 22px",
+  fontWeight: 900,
+  minHeight: 45,
+  lineHeight: "18px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  whiteSpace: "nowrap"
+},
 
   treeText: {
     minHeight: 58,
@@ -966,6 +992,23 @@ const styles = {
     background: "#9c7cff",
     margin: "0 auto"
   },
+
+  titleLine: {
+  width: 70,
+  height: 3,
+  borderRadius: 10,
+  background: "linear-gradient(90deg,#c084fc,#f0abfc)"
+},
+
+greenDot: {
+  width: 10,
+  height: 10,
+  borderRadius: "50%",
+  background: "#22c55e",
+  display: "inline-block",
+  marginRight: 8,
+  boxShadow: "0 0 10px #22c55e"
+},
 
   treeRow: {
     display: "flex",
