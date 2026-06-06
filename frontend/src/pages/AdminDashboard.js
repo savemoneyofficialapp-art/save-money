@@ -181,16 +181,29 @@ const fileUrl = (file) => {
   return `${API}/uploads/${file}`;
 };
 
-  const approveCash = async (id) => {
-  const d = await apiPost("/admin/deposit-approve", { id });
-  alert(d?.msg || "Done");
-  load();
+ const approveCash = async (id) => {
+  const res = await apiPost("/approve-cash", {
+    requestId: id,
+  });
+
+  if (res?.success) {
+    alert("Cash request approved");
+    load(); // table reload
+  } else {
+    alert(res?.msg || "Approve failed");
+  }
 };
 
 const rejectCash = async (id) => {
-  const d = await apiPost("/admin/deposit-reject", { id });
-  alert(d?.msg || "Done");
-  load();
+  const res = await apiPost("/reject-cash", {
+    requestId: id,
+  });
+
+  if (res?.success) {
+    load();
+  } else {
+    alert(res?.msg || "Reject failed");
+  }
 };
 
   const banUser = async (id) => {
@@ -419,8 +432,7 @@ const rejectCash = async (id) => {
             <tr key={r._id}>
               <td>{r.email}</td>
               <td>₹{Number(r.amount || 0).toLocaleString("en-IN")}</td>
-              <td>{r.transactionId || r.utr || "N/A"}</td>
-
+              <td>{r.txnId || r.transactionId || "N/A"}</td>
               <td>
                 <button
                   className="view-btn"
@@ -449,8 +461,8 @@ const rejectCash = async (id) => {
 
               <td className="action-cell">
                
-<button onClick={() => approveCash(r._id || r.id)}>Approve</button>
-<button onClick={() => rejectCash(r._id || r.id)}>Reject</button>
+<button onClick={() => approveCash(r._id)}>Approve</button>
+<button onClick={() => rejectCash(r._id)}>Reject</button>
 
               </td>
             </tr>

@@ -3671,12 +3671,13 @@ async (req, res) => {
 
 app.get("/cash-requests", auth, adminAuth, async (req, res) => {
   try {
-    const requests = await AddCash.find({
-      status: { $in: ["Pending", "pending"] }
-    }).sort({ createdAt: -1, date: -1 });
+    const requests = await DepositRequest.find({
+      status: "pending"
+    }).sort({ date: -1 });
 
     res.json(requests);
   } catch (err) {
+    console.log("CASH REQUEST ERROR:", err);
     res.status(500).json([]);
   }
 });
@@ -3688,7 +3689,7 @@ async (req, res) => {
 
   const { requestId } = req.body;
 
-  const reqData = await AddCash.findById(requestId);
+  const reqData = await DepositRequest.findById(requestId);
 
   if (!reqData) {
 
@@ -3726,6 +3727,35 @@ async (req, res) => {
     msg: "Cash Approved"
   });
 
+});
+
+app.post("/reject-cash", auth, adminAuth, async (req, res) => {
+  try {
+    const { requestId } = req.body;
+
+    const reqData = await DepositRequest.findById(requestId);
+
+    if (!reqData) {
+      return res.status(404).json({
+        success: false,
+        msg: "Request not found",
+      });
+    }
+
+    reqData.status = "rejected";
+    await reqData.save();
+
+    res.json({
+      success: true,
+      msg: "Cash request rejected",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      msg: "Server error",
+    });
+  }
 });
 
 app.get("/admin/finance-report", async (req, res) => {
