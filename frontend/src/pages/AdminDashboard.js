@@ -388,125 +388,85 @@ const fileUrl = (file) => {
 
   </div>
 ))}
-      </div>
 
-      <div style={styles.section}>
-        <h2>Cash Requests</h2>
+<section className="admin-card">
+  <h2>Cash Requests</h2>
 
-       <div className="cash-table-wrapper">
-  <table className="cash-table">
-    <thead>
-      <tr>
- <div className="cash-table-wrapper">
-  <table className="cash-table">
-    <thead>
-      <tr>
-        <th>Email</th>
-        <th>Amount</th>
-        <th>Transaction ID</th>
-        <th>Screenshot</th>
-        <th>Date</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {cash.map((r) => (
-        <tr key={r._id}>
-          <td>{r.email}</td>
-          <td>₹{r.amount}</td>
-          <td>{r.transactionId || r.utr || "N/A"}</td>
-          <td>
-            <button onClick={() => window.open(r.screenshot || r.screenshotUrl, "_blank")}>
-              View
-            </button>
-          </td>
-          <td>{r.createdAt ? new Date(r.createdAt).toLocaleString() : "N/A"}</td>
-          <td>
-            <span
-              style={{
-                color:
-                  r.status === "approved"
-                    ? "#22c55e"
-                    : r.status === "rejected"
-                    ? "#ef4444"
-                    : "#facc15",
-                fontWeight: "800",
-              }}
-            >
-              {r.status || "pending"}
-            </span>
-          </td>
-          <td>
-            <button onClick={() => approveCash(r._id)}>Approve</button>
-            <button onClick={() => rejectCash(r._id)}>Reject</button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-      </tr>
-    </thead>
-
-    <tbody>
-      {cash.length === 0 ? (
-        <tr>
-          <td colSpan="5">No Cash Requests</td>
-        </tr>
-      ) : (
-        cash.map((r) => (
-          <tr key={r._id}>
-            <td>{r.email}</td>
-
-            <td>₹{r.amount}</td>
-
-            <td>
-              {r.txnId ||
-                r.transactionId ||
-                "N/A"}
-            </td>
-
-            <td>
-              <button
-                className="view-btn"
-                onClick={() =>
-                  window.open(
-                    r.screenshot,
-                    "_blank"
-                  )
-                }
-              >
-                View
-              </button>
-            </td>
-
-            <td>
-              <button
-                className="approve-btn"
-                onClick={() =>
-                  approveDeposit(r._id)
-                }
-              >
-                Approve
-              </button>
-
-              <button
-                className="reject-btn"
-                onClick={() =>
-                  rejectDeposit(r._id)
-                }
-              >
-                Reject
-              </button>
-            </td>
+  {cash.length === 0 ? (
+    <p>No cash requests</p>
+  ) : (
+    <div className="cash-table-wrap">
+      <table className="cash-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Amount</th>
+            <th>Transaction ID</th>
+            <th>Screenshot</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Action</th>
           </tr>
-        ))
-      )}
-    </tbody>
-  </table>
-</div>
+        </thead>
+
+        <tbody>
+          {cash.map((r) => (
+            <tr key={r._id}>
+              <td>{r.email}</td>
+              <td>₹{Number(r.amount || 0).toLocaleString("en-IN")}</td>
+              <td>{r.transactionId || r.utr || "N/A"}</td>
+
+              <td>
+                <button
+                  className="view-btn"
+                  onClick={() =>
+                    window.open(
+                      r.screenshot || r.screenshotUrl || r.image || r.photo,
+                      "_blank"
+                    )
+                  }
+                >
+                  View
+                </button>
+              </td>
+
+              <td>
+                {r.createdAt
+                  ? new Date(r.createdAt).toLocaleString("en-IN")
+                  : "N/A"}
+              </td>
+
+              <td>
+                <span className={`status ${r.status || "pending"}`}>
+                  {r.status || "pending"}
+                </span>
+              </td>
+
+              <td className="action-cell">
+                <button
+                  className="approve-btn"
+                  onClick={() => approveCash(r._id)}
+                  disabled={r.status === "approved"}
+                >
+                  Approve
+                </button>
+
+                <button
+                  className="reject-btn"
+                  onClick={() => rejectCash(r._id)}
+                  disabled={r.status === "rejected"}
+                >
+                  Reject
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</section>
+     
         
       </div>
 
