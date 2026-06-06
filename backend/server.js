@@ -4439,6 +4439,54 @@ app.post("/referral-tree", auth, async (req, res) => {
   }
 });
 
+app.post("/refer-data", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({
+      email: String(email).toLowerCase()
+    });
+
+    if (!user) {
+      return res.json({
+        success: false,
+        msg: "User not found"
+      });
+    }
+
+    const history = await User.find({
+      referredBy:
+        user.referCode ||
+        user.referralCode ||
+        user.walletId
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      user,
+      history: history.map((u) => ({
+        name: u.name,
+        email: u.email,
+        mobile: u.mobile,
+        referId: u.referCode || u.referralCode || u.walletId,
+        date: u.createdAt
+          ? new Date(u.createdAt).toLocaleDateString("en-IN")
+          : "N/A",
+        package: u.package || "Save Money",
+        status: u.status || "Active",
+        earning: u.referralBonus || 0,
+        photo: u.photo || u.photoImage || ""
+      }))
+    });
+  } catch (err) {
+    console.log("REFER DATA ERROR:", err);
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+  }
+});
+
 app.post("/my-bonus-ledger", auth, async (req, res) => {
   const { email } = req.body;
 

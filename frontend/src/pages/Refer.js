@@ -1,418 +1,975 @@
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import { fetchWithAuth }
-from "../utils/fetchWithAuth";
-import axios from "axios";
 import { API } from "../config";
 
-
-
 export default function Refer() {
-  const email = localStorage.getItem("email");
-  const referCode = localStorage.getItem("referCode") || "----";
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const email = localStorage.getItem("email") || "";
+  const token = localStorage.getItem("token") || "";
 
-  const user = JSON.parse(
-    localStorage.getItem("user")
-  );
-
-  const investments =
-  JSON.parse(localStorage.getItem("investments")) || [];
-
-  if (!investments || investments.length === 0) {
-
-  toast.error("Please Start Your Investment First");
-
-  navigate("/save-money", { replace: true });
-  return;
-}
-
-}, []);
-
-  const [code, setCode] = useState("");
-  const [team, setTeam] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({});
   const [history, setHistory] = useState([]);
 
+  const [bonusModal, setBonusModal] = useState(null);
+  const [treeOpen, setTreeOpen] = useState(false);
 
   useEffect(() => {
-    load();
+    loadReferData();
   }, []);
 
-  const load = async () => {
-  const res = await fetchWithAuth(`${API}/my-referrals`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({})
-  });
+  const loadReferData = async () => {
+    try {
+      setLoading(true);
 
-  const d = await res.json();
+      const res = await fetch(`${API}/refer-data`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({ email })
+      });
 
-  if (d.msg === "Token expired or invalid") {
-    localStorage.clear();
-    toast.error("Session expired. Please login again.");
-    window.location.href = "/login";
-    return;
-  }
+      const data = await res.json();
 
-  setCode(d.myCode || d.referCode || "NO CODE");
-  setTeam(d.team || []);
-};
-  
-
-const referLink = `${window.location.origin}/register?ref=${code}`;
-
-  const copyText = (text, msg) => {
-    navigator.clipboard.writeText(text);
-    toast.success(msg);
+      if (data?.success) {
+        setUser(data.user || {});
+        setHistory(Array.isArray(data.history) ? data.history : []);
+      } else {
+        setUser({});
+        setHistory([]);
+      }
+    } catch (err) {
+      console.log("REFER DATA ERROR:", err);
+      setUser({});
+      setHistory([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const money = (n) =>
+    `₹ ${Number(n || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+
+  const referCode =
+    user.referCode ||
+    user.referralCode ||
+    user.walletId ||
+    "SMREF0001";
+
+  const referLink = `${window.location.origin}/register?ref=${referCode}`;
+
+  const copyText = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Copied Successfully");
+    } catch {
+      alert("Copy failed");
+    }
+  };
+
+  const shareWhatsapp = () => {
+    const text = `Join SAVE MONEY with my refer link: ${referLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const shareTelegram = () => {
+    const text = `Join SAVE MONEY with my refer link`;
+    window.open(
+      `https://t.me/share/url?url=${encodeURIComponent(
+        referLink
+      )}&text=${encodeURIComponent(text)}`,
+      "_blank"
+    );
+  };
+
+  const bonusCards = [
+    {
+      key: "performance",
+      title: "Performance Bonus",
+      amount: user.performanceBonus || user.performanceIncome || 0,
+      icon: "📈",
+      color: "#c026d3",
+      bg: "#fff0ff"
+    },
+    {
+      key: "team",
+      title: "Team Bonus",
+      amount: user.teamBonus || user.teamIncome || 0,
+      icon: "👥",
+      color: "#2563eb",
+      bg: "#eff6ff"
+    },
+    {
+      key: "royalty",
+      title: "Royalty Bonus",
+      amount: user.royaltyBonus || user.royaltyIncome || 0,
+      icon: "👑",
+      color: "#f97316",
+      bg: "#fff7ed"
+    }
+  ];
+
+  const demoHistory = [
+    {
+      name: "Priya Sharma",
+      mobile: "+91 98765 43210",
+      referId: "REF445566",
+      date: "20 May 2024",
+      time: "10:30 AM",
+      package: "Silver",
+      status: "Active",
+      earning: 520
+    },
+    {
+      name: "Amit Verma",
+      mobile: "+91 91234 56789",
+      referId: "REF445567",
+      date: "19 May 2024",
+      time: "09:20 AM",
+      package: "Gold",
+      status: "Active",
+      earning: 780
+    },
+    {
+      name: "Vikash Singh",
+      mobile: "+91 93456 78901",
+      referId: "REF445569",
+      date: "17 May 2024",
+      time: "12:40 PM",
+      package: "Bronze",
+      status: "Inactive",
+      earning: 0
+    }
+  ];
+
+  const finalHistory = history.length ? history : demoHistory;
+
+  if (loading) {
+    return (
+      <div style={styles.loadingPage}>
+        <div style={styles.loadingBox}>
+          <div style={styles.loadingIcon}>🎁</div>
+          <h2>Loading Refer World...</h2>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={styles.container}>
+    <div style={styles.page}>
+      <button style={styles.backBtn} onClick={() => navigate(-1)}>
+        ←
+      </button>
 
-      <h1 style={styles.title}>Refer & Earn</h1>
-      <p style={styles.subtitle}>Share your code and grow your team</p>
-
-      {/* REF CODE */}
-      <div style={styles.card}>
-        <p style={styles.label}>UNIQUE REFER CODE</p>
-
-        <div style={styles.copyBox}>
-          <span style={styles.codeText}>{code || "----"}</span>
-
-          <button
-            style={styles.copyBtn}
-            onClick={() => copyText(code, "Refer code copied")}
-          >
-            Copy
-          </button>
-        </div>
-      </div>
-
-      {/* REF LINK */}
-      <div style={styles.card}>
-        <p style={styles.label}>REFER LINK WITH CODE</p>
-
-        <div style={styles.linkBox}>
-          <p style={styles.linkText}>{referLink}</p>
-
-          <button
-            style={styles.copyBtnBlue}
-            onClick={() => copyText(referLink, "Refer link copied")}
-          >
-            Copy Link
-          </button>
-        </div>
-      </div>
-
-      {/* SOCIAL BUTTONS */}
-      <div style={styles.socialRow}>
-        <button style={styles.whatsapp}>WhatsApp</button>
-        <button style={styles.telegram}>Telegram</button>
-      </div>
-
-      {/* BONUS BUTTONS */}
-      <div style={styles.bonusGrid}>
-        <button
-  style={styles.bonus}
-  onClick={() => {
-    toast.success("Open Performance Bonus");
-        navigate("/performance-bonus");
-  }}
+      <button
+  style={styles.bellBtn}
+  onClick={() => (window.location.href = "/notifications")}
 >
-  Performance Bonus
-</button>
-        <button
-  style={styles.bonus}
-  onClick={() => {
-    toast.success("Open Team Bonus");
-         navigate("/team-bonus");
-  }}
->
-  Team Bonus
-</button>
-        <button
-  style={styles.bonus}
-  onClick={() => {
-    toast.success("Open Royalty Bonus");
-        navigate("/royalty-bonus");
-  }}
->
-  Royality Bonus
+  🔔
+  <span style={styles.bellCount}>3</span>
 </button>
 
-<button
-  style={styles.treeBtn}
-  onClick={() =>{toast.success("Open Referral tree");
-   navigate("/referral-tree");
-  }}
->
-  🌳 View 7 Level Referral Tree
-</button>
-      </div>
+      <div style={styles.bgGift}>🎁</div>
+      <div style={styles.bgPeople}>👥</div>
 
-      {/* HISTORY */}
-      <h3 style={styles.historyTitle}>Referral History</h3>
+      <header style={styles.header}>
+        <p style={styles.welcome}>Welcome to</p>
 
-      {team.length === 0 && (
-        <div style={styles.empty}>No referrals yet</div>
-      )}
+        <h1 style={styles.mainTitle}>
+          SAVE <span>MONEY</span>
+        </h1>
 
-      {team.map((u, i) => (
-        <div key={i} style={styles.historyCard}>
-          <div>
-            <p style={styles.name}>{u.name}</p>
-            <p style={styles.date}>
-              Joined: {new Date(u.date).toLocaleDateString()}
-            </p>
+        <h2 style={styles.referWorld}>Refer World</h2>
+
+        <p style={styles.tagline}>
+          Refer More, Earn More, Grow Together!
+        </p>
+      </header>
+
+      <section style={styles.heroCard}>
+        <div style={styles.heroLeft}>
+          <div style={styles.avatarWrap}>
+            <img
+              style={styles.avatar}
+              src={
+                user.photo ||
+                user.photoImage ||
+                user.avatar ||
+                "https://i.pravatar.cc/160?img=12"
+              }
+              alt="user"
+            />
+            <div style={styles.crown}>♛</div>
           </div>
 
-          <span
-  style={{
-    ...styles.status,
+          <div style={styles.userInfo}>
+            <h2>{user.name || "Save Money User"}</h2>
 
-    background:
-      u.status === "Active"
-        ? "#14532d"
-        : "#7f1d1d",
+            <div style={styles.activeMember}>● Active Member</div>
 
-    color:
-      u.status === "Active"
-        ? "#22c55e"
-        : "#ef4444",
+            <p style={styles.smallText}>Refer ID</p>
 
-    border:
-      u.status === "Active"
-        ? "1px solid #22c55e"
-        : "1px solid #ef4444"
-  }}
->
-            {u.status}
-          </span>
+            <div style={styles.referIdBox}>
+              <span>{referCode}</span>
+
+              <button onClick={() => copyText(referCode)}>⧉</button>
+            </div>
+          </div>
         </div>
-      ))}
 
+        <div style={styles.heroLine}></div>
+
+        <div style={styles.heroRight}>
+          <div style={styles.walletRound}>👛</div>
+
+          <p>Refer Wallet Balance</p>
+
+          <h1>{money(user.referWallet || user.referralIncome || 0)}</h1>
+
+          <button style={styles.withdrawBtn}>Withdraw</button>
+        </div>
+      </section>
+
+      <section style={styles.linkCard}>
+        <div style={styles.linkIcon}>🔗</div>
+
+        <div style={styles.linkMiddle}>
+          <h3>Your Refer Link</h3>
+
+          <div style={styles.copyBox}>
+            <span>{referLink}</span>
+
+            <button onClick={() => copyText(referLink)}>
+              ⧉ Copy Link
+            </button>
+          </div>
+        </div>
+
+        <div style={styles.shareBox}>
+          <h3>Share via</h3>
+
+          <button style={styles.whatsapp} onClick={shareWhatsapp}>
+            ☘
+          </button>
+
+          <button style={styles.telegram} onClick={shareTelegram}>
+            ✈
+          </button>
+        </div>
+      </section>
+
+      <section style={styles.bonusGrid}>
+        {bonusCards.map((b) => (
+          <div key={b.key} style={{ ...styles.bonusCard, background: b.bg }}>
+            <div style={{ ...styles.bonusIcon, background: b.color }}>
+              {b.icon}
+            </div>
+
+            <h3>{b.title}</h3>
+            <h2>{money(b.amount)}</h2>
+
+            <button
+              style={{ ...styles.detailBtn, color: b.color }}
+              onClick={() => setBonusModal(b)}
+            >
+              View Details
+            </button>
+          </div>
+        ))}
+
+        <div style={{ ...styles.bonusCard, background: "#ecfdf5" }}>
+          <div style={{ ...styles.bonusIcon, background: "#10b981" }}>
+            🌳
+          </div>
+
+          <h3>Tree View</h3>
+          <p style={styles.treeText}>View your whole team structure</p>
+
+          <button
+            style={{ ...styles.detailBtn, color: "#10b981" }}
+            onClick={() => setTreeOpen(true)}
+          >
+            View Tree
+          </button>
+        </div>
+      </section>
+
+      <section style={styles.historyCard}>
+        <div style={styles.historyHead}>
+          <div>
+            <h2>🕒 Refer History</h2>
+            <p>Check your referral activities</p>
+          </div>
+
+          <select style={styles.select}>
+            <option>All Status</option>
+            <option>Active</option>
+            <option>Inactive</option>
+          </select>
+        </div>
+
+        <div style={styles.tableWrap}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>User</th>
+                <th style={styles.th}>Refer ID</th>
+                <th style={styles.th}>Join Date</th>
+                <th style={styles.th}>Package</th>
+                <th style={styles.th}>Status</th>
+                <th style={styles.th}>Earning</th>
+                <th style={styles.th}></th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {finalHistory.map((r, i) => (
+                <tr key={i}>
+                  <td style={styles.td}>
+                    <div style={styles.userCell}>
+                      <img
+                        style={styles.smallAvatar}
+                        src={
+                          r.photo ||
+                          `https://i.pravatar.cc/80?img=${i + 20}`
+                        }
+                        alt=""
+                      />
+
+                      <div>
+                        <b>{r.name || r.userName || "User"}</b>
+                        <small style={styles.mobileText}>
+                          {r.mobile || r.email || ""}
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td style={styles.td}>{r.referId || r.referCode || "N/A"}</td>
+
+                  <td style={styles.td}>
+                    {r.date || "N/A"}
+                    <br />
+                    <small>{r.time || "10:30 AM"}</small>
+                  </td>
+
+                  <td style={styles.td}>🏅 {r.package || "Silver"}</td>
+
+                  <td style={styles.td}>
+                    <span
+                      style={
+                        String(r.status).toLowerCase() === "inactive"
+                          ? styles.inactive
+                          : styles.active
+                      }
+                    >
+                      {r.status || "Active"}
+                    </span>
+                  </td>
+
+                  <td
+                    style={{
+                      ...styles.td,
+                      color: Number(r.earning || 0) > 0 ? "#16a34a" : "#ef3971",
+                      fontWeight: 900
+                    }}
+                  >
+                    {money(r.earning)}
+                  </td>
+
+                  <td style={styles.td}>⋮</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <button style={styles.viewMore}>View More⌄</button>
+      </section>
+
+      <section style={styles.bottomBanner}>
+        <div style={styles.bottomGift}>🎁</div>
+
+        <div style={{ flex: 1 }}>
+          <h2>Keep Referring & Earning</h2>
+          <p>Your network is your net worth.</p>
+        </div>
+
+       <button style={styles.referNowBtn} onClick={shareWhatsapp}>
+  🔗 Refer Now
+</button>
+      </section>
+
+      {bonusModal && (
+        <Modal onClose={() => setBonusModal(null)}>
+          <h2>{bonusModal.icon} {bonusModal.title}</h2>
+          <h1 style={{ color: bonusModal.color }}>
+            {money(bonusModal.amount)}
+          </h1>
+
+          <p style={styles.modalText}>
+            This bonus will be calculated from your referral network. Admin can
+            activate or deactivate this bonus manually.
+          </p>
+
+          <button style={styles.modalBtn} onClick={() => setBonusModal(null)}>
+            Close
+          </button>
+        </Modal>
+      )}
+
+      {treeOpen && (
+        <Modal onClose={() => setTreeOpen(false)}>
+          <h2>🌳 Team Tree View</h2>
+
+          <div style={styles.treeBox}>
+            <div style={styles.treeNode}>You</div>
+            <div style={styles.treeLine}></div>
+
+            <div style={styles.treeRow}>
+              <div style={styles.treeNode}>Level 1</div>
+              <div style={styles.treeNode}>Level 2</div>
+              <div style={styles.treeNode}>Level 3</div>
+            </div>
+          </div>
+
+          <button style={styles.modalBtn} onClick={() => setTreeOpen(false)}>
+            Close
+          </button>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function Modal({ children, onClose }) {
+  return (
+    <div style={styles.modalOverlay} onClick={onClose}>
+      <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
     </div>
   );
 }
 
 const styles = {
-  container: {
+  loadingPage: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg,#020617,#0f172a,#111827)",
-    color: "white",
-    padding: "20px",
+    background: "#fff7ff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     fontFamily: "Arial"
   },
 
-  title: {
+  loadingBox: {
+    background: "white",
+    padding: 35,
+    borderRadius: 30,
     textAlign: "center",
-    color: "#22c55e",
-    fontSize: "32px",
-    marginBottom: "5px"
+    boxShadow: "0 20px 45px rgba(124,58,237,.18)"
   },
 
-  subtitle: {
+  loadingIcon: {
+    fontSize: 70
+  },
+
+  page: {
+    minHeight: "100vh",
+    padding: "28px",
+    background:
+      "radial-gradient(circle at top left,#fff0ff,transparent 28%),radial-gradient(circle at top right,#ffe8f5,transparent 30%),linear-gradient(135deg,#fffaff,#f8f3ff,#ffffff)",
+    fontFamily: "Arial, sans-serif",
+    color: "#111542",
+    position: "relative",
+    overflowX: "hidden"
+  },
+
+  backBtn: {
+    position: "absolute",
+    top: 24,
+    left: 24,
+    width: 54,
+    height: 54,
+    border: "none",
+    borderRadius: 16,
+    background: "white",
+    boxShadow: "0 12px 30px rgba(137,84,255,.22)",
+    fontSize: 30,
+    fontWeight: 900,
+    cursor: "pointer",
+    zIndex: 5
+  },
+
+  bellBtn: {
+    position: "absolute",
+    top: 24,
+    right: 24,
+    width: 58,
+    height: 58,
+    border: "none",
+    borderRadius: 18,
+    background: "white",
+    boxShadow: "0 12px 30px rgba(137,84,255,.22)",
+    fontSize: 25,
+    cursor: "pointer",
+    zIndex: 5
+  },
+
+  bellCount: {
+    position: "absolute",
+    top: 4,
+    right: 5,
+    background: "#f03092",
+    color: "white",
+    borderRadius: 99,
+    padding: "3px 8px",
+    fontSize: 13,
+    fontWeight: 900
+  },
+
+  bgGift: {
+    position: "absolute",
+    left: 45,
+    top: 150,
+    fontSize: 72,
+    opacity: 0.35
+  },
+
+  bgPeople: {
+    position: "absolute",
+    right: 70,
+    top: 145,
+    fontSize: 80,
+    opacity: 0.25
+  },
+
+  header: {
     textAlign: "center",
-    color: "#94a3b8",
-    marginBottom: "25px"
+    marginTop: 8
   },
 
-  card: {
-    background: "linear-gradient(135deg,#1e293b,#0f172a)",
-    padding: "16px",
-    borderRadius: "16px",
-    marginTop: "14px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
-    border: "1px solid #334155"
+  welcome: {
+    margin: 0,
+    fontSize: 22,
+    fontWeight: 500
   },
 
-  bonus:{
-  flex:1,
-  padding:"12px",
-  borderRadius:"10px",
-  background:"#3b82f6",
-  color:"white",
-  border:"none",
-  fontWeight:"bold",
-  cursor:"pointer"
-},
+  mainTitle: {
+    margin: "2px 0 0",
+    fontSize: 62,
+    fontWeight: 900,
+    letterSpacing: 1,
+    background: "linear-gradient(90deg,#1463ff,#8b20ff,#ff1685)",
+    WebkitBackgroundClip: "text",
+    color: "transparent"
+  },
 
-  label: {
-    fontSize: "12px",
-    letterSpacing: "1px",
-    color: "#94a3b8",
-    marginBottom: "10px",
-    fontWeight: "bold"
+  referWorld: {
+    margin: "-5px 0 0",
+    fontSize: 38,
+    fontWeight: 800
+  },
+
+  tagline: {
+    color: "#62678c",
+    fontSize: 18,
+    marginTop: 10
+  },
+
+  heroCard: {
+    width: "min(1050px, 94vw)",
+    margin: "30px auto 18px",
+    padding: 44,
+    borderRadius: 34,
+    background: "linear-gradient(135deg,#3a19d6 0%,#6b08d8 45%,#b616a1 100%)",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 30,
+    boxShadow: "0 30px 55px rgba(102,38,190,.35)"
+  },
+
+  heroLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: 28
+  },
+
+  avatarWrap: {
+    position: "relative"
+  },
+
+  avatar: {
+    width: 150,
+    height: 150,
+    borderRadius: "50%",
+    border: "8px solid white",
+    objectFit: "cover"
+  },
+
+  crown: {
+    position: "absolute",
+    right: -4,
+    bottom: 12,
+    width: 50,
+    height: 50,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg,#e11dff,#9f18ff)",
+    display: "grid",
+    placeItems: "center",
+    fontSize: 26,
+    border: "4px solid white"
+  },
+
+  userInfo: {
+    minWidth: 250
+  },
+
+  activeMember: {
+    display: "inline-block",
+    margin: "12px 0",
+    padding: "10px 18px",
+    borderRadius: 12,
+    background: "rgba(255,255,255,.16)",
+    fontWeight: 700
+  },
+
+  smallText: {
+    margin: "8px 0",
+    opacity: 0.9
+  },
+
+  referIdBox: {
+    border: "1px dashed rgba(255,255,255,.75)",
+    borderRadius: 14,
+    padding: "12px 16px",
+    fontSize: 22,
+    fontWeight: 800,
+    display: "flex",
+    gap: 18,
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+
+  copySmall: {},
+
+  heroLine: {
+    height: 145,
+    width: 1,
+    background: "rgba(255,255,255,.25)"
+  },
+
+  heroRight: {
+    minWidth: 310
+  },
+
+  walletRound: {
+    width: 76,
+    height: 76,
+    borderRadius: "50%",
+    background: "rgba(255,255,255,.18)",
+    display: "grid",
+    placeItems: "center",
+    fontSize: 38
+  },
+
+  balance: {},
+
+  withdrawBtn: {
+    border: "1px solid rgba(255,255,255,.55)",
+    background: "transparent",
+    color: "white",
+    borderRadius: 14,
+    padding: "14px 42px",
+    fontSize: 20,
+    fontWeight: 800,
+    cursor: "pointer"
+  },
+
+  linkCard: {
+    width: "min(1120px, 94vw)",
+    margin: "20px auto",
+    padding: 28,
+    borderRadius: 26,
+    background: "white",
+    boxShadow: "0 16px 36px rgba(156,105,255,.16)",
+    display: "flex",
+    alignItems: "center",
+    gap: 24
+  },
+
+  linkIcon: {
+    width: 90,
+    height: 90,
+    borderRadius: 22,
+    background: "#f0e7ff",
+    display: "grid",
+    placeItems: "center",
+    fontSize: 48
+  },
+
+  linkMiddle: {
+    flex: 1
   },
 
   copyBox: {
+    border: "1px solid #ddd9ec",
+    borderRadius: 14,
+    padding: 12,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    background: "#020617",
-    padding: "12px",
-    borderRadius: "12px"
+    gap: 10
   },
 
-  codeText: {
-    fontSize: "22px",
-    fontWeight: "bold",
-    color: "#facc15"
-  },
-
-  linkBox: {
-    background: "#020617",
-    padding: "12px",
-    borderRadius: "12px"
-  },
-
-  linkText: {
-    fontSize: "12px",
-    color: "#cbd5e1",
-    wordBreak: "break-all",
-    marginBottom: "10px"
-  },
-
-  copyBtn: {
-    padding: "9px 14px",
-    border: "none",
-    borderRadius: "10px",
-    background: "#22c55e",
-    color: "#02130a",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-
-  copyBtnBlue: {
-    width: "100%",
-    padding: "10px",
-    border: "none",
-    borderRadius: "10px",
-    background: "#38bdf8",
-    color: "#082f49",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-
-  socialRow: {
-    display: "flex",
-    gap: "12px",
-    marginTop: "14px"
+  shareBox: {
+    borderLeft: "1px solid #e7e2f0",
+    paddingLeft: 30,
+    minWidth: 190
   },
 
   whatsapp: {
-    flex: 1,
-    padding: "13px",
+    width: 58,
+    height: 58,
     border: "none",
-    borderRadius: "12px",
-    background: "#25D366",
+    borderRadius: "50%",
+    background: "#18c96f",
     color: "white",
-    fontWeight: "bold",
-    fontSize: "15px"
+    fontSize: 30,
+    marginRight: 12
   },
 
   telegram: {
-    flex: 1,
-    padding: "13px",
+    width: 58,
+    height: 58,
     border: "none",
-    borderRadius: "12px",
-    background: "#229ED9",
+    borderRadius: "50%",
+    background: "#2c9bef",
     color: "white",
-    fontWeight: "bold",
-    fontSize: "15px"
+    fontSize: 30
   },
 
   bonusGrid: {
+    width: "min(1120px, 94vw)",
+    margin: "26px auto",
     display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: "10px",
-    marginTop: "18px"
+    gridTemplateColumns: "repeat(4,1fr)",
+    gap: 20
   },
 
-  
+  bonusCard: {
+    borderRadius: 24,
+    padding: "34px 18px",
+    textAlign: "center",
+    boxShadow: "0 14px 34px rgba(0,0,0,.08)"
+  },
 
-  bonusPurple: {
-    padding: "14px",
-    borderRadius: "14px",
-    border: "none",
-    background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+  bonusIcon: {
+    width: 78,
+    height: 78,
+    borderRadius: 22,
+    margin: "0 auto 18px",
+    display: "grid",
+    placeItems: "center",
     color: "white",
-    fontWeight: "bold"
+    fontSize: 38
   },
 
-  bonusGreen: {
-    padding: "14px",
-    borderRadius: "14px",
-    border: "none",
-    background: "linear-gradient(135deg,#16a34a,#22c55e)",
-    color: "white",
-    fontWeight: "bold"
+  detailBtn: {
+    border: "1px solid currentColor",
+    borderRadius: 12,
+    background: "white",
+    padding: "12px 24px",
+    fontWeight: 900
   },
 
-  bonusGold: {
-    padding: "14px",
-    borderRadius: "14px",
-    border: "none",
-    background: "linear-gradient(135deg,#ca8a04,#facc15)",
-    color: "#1c1917",
-    fontWeight: "bold"
-  },
-
-  treeBtn: {
-  width: "100%",
-  padding: "15px",
-  marginTop: "15px",
-  border: "none",
-  borderRadius: "15px",
-  background: "linear-gradient(135deg,#22c55e,#16a34a)",
-  color: "#020617",
-  fontWeight: "bold"
-},
-
-  historyTitle: {
-    marginTop: "25px",
-    color: "#e2e8f0"
-  },
-
-  empty: {
-    background: "#1e293b",
-    padding: "14px",
-    borderRadius: "12px",
-    color: "#94a3b8",
-    textAlign: "center"
+  treeText: {
+    minHeight: 58,
+    color: "#5d6280"
   },
 
   historyCard: {
-    background: "#1e293b",
-    padding: "14px",
-    marginTop: "10px",
-    borderRadius: "14px",
+    width: "min(1120px, 94vw)",
+    margin: "26px auto",
+    background: "white",
+    borderRadius: 26,
+    padding: 28,
+    boxShadow: "0 16px 36px rgba(156,105,255,.16)"
+  },
+
+  historyHead: {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "center"
+  },
+
+  select: {
+    padding: "13px 18px",
+    borderRadius: 14,
+    border: "1px solid #ddd"
+  },
+
+  tableWrap: {
+    overflowX: "auto",
+    marginTop: 22
+  },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    minWidth: 800
+  },
+
+  th: {
+    background: "#f5efff",
+    padding: "14px 12px",
+    color: "#3d426a",
+    textAlign: "left"
+  },
+
+  td: {
+    padding: "14px 12px",
+    borderBottom: "1px solid #eee"
+  },
+
+  userCell: {
+    display: "flex",
     alignItems: "center",
-    border: "1px solid #334155"
+    gap: 12
   },
 
-  name: {
-    margin: 0,
-    fontWeight: "bold"
+  smallAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: "50%",
+    objectFit: "cover"
   },
 
-  date: {
-    margin: "5px 0 0",
-    fontSize: "12px",
-    color: "#94a3b8"
+  mobileText: {
+    display: "block",
+    color: "#707695",
+    marginTop: 4
   },
 
-  status:{
-  padding:"6px 12px",
-  borderRadius:"20px",
-  fontWeight:"bold",
-  fontSize:"12px"
-},
+  active: {
+    background: "#dcfce7",
+    color: "#16a34a",
+    padding: "8px 17px",
+    borderRadius: 20,
+    fontWeight: 900
+  },
+
+  inactive: {
+    background: "#ffe4ec",
+    color: "#ef3971",
+    padding: "8px 17px",
+    borderRadius: 20,
+    fontWeight: 900
+  },
+
+  viewMore: {
+    display: "block",
+    margin: "22px auto 0",
+    border: "none",
+    background: "white",
+    color: "#7b20e8",
+    fontSize: 18,
+    fontWeight: 900
+  },
+
+  bottomBanner: {
+    width: "min(1120px, 94vw)",
+    margin: "26px auto 10px",
+    padding: "26px 34px",
+    borderRadius: 24,
+    background: "linear-gradient(90deg,#fff2ff,#f5eaff)",
+    display: "flex",
+    alignItems: "center",
+    gap: 24
+  },
+
+  bottomGift: {
+    fontSize: 70
+  },
+
+  referNowBtn: {
+    border: "none",
+    borderRadius: 16,
+    padding: "18px 48px",
+    color: "white",
+    background: "linear-gradient(90deg,#7b20ff,#c515e9)",
+    fontSize: 20,
+    fontWeight: 900
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(11,10,40,.55)",
+    display: "grid",
+    placeItems: "center",
+    zIndex: 99,
+    padding: 20
+  },
+
+  modalBox: {
+    width: "min(480px, 92vw)",
+    background: "white",
+    borderRadius: 26,
+    padding: 30,
+    boxShadow: "0 30px 80px rgba(0,0,0,.25)"
+  },
+
+  modalText: {
+    fontSize: 16,
+    lineHeight: 1.7,
+    color: "#555b78"
+  },
+
+  modalBtn: {
+    width: "100%",
+    border: "none",
+    borderRadius: 14,
+    padding: 15,
+    background: "linear-gradient(90deg,#7021ff,#d319cb)",
+    color: "white",
+    fontWeight: 900,
+    fontSize: 16
+  },
+
+  treeBox: {
+    textAlign: "center",
+    padding: 18
+  },
+
+  treeNode: {
+    display: "inline-block",
+    background: "linear-gradient(135deg,#6c20ff,#14b87a)",
+    color: "white",
+    borderRadius: 14,
+    padding: "14px 22px",
+    fontWeight: 900,
+    margin: 8
+  },
+
+  treeLine: {
+    width: 3,
+    height: 36,
+    background: "#9c7cff",
+    margin: "0 auto"
+  },
+
+  treeRow: {
+    display: "flex",
+    justifyContent: "center",
+    flexWrap: "wrap"
+  }
 };

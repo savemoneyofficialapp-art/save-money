@@ -188,7 +188,7 @@ const fileUrl = (file) => {
 
   if (res?.success) {
     alert("Cash request approved");
-    load(); // table reload
+    load(); 
   } else {
     alert(res?.msg || "Approve failed");
   }
@@ -200,7 +200,7 @@ const rejectCash = async (id) => {
   });
 
   if (res?.success) {
-    load();
+    load(); 
   } else {
     alert(res?.msg || "Reject failed");
   }
