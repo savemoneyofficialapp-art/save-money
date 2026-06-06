@@ -99,8 +99,8 @@ export default function AdminDashboard() {
       const kData = await apiGet("/pending-kyc");
       setKyc(Array.isArray(kData) ? kData : []);
 
-const cData = await apiGet("/admin/deposit-requests");
-setCash(cData?.requests || []);
+const cData = await apiGet("/cash-requests");
+setCash(Array.isArray(cData) ? cData : []);
 
       const uData = await apiGet("/all-users");
       setUsers(Array.isArray(uData) ? uData : []);
@@ -182,11 +182,16 @@ const fileUrl = (file) => {
 };
 
   const approveCash = async (id) => {
-    const d = await apiPost("/approve-cash", { requestId: id });
-    if (!d) return;
-    toast.info(d.msg || "Done");
-    load();
-  };
+  const d = await apiPost("/admin/deposit-approve", { id });
+  alert(d?.msg || "Done");
+  load();
+};
+
+const rejectCash = async (id) => {
+  const d = await apiPost("/admin/deposit-reject", { id });
+  alert(d?.msg || "Done");
+  load();
+};
 
   const banUser = async (id) => {
     const d = await apiPost("/ban-user", { userId: id });
@@ -443,21 +448,10 @@ const fileUrl = (file) => {
               </td>
 
               <td className="action-cell">
-                <button
-                  className="approve-btn"
-                  onClick={() => approveCash(r._id)}
-                  disabled={r.status === "approved"}
-                >
-                  Approve
-                </button>
+               
+<button onClick={() => approveCash(r._id || r.id)}>Approve</button>
+<button onClick={() => rejectCash(r._id || r.id)}>Reject</button>
 
-                <button
-                  className="reject-btn"
-                  onClick={() => rejectCash(r._id)}
-                  disabled={r.status === "rejected"}
-                >
-                  Reject
-                </button>
               </td>
             </tr>
           ))}

@@ -3670,8 +3670,15 @@ async (req, res) => {
 });
 
 app.get("/cash-requests", auth, adminAuth, async (req, res) => {
-  const requests = await AddCash.find({ status: "Pending" }).sort({ date: -1 });
-  res.json(requests);
+  try {
+    const requests = await AddCash.find({
+      status: { $in: ["Pending", "pending"] }
+    }).sort({ createdAt: -1, date: -1 });
+
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json([]);
+  }
 });
 
 app.post("/approve-cash",
@@ -3846,26 +3853,30 @@ app.post("/admin/update-bonus-status", async (req, res) => {
   }
 });
 
-app.post("/admin/approve-deposit", async (req, res) => {
+app.post("/admin/deposit-approve", auth, async (req, res) => {
   try {
     const { id } = req.body;
 
     const request = await DepositRequest.findById(id);
     if (!request) {
-      return res.status(404).json({ success: false, msg: "Request not found" });
+      return res.json({ success: false, msg: "Request not found" });
     }
 
-    if (request.status !== "pending") {
-      return res.status(400).json({ success: false, msg: "Already processed" });
+    if (request.status === "approved") {
+      return res.json({ success: false, msg: "Already approved" });
     }
 
-    const user = await User.findOne({ email: request.email.toLowerCase() });
+    const user = await User.findOne({
+      email: String(request.email).toLowerCase()
+    });
+
     if (!user) {
-      return res.status(404).json({ success: false, msg: "User not found" });
+      return res.json({ success: false, msg: "User not found" });
     }
 
     const oldBalance = Number(user.balance ?? user.wallet ?? user.walletBalance ?? 0);
-    const newBalance = oldBalance + Number(request.amount);
+    const addAmount = Number(request.amount || 0);
+    const newBalance = oldBalance + addAmount;
 
     user.balance = newBalance;
     user.wallet = newBalance;
@@ -3877,54 +3888,42 @@ app.post("/admin/approve-deposit", async (req, res) => {
     await request.save();
 
     await WalletHistory.create({
-      email: request.email.toLowerCase(),
-      amount: Number(request.amount),
-      type: "credit",
-      description: `Deposit approved. TXN: ${request.txnId}`,
-      note: `Deposit approved by admin`,
+      email: String(request.email).toLowerCase(),
+      amount: addAmount,
+      type: "Admin Credit",
+      note: "Deposit request approved by admin",
       status: "success",
       date: new Date()
     });
 
-    res.json({ success: true, msg: "Deposit approved", balance: newBalance });
+    res.json({ success: true, msg: "Deposit approved" });
   } catch (err) {
-    console.log("APPROVE DEPOSIT ERROR:", err);
+    console.log("DEPOSIT APPROVE ERROR:", err);
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
 
-app.post("/admin/reject-deposit", async (req, res) => {
+app.post("/admin/deposit-reject", auth, async (req, res) => {
   try {
-    const { id, reason } = req.body;
+    const { id } = req.body;
 
     const request = await DepositRequest.findById(id);
-
     if (!request) {
-      return res.status(404).json({
-        success: false,
-        msg: "Request not found"
-      });
+      return res.json({ success: false, msg: "Request not found" });
     }
 
     request.status = "rejected";
-    request.rejectReason = reason || "Rejected by admin";
     request.rejectedAt = new Date();
-
     await request.save();
 
-    res.json({
-      success: true,
-      msg: "Deposit request rejected"
-    });
+    res.json({ success: true, msg: "Deposit rejected" });
   } catch (err) {
-    console.log("REJECT DEPOSIT ERROR:", err);
-
-    res.status(500).json({
-      success: false,
-      msg: "Server error"
-    });
+    console.log("DEPOSIT REJECT ERROR:", err);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+
+
 
 app.post("/admin/wallet-adjust", async (req, res) => {
   try {
@@ -4873,16 +4872,6 @@ app.get("/admin-tickets", auth, adminAuth, async (req, res) => {
 
   res.json(tickets);
 });
-
-app.get("/admin/deposit-requests", async (req, res) => {
-  try {
-    const requests = await DepositRequest.find({ status: "pending" }).sort({ date: -1 });
-    res.json({ success: true, requests });
-  } catch (err) {
-    res.status(500).json({ success: false, msg: "Server error" });
-  }
-});
-
 
 app.get("/investment-certificate/:id", async (req, res) => {
   try {
