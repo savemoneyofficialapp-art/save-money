@@ -234,8 +234,10 @@ const shareTelegram = () => {
   <span
   style={{
     ...styles.greenDot,
-    background: userStatus === "Active" ? "#22c55e" : "#ef4444"
-  }}
+background:
+  String(user?.status || "Active").toLowerCase() === "active"
+    ? "#22c55e"
+    : "#ef4444"  }}
 ></span>
   Active Member
 </span>
