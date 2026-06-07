@@ -17,12 +17,16 @@ const [treeOpen, setTreeOpen] = useState(false);
 const [showAllHistory, setShowAllHistory] = useState(false);
 const [statusFilter, setStatusFilter] = useState("All");
 
-const visibleHistory = (statusFilter === "All"
-  ? History
-  : History.filter(x => x.status === statusFilter)
-);
+const safeHistory = Array.isArray(history) ? history : [];
 
-const finalHistory = showAllHistory ? visibleHistory : visibleHistory.slice(0, 3);
+const visibleHistory =
+  statusFilter === "All"
+    ? safeHistory
+    : safeHistory.filter((x) => String(x.status) === String(statusFilter));
+
+const finalHistory = showAllHistory
+  ? visibleHistory
+  : visibleHistory.slice(0, 3);
 
 const openBonus = (type) => {
   setBonusModal(type);
