@@ -14,7 +14,21 @@ export default function Refer() {
 
   const [bonusModal, setBonusModal] = useState(null);
   const [treeOpen, setTreeOpen] = useState(false);
-  const [showAllHistory, setShowAllHistory] = useState(false);
+const [referHistory, setReferHistory] = useState([]);
+const [showAllHistory, setShowAllHistory] = useState(false);
+const [statusFilter, setStatusFilter] = useState("All");
+
+const filteredHistory =
+  statusFilter === "All"
+    ? referHistory
+    : referHistory.filter(
+        (x) => String(x.status).toLowerCase() === statusFilter.toLowerCase()
+      );
+
+const visibleHistory = showAllHistory
+  ? filteredHistory
+  : filteredHistory.slice(0, 3);
+
 
   useEffect(() => {
     loadReferData();
@@ -34,6 +48,8 @@ export default function Refer() {
       });
 
       const data = await res.json();
+
+      setReferHistory(Array.isArray(data.history) ? data.history : []);
 
       if (data?.success) {
         setUser(data.user || {});
@@ -144,12 +160,9 @@ const shareTelegram = () => {
     }
   ];
 
-  const finalHistory = history.length ? history : demoHistory;
+  const finalHistory = referHistory;
 
-  const visibleHistory =
-  showAllHistory
-    ? referHistory
-    : referHistory.slice(0, 3);
+ 
 
   if (loading) {
     return (
