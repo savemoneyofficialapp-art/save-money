@@ -17,6 +17,12 @@ const [treeOpen, setTreeOpen] = useState(false);
 const [showAllHistory, setShowAllHistory] = useState(false);
 const [statusFilter, setStatusFilter] = useState("All");
 
+const [performance, setPerformance] = useState({});
+const [team, setTeam] = useState({});
+const [royalty, setRoyalty] = useState({});
+const [bonusHistory, setBonusHistory] = useState([]);
+const [treeData, setTreeData] = useState([]);
+
 const safeHistory = Array.isArray(history) ? history : [];
 
 const visibleHistory =
@@ -68,6 +74,13 @@ const goInvest = () => {
         setUser({});
         setHistory([]);
       }
+
+      setPerformance(data.performance || {});
+setTeam(data.team || {});
+setRoyalty(data.royalty || {});
+setBonusHistory(data.bonusHistory || []);
+setTreeData(data.treeData || []);
+
     } catch (err) {
       console.log("REFER DATA ERROR:", err);
       setUser({});
