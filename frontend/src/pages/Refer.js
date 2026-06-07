@@ -18,8 +18,8 @@ const [showAllHistory, setShowAllHistory] = useState(false);
 const [statusFilter, setStatusFilter] = useState("All");
 
 const visibleHistory = (statusFilter === "All"
-  ? referHistory
-  : referHistory.filter(x => x.status === statusFilter)
+  ? History
+  : History.filter(x => x.status === statusFilter)
 );
 
 const finalHistory = showAllHistory ? visibleHistory : visibleHistory.slice(0, 3);
@@ -55,7 +55,7 @@ const goInvest = () => {
 
       const data = await res.json();
 
-      setReferHistory(Array.isArray(data.history) ? data.history : []);
+      setHistory(Array.isArray(data.history) ? data.history : []);
 
       if (data?.success) {
         setUser(data.user || {});
