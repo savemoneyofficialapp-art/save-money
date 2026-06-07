@@ -166,7 +166,6 @@ const shareTelegram = () => {
     }
   ];
 
-  const finalHistory = referHistory;
 
  
 
