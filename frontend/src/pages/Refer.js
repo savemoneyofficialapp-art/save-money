@@ -26,7 +26,7 @@ const visibleHistory =
 
 const finalHistory = showAllHistory
   ? visibleHistory
-  : visibleHistory.slice(0, 5);
+  : visibleHistory.slice(0, 3);
 
 const openBonus = (type) => {
   setBonusModal(type);
@@ -422,27 +422,9 @@ setTreeOpen(true);
   </table>
 
   {visibleHistory.length > 3 && (
-   <button
-
-onClick={()=>
-
-setShowAllHistory(
-!showAllHistory
-)
-
-}
-
->
-
-{
-showAllHistory
-?
-"Show Less"
-:
-"View More"
-}
-
-</button>
+    <button style={styles.viewMoreBtn} onClick={() => setShowAllHistory(!showAllHistory)}>
+      {showAllHistory ? "Show Less⌃" : "View More⌄"}
+    </button>
   )}
 </div>     
 
@@ -551,58 +533,18 @@ showAllHistory
 )}
 
 {treeOpen && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      <h2>🌳 7 Level Tree View</h2>
+      <p>Your full 7 level network structure will show here.</p>
 
-<div style={styles.modalOverlay}>
+      <div style={styles.treeBox}>
+        Level 1 → Level 2 → Level 3 → Level 4 → Level 5 → Level 6 → Level 7
+      </div>
 
-<div style={styles.treeModal}>
-
-<h2>
-🌳 7 Level Tree View
-</h2>
-
-{
-Object.entries(treeData).map(
-([level,users])=>(
-<div key={level}>
-
-<h3>
-{level.toUpperCase()}
-(
-{users.length}
-)
-</h3>
-
-{users.map((u,i)=>(
-
-<div
-key={i}
-style={styles.treeUser}
->
-
-{u.name}
-
-</div>
-
-))}
-
-</div>
-))
-}
-
-<button
-onClick={()=>
-setTreeOpen(false)
-}
->
-
-Close
-
-</button>
-
-</div>
-
-</div>
-
+      <button style={styles.closeBtn} onClick={() => setTreeOpen(false)}>Close</button>
+    </div>
+  </div>
 )}
     </div>
   );
