@@ -13,7 +13,7 @@ export default function Refer() {
   const [history, setHistory] = useState([]);
 
 const [bonusModal, setBonusModal] = useState(null);
-const [treeOpen, setTreeOpen] = useState(false);
+const [treeData,setTreeData] = useState({});
 const [showAllHistory, setShowAllHistory] = useState(false);
 const [statusFilter, setStatusFilter] = useState("All");
 
@@ -26,7 +26,7 @@ const visibleHistory =
 
 const finalHistory = showAllHistory
   ? visibleHistory
-  : visibleHistory.slice(0, 3);
+  : visibleHistory.slice(0, 5);
 
 const openBonus = (type) => {
   setBonusModal(type);
@@ -41,41 +41,70 @@ const goInvest = () => {
 };
 
   useEffect(() => {
+
+const loadTree = async () => {
+
+const res = await fetch(
+`${API}/refer-tree`,
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+email
+})
+}
+);
+
+const data = await res.json();
+
+if(data.success){
+
+setTreeData(data.levels);
+
+}
+
+};
+
     loadReferData();
   }, []);
 
+  
+  
   const loadReferData = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const res = await fetch(`${API}/refer-data`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token || ""
-        },
-        body: JSON.stringify({ email })
-      });
+    const res = await fetch(`${API}/refer-dashboard`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: token || ""
+      },
+      body: JSON.stringify({ email })
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      setHistory(Array.isArray(data.history) ? data.history : []);
-
-      if (data?.success) {
-        setUser(data.user || {});
-        setHistory(Array.isArray(data.history) ? data.history : []);
-      } else {
-        setUser({});
-        setHistory([]);
-      }
-    } catch (err) {
-      console.log("REFER DATA ERROR:", err);
-      setUser({});
-      setHistory([]);
-    } finally {
-      setLoading(false);
+    if (!data.success) {
+      alert(data.msg || "Refer data loading failed");
+      return;
     }
-  };
+
+    setUser(data.user || {});
+    setHistory(data.referHistory || []);
+    setPerformance(data.performance || {});
+    setTeam(data.team || {});
+    setRoyalty(data.royalty || {});
+    setBonusHistory(data.bonusHistory || []);
+  } catch (err) {
+    console.log("REFER LOAD ERROR:", err);
+    alert("Refer data loading failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const money = (n) =>
     `₹ ${Number(n || 0).toLocaleString("en-IN", {
@@ -329,8 +358,10 @@ background:
 
           <button
             style={{ ...styles.detailBtn, color: "#10b981" }}
-            onClick={() => setTreeOpen(true)}
-          >
+onClick={()=>{
+loadTree();
+setTreeOpen(true);
+}}          >
             View Tree
           </button>
         </div>
@@ -391,9 +422,27 @@ background:
   </table>
 
   {visibleHistory.length > 3 && (
-    <button style={styles.viewMoreBtn} onClick={() => setShowAllHistory(!showAllHistory)}>
-      {showAllHistory ? "Show Less⌃" : "View More⌄"}
-    </button>
+   <button
+
+onClick={()=>
+
+setShowAllHistory(
+!showAllHistory
+)
+
+}
+
+>
+
+{
+showAllHistory
+?
+"Show Less"
+:
+"View More"
+}
+
+</button>
   )}
 </div>     
 
@@ -502,18 +551,58 @@ background:
 )}
 
 {treeOpen && (
-  <div style={styles.modalOverlay}>
-    <div style={styles.modalBox}>
-      <h2>🌳 7 Level Tree View</h2>
-      <p>Your full 7 level network structure will show here.</p>
 
-      <div style={styles.treeBox}>
-        Level 1 → Level 2 → Level 3 → Level 4 → Level 5 → Level 6 → Level 7
-      </div>
+<div style={styles.modalOverlay}>
 
-      <button style={styles.closeBtn} onClick={() => setTreeOpen(false)}>Close</button>
-    </div>
-  </div>
+<div style={styles.treeModal}>
+
+<h2>
+🌳 7 Level Tree View
+</h2>
+
+{
+Object.entries(treeData).map(
+([level,users])=>(
+<div key={level}>
+
+<h3>
+{level.toUpperCase()}
+(
+{users.length}
+)
+</h3>
+
+{users.map((u,i)=>(
+
+<div
+key={i}
+style={styles.treeUser}
+>
+
+{u.name}
+
+</div>
+
+))}
+
+</div>
+))
+}
+
+<button
+onClick={()=>
+setTreeOpen(false)
+}
+>
+
+Close
+
+</button>
+
+</div>
+
+</div>
+
 )}
     </div>
   );

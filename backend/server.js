@@ -591,70 +591,95 @@ async function updateUserRank(email) {
   await user.save();
 }
 
-async function addBonus({ email, fromEmail, fromName, type, level, amount, note, refId }) {
-  const exists = await BonusLedger.findOne({ email, type, refId });
-
-  if (exists) return;
-
-  const user = await User.findOne({ email });
-  if (!user) return;
-
-  if (user.disableBonus) {
-  return;
-}
-
-  user.wallet += amount;
-  user.totalEarning = (user.totalEarning || 0) + amount;
-
-  if (type === "Referral Bonus") {
-    user.referralIncome = (user.referralIncome || 0) + amount;
-  }
-
-  if (type === "Performance Bonus") {
-    user.performanceIncome = (user.performanceIncome || 0) + amount;
-  }
-
-  if (type === "Team Bonus") {
-    user.teamIncome = (user.teamIncome || 0) + amount;
-  }
-
-  if (type === "Royalty Bonus") {
-    user.royaltyIncome = (user.royaltyIncome || 0) + amount;
-  }
-
-  await user.save();
-
-  await BonusLedger.create({
-    email,
-    fromEmail,
-    fromName,
-    type,
-    level,
-    amount,
-    note,
-    refId
-  });
-
-  await WalletHistory.create({
-    email,
-    type,
-    amount,
-    note
-  });
-
-  if (typeof sendNotification === "function") {
-    await sendNotification(
-      email,
-      type,
-      `${type} ₹${amount} received from ${fromName}`
-    );
-  }
-
-await sendEmail(
+async function addBonus({
   email,
-  `${type} Credited`,
-  `You received ${type} of ₹${amount} from ${fromName}.`
-  );
+  fromEmail,
+  fromName,
+  type,
+  level = 0,
+  amount = 0,
+  note = "",
+  refId = ""
+}) {
+  try {
+    const bonusAmount = Number(amount || 0);
+    if (!email || bonusAmount <= 0) return;
+
+    const bonusType = type;
+
+    const exists = await BonusLedger.findOne({
+      email: String(email).toLowerCase(),
+      type: bonusType,
+      refId
+    });
+
+    if (exists) return;
+
+    const user = await User.findOne({
+      email: String(email).toLowerCase()
+    });
+
+    if (!user) return;
+
+    if (user.disableBonus) return;
+
+    user.wallet = Number(user.wallet || 0) + bonusAmount;
+    user.balance = Number(user.balance || 0) + bonusAmount;
+    user.walletBalance = Number(user.walletBalance || 0) + bonusAmount;
+    user.totalEarning = Number(user.totalEarning || 0) + bonusAmount;
+
+    if (bonusType === "Referral Bonus") {
+      user.referralIncome = Number(user.referralIncome || 0) + bonusAmount;
+    }
+
+    if (bonusType === "Performance Bonus") {
+      user.performanceIncome = Number(user.performanceIncome || 0) + bonusAmount;
+    }
+
+    if (bonusType === "Team Bonus") {
+      user.teamIncome = Number(user.teamIncome || 0) + bonusAmount;
+    }
+
+    if (bonusType === "Royalty Bonus") {
+      user.royaltyIncome = Number(user.royaltyIncome || 0) + bonusAmount;
+    }
+
+    await user.save();
+
+    await BonusLedger.create({
+      email: String(email).toLowerCase(),
+      fromEmail,
+      fromName: fromName || "User",
+      type: bonusType,
+      bonusType,
+      level,
+      amount: bonusAmount,
+      note,
+      status: "Paid",
+      refId,
+      date: new Date()
+    });
+
+    await WalletHistory.create({
+      email: String(email).toLowerCase(),
+      type: bonusType,
+      amount: bonusAmount,
+      note: note || `${bonusType} received from ${fromName}`,
+      status: "Success",
+      date: new Date()
+    });
+
+    if (typeof sendNotification === "function") {
+      await sendNotification(
+        String(email).toLowerCase(),
+        bonusType,
+        `${bonusType} ₹${bonusAmount} received from ${fromName}`
+      );
+    }
+
+  } catch (err) {
+    console.log("ADD BONUS ERROR:", err);
+  }
 }
 
 function referralBonusRate(years) {
@@ -675,6 +700,13 @@ async function processFirstInvestmentBonuses(investorEmail, investment) {
 
   const sponsor = await User.findOne({ referCode: investor.referredBy });
   if (!sponsor) return;
+
+  const sponsorActiveInvestment = await Investment.findOne({
+  email: sponsor.email,
+  status: "Active"
+});
+
+if (!sponsorActiveInvestment) return;
 
   const refId = `FIRST-${investment._id}`;
 
@@ -752,7 +784,7 @@ async function processFirstInvestmentBonuses(investorEmail, investment) {
       const rb = await RoyaltyBonus.findOne({ email: royaltyOwner.email });
 
       if (rb && rb.isActive) {
-        const royalty = Math.floor(investment.monthlyAmount * 0.01);
+        const royalty = Math.floor(investment.monthlyAmount * 0.03);
 
         rb.wallet += royalty;
         rb.thisMonthTurnover += investment.monthlyAmount;
@@ -773,7 +805,7 @@ async function processFirstInvestmentBonuses(investorEmail, investment) {
           type: "Royalty Bonus",
           level: 0,
           amount: royalty,
-          note: "1% royalty from network first investment",
+          note: "3% royalty from network first investment",
           refId: refId + "-ROYALTY"
         });
       }
@@ -4397,114 +4429,99 @@ app.post("/my-tickets", auth, async (req, res) => {
   res.json(tickets);
 });
 
-app.post("/referral-tree", auth, async (req, res) => {
+app.post("/refer-tree", async (req, res) => {
   try {
+    const { email } = req.body;
 
-    const { email, filter } = req.body;
+    const user = await User.findOne({
+      email: String(email).toLowerCase()
+    });
 
-    const rootUser = await User.findOne({ email });
-
-    if (!rootUser) {
-      return res.json({ msg: "User not found" });
+    if (!user) {
+      return res.json({
+        success: false
+      });
     }
 
-    let analytics = {
-      totalUsers: 0,
-      activeUsers: 0,
-      totalBusiness: 0,
-      levels: {}
-    };
+    const rootCode =
+      user.referCode ||
+      user.referralCode;
 
-    async function buildTree(user, level) {
-
-      if (level > 7) return [];
-
-      let query = {
-        referredBy: user.referCode
-      };
-
-      if (filter === "active") {
-        query.kycStatus = "approved";
-      }
-
-      if (filter === "pending") {
-        query.kycStatus = { $ne: "approved" };
-      }
-
-      const children = await User.find(query)
-        .select(
-  "name email referCode kycStatus createdAt wallet"
-);
-
-      const result = [];
-
-      if (!analytics.levels[level]) {
-        analytics.levels[level] = {
-          users: 0,
-          active: 0,
-          income: 0
-        };
-      }
-
-      for (let child of children) {
-
-        analytics.totalUsers += 1;
-
-        analytics.levels[level].users += 1;
-
-        if (child.kycStatus === "approved") {
-          analytics.activeUsers += 1;
-          analytics.levels[level].active += 1;
-        }
-
-        const investment = await Investment.findOne({
-          email: child.email,
-          status: "Active"
-        });
-
-        let business = 0;
-
-        if (investment) {
-          business = investment.Amount || 0;
-          analytics.totalBusiness += business;
-          analytics.levels[level].income += business;
-        }
-
-        result.push({
-          _id: child._id,
-          name: child.name,
-          email: child.email,
-          referCode: child.referCode,
-          kycStatus: child.kycStatus,
-          joinDate: child.createdAt,
-          level,
-          business,
-          children: await buildTree(child, level + 1)
-        });
-      }
-
-      return result;
+    async function getLevel(code) {
+      return await User.find({
+        referredBy: code
+      }).select(
+        "name email referCode mobile"
+      );
     }
 
-    const tree = {
-      name: rootUser.name,
-      email: rootUser.email,
-      referCode: rootUser.referCode,
-      kycStatus: rootUser.kycStatus,
-      level: 0,
-      children: await buildTree(rootUser, 1)
-    };
+    const level1 = await getLevel(rootCode);
+
+    const level2 = [];
+    const level3 = [];
+    const level4 = [];
+    const level5 = [];
+    const level6 = [];
+    const level7 = [];
+
+    for (const a of level1) {
+      level2.push(
+        ...(await getLevel(a.referCode))
+      );
+    }
+
+    for (const a of level2) {
+      level3.push(
+        ...(await getLevel(a.referCode))
+      );
+    }
+
+    for (const a of level3) {
+      level4.push(
+        ...(await getLevel(a.referCode))
+      );
+    }
+
+    for (const a of level4) {
+      level5.push(
+        ...(await getLevel(a.referCode))
+      );
+    }
+
+    for (const a of level5) {
+      level6.push(
+        ...(await getLevel(a.referCode))
+      );
+    }
+
+    for (const a of level6) {
+      level7.push(
+        ...(await getLevel(a.referCode))
+      );
+    }
 
     res.json({
-      tree,
-      analytics
+      success: true,
+
+      levels: {
+        level1,
+        level2,
+        level3,
+        level4,
+        level5,
+        level6,
+        level7
+      }
     });
 
   } catch (err) {
+
     console.log(err);
+
     res.status(500).json({
-      msg: "Server error"
+      success: false
     });
+
   }
 });
 
@@ -4838,6 +4855,8 @@ app.post("/wallet-history", async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+
+
 
 
 

@@ -1,16 +1,14 @@
 const mongoose = require("mongoose");
 
-const schema = new mongoose.Schema({
+const BonusLedgerSchema = new mongoose.Schema({
   email: String,
   fromEmail: String,
   fromName: String,
-  type: String,
+  bonusType: String, // performance/team/royalty
   level: Number,
   amount: Number,
-  note: String,
-  status: { type: String, default: "Paid" },
-  refId: String,
+  description: String,
   date: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model("BonusLedger", schema);
+module.exports = mongoose.model("BonusLedger", BonusLedgerSchema);
