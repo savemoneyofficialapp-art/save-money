@@ -12,23 +12,29 @@ export default function Refer() {
   const [user, setUser] = useState({});
   const [history, setHistory] = useState([]);
 
-  const [bonusModal, setBonusModal] = useState(null);
-  const [treeOpen, setTreeOpen] = useState(false);
-const [referHistory, setReferHistory] = useState([]);
+const [bonusModal, setBonusModal] = useState(null);
+const [treeOpen, setTreeOpen] = useState(false);
 const [showAllHistory, setShowAllHistory] = useState(false);
 const [statusFilter, setStatusFilter] = useState("All");
 
-const filteredHistory =
-  statusFilter === "All"
-    ? referHistory
-    : referHistory.filter(
-        (x) => String(x.status).toLowerCase() === statusFilter.toLowerCase()
-      );
+const visibleHistory = (statusFilter === "All"
+  ? referHistory
+  : referHistory.filter(x => x.status === statusFilter)
+);
 
-const visibleHistory = showAllHistory
-  ? filteredHistory
-  : filteredHistory.slice(0, 3);
+const finalHistory = showAllHistory ? visibleHistory : visibleHistory.slice(0, 3);
 
+const openBonus = (type) => {
+  setBonusModal(type);
+};
+
+const closeBonus = () => {
+  setBonusModal(null);
+};
+
+const goInvest = () => {
+  window.location.href = "/save-money";
+};
 
   useEffect(() => {
     loadReferData();
@@ -327,98 +333,66 @@ background:
         </div>
       </section>
 
-      <section style={styles.historyCard}>
-        <div style={styles.historyHead}>
-          <div>
-            <h2>🕒 Refer History</h2>
-            <p>Check your referral activities</p>
-          </div>
+<div style={styles.historyCard}>
+  <div style={styles.historyTop}>
+    <div>
+      <h2>🕘 Refer History</h2>
+      <p>Check your referral activities</p>
+    </div>
 
-          <select style={styles.select}>
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Inactive</option>
-          </select>
-        </div>
+    <select
+      value={statusFilter}
+      onChange={(e) => setStatusFilter(e.target.value)}
+      style={styles.filterSelect}
+    >
+      <option value="All">All Status</option>
+      <option value="Active">Active</option>
+      <option value="Inactive">Inactive</option>
+    </select>
+  </div>
 
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>User</th>
-                <th style={styles.th}>Refer ID</th>
-                <th style={styles.th}>Join Date</th>
-                <th style={styles.th}>Status</th>
-                <th style={styles.th}>Earning</th>
-                <th style={styles.th}></th>
-              </tr>
-            </thead>
+  <table style={styles.table}>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Refer ID</th>
+        <th>Join Date</th>
+        <th>Status</th>
+        <th>Earning</th>
+      </tr>
+    </thead>
 
-            <tbody>
-              {visibleHistory.map((r, i) => (
-                <tr key={i}>
-                  <td style={styles.td}>
-                    <div style={styles.userCell}>
-                      <img
-                        style={styles.smallAvatar}
-                        src={
-                          r.photo ||
-                          `https://i.pravatar.cc/80?img=${i + 20}`
-                        }
-                        alt=""
-                      />
+    <tbody>
+      {finalHistory.map((x, i) => (
+        <tr key={i}>
+          <td>
+            <b>{x.name}</b>
+            <br />
+            <small>{x.mobile || x.email}</small>
+          </td>
+          <td>{x.referId || "N/A"}</td>
+          <td>{x.joinDate ? new Date(x.joinDate).toLocaleString("en-IN") : "N/A"}</td>
+          <td>
+            <span style={{
+              ...styles.statusPill,
+              background: x.status === "Active" ? "#dcfce7" : "#ffe4e6",
+              color: x.status === "Active" ? "#16a34a" : "#e11d48"
+            }}>
+              {x.status}
+            </span>
+          </td>
+          <td>₹ {Number(x.earning || 0).toLocaleString("en-IN")}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
 
-                      <div>
-                        <b>{r.name || r.userName || "User"}</b>
-                        <small style={styles.mobileText}>
-                          {r.mobile || r.email || ""}
-                        </small>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td style={styles.td}>{r.referId || r.referCode || "N/A"}</td>
-
-                  <td style={styles.td}>
-                    {r.date || "N/A"}
-                    <br />
-                    <small>{r.time || "10:30 AM"}</small>
-                  </td>
-
-
-                  <td style={styles.td}>
-                    <span
-                      style={
-                        String(r.status).toLowerCase() === "inactive"
-                          ? styles.inactive
-                          : styles.active
-                      }
-                    >
-                      {r.status || "Active"}
-                    </span>
-                  </td>
-
-                  <td
-                    style={{
-                      ...styles.td,
-                      color: Number(r.earning || 0) > 0 ? "#16a34a" : "#ef3971",
-                      fontWeight: 900
-                    }}
-                  >
-                    {money(r.earning)}
-                  </td>
-
-                  <td style={styles.td}>⋮</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-      <button onClick={() => setShowAllHistory(!showAllHistory)}>
-  {showAllHistory ? "Show Less" : "View More"}
-</button>  
-          </section>
+  {visibleHistory.length > 3 && (
+    <button style={styles.viewMoreBtn} onClick={() => setShowAllHistory(!showAllHistory)}>
+      {showAllHistory ? "Show Less⌃" : "View More⌄"}
+    </button>
+  )}
+</div>     
 
       <section style={styles.bottomBanner}>
         <div style={styles.bottomGift}>🎁</div>
@@ -433,43 +407,145 @@ background:
 </button>
       </section>
 
-      {bonusModal && (
-        <Modal onClose={() => setBonusModal(null)}>
-          <h2>{bonusModal.icon} {bonusModal.title}</h2>
-          <h1 style={{ color: bonusModal.color }}>
-            {money(bonusModal.amount)}
-          </h1>
+     {bonusModal && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      {bonusModal === "performance" && (
+        <>
+          <h2>📈 Performance Bonus</h2>
+          <h1>₹ {Number(performance?.balance || 0).toLocaleString("en-IN")}</h1>
 
-          <p style={styles.modalText}>
-            This bonus will be calculated from your referral network. Admin can
-            activate or deactivate this bonus manually.
+          <p>
+            Status: <b>{performance?.enabled ? "Active" : "Inactive"}</b>
           </p>
 
-          <button style={styles.modalBtn} onClick={() => setBonusModal(null)}>
-            Close
-          </button>
-        </Modal>
+          {!performance?.completed && !performance?.expired && (
+            <>
+              <p>
+                Your Active Refer: <b>{performance?.directActiveCount || 0}</b> / 10
+              </p>
+              <p>
+                Remaining: <b>{performance?.remaining || 0}</b>
+              </p>
+              <button style={styles.greenBtn} onClick={goInvest}>
+                Go to Save Money Invest
+              </button>
+            </>
+          )}
+
+          {performance?.expired && (
+            <p style={{ color: "#ef4444", fontWeight: 900 }}>
+              তুমি task complete করতে পারোনি। Please upline এর সঙ্গে contact করো।
+            </p>
+          )}
+
+          {performance?.completed && (
+            <p style={{ color: "#16a34a", fontWeight: 900 }}>
+              তুমি task complete করেছো। এখন থেকে তুমি Performance Bonus পাবে।
+            </p>
+          )}
+
+          <BonusHistory type="performance" data={bonusHistory} />
+        </>
       )}
 
-      {treeOpen && (
-        <Modal onClose={() => setTreeOpen(false)}>
-          <h2>🌳 Team Tree View</h2>
+      {bonusModal === "team" && (
+        <>
+          <h2>👥 Team Bonus</h2>
+          <p style={{ color: "#16a34a", fontWeight: 900 }}>
+            Your team network is growing. You will earn bonus from 3 levels.
+          </p>
 
-          <div style={styles.treeBox}>
-            <div style={styles.treeNode}>You</div>
-            <div style={styles.treeLine}></div>
+          <h1>₹ {Number(team?.balance || 0).toLocaleString("en-IN")}</h1>
 
-            <div style={styles.treeRow}>
-              <div style={styles.treeNode}>Level 1</div>
-              <div style={styles.treeNode}>Level 2</div>
-              <div style={styles.treeNode}>Level 3</div>
-            </div>
+          <div style={styles.levelGrid}>
+            <div>Level 1: ₹70</div>
+            <div>Level 2: ₹50</div>
+            <div>Level 3: ₹35</div>
           </div>
 
-          <button style={styles.modalBtn} onClick={() => setTreeOpen(false)}>
-            Close
-          </button>
-        </Modal>
+          <BonusHistory type="team" data={bonusHistory} />
+        </>
+      )}
+
+      {bonusModal === "royalty" && (
+        <>
+          <h2>👑 Royalty Bonus</h2>
+          <h1>₹ {Number(royalty?.balance || 0).toLocaleString("en-IN")}</h1>
+
+          <p>
+            Direct Refer: <b>{royalty?.directCount || 0}</b> / 50
+          </p>
+
+          <p>
+            Remaining: <b>{royalty?.remaining || 0}</b>
+          </p>
+
+          <p>
+            Status: <b>{royalty?.enabled ? "Active" : "Inactive"}</b>
+          </p>
+
+          <p>
+            Royalty active হলে next business থেকে 3% bonus পাবেন।
+          </p>
+
+          <BonusHistory type="royalty" data={bonusHistory} />
+        </>
+      )}
+
+      <button style={styles.closeBtn} onClick={closeBonus}>Close</button>
+    </div>
+  </div>
+)}
+
+{treeOpen && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      <h2>🌳 7 Level Tree View</h2>
+      <p>Your full 7 level network structure will show here.</p>
+
+      <div style={styles.treeBox}>
+        Level 1 → Level 2 → Level 3 → Level 4 → Level 5 → Level 6 → Level 7
+      </div>
+
+      <button style={styles.closeBtn} onClick={() => setTreeOpen(false)}>Close</button>
+    </div>
+  </div>
+)}
+    </div>
+  );
+}
+
+function BonusHistory({ type, data }) {
+  const rows = (data || []).filter(x => x.bonusType === type);
+
+  return (
+    <div style={{ marginTop: 20 }}>
+      <h3>Bonus History</h3>
+
+      {rows.length === 0 ? (
+        <p>No history found</p>
+      ) : (
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Date</th>
+              <th>Level</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((x, i) => (
+              <tr key={i}>
+                <td>{x.fromName || x.fromEmail}</td>
+                <td>{new Date(x.date).toLocaleString("en-IN")}</td>
+                <td>{x.level || "-"}</td>
+                <td>₹{Number(x.amount || 0).toLocaleString("en-IN")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
@@ -962,23 +1038,28 @@ copyLinkBtn: {
     fontWeight: 900
   },
 
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(11,10,40,.55)",
-    display: "grid",
-    placeItems: "center",
-    zIndex: 99,
-    padding: 20
-  },
+ modalOverlay: {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(15,23,42,.55)",
+  backdropFilter: "blur(8px)",
+  zIndex: 9999,
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: 20
+},
 
-  modalBox: {
-    width: "min(480px, 92vw)",
-    background: "white",
-    borderRadius: 26,
-    padding: 30,
-    boxShadow: "0 30px 80px rgba(0,0,0,.25)"
-  },
+ modalBox: {
+  width: "min(720px, 96vw)",
+  maxHeight: "88vh",
+  overflowY: "auto",
+  background: "#fff",
+  borderRadius: 28,
+  padding: 28,
+  boxShadow: "0 30px 90px rgba(0,0,0,.25)"
+},
+
 
   modalText: {
     fontSize: 16,
@@ -997,10 +1078,12 @@ copyLinkBtn: {
     fontSize: 16
   },
 
-  treeBox: {
-    textAlign: "center",
-    padding: 18
-  },
+ treeBox: {
+  padding: 22,
+  background: "#f1f5f9",
+  borderRadius: 18,
+  fontWeight: 900
+},
 
   treeNode: {
     display: "inline-block",
@@ -1025,6 +1108,36 @@ copyLinkBtn: {
   borderRadius: 10,
   background: "linear-gradient(90deg,#c084fc,#f0abfc)"
 },
+
+greenBtn: {
+  border: "none",
+  borderRadius: 14,
+  padding: "13px 20px",
+  background: "linear-gradient(90deg,#16a34a,#22c55e)",
+  color: "#fff",
+  fontWeight: 900,
+  cursor: "pointer"
+},
+
+closeBtn: {
+  marginTop: 20,
+  width: "100%",
+  border: "none",
+  borderRadius: 14,
+  padding: 14,
+  background: "#e5e7eb",
+  fontWeight: 900,
+  cursor: "pointer"
+},
+
+levelGrid: {
+  display: "grid",
+  gridTemplateColumns: "repeat(3,1fr)",
+  gap: 12,
+  margin: "16px 0",
+  fontWeight: 900
+},
+
 
 greenDot: {
   width: 10,

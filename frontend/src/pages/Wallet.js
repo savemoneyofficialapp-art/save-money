@@ -109,7 +109,7 @@ photoImage: data.user?.photoImage || "",          balance: Number(data.balance |
     setAddOpen(true);
   };
 
- const DEPOSIT_ADDRESS = "YOUR_USDT_TRC20_WALLET_ADDRESS";
+ const DEPOSIT_ADDRESS = "0x53D944eDA838748A92F2c361d2F71cD7EcFc8643";
 
 const submitDepositRequest = async () => {
   if (!addAmount || Number(addAmount) <= 0) {
