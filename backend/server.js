@@ -708,6 +708,57 @@ async function processFirstInvestmentBonuses(investorEmail, investment) {
 
 if (!sponsorActiveInvestment) return;
 
+// ✅ Sponsor must be active investor
+const sponsorActiveInvestment = await Investment.findOne({
+  email: sponsor.email,
+  status: "Active"
+});
+
+if (!sponsorActiveInvestment) return;
+
+// ✅ Performance bonus eligibility
+const directUsers = await User.find({
+  referredBy: sponsor.referCode
+});
+
+let activeDirectCount = 0;
+
+for (const du of directUsers) {
+  const activeInv = await Investment.findOne({
+    email: du.email,
+    status: "Active"
+  });
+
+  if (activeInv) activeDirectCount++;
+}
+
+const sponsorJoin = sponsor.createdAt || sponsor.date || new Date();
+const performanceDeadline = new Date(sponsorJoin);
+performanceDeadline.setDate(performanceDeadline.getDate() + 30);
+
+const taskExpired = new Date() > performanceDeadline;
+
+let performanceAmount = 0;
+
+if (activeDirectCount >= 10 && !taskExpired) {
+  performanceAmount = 699;
+
+  if (activeDirectCount >= 15) performanceAmount = 799;
+  if (activeDirectCount >= 20) performanceAmount = 899;
+  if (activeDirectCount >= 21) performanceAmount = 999;
+
+  await addBonus({
+    email: sponsor.email,
+    fromEmail: investor.email,
+    fromName: investor.name,
+    type: "Performance Bonus",
+    level: 1,
+    amount: performanceAmount,
+    note: "Direct active referral performance bonus",
+    refId: refId + "-PERFORMANCE"
+  });
+}
+
   const refId = `FIRST-${investment._id}`;
 
   // Direct Referral Bonus

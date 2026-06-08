@@ -4,47 +4,20 @@ import { API } from "../config";
 
 export default function Refer() {
   const navigate = useNavigate();
-
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
 
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({});
   const [history, setHistory] = useState([]);
-
-const [bonusModal, setBonusModal] = useState(null);
-const [treeOpen, setTreeOpen] = useState(false);
-const [showAllHistory, setShowAllHistory] = useState(false);
-const [statusFilter, setStatusFilter] = useState("All");
-
-const [performance, setPerformance] = useState({});
-const [team, setTeam] = useState({});
-const [royalty, setRoyalty] = useState({});
-const [bonusHistory, setBonusHistory] = useState([]);
-const [treeData, setTreeData] = useState([]);
-
-const safeHistory = Array.isArray(history) ? history : [];
-
-const visibleHistory =
-  statusFilter === "All"
-    ? safeHistory
-    : safeHistory.filter((x) => String(x.status) === String(statusFilter));
-
-const finalHistory = showAllHistory
-  ? visibleHistory
-  : visibleHistory.slice(0, 3);
-
-const openBonus = (type) => {
-  setBonusModal(type);
-};
-
-const closeBonus = () => {
-  setBonusModal(null);
-};
-
-const goInvest = () => {
-  window.location.href = "/save-money";
-};
+  const [bonusHistory, setBonusHistory] = useState([]);
+  const [performance, setPerformance] = useState({});
+  const [team, setTeam] = useState({});
+  const [royalty, setRoyalty] = useState({});
+  const [bonusModal, setBonusModal] = useState(null);
+  const [treeOpen, setTreeOpen] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => {
     loadReferData();
@@ -53,8 +26,7 @@ const goInvest = () => {
   const loadReferData = async () => {
     try {
       setLoading(true);
-
-      const res = await fetch(`${API}/refer-data`, {
+      const res = await fetch(`${API}/refer-dashboard`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,30 +37,46 @@ const goInvest = () => {
 
       const data = await res.json();
 
-      setHistory(Array.isArray(data.history) ? data.history : []);
-
-      if (data?.success) {
-        setUser(data.user || {});
-        setHistory(Array.isArray(data.history) ? data.history : []);
-      } else {
-        setUser({});
-        setHistory([]);
+      if (!data.success) {
+        alert(data.msg || "Refer data loading failed");
+        return;
       }
 
+      setUser(data.user || {});
+      setHistory(Array.isArray(data.referHistory) ? data.referHistory : []);
+      setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
       setPerformance(data.performance || {});
-setTeam(data.team || {});
-setRoyalty(data.royalty || {});
-setBonusHistory(data.bonusHistory || []);
-setTreeData(data.treeData || []);
-
+      setTeam(data.team || {});
+      setRoyalty(data.royalty || {});
     } catch (err) {
-      console.log("REFER DATA ERROR:", err);
-      setUser({});
-      setHistory([]);
+      console.log("REFER LOAD ERROR:", err);
+      alert("Refer loading failed");
     } finally {
       setLoading(false);
     }
   };
+
+  const referCode =
+    user.referCode || user.referralCode || user.walletId || "SAVE-MONEY";
+
+  const referLink = `${window.location.origin}/register?ref=${referCode}`;
+
+  const safeHistory = Array.isArray(history) ? history : [];
+
+  const visibleHistory =
+    statusFilter === "All"
+      ? safeHistory
+      : safeHistory.filter(
+          (x) => String(x.status).toLowerCase() === statusFilter.toLowerCase()
+        );
+
+  const finalHistory = showAllHistory
+    ? visibleHistory
+    : visibleHistory.slice(0, 3);
+
+  const isActive =
+    String(user.status || user.activeStatus || "Inactive").toLowerCase() ===
+    "active";
 
   const money = (n) =>
     `₹ ${Number(n || 0).toLocaleString("en-IN", {
@@ -96,103 +84,62 @@ setTreeData(data.treeData || []);
       maximumFractionDigits: 2
     })}`;
 
-  const referCode =
-    user.referCode ||
-    user.referralCode ||
-    user.walletId ||
-    "SMREF0001";
-
-  const referLink = `${window.location.origin}/register?ref=${referCode}`;
-
-  const copyText = async (text) => {
+  const copyText = async (txt) => {
     try {
-      await navigator.clipboard.writeText(text);
-      alert("Copied Successfully");
+      await navigator.clipboard.writeText(txt);
+      alert("Copied");
     } catch {
       alert("Copy failed");
     }
   };
 
- const shareWhatsapp = () => {
-  const text = `Join SAVE MONEY using my refer link: ${referLink}`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-};
+  const shareWhatsApp = () => {
+    const text = `Join SAVE MONEY with my refer code ${referCode}\n${referLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
 
-const shareTelegram = () => {
-  const text = `Join SAVE MONEY using my refer link: ${referLink}`;
-  window.open(`https://t.me/share/url?url=${encodeURIComponent(referLink)}&text=${encodeURIComponent(text)}`, "_blank");
-};
+  const shareTelegram = () => {
+    const text = `Join SAVE MONEY with my refer code ${referCode}`;
+    window.open(
+      `https://t.me/share/url?url=${encodeURIComponent(
+        referLink
+      )}&text=${encodeURIComponent(text)}`,
+      "_blank"
+    );
+  };
 
   const bonusCards = [
     {
       key: "performance",
-      title: "Performance Bonus",
-      amount: user.performanceBonus || user.performanceIncome || 0,
       icon: "📈",
-      color: "#c026d3",
-      bg: "#fff0ff"
+      title: "Performance Bonus",
+      amount: performance.balance || user.performanceIncome || 0,
+      color: "#9b1de8",
+      bg: "linear-gradient(145deg,#fff5ff,#f7edff)"
     },
     {
       key: "team",
-      title: "Team Bonus",
-      amount: user.teamBonus || user.teamIncome || 0,
       icon: "👥",
-      color: "#2563eb",
-      bg: "#eff6ff"
+      title: "Team Bonus",
+      amount: team.balance || user.teamIncome || 0,
+      color: "#1976ff",
+      bg: "linear-gradient(145deg,#f5fbff,#eef7ff)"
     },
     {
       key: "royalty",
-      title: "Royalty Bonus",
-      amount: user.royaltyBonus || user.royaltyIncome || 0,
       icon: "👑",
-      color: "#f97316",
-      bg: "#fff7ed"
+      title: "Royalty Bonus",
+      amount: royalty.balance || user.royaltyIncome || 0,
+      color: "#ff8a19",
+      bg: "linear-gradient(145deg,#fffaf0,#fff2d9)"
     }
   ];
-
-  const demoHistory = [
-    {
-      name: "Priya Sharma",
-      mobile: "+91 98765 43210",
-      referId: "REF445566",
-      date: "20 May 2024",
-      time: "10:30 AM",
-      package: "Silver",
-      status: "Active",
-      earning: 520
-    },
-    {
-      name: "Amit Verma",
-      mobile: "+91 91234 56789",
-      referId: "REF445567",
-      date: "19 May 2024",
-      time: "09:20 AM",
-      package: "Gold",
-      status: "Active",
-      earning: 780
-    },
-    {
-      name: "Vikash Singh",
-      mobile: "+91 93456 78901",
-      referId: "REF445569",
-      date: "17 May 2024",
-      time: "12:40 PM",
-      package: "Bronze",
-      status: "Inactive",
-      earning: 0
-    }
-  ];
-
-
- 
 
   if (loading) {
     return (
-      <div style={styles.loadingPage}>
-        <div style={styles.loadingBox}>
-          <div style={styles.loadingIcon}>🎁</div>
-          <h2>Loading Refer World...</h2>
-        </div>
+      <div style={styles.loading}>
+        <div style={styles.loader}></div>
+        <h3>Loading Refer World...</h3>
       </div>
     );
   }
@@ -204,33 +151,28 @@ const shareTelegram = () => {
       </button>
 
       <button
-  style={styles.bellBtn}
-  onClick={() => (window.location.href = "/notifications")}
->
-  🔔
-  <span style={styles.bellCount}></span>
-</button>
-
-      <div style={styles.bgGift}>🎁</div>
-      <div style={styles.bgPeople}>👥</div>
+        style={styles.bellBtn}
+        onClick={() => navigate("/notifications")}
+      >
+        🔔
+        <span style={styles.bellCount}>3</span>
+      </button>
 
       <header style={styles.header}>
         <p style={styles.welcome}>Welcome to</p>
 
-        <h1 style={styles.mainTitle}>
-  <span style={styles.walletLogo}>🎁</span>
-     SAVE MONEY
-</h1>
+        <h1 style={styles.title}>
+          <span style={styles.walletLogo}>💵</span>
+          SAVE MONEY
+        </h1>
 
-<h2 style={styles.referWorld}>
-  <span style={styles.titleLine}></span>
-  Refer World
-  <span style={styles.titleLine}></span>
-</h2>
+        <h2 style={styles.referWorld}>
+          <span style={styles.line}></span>
+          Refer World
+          <span style={styles.line}></span>
+        </h2>
 
-        <p style={styles.tagline}>
-          Refer More, Earn More, Grow Together!
-        </p>
+        <p style={styles.tagline}>Refer More, Earn More, Grow Together!</p>
       </header>
 
       <section style={styles.heroCard}>
@@ -242,7 +184,7 @@ const shareTelegram = () => {
                 user.photo ||
                 user.photoImage ||
                 user.avatar ||
-                "https://i.pravatar.cc/160?img=12"
+                "https://i.pravatar.cc/180?img=12"
               }
               alt="user"
             />
@@ -252,23 +194,21 @@ const shareTelegram = () => {
           <div style={styles.userInfo}>
             <h2>{user.name || "Save Money User"}</h2>
 
-<span style={styles.activeMember}>
-  <span
-  style={{
-    ...styles.greenDot,
-background:
-  String(user?.status || "Active").toLowerCase() === "active"
-    ? "#22c55e"
-    : "#ef4444"  }}
-></span>
-  Active Member
-</span>
-            <p style={styles.smallText}>Refer ID</p>
+            <div style={styles.activePill}>
+              <span
+                style={{
+                  ...styles.dot,
+                  background: isActive ? "#22c55e" : "#ef4444"
+                }}
+              ></span>
+              {isActive ? "Active Member" : "Inactive Member"}
+            </div>
+
+            <p style={styles.label}>Refer ID</p>
 
             <div style={styles.referIdBox}>
-              <span>{referCode}</span>
-
-              <button onClick={() => copyText(referCode)}>🗊</button>
+              <b>{referCode}</b>
+              <button onClick={() => copyText(referCode)}>📋</button>
             </div>
           </div>
         </div>
@@ -276,12 +216,10 @@ background:
         <div style={styles.heroLine}></div>
 
         <div style={styles.heroRight}>
-          <div style={styles.walletRound}>💸</div>
-
+          <div style={styles.walletRound}>👛</div>
           <p>Refer Wallet Balance</p>
-
           <h1>{money(user.referWallet || user.referralIncome || 0)}</h1>
-
+          <button style={styles.withdrawBtn}>Withdraw</button>
         </div>
       </section>
 
@@ -290,25 +228,21 @@ background:
 
         <div style={styles.linkMiddle}>
           <h3>Your Refer Link</h3>
-
           <div style={styles.copyBox}>
             <span>{referLink}</span>
-
-           <button style={styles.copyLinkBtn} onClick={() => copyText(referLink)}>
-               🔗 Copy Link
-           </button>
+            <button style={styles.copyLinkBtn} onClick={() => copyText(referLink)}>
+              📋 Copy Link
+            </button>
           </div>
         </div>
 
         <div style={styles.shareBox}>
           <h3>Share via</h3>
-
-          <button style={styles.whatsapp} onClick={shareWhatsapp}>
-            🌍
+          <button style={styles.whatsapp} onClick={shareWhatsApp}>
+            🟢
           </button>
-
           <button style={styles.telegram} onClick={shareTelegram}>
-            ⌲
+            ✈️
           </button>
         </div>
       </section>
@@ -316,7 +250,12 @@ background:
       <section style={styles.bonusGrid}>
         {bonusCards.map((b) => (
           <div key={b.key} style={{ ...styles.bonusCard, background: b.bg }}>
-            <div style={{ ...styles.bonusIcon, background: b.color }}>
+            <div
+              style={{
+                ...styles.bonusIcon,
+                background: b.color
+              }}
+            >
               {b.icon}
             </div>
 
@@ -324,24 +263,28 @@ background:
             <h2>{money(b.amount)}</h2>
 
             <button
-              style={{ ...styles.detailBtn, color: b.color }}
-              onClick={() => setBonusModal(b)}
+              style={{
+                ...styles.detailBtn,
+                color: b.color,
+                borderColor: b.color
+              }}
+              onClick={() => setBonusModal(b.key)}
             >
               View Details
             </button>
           </div>
         ))}
 
-        <div style={{ ...styles.bonusCard, background: "#ecfdf5" }}>
-          <div style={{ ...styles.bonusIcon, background: "#10b981" }}>
-            🌳
-          </div>
-
+        <div style={{ ...styles.bonusCard, background: "#ecfff4" }}>
+          <div style={{ ...styles.bonusIcon, background: "#10b981" }}>🌳</div>
           <h3>Tree View</h3>
-          <p style={styles.treeText}>View your whole team structure</p>
-
+          <p style={{ minHeight: 38 }}>View your whole team structure</p>
           <button
-            style={{ ...styles.detailBtn, color: "#10b981" }}
+            style={{
+              ...styles.detailBtn,
+              color: "#10b981",
+              borderColor: "#10b981"
+            }}
             onClick={() => setTreeOpen(true)}
           >
             View Tree
@@ -349,66 +292,93 @@ background:
         </div>
       </section>
 
-<div style={styles.historyCard}>
-  <div style={styles.historyTop}>
-    <div>
-      <h2>🕘 Refer History</h2>
-      <p>Check your referral activities</p>
-    </div>
+      <section style={styles.historyCard}>
+        <div style={styles.historyTop}>
+          <div>
+            <h2>🕘 Refer History</h2>
+            <p>Check your referral activities</p>
+          </div>
 
-    <select
-      value={statusFilter}
-      onChange={(e) => setStatusFilter(e.target.value)}
-      style={styles.filterSelect}
-    >
-      <option value="All">All Status</option>
-      <option value="Active">Active</option>
-      <option value="Inactive">Inactive</option>
-    </select>
-  </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={styles.filterSelect}
+          >
+            <option value="All">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
 
-  <table style={styles.table}>
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Refer ID</th>
-        <th>Join Date</th>
-        <th>Status</th>
-        <th>Earning</th>
-      </tr>
-    </thead>
+        <div style={styles.tableWrap}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Refer ID</th>
+                <th>Join Date</th>
+                <th>Status</th>
+                <th>Earning</th>
+              </tr>
+            </thead>
 
-    <tbody>
-      {finalHistory.map((x, i) => (
-        <tr key={i}>
-          <td>
-            <b>{x.name}</b>
-            <br />
-            <small>{x.mobile || x.email}</small>
-          </td>
-          <td>{x.referId || "N/A"}</td>
-          <td>{x.joinDate ? new Date(x.joinDate).toLocaleString("en-IN") : "N/A"}</td>
-          <td>
-            <span style={{
-              ...styles.statusPill,
-              background: x.status === "Active" ? "#dcfce7" : "#ffe4e6",
-              color: x.status === "Active" ? "#16a34a" : "#e11d48"
-            }}>
-              {x.status}
-            </span>
-          </td>
-          <td>₹ {Number(x.earning || 0).toLocaleString("en-IN")}</td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
+            <tbody>
+              {finalHistory.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={styles.empty}>
+                    No refer history found
+                  </td>
+                </tr>
+              ) : (
+                finalHistory.map((x, i) => (
+                  <tr key={i}>
+                    <td>
+                      <b>{x.name || "User"}</b>
+                      <br />
+                      <small>{x.mobile || x.email}</small>
+                    </td>
 
-  {visibleHistory.length > 3 && (
-    <button style={styles.viewMoreBtn} onClick={() => setShowAllHistory(!showAllHistory)}>
-      {showAllHistory ? "Show Less⌃" : "View More⌄"}
-    </button>
-  )}
-</div>     
+                    <td>{x.referId || "N/A"}</td>
+
+                    <td>
+                      {x.joinDate
+                        ? new Date(x.joinDate).toLocaleString("en-IN")
+                        : "N/A"}
+                    </td>
+
+                    <td>
+                      <span
+                        style={{
+                          ...styles.statusPill,
+                          background:
+                            x.status === "Active" ? "#dcfce7" : "#ffe4e6",
+                          color:
+                            x.status === "Active" ? "#16a34a" : "#e11d48"
+                        }}
+                      >
+                        {x.status || "Inactive"}
+                      </span>
+                    </td>
+
+                    <td style={{ color: "#16a34a", fontWeight: 900 }}>
+                      {money(x.earning || 0)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {visibleHistory.length > 3 && (
+          <button
+            style={styles.viewMoreBtn}
+            onClick={() => setShowAllHistory(!showAllHistory)}
+          >
+            {showAllHistory ? "Show Less ▲" : "View More ▼"}
+          </button>
+        )}
+      </section>
 
       <section style={styles.bottomBanner}>
         <div style={styles.bottomGift}>🎁</div>
@@ -418,131 +388,139 @@ background:
           <p>Your network is your net worth.</p>
         </div>
 
-       <button style={styles.referNowBtn} onClick={shareWhatsapp}>
-  🔗 Refer Now
-</button>
+        <button style={styles.referNowBtn} onClick={shareWhatsApp}>
+          🔗 Refer Now
+        </button>
       </section>
 
-     {bonusModal && (
-  <div style={styles.modalOverlay}>
-    <div style={styles.modalBox}>
-      {bonusModal === "performance" && (
-        <>
-          <h2>📈 Performance Bonus</h2>
-          <h1>₹ {Number(performance?.balance || 0).toLocaleString("en-IN")}</h1>
-
-          <p>
-            Status: <b>{performance?.enabled ? "Active" : "Inactive"}</b>
-          </p>
-
-          {!performance?.completed && !performance?.expired && (
+      {bonusModal && (
+        <Modal onClose={() => setBonusModal(null)}>
+          {bonusModal === "performance" && (
             <>
+              <h2>📈 Performance Bonus</h2>
+              <h1>{money(performance.balance || 0)}</h1>
+
               <p>
-                Your Active Refer: <b>{performance?.directActiveCount || 0}</b> / 10
+                Status:{" "}
+                <b style={{ color: performance.enabled ? "#16a34a" : "#ef4444" }}>
+                  {performance.enabled ? "Active" : "Inactive"}
+                </b>
               </p>
-              <p>
-                Remaining: <b>{performance?.remaining || 0}</b>
-              </p>
-              <button style={styles.greenBtn} onClick={goInvest}>
-                Go to Save Money Invest
-              </button>
+
+              {!performance.completed && !performance.expired && (
+                <>
+                  <p>
+                    Active Direct Refer:{" "}
+                    <b>{performance.directActiveCount || 0}</b> / 10
+                  </p>
+                  <p>
+                    Remaining: <b>{performance.remaining || 0}</b>
+                  </p>
+                  <p>
+                    Days Left: <b>{performance.daysLeft || 0}</b>
+                  </p>
+
+                  <button style={styles.greenBtn} onClick={() => navigate("/save-money")}>
+                    Go To Save Money Invest
+                  </button>
+                </>
+              )}
+
+              {performance.expired && (
+                <p style={styles.dangerText}>
+                  Task complete করতে পারোনি। Please upline এর সঙ্গে contact করো।
+                </p>
+              )}
+
+              {performance.completed && (
+                <p style={styles.successText}>
+                  তুমি task complete করেছো। এখন থেকে তুমি Performance Bonus পাবে।
+                </p>
+              )}
+
+              <BonusHistory type="Performance Bonus" data={bonusHistory} />
             </>
           )}
 
-          {performance?.expired && (
-            <p style={{ color: "#ef4444", fontWeight: 900 }}>
-              তুমি task complete করতে পারোনি। Please upline এর সঙ্গে contact করো।
-            </p>
+          {bonusModal === "team" && (
+            <>
+              <h2>👥 Team Bonus</h2>
+              <h1>{money(team.balance || 0)}</h1>
+
+              <p style={styles.successText}>
+                Your network is growing. You will earn bonus from 3 levels.
+              </p>
+
+              <div style={styles.levelGrid}>
+                <div>Level 1: ₹70</div>
+                <div>Level 2: ₹50</div>
+                <div>Level 3: ₹35</div>
+              </div>
+
+              <BonusHistory type="Team Bonus" data={bonusHistory} />
+            </>
           )}
 
-          {performance?.completed && (
-            <p style={{ color: "#16a34a", fontWeight: 900 }}>
-              তুমি task complete করেছো। এখন থেকে তুমি Performance Bonus পাবে।
-            </p>
+          {bonusModal === "royalty" && (
+            <>
+              <h2>👑 Royalty Bonus</h2>
+              <h1>{money(royalty.balance || 0)}</h1>
+
+              <p>
+                Direct Refer: <b>{royalty.directCount || 0}</b> / 50
+              </p>
+              <p>
+                Remaining: <b>{royalty.remaining || 0}</b>
+              </p>
+
+              <p>
+                Status:{" "}
+                <b style={{ color: royalty.enabled ? "#16a34a" : "#ef4444" }}>
+                  {royalty.enabled ? "Active" : "Inactive"}
+                </b>
+              </p>
+
+              <p>
+                Royalty active হলে next business থেকে 3% bonus পাবে।
+              </p>
+
+              <BonusHistory type="Royalty Bonus" data={bonusHistory} />
+            </>
           )}
 
-          <BonusHistory type="performance" data={bonusHistory} />
-        </>
+          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>
+            Close
+          </button>
+        </Modal>
       )}
 
-      {bonusModal === "team" && (
-        <>
-          <h2>👥 Team Bonus</h2>
-          <p style={{ color: "#16a34a", fontWeight: 900 }}>
-            Your team network is growing. You will earn bonus from 3 levels.
-          </p>
-
-          <h1>₹ {Number(team?.balance || 0).toLocaleString("en-IN")}</h1>
-
-          <div style={styles.levelGrid}>
-            <div>Level 1: ₹70</div>
-            <div>Level 2: ₹50</div>
-            <div>Level 3: ₹35</div>
+      {treeOpen && (
+        <Modal onClose={() => setTreeOpen(false)}>
+          <h2>🌳 7 Level Tree View</h2>
+          <p>Your full 7 level network structure will show here.</p>
+          <div style={styles.treeBox}>
+            Level 1 → Level 2 → Level 3 → Level 4 → Level 5 → Level 6 → Level 7
           </div>
-
-          <BonusHistory type="team" data={bonusHistory} />
-        </>
+          <button style={styles.closeBtn} onClick={() => setTreeOpen(false)}>
+            Close
+          </button>
+        </Modal>
       )}
-
-      {bonusModal === "royalty" && (
-        <>
-          <h2>👑 Royalty Bonus</h2>
-          <h1>₹ {Number(royalty?.balance || 0).toLocaleString("en-IN")}</h1>
-
-          <p>
-            Direct Refer: <b>{royalty?.directCount || 0}</b> / 50
-          </p>
-
-          <p>
-            Remaining: <b>{royalty?.remaining || 0}</b>
-          </p>
-
-          <p>
-            Status: <b>{royalty?.enabled ? "Active" : "Inactive"}</b>
-          </p>
-
-          <p>
-            Royalty active হলে next business থেকে 3% bonus পাবেন।
-          </p>
-
-          <BonusHistory type="royalty" data={bonusHistory} />
-        </>
-      )}
-
-      <button style={styles.closeBtn} onClick={closeBonus}>Close</button>
-    </div>
-  </div>
-)}
-
-{treeOpen && (
-  <div style={styles.modalOverlay}>
-    <div style={styles.modalBox}>
-      <h2>🌳 7 Level Tree View</h2>
-      <p>Your full 7 level network structure will show here.</p>
-
-      <div style={styles.treeBox}>
-        Level 1 → Level 2 → Level 3 → Level 4 → Level 5 → Level 6 → Level 7
-      </div>
-
-      <button style={styles.closeBtn} onClick={() => setTreeOpen(false)}>Close</button>
-    </div>
-  </div>
-)}
     </div>
   );
 }
 
 function BonusHistory({ type, data }) {
-  const rows = (data || []).filter(x => x.bonusType === type);
+  const rows = (data || []).filter(
+    (x) => x.type === type || x.bonusType === type
+  );
 
   return (
-    <div style={{ marginTop: 20 }}>
+    <div style={{ marginTop: 18 }}>
       <h3>Bonus History</h3>
 
-      {rows.length === 0 ? (
-        <p>No history found</p>
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div style={{ overflowX: "auto" }}>
+        <table style={styles.modalTable}>
           <thead>
             <tr>
               <th>Name</th>
@@ -551,18 +529,25 @@ function BonusHistory({ type, data }) {
               <th>Amount</th>
             </tr>
           </thead>
+
           <tbody>
-            {rows.map((x, i) => (
-              <tr key={i}>
-                <td>{x.fromName || x.fromEmail}</td>
-                <td>{new Date(x.date).toLocaleString("en-IN")}</td>
-                <td>{x.level || "-"}</td>
-                <td>₹{Number(x.amount || 0).toLocaleString("en-IN")}</td>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan="4">No bonus history</td>
               </tr>
-            ))}
+            ) : (
+              rows.map((r, i) => (
+                <tr key={i}>
+                  <td>{r.fromName || r.name || "User"}</td>
+                  <td>{r.date ? new Date(r.date).toLocaleString("en-IN") : "N/A"}</td>
+                  <td>{r.level || 0}</td>
+                  <td>₹{Number(r.amount || 0).toLocaleString("en-IN")}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
-      )}
+      </div>
     </div>
   );
 }
@@ -578,596 +563,500 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
-  loadingPage: {
-    minHeight: "100vh",
-    background: "#fff7ff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily: "Arial"
-  },
-
-  loadingBox: {
-    background: "white",
-    padding: 35,
-    borderRadius: 30,
-    textAlign: "center",
-    boxShadow: "0 20px 45px rgba(124,58,237,.18)"
-  },
-
-  loadingIcon: {
-    fontSize: 70
-  },
-
   page: {
     minHeight: "100vh",
-    padding: "28px",
+    padding: "28px 30px 45px",
     background:
-      "radial-gradient(circle at top left,#fff0ff,transparent 28%),radial-gradient(circle at top right,#ffe8f5,transparent 30%),linear-gradient(135deg,#fffaff,#f8f3ff,#ffffff)",
-    fontFamily: "Arial, sans-serif",
-    color: "#111542",
-    position: "relative",
-    overflowX: "hidden"
+      "radial-gradient(circle at top left,#f6edff,transparent 35%),radial-gradient(circle at top right,#ffeaf7,transparent 35%),#fbf8ff",
+    fontFamily: "Inter, Arial, sans-serif",
+    color: "#10183a",
+    position: "relative"
+  },
+
+  loading: {
+    minHeight: "100vh",
+    display: "grid",
+    placeItems: "center",
+    background: "#fbf8ff"
+  },
+
+  loader: {
+    width: 46,
+    height: 46,
+    border: "5px solid #ddd",
+    borderTop: "5px solid #7c3aed",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite"
   },
 
   backBtn: {
     position: "absolute",
-    top: 24,
     left: 24,
+    top: 24,
     width: 54,
     height: 54,
-    border: "none",
+    border: 0,
     borderRadius: 16,
-    background: "white",
-    boxShadow: "0 12px 30px rgba(137,84,255,.22)",
-    fontSize: 30,
-    fontWeight: 900,
-    cursor: "pointer",
-    zIndex: 5
+    background: "#fff",
+    fontSize: 28,
+    boxShadow: "0 12px 30px rgba(0,0,0,.08)",
+    cursor: "pointer"
   },
 
   bellBtn: {
     position: "absolute",
-    top: 24,
     right: 24,
-    width: 58,
-    height: 58,
-    border: "none",
-    borderRadius: 18,
-    background: "white",
-    boxShadow: "0 12px 30px rgba(137,84,255,.22)",
-    fontSize: 25,
-    cursor: "pointer",
-    zIndex: 5
+    top: 24,
+    width: 54,
+    height: 54,
+    border: 0,
+    borderRadius: 16,
+    background: "#fff",
+    fontSize: 24,
+    boxShadow: "0 12px 30px rgba(0,0,0,.08)",
+    cursor: "pointer"
   },
 
   bellCount: {
     position: "absolute",
-    top: 4,
-    right: 5,
-    background: "#f03092",
-    color: "white",
-    borderRadius: 99,
-    padding: "3px 8px",
+    top: -7,
+    right: -7,
+    background: "#ec4899",
+    color: "#fff",
+    width: 24,
+    height: 24,
+    borderRadius: "50%",
     fontSize: 13,
-    fontWeight: 900
-  },
-
-  bgGift: {
-    position: "absolute",
-    left: 45,
-    top: 150,
-    fontSize: 72,
-    opacity: 0.35
-  },
-
-  bgPeople: {
-    position: "absolute",
-    right: 70,
-    top: 145,
-    fontSize: 80,
-    opacity: 0.25
+    display: "grid",
+    placeItems: "center"
   },
 
   header: {
     textAlign: "center",
-    marginTop: 8
+    marginBottom: 28
   },
 
   welcome: {
     margin: 0,
     fontSize: 22,
-    fontWeight: 500
+    color: "#111827"
   },
 
-  mainTitle: {
-    margin: "2px 0 0",
-    fontSize: 62,
-    fontWeight: 900,
-    letterSpacing: 1,
-    background: "linear-gradient(90deg,#1463ff,#8b20ff,#ff1685)",
+  title: {
+    margin: "4px 0",
+    fontSize: "clamp(44px,7vw,72px)",
+    fontWeight: 1000,
+    letterSpacing: 2,
+    background: "linear-gradient(90deg,#1d7cff,#8b2cff,#ff2e93)",
     WebkitBackgroundClip: "text",
     color: "transparent"
   },
 
-  referWorld: {
-  margin: "-5px 0 0",
-  fontSize: 38,
-  fontWeight: 800,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 18
-},
+  walletLogo: {
+    color: "#7c3aed",
+    WebkitTextFillColor: "initial",
+    marginRight: 12
+  },
 
-walletLogo: {
-  display: "inline-block",
-  fontSize: 58,
-  marginRight: 16,
-  verticalAlign: "middle",
-  filter: "drop-shadow(0 10px 18px rgba(124,58,237,.3))"
-},
+  referWorld: {
+    margin: 0,
+    fontSize: "clamp(30px,4vw,46px)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 18
+  },
+
+  line: {
+    width: 74,
+    height: 3,
+    borderRadius: 8,
+    background: "linear-gradient(90deg,transparent,#b06cff,transparent)"
+  },
 
   tagline: {
-    color: "#62678c",
     fontSize: 18,
-    marginTop: 10
+    color: "#58607d"
   },
 
   heroCard: {
-    width: "min(1050px, 94vw)",
-    margin: "30px auto 18px",
-    padding: 44,
-    borderRadius: 34,
-    background: "linear-gradient(135deg,#3a19d6 0%,#6b08d8 45%,#b616a1 100%)",
-    color: "white",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 30,
-    boxShadow: "0 30px 55px rgba(102,38,190,.35)"
+    maxWidth: 1000,
+    margin: "0 auto 22px",
+    padding: 38,
+    borderRadius: 36,
+    background: "linear-gradient(135deg,#1066f5,#4a20cc,#9a0f86)",
+    boxShadow: "0 25px 60px rgba(85,40,200,.28)",
+    color: "#fff",
+    display: "grid",
+    gridTemplateColumns: "1.3fr 1px 1fr",
+    gap: 36,
+    alignItems: "center"
   },
 
   heroLeft: {
     display: "flex",
-    alignItems: "center",
-    gap: 28
+    gap: 28,
+    alignItems: "center"
   },
 
   avatarWrap: {
-    position: "relative"
-  },
-
-  avatar: {
     width: 150,
     height: 150,
     borderRadius: "50%",
-    border: "8px solid white",
+    border: "8px solid rgba(255,255,255,.85)",
+    position: "relative",
+    flexShrink: 0
+  },
+
+  avatar: {
+    width: "100%",
+    height: "100%",
+    borderRadius: "50%",
     objectFit: "cover"
   },
 
   crown: {
     position: "absolute",
-    right: -4,
-    bottom: 12,
-    width: 50,
-    height: 50,
+    right: -8,
+    bottom: 6,
+    width: 58,
+    height: 58,
     borderRadius: "50%",
-    background: "linear-gradient(135deg,#e11dff,#9f18ff)",
+    background: "linear-gradient(135deg,#a855f7,#7c3aed)",
     display: "grid",
     placeItems: "center",
-    fontSize: 26,
-    border: "4px solid white"
+    fontSize: 28,
+    border: "5px solid #fff"
   },
 
   userInfo: {
-    minWidth: 250
+    minWidth: 220
   },
 
-  activeMember: {
-    display: "inline-block",
-    margin: "12px 0",
-    padding: "10px 18px",
+  activePill: {
+    display: "inline-flex",
+    gap: 10,
+    alignItems: "center",
+    padding: "11px 18px",
     borderRadius: 12,
-    background: "rgba(255,255,255,.16)",
-    fontWeight: 700
+    background: "rgba(255,255,255,.17)",
+    fontWeight: 800
   },
 
-  smallText: {
-    margin: "8px 0",
+  dot: {
+    width: 13,
+    height: 13,
+    borderRadius: "50%"
+  },
+
+  label: {
+    marginBottom: 8,
     opacity: 0.9
   },
 
- referIdBox: {
-  border: "1px dashed rgba(255,255,255,.85)",
-  borderRadius: 14,
-  padding: "12px 16px",
-  fontSize: 22,
-  fontWeight: 900,
-  display: "flex",
-  gap: 18,
-  alignItems: "center",
-  justifyContent: "space-between",
-  background: "linear-gradient(90deg,#ffffff33,#ffffff18)",
-  color: "#fff",
-  boxShadow: "inset 0 0 0 1px rgba(255,255,255,.12)"
-},
-
-copyLinkBtn: {
-  border: "none",
-  borderRadius: 12,
-  padding: "12px 22px",
-  background: "linear-gradient(90deg,#7c3aed,#d946ef)",
-  color: "#fff",
-  fontWeight: 900,
-  cursor: "pointer",
-  whiteSpace: "nowrap"
-},
-
-  copySmall: {},
+  referIdBox: {
+    border: "1px dashed rgba(255,255,255,.7)",
+    borderRadius: 14,
+    padding: "13px 16px",
+    background: "linear-gradient(90deg,rgba(255,255,255,.18),rgba(255,255,255,.08))",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: 24
+  },
 
   heroLine: {
-    height: 145,
-    width: 1,
+    height: "100%",
     background: "rgba(255,255,255,.25)"
   },
 
   heroRight: {
-    minWidth: 310
+    textAlign: "center"
   },
 
   walletRound: {
-    width: 76,
-    height: 76,
+    margin: "0 auto 14px",
+    width: 82,
+    height: 82,
     borderRadius: "50%",
     background: "rgba(255,255,255,.18)",
     display: "grid",
     placeItems: "center",
-    fontSize: 38
+    fontSize: 40
   },
 
-  balance: {},
-
- 
+  withdrawBtn: {
+    padding: "14px 48px",
+    borderRadius: 14,
+    border: "1px solid rgba(255,255,255,.55)",
+    background: "transparent",
+    color: "#fff",
+    fontWeight: 900,
+    fontSize: 18,
+    cursor: "pointer"
+  },
 
   linkCard: {
-    width: "min(1120px, 94vw)",
-    margin: "20px auto",
-    padding: 28,
-    borderRadius: 26,
-    background: "white",
-    boxShadow: "0 16px 36px rgba(156,105,255,.16)",
-    display: "flex",
+    maxWidth: 1120,
+    margin: "0 auto 18px",
+    padding: 26,
+    background: "#fff",
+    borderRadius: 24,
+    display: "grid",
+    gridTemplateColumns: "90px 1fr 210px",
+    gap: 22,
     alignItems: "center",
-    gap: 24
+    boxShadow: "0 20px 45px rgba(25,25,80,.08)"
   },
 
   linkIcon: {
-    width: 90,
-    height: 90,
-    borderRadius: 22,
-    background: "#f0e7ff",
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    background: "#f1e8ff",
     display: "grid",
     placeItems: "center",
-    fontSize: 48
-  },
-
-  linkMiddle: {
-    flex: 1
+    fontSize: 42
   },
 
   copyBox: {
-    border: "1px solid #ddd9ec",
-    borderRadius: 14,
-    padding: 12,
     display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10
+    gap: 12,
+    border: "1px solid #e5e7eb",
+    borderRadius: 14,
+    padding: 10,
+    alignItems: "center"
+  },
+
+  copyLinkBtn: {
+    padding: "12px 22px",
+    border: 0,
+    borderRadius: 12,
+    background: "linear-gradient(90deg,#6d28d9,#ec4899)",
+    color: "#fff",
+    fontWeight: 900,
+    cursor: "pointer",
+    whiteSpace: "nowrap"
   },
 
   shareBox: {
-    borderLeft: "1px solid #e7e2f0",
-    paddingLeft: 30,
-    minWidth: 190
+    borderLeft: "1px solid #e5e7eb",
+    paddingLeft: 24,
+    display: "flex",
+    gap: 12,
+    alignItems: "center",
+    flexWrap: "wrap"
   },
 
   whatsapp: {
-  width: 58,
-  height: 58,
-  border: "none",
-  borderRadius: "50%",
-  background: "#16c768",
-  color: "white",
-  fontSize: 30,
-  marginRight: 12,
-  cursor: "pointer"
-},
+    width: 54,
+    height: 54,
+    border: 0,
+    borderRadius: "50%",
+    background: "#22c55e",
+    fontSize: 24,
+    cursor: "pointer"
+  },
 
   telegram: {
-  width: 58,
-  height: 58,
-  border: "none",
-  borderRadius: "50%",
-  background: "#2196f3",
-  color: "white",
-  fontSize: 30,
-  cursor: "pointer"
-},
+    width: 54,
+    height: 54,
+    border: 0,
+    borderRadius: "50%",
+    background: "#0ea5e9",
+    fontSize: 24,
+    cursor: "pointer"
+  },
 
   bonusGrid: {
-    width: "min(1120px, 94vw)",
-    margin: "26px auto",
+    maxWidth: 1120,
+    margin: "0 auto 22px",
     display: "grid",
     gridTemplateColumns: "repeat(4,1fr)",
     gap: 20
   },
 
   bonusCard: {
+    padding: 26,
     borderRadius: 24,
-    padding: "34px 18px",
     textAlign: "center",
-    boxShadow: "0 14px 34px rgba(0,0,0,.08)"
+    boxShadow: "0 18px 40px rgba(0,0,0,.07)",
+    minHeight: 240
   },
 
   bonusIcon: {
-    width: 78,
-    height: 78,
-    borderRadius: 22,
+    width: 72,
+    height: 72,
     margin: "0 auto 18px",
+    borderRadius: 18,
     display: "grid",
     placeItems: "center",
-    color: "white",
-    fontSize: 38
+    fontSize: 34,
+    color: "#fff",
+    boxShadow: "0 12px 28px rgba(0,0,0,.18)"
   },
 
   detailBtn: {
-  border: "1px solid currentColor",
-  borderRadius: 12,
-  background: "white",
-  padding: "12px 22px",
-  fontWeight: 900,
-  minHeight: 45,
-  lineHeight: "18px",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  whiteSpace: "nowrap"
-},
-
-  treeText: {
-    minHeight: 58,
-    color: "#5d6280"
+    padding: "11px 28px",
+    borderRadius: 12,
+    background: "#fff",
+    border: "1px solid",
+    fontWeight: 900,
+    cursor: "pointer",
+    whiteSpace: "nowrap"
   },
 
   historyCard: {
-    width: "min(1120px, 94vw)",
-    margin: "26px auto",
-    background: "white",
-    borderRadius: 26,
+    maxWidth: 1120,
+    margin: "0 auto 22px",
     padding: 28,
-    boxShadow: "0 16px 36px rgba(156,105,255,.16)"
+    borderRadius: 24,
+    background: "#fff",
+    boxShadow: "0 20px 45px rgba(25,25,80,.08)"
   },
 
-  historyHead: {
+  historyTop: {
     display: "flex",
     justifyContent: "space-between",
+    gap: 14,
     alignItems: "center"
   },
 
-  select: {
-    padding: "13px 18px",
+  filterSelect: {
+    padding: "13px 20px",
     borderRadius: 14,
-    border: "1px solid #ddd"
+    border: "1px solid #e5e7eb",
+    fontWeight: 800
   },
 
   tableWrap: {
     overflowX: "auto",
-    marginTop: 22
+    marginTop: 18
   },
 
   table: {
     width: "100%",
+    borderCollapse: "collapse"
+  },
+
+  modalTable: {
+    width: "100%",
     borderCollapse: "collapse",
-    minWidth: 800
+    marginTop: 10
   },
 
-  th: {
-    background: "#f5efff",
-    padding: "14px 12px",
-    color: "#3d426a",
-    textAlign: "left"
-  },
-
-  td: {
-    padding: "14px 12px",
-    borderBottom: "1px solid #eee"
-  },
-
-  userCell: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12
-  },
-
-  smallAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: "50%",
-    objectFit: "cover"
-  },
-
-  mobileText: {
-    display: "block",
-    color: "#707695",
-    marginTop: 4
-  },
-
-  active: {
-    background: "#dcfce7",
-    color: "#16a34a",
-    padding: "8px 17px",
-    borderRadius: 20,
+  statusPill: {
+    padding: "9px 20px",
+    borderRadius: 999,
     fontWeight: 900
   },
 
-  inactive: {
-    background: "#ffe4ec",
-    color: "#ef3971",
-    padding: "8px 17px",
-    borderRadius: 20,
-    fontWeight: 900
+  empty: {
+    textAlign: "center",
+    padding: 25
   },
 
-  viewMore: {
+  viewMoreBtn: {
     display: "block",
-    margin: "22px auto 0",
-    border: "none",
-    background: "white",
-    color: "#7b20e8",
+    margin: "20px auto 0",
+    border: 0,
+    background: "transparent",
+    color: "#4f46e5",
     fontSize: 18,
-    fontWeight: 900
+    fontWeight: 1000,
+    cursor: "pointer"
   },
 
   bottomBanner: {
-    width: "min(1120px, 94vw)",
-    margin: "26px auto 10px",
-    padding: "26px 34px",
+    maxWidth: 1120,
+    margin: "0 auto",
+    padding: 28,
     borderRadius: 24,
-    background: "linear-gradient(90deg,#fff2ff,#f5eaff)",
+    background: "linear-gradient(90deg,#fff5ff,#f1e8ff)",
     display: "flex",
-    alignItems: "center",
-    gap: 24
+    gap: 24,
+    alignItems: "center"
   },
 
   bottomGift: {
-    fontSize: 70
+    fontSize: 64
   },
 
   referNowBtn: {
-    border: "none",
+    padding: "18px 46px",
+    border: 0,
     borderRadius: 16,
-    padding: "18px 48px",
-    color: "white",
-    background: "linear-gradient(90deg,#7b20ff,#c515e9)",
+    background: "linear-gradient(90deg,#2563eb,#9333ea)",
+    color: "#fff",
     fontSize: 20,
+    fontWeight: 1000,
+    cursor: "pointer"
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15,23,42,.55)",
+    backdropFilter: "blur(6px)",
+    display: "grid",
+    placeItems: "center",
+    zIndex: 9999,
+    padding: 18
+  },
+
+  modalBox: {
+    width: "min(560px,94vw)",
+    maxHeight: "86vh",
+    overflowY: "auto",
+    background: "#fff",
+    borderRadius: 26,
+    padding: 30,
+    boxShadow: "0 30px 80px rgba(0,0,0,.28)"
+  },
+
+  greenBtn: {
+    width: "100%",
+    padding: 15,
+    border: 0,
+    borderRadius: 14,
+    background: "#16a34a",
+    color: "#fff",
+    fontWeight: 900,
+    cursor: "pointer"
+  },
+
+  closeBtn: {
+    width: "100%",
+    marginTop: 18,
+    padding: 15,
+    border: 0,
+    borderRadius: 14,
+    background: "#e5e7eb",
+    fontWeight: 900,
+    cursor: "pointer"
+  },
+
+  dangerText: {
+    color: "#ef4444",
     fontWeight: 900
   },
 
- modalOverlay: {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(15,23,42,.55)",
-  backdropFilter: "blur(8px)",
-  zIndex: 9999,
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: 20
-},
-
- modalBox: {
-  width: "min(720px, 96vw)",
-  maxHeight: "88vh",
-  overflowY: "auto",
-  background: "#fff",
-  borderRadius: 28,
-  padding: 28,
-  boxShadow: "0 30px 90px rgba(0,0,0,.25)"
-},
-
-
-  modalText: {
-    fontSize: 16,
-    lineHeight: 1.7,
-    color: "#555b78"
+  successText: {
+    color: "#16a34a",
+    fontWeight: 900
   },
 
-  modalBtn: {
-    width: "100%",
-    border: "none",
-    borderRadius: 14,
-    padding: 15,
-    background: "linear-gradient(90deg,#7021ff,#d319cb)",
-    color: "white",
-    fontWeight: 900,
-    fontSize: 16
+  levelGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3,1fr)",
+    gap: 10,
+    marginTop: 16
   },
 
- treeBox: {
-  padding: 22,
-  background: "#f1f5f9",
-  borderRadius: 18,
-  fontWeight: 900
-},
-
-  treeNode: {
-    display: "inline-block",
-    background: "linear-gradient(135deg,#6c20ff,#14b87a)",
-    color: "white",
-    borderRadius: 14,
-    padding: "14px 22px",
-    fontWeight: 900,
-    margin: 8
-  },
-
-  treeLine: {
-    width: 3,
-    height: 36,
-    background: "#9c7cff",
-    margin: "0 auto"
-  },
-
-  titleLine: {
-  width: 70,
-  height: 3,
-  borderRadius: 10,
-  background: "linear-gradient(90deg,#c084fc,#f0abfc)"
-},
-
-greenBtn: {
-  border: "none",
-  borderRadius: 14,
-  padding: "13px 20px",
-  background: "linear-gradient(90deg,#16a34a,#22c55e)",
-  color: "#fff",
-  fontWeight: 900,
-  cursor: "pointer"
-},
-
-closeBtn: {
-  marginTop: 20,
-  width: "100%",
-  border: "none",
-  borderRadius: 14,
-  padding: 14,
-  background: "#e5e7eb",
-  fontWeight: 900,
-  cursor: "pointer"
-},
-
-levelGrid: {
-  display: "grid",
-  gridTemplateColumns: "repeat(3,1fr)",
-  gap: 12,
-  margin: "16px 0",
-  fontWeight: 900
-},
-
-
-greenDot: {
-  width: 10,
-  height: 10,
-  borderRadius: "50%",
-  background: "#22c55e",
-  display: "inline-block",
-  marginRight: 8,
-  boxShadow: "0 0 10px #22c55e"
-},
-
-  treeRow: {
-    display: "flex",
-    justifyContent: "center",
-    flexWrap: "wrap"
+  treeBox: {
+    padding: 20,
+    borderRadius: 18,
+    background: "#f1f5f9",
+    fontWeight: 900
   }
 };
