@@ -1,14 +1,56 @@
 const mongoose = require("mongoose");
 
-const BonusLedgerSchema = new mongoose.Schema({
-  email: String,
-  fromEmail: String,
-  fromName: String,
-  bonusType: String, // performance/team/royalty
-  level: Number,
-  amount: Number,
-  description: String,
-  date: { type: Date, default: Date.now }
-});
+const bonusLedgerSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      lowercase: true
+    },
 
-module.exports = mongoose.model("BonusLedger", BonusLedgerSchema);
+    fromEmail: {
+      type: String,
+      default: "",
+      lowercase: true
+    },
+
+    fromName: {
+      type: String,
+      default: ""
+    },
+
+    bonusType: {
+      type: String,
+      enum: ["referral", "performance", "team", "royalty"],
+      required: true
+    },
+
+    level: {
+      type: Number,
+      default: 0
+    },
+
+    amount: {
+      type: Number,
+      default: 0
+    },
+
+    businessAmount: {
+      type: Number,
+      default: 0
+    },
+
+    note: {
+      type: String,
+      default: ""
+    },
+
+    date: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("BonusLedger", bonusLedgerSchema);
