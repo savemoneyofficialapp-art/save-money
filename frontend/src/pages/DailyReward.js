@@ -31,10 +31,15 @@ export default function DailyReward() {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        setResult(data.msg || "Reward claim failed");
-        return;
-      }
+     if (!res.ok) {
+  setResult(data.msg || "Reward claim failed");
+
+  if (data.reward?.history) {
+    setHistory([...data.reward.history].reverse());
+  }
+
+  return;
+}
 
       setResult(data.msg || "Reward Claimed Successfully");
       setAmount(data.amount || data.rewardAmount || 0);

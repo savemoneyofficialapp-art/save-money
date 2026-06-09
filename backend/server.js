@@ -5202,16 +5202,17 @@ app.post("/wallet-history", async (req, res) => {
   }
 });
 
-
-
-
-
-app.post("/daily-reward", auth, async (req, res) => {
+app.post("/daily-reward", async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = String(req.body.email || "").toLowerCase();
 
-    const user = await User.findOne({ email });
-    if (!user) return res.json({ msg: "User not found" });
+    if (!email) {
+      return res.status(400).json({ success: false, msg: "Email required" });
+    }
+
+    const today = new Date().toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata"
+    });
 
     let reward = await DailyReward.findOne({ email });
 
@@ -5219,60 +5220,55 @@ app.post("/daily-reward", auth, async (req, res) => {
       reward = await DailyReward.create({
         email,
         totalReward: 0,
+        claimCount: 0,
+        lastClaimDate: "",
         history: []
       });
     }
 
-    const today = new Date().toDateString();
-
-    if (
-      reward.lastClaimDate &&
-      new Date(reward.lastClaimDate).toDateString() === today
-    ) {
-      return res.json({
-        msg: "Today reward already claimed",
+    if (reward.lastClaimDate === today) {
+      return res.status(400).json({
+        success: false,
+        msg: "Already claimed today",
         reward
       });
     }
 
-    const claimCount = reward.history.length + 1;
+    const nextClaimCount = Number(reward.claimCount || 0) + 1;
 
-    let amount =
-      claimCount % 10 === 0
-        ? Math.floor(Math.random() * 10) + 11
-        : Math.floor(Math.random() * 10) + 1;
+    const special = nextClaimCount % 10 === 0;
 
-    user.wallet += amount;
-    await user.save();
+    const amount = special
+      ? 50
+      : Math.floor(Math.random() * 10) + 1;
 
-    reward.lastClaimDate = new Date();
-    reward.totalReward += amount;
+    reward.claimCount = nextClaimCount;
+    reward.totalReward = Number(reward.totalReward || 0) + amount;
+    reward.lastClaimDate = today;
 
     reward.history.push({
       amount,
-      date: new Date(),
-      status: "Claimed"
+      special,
+      date: new Date()
     });
 
     await reward.save();
 
-    await WalletHistory.create({
-      email,
-      type: "Daily Reward",
+    return res.json({
+      success: true,
+      msg: special
+        ? "Special Reward Claimed Successfully"
+        : "Reward Claimed Successfully",
       amount,
-      note: "Daily login reward"
+      special,
+      reward
     });
-
-    res.json({
-  msg: "Reward Claimed Successfully",
-  amount: rewardAmount,
-  special: isSpecial,
-  reward
-});
-
   } catch (err) {
     console.log("DAILY REWARD ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    return res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
   }
 });
 
