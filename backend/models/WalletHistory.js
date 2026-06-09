@@ -5,13 +5,14 @@ const walletHistorySchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      lowercase: true
+      lowercase: true,
+      trim: true
     },
 
     type: {
       type: String,
       enum: ["Credit", "Debit"],
-      required: true
+      default: "Credit"
     },
 
     amount: {
