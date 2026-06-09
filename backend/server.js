@@ -1190,7 +1190,7 @@ async function generateShortWalletId() {
   let exists = true;
 
   while (exists) {
-    walletId = "WLT" + Math.floor(10000 + Math.random() * 90000);
+    walletId = "WAL" + Math.floor(100000 + Math.random() * 900000);
     exists = await User.findOne({ walletId });
   }
 
@@ -5197,11 +5197,23 @@ app.post("/daily-reward", async (req, res) => {
     const email = String(req.body.email || "").toLowerCase();
 
     if (!email) {
-      return res.status(400).json({ success: false, msg: "Email required" });
+      return res.status(400).json({
+        success: false,
+        msg: "Email required"
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        msg: "User not found"
+      });
     }
 
     const today = new Date().toLocaleDateString("en-IN", {
-      timeZone: "Asia/Kolkata"
+      timeZone: "Asia/India"
     });
 
     let reward = await DailyReward.findOne({ email });
@@ -5225,7 +5237,6 @@ app.post("/daily-reward", async (req, res) => {
     }
 
     const nextClaimCount = Number(reward.claimCount || 0) + 1;
-
     const special = nextClaimCount % 10 === 0;
 
     const amount = special
@@ -5244,39 +5255,44 @@ app.post("/daily-reward", async (req, res) => {
 
     await reward.save();
 
-    const user = await User.findOne({ email });
+    // ✅ Wallet balance add
+    user.wallet = Number(user.wallet || 0) + Number(amount);
+    user.balance = Number(user.balance || 0) + Number(amount);
+    user.totalEarning = Number(user.totalEarning || 0) + Number(amount);
 
-if (user) {
-  user.wallet = Number(user.wallet || 0) + Number(amount || 0);
-  user.balance = Number(user.balance || 0) + Number(amount || 0);
-  await user.save();
+    await user.save();
 
-  await WalletHistory.create({
-    email,
-    type: "Credit",
-    amount: Number(amount || 0),
-    title: special ? "Special Daily Reward" : "Daily Reward",
-    description: special
-      ? "Special daily reward added to wallet"
-      : "Daily reward added to wallet",
-    status: "Success",
-    date: new Date()
-  });
-}
-   return res.json({
+    // ✅ Wallet history add
+    await WalletHistory.create({
+      email,
+      type: "Credit",
+      amount: Number(amount),
+      title: special ? "Special Daily Reward" : "Daily Reward",
+      description: special
+        ? "Special daily reward added to wallet"
+        : "Daily reward added to wallet",
+      status: "Success",
+      date: new Date()
+    });
+
+    return res.json({
       success: true,
       msg: special
         ? "Special Reward Claimed Successfully"
         : "Reward Claimed Successfully",
       amount,
       special,
+      wallet: user.wallet,
+      balance: user.balance,
       reward
     });
+
   } catch (err) {
     console.log("DAILY REWARD ERROR:", err);
     return res.status(500).json({
       success: false,
-      msg: "Server error"
+      msg: "Server error",
+      error: err.message
     });
   }
 });

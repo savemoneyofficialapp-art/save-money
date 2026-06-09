@@ -352,11 +352,11 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="🔔"
-          title="Notifications"
-          subtitle="All Notifications"
-          gradient="notification"
-          onClick={() => go("/notifications")}
+          icon="🕸️"
+          title="Analytics"
+          subtitle="User Analytics"
+          gradient="analytics"
+          onClick={() => go("/user-analytics")}
         />
 
         <PremiumActionButton
