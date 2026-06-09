@@ -5213,7 +5213,7 @@ app.post("/daily-reward", async (req, res) => {
     }
 
     const today = new Date().toLocaleDateString("en-IN", {
-      timeZone: "Asia/India"
+      timeZone: "Asia/Kolkata"
     });
 
     let reward = await DailyReward.findOne({ email });
