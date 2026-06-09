@@ -1,25 +1,45 @@
 const mongoose = require("mongoose");
 
-const walletHistorySchema =
-  new mongoose.Schema({
+const walletHistorySchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      lowercase: true
+    },
 
-    email: String,
+    type: {
+      type: String,
+      enum: ["Credit", "Debit"],
+      required: true
+    },
 
-    type: String,
+    amount: {
+      type: Number,
+      default: 0
+    },
 
-    amount: Number,
+    title: {
+      type: String,
+      default: ""
+    },
 
-    note: String,
+    description: {
+      type: String,
+      default: ""
+    },
+
+    status: {
+      type: String,
+      default: "Success"
+    },
 
     date: {
       type: Date,
       default: Date.now
     }
+  },
+  { timestamps: true }
+);
 
-  });
-
-module.exports =
-  mongoose.model(
-    "WalletHistory",
-    walletHistorySchema
-  );
+module.exports = mongoose.model("WalletHistory", walletHistorySchema);

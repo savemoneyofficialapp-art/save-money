@@ -2648,29 +2648,25 @@ app.post("/wallet-transfer", async (req, res) => {
     await sender.save();
     await receiver.save();
 
-    await WalletTransaction.create({
-      email: sender.email,
-      walletId: sender.walletId || sender.referralCode || sender._id.toString(),
-      type: "debit",
-      title: "Wallet Transfer",
-      description: `Transfer to ${receiver.name}`,
-      amount: transferAmount,
-      status: "Success",
-      fromWalletId: sender.walletId || sender.referralCode || sender._id.toString(),
-      toWalletId: receiver.walletId || receiver.referralCode || receiver._id.toString()
-    });
+   await WalletHistory.create({
+  email: sender.email,
+  type: "Debit",
+  amount: Number(amount),
+  title: "Wallet Transfer Sent",
+  description: `Transfer sent to ${receiver.walletId}`,
+  status: "Success",
+  date: new Date()
+});
 
-    await WalletTransaction.create({
-      email: receiver.email,
-      walletId: receiver.walletId || receiver.referralCode || receiver._id.toString(),
-      type: "credit",
-      title: "Wallet Received",
-      description: `Received from ${sender.name}`,
-      amount: transferAmount,
-      status: "Success",
-      fromWalletId: sender.walletId || sender.referralCode || sender._id.toString(),
-      toWalletId: receiver.walletId || receiver.referralCode || receiver._id.toString()
-    });
+await WalletHistory.create({
+  email: receiver.email,
+  type: "Credit",
+  amount: Number(amount),
+  title: "Wallet Transfer Received",
+  description: `Transfer received from ${sender.walletId}`,
+  status: "Success",
+  date: new Date()
+});
 
     res.json({
       success: true,
@@ -5180,22 +5176,16 @@ app.post("/verify-razorpay-payment", async (req, res) => {
   }
 });
 
-
-
-
 app.post("/wallet-history", async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = String(req.body.email || "").toLowerCase();
 
-    const history = await WalletHistory.find({
-  email: email.toLowerCase()
-}).sort({ date: -1 });
+    const history = await WalletHistory.find({ email }).sort({ date: -1 });
 
     res.json({
       success: true,
       history
     });
-
   } catch (err) {
     console.log("WALLET HISTORY ERROR:", err);
     res.status(500).json({ success: false, msg: "Server error" });
@@ -5254,7 +5244,26 @@ app.post("/daily-reward", async (req, res) => {
 
     await reward.save();
 
-    return res.json({
+    const user = await User.findOne({ email });
+
+if (user) {
+  user.wallet = Number(user.wallet || 0) + Number(amount || 0);
+  user.balance = Number(user.balance || 0) + Number(amount || 0);
+  await user.save();
+
+  await WalletHistory.create({
+    email,
+    type: "Credit",
+    amount: Number(amount || 0),
+    title: special ? "Special Daily Reward" : "Daily Reward",
+    description: special
+      ? "Special daily reward added to wallet"
+      : "Daily reward added to wallet",
+    status: "Success",
+    date: new Date()
+  });
+}
+   return res.json({
       success: true,
       msg: special
         ? "Special Reward Claimed Successfully"
