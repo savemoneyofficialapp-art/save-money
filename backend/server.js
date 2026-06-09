@@ -708,14 +708,6 @@ async function processFirstInvestmentBonuses(investorEmail, investment) {
 
 if (!sponsorActiveInvestment) return;
 
-// ✅ Sponsor must be active investor
-const sponsorActiveInvestment = await Investment.findOne({
-  email: sponsor.email,
-  status: "Active"
-});
-
-if (!sponsorActiveInvestment) return;
-
 // ✅ Performance bonus eligibility
 const directUsers = await User.find({
   referredBy: sponsor.referCode
