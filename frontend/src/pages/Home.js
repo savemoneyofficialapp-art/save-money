@@ -355,7 +355,7 @@ export default function Home() {
           icon="🕸️"
           title="Analytics"
           subtitle="User Analytics"
-          gradient="analytics"
+          gradient="notification"
           onClick={() => go("/user-analytics")}
         />
 
