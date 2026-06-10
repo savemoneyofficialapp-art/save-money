@@ -37,6 +37,8 @@ const sanitize = require("mongo-sanitize");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
+const WithdrawRequest = require("./models/WithdrawRequest");
+
 
 
 
@@ -5354,6 +5356,71 @@ app.post("/daily-reward", async (req, res) => {
   }
 });
 
+app.post("/admin/withdraw-action", async (req, res) => {
+  try {
+    const { id, status, rejectReason } = req.body;
+
+    const request = await WithdrawRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({ success: false, msg: "Request not found" });
+    }
+
+    if (request.status !== "Pending") {
+      return res.status(400).json({ success: false, msg: "Already processed" });
+    }
+
+    if (status === "Success") {
+      request.status = "Success";
+      request.actionDate = new Date();
+
+      await WalletHistory.create({
+        email: request.email,
+        type: "Debit",
+        amount: request.amount,
+        title: "Withdraw Success",
+        description: "Withdraw approved by admin",
+        status: "Success",
+        date: new Date()
+      });
+    }
+
+    if (status === "Rejected") {
+      request.status = "Rejected";
+      request.rejectReason = rejectReason || "Rejected by admin";
+      request.actionDate = new Date();
+
+      const user = await User.findOne({ email: request.email });
+
+      if (user) {
+        user.wallet = Number(user.wallet || 0) + Number(request.amount || 0);
+        user.balance = Number(user.balance || 0) + Number(request.amount || 0);
+        await user.save();
+      }
+
+      await WalletHistory.create({
+        email: request.email,
+        type: "Credit",
+        amount: request.amount,
+        title: "Withdraw Rejected Refund",
+        description: request.rejectReason,
+        status: "Rejected",
+        date: new Date()
+      });
+    }
+
+    await request.save();
+
+    res.json({
+      success: true,
+      msg: `Withdraw ${status}`,
+      request
+    });
+  } catch (err) {
+    console.log("ADMIN WITHDRAW ACTION ERROR:", err);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
 // ================= DOWNLOAD SLIP =================
 app.get("/download-slip/:id", async (req, res) => {
 
@@ -5620,6 +5687,15 @@ app.get("/investment-slip/:planId/:historyId", async (req, res) => {
   } catch (err) {
     console.log("SLIP ERROR:", err);
     res.status(500).send("Server error");
+  }
+});
+
+app.get("/admin/withdraw-requests", async (req, res) => {
+  try {
+    const requests = await WithdrawRequest.find().sort({ createdAt: -1 });
+    res.json({ success: true, requests });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
 
