@@ -5455,16 +5455,6 @@ await user.save();
       status: "Pending"
     });
 
-    await WalletHistory.create({
-      email,
-      type: "Debit",
-      amount,
-      title: "Withdraw Request",
-      description: "Withdraw request submitted and balance deducted",
-      status: "Pending",
-      date: new Date()
-    });
-
     return res.json({
       success: true,
       msg: "Withdraw request submitted successfully",
@@ -5504,7 +5494,7 @@ app.post("/admin/withdraw-action", async (req, res) => {
         type: "Debit",
         amount: request.amount,
         title: "Withdraw Success",
-        description: "Withdraw request approved by admin",
+        description: "Withdraw",
         status: "Success",
         date: new Date()
       });

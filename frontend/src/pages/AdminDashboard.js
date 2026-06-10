@@ -143,21 +143,41 @@ export default function AdminDashboard() {
   };
 
   const withdrawAction = async (id, status) => {
-    let rejectReason = "";
+  let rejectReason = "";
 
-    if (status === "Rejected") {
-      rejectReason = prompt("Reject reason লিখুন") || "Rejected by admin";
-    }
+  if (status === "Rejected") {
+    rejectReason = prompt("Reject reason লিখুন") || "Rejected by admin";
+  }
 
-    const d = await apiPost("/admin/withdraw-action", {
-      id,
-      status,
-      rejectReason
-    });
+  const d = await apiPost("/admin/withdraw-action", {
+    id,
+    status,
+    rejectReason
+  });
 
-    alert(d?.msg || `Withdraw ${status}`);
-    load();
-  };
+  if (d?.success) {
+    setWithdraws((prev) =>
+      prev.map((w) =>
+        w._id === id
+          ? {
+              ...w,
+              status,
+              rejectReason:
+                status === "Rejected"
+                  ? rejectReason
+                  : w.rejectReason,
+              actionDate: new Date().toISOString()
+            }
+          : w
+      )
+    );
+
+    toast.success(d.msg || `Withdraw ${status}`);
+    await load();
+  } else {
+    toast.error(d?.msg || "Withdraw action failed");
+  }
+};
 
   const banUser = async (id) => {
     const d = await apiPost("/ban-user", { userId: id });
