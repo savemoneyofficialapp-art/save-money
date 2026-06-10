@@ -31,8 +31,8 @@ export default function DailyReward() {
 
       const data = await res.json();
 
-     if (!res.ok) {
-  setResult(data.msg || "Reward claim failed");
+    if (!res.ok) {
+  setResult(data.error || data.msg || "Reward claim failed");
 
   if (data.reward?.history) {
     setHistory([...data.reward.history].reverse());
