@@ -46,6 +46,7 @@ import AboutCompany from "./pages/AboutCompany";
 import InvestNow from "./pages/InvestNow";
 
 import BankDetails from "./pages/BankDetails";
+import Withdraw from "./pages/Withdraw";
 
 
 
@@ -133,6 +134,12 @@ function App() {
       <BankDetails />
   } 
 />
+
+<Route path="/withdraw"
+       element={   
+              <Withdraw />   
+  }
+ />
 
         <Route
           path="/wallet"
