@@ -45,6 +45,8 @@ import AboutCompany from "./pages/AboutCompany";
 
 import InvestNow from "./pages/InvestNow";
 
+import BankDetails from "./pages/BankDetails";
+
 
 
 
@@ -124,6 +126,16 @@ function App() {
     </ProtectedRoute>
   }
 />
+
+<Route 
+  path="/bank-details" 
+  element={
+    <ProtectedRoute>
+      <BankDetails />
+    </ProtectedRoute>
+  } 
+/>
+
         <Route
           path="/wallet"
           element={

@@ -36,6 +36,7 @@ const validator = require("validator");
 const sanitize = require("mongo-sanitize");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const BankDetails = require("./models/BankDetails");
 
 
 
@@ -5192,6 +5193,76 @@ app.post("/wallet-history", async (req, res) => {
   }
 });
 
+app.post("/bank-details", async (req, res) => {
+  try {
+    const email = String(req.body.email || "").toLowerCase();
+
+    const bank = await BankDetails.findOne({ email });
+
+    return res.json({
+      success: true,
+      bank
+    });
+  } catch (err) {
+    console.log("BANK DETAILS LOAD ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+  }
+});
+
+app.post("/save-bank-details", async (req, res) => {
+  try {
+    const email = String(req.body.email || "").toLowerCase();
+
+    const {
+      accountHolderName,
+      mobile,
+      bankName,
+      accountNumber,
+      ifscCode,
+      upiId
+    } = req.body;
+
+    if (!email || !accountHolderName || !mobile || !bankName || !accountNumber || !ifscCode) {
+      return res.status(400).json({
+        success: false,
+        msg: "All required fields are mandatory"
+      });
+    }
+
+    const bank = await BankDetails.findOneAndUpdate(
+      { email },
+      {
+        email,
+        accountHolderName,
+        mobile,
+        bankName,
+        accountNumber,
+        ifscCode: String(ifscCode).toUpperCase(),
+        upiId: upiId || ""
+      },
+      {
+        new: true,
+        upsert: true
+      }
+    );
+
+    return res.json({
+      success: true,
+      msg: "Bank details saved successfully",
+      bank
+    });
+  } catch (err) {
+    console.log("BANK DETAILS SAVE ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+  }
+});
+
 app.post("/daily-reward", async (req, res) => {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
@@ -5256,7 +5327,7 @@ app.post("/daily-reward", async (req, res) => {
       type: "Credit",
       amount,
       title: special ? "Special Daily Reward" : "Daily Reward",
-      description: "Daily reward added to wallet",
+      description: "Daily reward added ",
       status: "Success",
       date: new Date()
     });
