@@ -5356,17 +5356,142 @@ app.post("/daily-reward", async (req, res) => {
   }
 });
 
+app.post("/withdraw-info", async (req, res) => {
+  try {
+    const email = String(req.body.email || "").toLowerCase();
+
+    const user = await User.findOne({ email });
+    const bank = await BankDetails.findOne({ email });
+    const history = await WithdrawRequest.find({ email }).sort({ createdAt: -1 });
+
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found" });
+    }
+
+    const walletBalance = Number(user.wallet || user.balance || 0);
+    const withdrawableBalance = Math.floor(walletBalance * 0.8);
+
+    return res.json({
+      success: true,
+      walletBalance,
+      withdrawableBalance,
+      bank,
+      history
+    });
+  } catch (err) {
+    console.log("WITHDRAW INFO ERROR:", err);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
+app.post("/withdraw-request", async (req, res) => {
+  try {
+    const email = String(req.body.email || "").toLowerCase();
+    const amount = Number(req.body.amount || 0);
+
+    const user = await User.findOne({ email });
+    const bank = await BankDetails.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found" });
+    }
+
+    if (!bank) {
+      return res.status(400).json({
+        success: false,
+        msg: "Please add bank details first"
+      });
+    }
+
+    const walletBalance = Number(user.wallet || user.balance || 0);
+    const withdrawableBalance = Math.floor(walletBalance * 0.8);
+
+    if (amount < 100) {
+      return res.status(400).json({
+        success: false,
+        msg: "Minimum withdraw amount is ₹100"
+      });
+    }
+
+    if (amount > withdrawableBalance) {
+      return res.status(400).json({
+        success: false,
+        msg: "Amount is greater than withdrawable balance"
+      });
+    }
+
+    const pending = await WithdrawRequest.findOne({
+      email,
+      status: "Pending"
+    });
+
+    if (pending) {
+      return res.status(400).json({
+        success: false,
+        msg: "You already have a pending withdraw request"
+      });
+    }
+
+    user.wallet = walletBalance - amount;
+    user.balance = Number(user.balance || walletBalance) - amount;
+    await user.save();
+
+    const request = await WithdrawRequest.create({
+      email,
+      name: user.name || "",
+      walletId: user.walletId || "",
+      amount,
+      walletBalance,
+      withdrawableBalance,
+      bankDetails: {
+        accountHolderName: bank.accountHolderName,
+        mobile: bank.mobile,
+        bankName: bank.bankName,
+        accountNumber: bank.accountNumber,
+        ifscCode: bank.ifscCode,
+        upiId: bank.upiId
+      },
+      status: "Pending"
+    });
+
+    await WalletHistory.create({
+      email,
+      type: "Debit",
+      amount,
+      title: "Withdraw Request",
+      description: "Withdraw request submitted and balance deducted",
+      status: "Pending",
+      date: new Date()
+    });
+
+    return res.json({
+      success: true,
+      msg: "Withdraw request submitted successfully",
+      request
+    });
+  } catch (err) {
+    console.log("WITHDRAW REQUEST ERROR:", err);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
+
+
 app.post("/admin/withdraw-action", async (req, res) => {
   try {
     const { id, status, rejectReason } = req.body;
 
     const request = await WithdrawRequest.findById(id);
+
     if (!request) {
       return res.status(404).json({ success: false, msg: "Request not found" });
     }
 
     if (request.status !== "Pending") {
-      return res.status(400).json({ success: false, msg: "Already processed" });
+      return res.status(400).json({
+        success: false,
+        msg: "This request already processed"
+      });
     }
 
     if (status === "Success") {
@@ -5378,7 +5503,7 @@ app.post("/admin/withdraw-action", async (req, res) => {
         type: "Debit",
         amount: request.amount,
         title: "Withdraw Success",
-        description: "Withdraw approved by admin",
+        description: "Withdraw request approved by admin",
         status: "Success",
         date: new Date()
       });
@@ -5587,6 +5712,20 @@ app.get("/admin-tickets", auth, adminAuth, async (req, res) => {
   res.json(tickets);
 });
 
+app.get("/admin/withdraw-requests", async (req, res) => {
+  try {
+    const requests = await WithdrawRequest.find().sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      requests
+    });
+  } catch (err) {
+    console.log("ADMIN WITHDRAW LIST ERROR:", err);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
 app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
@@ -5690,14 +5829,7 @@ app.get("/investment-slip/:planId/:historyId", async (req, res) => {
   }
 });
 
-app.get("/admin/withdraw-requests", async (req, res) => {
-  try {
-    const requests = await WithdrawRequest.find().sort({ createdAt: -1 });
-    res.json({ success: true, requests });
-  } catch (err) {
-    res.status(500).json({ success: false, msg: "Server error" });
-  }
-});
+
 
 app.get(
 "/renew-days-left/:id",
