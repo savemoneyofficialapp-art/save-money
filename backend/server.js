@@ -5194,22 +5194,16 @@ app.post("/wallet-history", async (req, res) => {
 
 app.post("/daily-reward", async (req, res) => {
   try {
-    const email = String(req.body.email || "").toLowerCase();
+    const email = String(req.body.email || "").trim().toLowerCase();
 
     if (!email) {
-      return res.status(400).json({
-        success: false,
-        msg: "Email required"
-      });
+      return res.status(400).json({ success: false, msg: "Email required" });
     }
 
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        msg: "User not found"
-      });
+      return res.status(404).json({ success: false, msg: "User not found" });
     }
 
     const today = new Date().toLocaleDateString("en-IN", {
@@ -5219,7 +5213,7 @@ app.post("/daily-reward", async (req, res) => {
     let reward = await DailyReward.findOne({ email });
 
     if (!reward) {
-      reward = await DailyReward.create({
+      reward = new DailyReward({
         email,
         totalReward: 0,
         claimCount: 0,
@@ -5238,15 +5232,11 @@ app.post("/daily-reward", async (req, res) => {
 
     const nextClaimCount = Number(reward.claimCount || 0) + 1;
     const special = nextClaimCount % 10 === 0;
-
-    const amount = special
-      ? 50
-      : Math.floor(Math.random() * 10) + 1;
+    const amount = special ? 50 : Math.floor(Math.random() * 10) + 1;
 
     reward.claimCount = nextClaimCount;
     reward.totalReward = Number(reward.totalReward || 0) + amount;
     reward.lastClaimDate = today;
-
     reward.history.push({
       amount,
       special,
@@ -5255,22 +5245,18 @@ app.post("/daily-reward", async (req, res) => {
 
     await reward.save();
 
-    // ✅ Wallet balance add
-    user.wallet = Number(user.wallet || 0) + Number(amount);
-    user.balance = Number(user.balance || 0) + Number(amount);
-    user.totalEarning = Number(user.totalEarning || 0) + Number(amount);
+    user.wallet = Number(user.wallet || 0) + amount;
+    user.balance = Number(user.balance || 0) + amount;
+    user.totalEarning = Number(user.totalEarning || 0) + amount;
 
     await user.save();
 
-    // ✅ Wallet history add
-    await WalletHistory.create({
+    const walletHistory = await WalletHistory.create({
       email,
       type: "Credit",
-      amount: Number(amount),
+      amount,
       title: special ? "Special Daily Reward" : "Daily Reward",
-      description: special
-        ? "Special daily reward added to wallet"
-        : "Daily reward added to wallet",
+      description: "Daily reward added to wallet",
       status: "Success",
       date: new Date()
     });
@@ -5284,9 +5270,9 @@ app.post("/daily-reward", async (req, res) => {
       special,
       wallet: user.wallet,
       balance: user.balance,
+      walletHistory,
       reward
     });
-
   } catch (err) {
     console.log("DAILY REWARD ERROR:", err);
     return res.status(500).json({
