@@ -340,7 +340,7 @@ export default function Home() {
           title="Bank Details"
           subtitle="Manage Bank Info"
           gradient="bank"
-          onClick={() => go("/bank-details")}
+          onClick={() => navigate("/bank-details")}
         />
 
         <PremiumActionButton
