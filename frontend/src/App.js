@@ -130,9 +130,7 @@ function App() {
 <Route 
   path="/bank-details" 
   element={
-    <ProtectedRoute>
       <BankDetails />
-    </ProtectedRoute>
   } 
 />
 
