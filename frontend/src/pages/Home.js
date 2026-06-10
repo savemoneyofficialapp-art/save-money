@@ -292,7 +292,7 @@ export default function Home() {
           title="Withdraw"
           subtitle="Request Payout"
           gradient="withdraw"
-          onClick={() => go("/withdraw")}
+          onClick={() => navigate("/withdraw")}
         />
 
         <PremiumActionButton
