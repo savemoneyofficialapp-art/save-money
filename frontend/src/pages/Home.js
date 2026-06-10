@@ -502,7 +502,7 @@ export default function Home() {
           icon="🌲"
           title="tree"
           active={location.pathname === "/profile"}
-          onClick={() => go("/referral-tree")}
+          onClick={() => go("/setTreeOpen")}
         />
       </nav>
 
