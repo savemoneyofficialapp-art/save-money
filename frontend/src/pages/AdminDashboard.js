@@ -22,6 +22,8 @@ export default function AdminDashboard() {
   const [openWithdrawId, setOpenWithdrawId] = useState(null);
   const [transactionPopup, setTransactionPopup] = useState(false);
   const [transactionFilter, setTransactionFilter] = useState("all");
+  const [transactionFrom, setTransactionFrom] = useState("");
+  const [transactionTo, setTransactionTo] = useState("");
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -228,9 +230,43 @@ export default function AdminDashboard() {
 
   const pendingWithdraws = withdraws.filter((w) => w.status === "Pending");
 
+  const now = new Date();
+  const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endLastMonth = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    0,
+    23,
+    59,
+    59
+  );
+
   const transactionWithdraws = withdraws.filter((w) => {
-    if (transactionFilter === "all") return true;
-    return String(w.status || "").toLowerCase() === transactionFilter;
+    const d = new Date(w.createdAt || w.date);
+
+    if (transactionFilter === "pending" && w.status !== "Pending") return false;
+    if (transactionFilter === "success" && w.status !== "Success") return false;
+    if (transactionFilter === "rejected" && w.status !== "Rejected") return false;
+    if (transactionFilter === "thisMonth" && d < startThisMonth) return false;
+    if (
+      transactionFilter === "lastMonth" &&
+      (d < startLastMonth || d > endLastMonth)
+    )
+      return false;
+
+    if (transactionFrom) {
+      const from = new Date(transactionFrom);
+      if (d < from) return false;
+    }
+
+    if (transactionTo) {
+      const to = new Date(transactionTo);
+      to.setHours(23, 59, 59, 999);
+      if (d > to) return false;
+    }
+
+    return true;
   });
 
   const pendingWithdrawAmount = pendingWithdraws.reduce(
@@ -239,6 +275,10 @@ export default function AdminDashboard() {
   );
 
   const totalWithdrawAmount = withdraws
+    .filter((w) => w.status === "Success")
+    .reduce((sum, w) => sum + Number(w.amount || 0), 0);
+
+  const transactionTotalAmount = transactionWithdraws
     .filter((w) => w.status === "Success")
     .reduce((sum, w) => sum + Number(w.amount || 0), 0);
 
@@ -256,24 +296,15 @@ export default function AdminDashboard() {
       {error && <div style={styles.error}>{error}</div>}
 
       <div style={styles.quick}>
-        <button
-          style={styles.green}
-          onClick={() => (window.location.href = "/admin-analytics")}
-        >
+        <button style={styles.green} onClick={() => (window.location.href = "/admin-analytics")}>
           Advanced Analytics
         </button>
 
-        <button
-          style={styles.green}
-          onClick={() => (window.location.href = "/admin-user-control")}
-        >
+        <button style={styles.green} onClick={() => (window.location.href = "/admin-user-control")}>
           User Control
         </button>
 
-        <button
-          style={styles.green}
-          onClick={() => (window.location.href = "/admin-support")}
-        >
+        <button style={styles.green} onClick={() => (window.location.href = "/admin-support")}>
           Support Tickets
         </button>
       </div>
@@ -443,26 +474,12 @@ export default function AdminDashboard() {
 
                   <div style={styles.bankBox}>
                     <h4>Bank Details</h4>
-                    <p>
-                      <b>Name:</b>{" "}
-                      {w.bankDetails?.accountHolderName || "N/A"}
-                    </p>
-                    <p>
-                      <b>Mobile:</b> {w.bankDetails?.mobile || "N/A"}
-                    </p>
-                    <p>
-                      <b>Bank:</b> {w.bankDetails?.bankName || "N/A"}
-                    </p>
-                    <p>
-                      <b>Account:</b>{" "}
-                      {w.bankDetails?.accountNumber || "N/A"}
-                    </p>
-                    <p>
-                      <b>IFSC:</b> {w.bankDetails?.ifscCode || "N/A"}
-                    </p>
-                    <p>
-                      <b>UPI:</b> {w.bankDetails?.upiId || "N/A"}
-                    </p>
+                    <p><b>Name:</b> {w.bankDetails?.accountHolderName || "N/A"}</p>
+                    <p><b>Mobile:</b> {w.bankDetails?.mobile || "N/A"}</p>
+                    <p><b>Bank:</b> {w.bankDetails?.bankName || "N/A"}</p>
+                    <p><b>Account:</b> {w.bankDetails?.accountNumber || "N/A"}</p>
+                    <p><b>IFSC:</b> {w.bankDetails?.ifscCode || "N/A"}</p>
+                    <p><b>UPI:</b> {w.bankDetails?.upiId || "N/A"}</p>
                   </div>
 
                   <div style={styles.actionRow}>
@@ -500,34 +517,19 @@ export default function AdminDashboard() {
 
             <div style={styles.docGrid}>
               {u.aadhaarFile && (
-                <a
-                  href={fileUrl(u.aadhaarFile)}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={styles.docBtn}
-                >
+                <a href={fileUrl(u.aadhaarFile)} target="_blank" rel="noreferrer" style={styles.docBtn}>
                   View Aadhaar
                 </a>
               )}
 
               {u.panFile && (
-                <a
-                  href={fileUrl(u.panFile)}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={styles.docBtn}
-                >
+                <a href={fileUrl(u.panFile)} target="_blank" rel="noreferrer" style={styles.docBtn}>
                   View PAN
                 </a>
               )}
 
               {u.photo && (
-                <a
-                  href={fileUrl(u.photo)}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={styles.docBtn}
-                >
+                <a href={fileUrl(u.photo)} target="_blank" rel="noreferrer" style={styles.docBtn}>
                   View Photo
                 </a>
               )}
@@ -575,10 +577,7 @@ export default function AdminDashboard() {
                         style={styles.smallBlue}
                         onClick={() =>
                           window.open(
-                            r.screenshot ||
-                              r.screenshotUrl ||
-                              r.image ||
-                              r.photo,
+                            r.screenshot || r.screenshotUrl || r.image || r.photo,
                             "_blank"
                           )
                         }
@@ -593,16 +592,10 @@ export default function AdminDashboard() {
                     </td>
                     <td>{r.status || "pending"}</td>
                     <td>
-                      <button
-                        style={styles.smallGreen}
-                        onClick={() => approveCash(r._id)}
-                      >
+                      <button style={styles.smallGreen} onClick={() => approveCash(r._id)}>
                         Approve
                       </button>
-                      <button
-                        style={styles.smallRed}
-                        onClick={() => rejectCash(r._id)}
-                      >
+                      <button style={styles.smallRed} onClick={() => rejectCash(r._id)}>
                         Reject
                       </button>
                     </td>
@@ -648,16 +641,56 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <select
-              style={styles.filterInput}
-              value={transactionFilter}
-              onChange={(e) => setTransactionFilter(e.target.value)}
-            >
-              <option value="all">All Transactions</option>
-              <option value="pending">Pending</option>
-              <option value="success">Success</option>
-              <option value="rejected">Rejected</option>
-            </select>
+            <div style={styles.transactionFilterBox}>
+              <select
+                style={styles.filterInput}
+                value={transactionFilter}
+                onChange={(e) => setTransactionFilter(e.target.value)}
+              >
+                <option value="all">All Transactions</option>
+                <option value="pending">Pending</option>
+                <option value="success">Success</option>
+                <option value="rejected">Rejected</option>
+                <option value="thisMonth">This Month</option>
+                <option value="lastMonth">Last Month</option>
+              </select>
+
+              <input
+                style={styles.filterInput}
+                type="date"
+                value={transactionFrom}
+                onChange={(e) => setTransactionFrom(e.target.value)}
+              />
+
+              <input
+                style={styles.filterInput}
+                type="date"
+                value={transactionTo}
+                onChange={(e) => setTransactionTo(e.target.value)}
+              />
+
+              <button
+                style={styles.resetBtn}
+                onClick={() => {
+                  setTransactionFilter("all");
+                  setTransactionFrom("");
+                  setTransactionTo("");
+                }}
+              >
+                Reset
+              </button>
+            </div>
+
+            <div style={styles.popupSummary}>
+              <div>
+                <b>Total Transactions</b>
+                <h3>{transactionWithdraws.length}</h3>
+              </div>
+              <div>
+                <b>Success Amount</b>
+                <h3>{money(transactionTotalAmount)}</h3>
+              </div>
+            </div>
 
             <div style={{ marginTop: 15 }}>
               {transactionWithdraws.length === 0 ? (
@@ -1047,7 +1080,7 @@ const styles = {
   },
 
   popupBox: {
-    width: "min(760px,96vw)",
+    width: "min(860px,96vw)",
     maxHeight: "85vh",
     overflowY: "auto",
     background: "#0f172a",
@@ -1072,13 +1105,37 @@ const styles = {
     fontWeight: 900
   },
 
+  transactionFilterBox: {
+    display: "grid",
+    gridTemplateColumns: "1.2fr 1fr 1fr auto",
+    gap: "10px",
+    marginTop: "15px"
+  },
+
   filterInput: {
     width: "100%",
     padding: "12px",
     borderRadius: "10px",
     border: "1px solid #334155",
     background: "#020617",
-    color: "white"
+    color: "white",
+    boxSizing: "border-box"
+  },
+
+  resetBtn: {
+    background: "#2563eb",
+    border: "none",
+    color: "white",
+    padding: "12px 16px",
+    borderRadius: "10px",
+    fontWeight: 900
+  },
+
+  popupSummary: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+    marginTop: "14px"
   },
 
   transactionItem: {
