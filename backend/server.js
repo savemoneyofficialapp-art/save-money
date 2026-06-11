@@ -2971,35 +2971,65 @@ app.post("/update-mobile", async (req, res) => {
 app.post(
   "/submit-kyc",
   upload.fields([
+    { name: "aadhaarCard", maxCount: 1 },
+    { name: "panCard", maxCount: 1 },
+    { name: "photo", maxCount: 1 },
     { name: "aadhaarFile", maxCount: 1 },
-    { name: "panFile", maxCount: 1 },
-    { name: "photo", maxCount: 1 }
+    { name: "panFile", maxCount: 1 }
   ]),
   async (req, res) => {
     try {
-      const { email, aadhaar, pan  } = req.body;
-      await sendNotification(email, "KYC Submitted Successfully");
+      const email = String(req.body.email || "").toLowerCase();
+      const aadhaar = req.body.aadhaar || req.body.aadhaarNumber || "";
+      const pan = req.body.pan || req.body.panNumber || "";
 
-      console.log("KYC API HIT:", email);
+      const user = await User.findOne({ email });
 
-      await User.updateOne(
-        { email },
-        { aadhaar, 
-          pan,
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          msg: "User not found"
+        });
+      }
 
-          aadhaarFile: req.files.aadhaarFile[0].path,
-          panFile: req.files.panFile[0].path,
-          photo: req.files.photo[0].path,
-          kycStatus: "reviewing"
-        }
-      );
-      await createNotification(email, "KYC Submitted Successfully");
+      const aadhaarFile =
+        req.files?.aadhaarCard?.[0]?.filename ||
+        req.files?.aadhaarFile?.[0]?.filename ||
+        user.aadhaarFile ||
+        "";
 
-      res.json({ msg: "KYC Submitted Successfully" });
+      const panFile =
+        req.files?.panCard?.[0]?.filename ||
+        req.files?.panFile?.[0]?.filename ||
+        user.panFile ||
+        "";
 
+      const photo =
+        req.files?.photo?.[0]?.filename ||
+        user.photo ||
+        "";
+
+      user.aadhaar = aadhaar || user.aadhaar;
+      user.pan = pan || user.pan;
+      user.aadhaarFile = aadhaarFile;
+      user.panFile = panFile;
+      user.photo = photo;
+      user.kycStatus = "Pending";
+      user.kycRejectReason = "";
+
+      await user.save();
+
+      return res.json({
+        success: true,
+        msg: "KYC submitted successfully",
+        user
+      });
     } catch (err) {
-      console.log("KYC ERROR:", err);
-      res.status(500).json({ msg: "Server error" });
+      console.log("SUBMIT KYC ERROR:", err);
+      return res.status(500).json({
+        success: false,
+        msg: err.message || "Server error"
+      });
     }
   }
 );
