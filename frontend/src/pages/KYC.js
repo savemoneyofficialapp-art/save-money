@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { API } from "../config";
 
@@ -13,7 +12,7 @@ export default function KYC() {
   const [aadhaarFile, setAadhaarFile] = useState(null);
   const [panFile, setPanFile] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
-  const [kycStatus, setKycStatus] = useState("pending");
+  const [kycStatus, setKycStatus] = useState("Pending");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -26,7 +25,7 @@ export default function KYC() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          authorization: token
+          authorization: token || ""
         },
         body: JSON.stringify({ email })
       });
@@ -36,9 +35,9 @@ export default function KYC() {
       if (data.success) {
         const u = data.user || {};
         setUser(u);
-        setAadhaarNumber(u.aadhaarNumber || "");
-        setPanNumber(u.panNumber || "");
-        setKycStatus(u.kycStatus || "pending");
+        setAadhaarNumber(u.aadhaar || u.aadhaarNumber || "");
+        setPanNumber(u.pan || u.panNumber || "");
+        setKycStatus(u.kycStatus || "Pending");
       }
     } catch (err) {
       console.log("KYC LOAD ERROR:", err);
@@ -46,6 +45,8 @@ export default function KYC() {
   };
 
   const submitKyc = async () => {
+    if (loading) return;
+
     if (!aadhaarNumber || aadhaarNumber.length !== 12) {
       toast.info("Enter valid 12 digit Aadhaar number");
       return;
@@ -67,43 +68,67 @@ export default function KYC() {
       const formData = new FormData();
       formData.append("email", email);
       formData.append("aadhaarNumber", aadhaarNumber);
+      formData.append("aadhaar", aadhaarNumber);
       formData.append("panNumber", panNumber);
+      formData.append("pan", panNumber);
+
       formData.append("aadhaarCard", aadhaarFile);
+      formData.append("aadhaarFile", aadhaarFile);
+
       formData.append("panCard", panFile);
+      formData.append("panFile", panFile);
+
       formData.append("photo", photoFile);
 
       const res = await fetch(`${API}/submit-kyc`, {
         method: "POST",
-        headers: { authorization: token },
+        headers: {
+          authorization: token || ""
+        },
         body: formData
       });
 
-      const data = await res.json();
-      toast.success(data.msg || "KYC submitted");
+      const text = await res.text();
+
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { success: false, msg: text || "Invalid server response" };
+      }
 
       if (data.success) {
-        setKycStatus("reviewing");
-        loadKyc();
+        toast.success(data.msg || "KYC submitted successfully");
+        setKycStatus("Pending");
+        setAadhaarFile(null);
+        setPanFile(null);
+        setPhotoFile(null);
+        await loadKyc();
+      } else {
+        toast.error(data.msg || "KYC submit failed");
       }
     } catch (err) {
       console.log("KYC SUBMIT ERROR:", err);
-      toast.info("KYC submit failed");
+      toast.error("KYC submit failed");
     } finally {
       setLoading(false);
     }
   };
 
+  const statusValue = String(kycStatus || "Pending").toLowerCase();
+
   const statusText =
-    kycStatus === "approved"
+    statusValue === "approved"
       ? "Approved"
-      : kycStatus === "reviewing"
+      : statusValue === "rejected"
+      ? "Rejected"
+      : statusValue === "reviewing"
       ? "Reviewing"
       : "Pending";
 
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-
         <div style={styles.hero}>
           <button style={styles.backBtn} onClick={() => window.history.back()}>
             ←
@@ -147,15 +172,19 @@ export default function KYC() {
                   style={{
                     ...styles.status,
                     color:
-                      kycStatus === "approved"
+                      statusValue === "approved"
                         ? "#22c55e"
-                        : kycStatus === "reviewing"
+                        : statusValue === "rejected"
+                        ? "#ef4444"
+                        : statusValue === "reviewing"
                         ? "#38bdf8"
                         : "#facc15",
                     borderColor:
-                      kycStatus === "approved"
+                      statusValue === "approved"
                         ? "#22c55e"
-                        : kycStatus === "reviewing"
+                        : statusValue === "rejected"
+                        ? "#ef4444"
+                        : statusValue === "reviewing"
                         ? "#38bdf8"
                         : "#facc15"
                   }}
@@ -213,7 +242,15 @@ export default function KYC() {
             <FileBox file={photoFile} setFile={setPhotoFile} text="Upload Photo" />
           </div>
 
-          <button style={styles.submitBtn} onClick={submitKyc} disabled={loading}>
+          <button
+            style={{
+              ...styles.submitBtn,
+              opacity: loading ? 0.65 : 1,
+              cursor: loading ? "not-allowed" : "pointer"
+            }}
+            onClick={submitKyc}
+            disabled={loading}
+          >
             🛡 {loading ? "Submitting..." : "Submit KYC"} →
           </button>
 
@@ -237,7 +274,6 @@ export default function KYC() {
           <Mini icon="⏱️" title="Quick Verification" text="Within 24 hours" />
           <Mini icon="✅" title="Trusted Platform" text="Safe verification" />
         </div>
-
       </div>
     </div>
   );
@@ -288,7 +324,17 @@ function FileBox({ file, setFile, text }) {
         type="file"
         hidden
         accept="image/*"
-        onChange={(e) => setFile(e.target.files[0])}
+        onChange={(e) => {
+          const selected = e.target.files?.[0];
+          if (!selected) return;
+
+          if (selected.size > 2 * 1024 * 1024) {
+            toast.info("File size must be under 2MB");
+            return;
+          }
+
+          setFile(selected);
+        }}
       />
     </label>
   );
@@ -519,8 +565,7 @@ const styles = {
     background: "linear-gradient(90deg,#6d5dfc,#ec168e)",
     color: "white",
     fontSize: "22px",
-    fontWeight: "900",
-    cursor: "pointer"
+    fontWeight: "900"
   },
 
   safe: {
