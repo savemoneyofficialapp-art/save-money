@@ -2971,99 +2971,35 @@ app.post("/update-mobile", async (req, res) => {
 app.post(
   "/submit-kyc",
   upload.fields([
-    { name: "aadhaarCard", maxCount: 1 },
-    { name: "panCard", maxCount: 1 },
-    { name: "photo", maxCount: 1 },
-
     { name: "aadhaarFile", maxCount: 1 },
     { name: "panFile", maxCount: 1 },
-    { name: "photoFile", maxCount: 1 }
+    { name: "photo", maxCount: 1 }
   ]),
   async (req, res) => {
     try {
-      const email = String(req.body.email || "").trim().toLowerCase();
+      const { email, aadhaar, pan  } = req.body;
+      await sendNotification(email, "KYC Submitted Successfully");
 
-      if (!email) {
-        return res.status(400).json({
-          success: false,
-          msg: "Email required"
-        });
-      }
+      console.log("KYC API HIT:", email);
 
-      const user = await User.findOne({ email });
+      await User.updateOne(
+        { email },
+        { aadhaar, 
+          pan,
 
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          msg: "User not found"
-        });
-      }
+          aadhaarFile: req.files.aadhaarFile[0].path,
+          panFile: req.files.panFile[0].path,
+          photo: req.files.photo[0].path,
+          kycStatus: "reviewing"
+        }
+      );
+      await createNotification(email, "KYC Submitted Successfully");
 
-      const aadhaarNumber =
-        req.body.aadhaar ||
-        req.body.aadhaarNumber ||
-        req.body.aadhaarNo ||
-        "";
+      res.json({ msg: "KYC Submitted Successfully" });
 
-      const panNumber =
-        req.body.pan ||
-        req.body.panNumber ||
-        req.body.panNo ||
-        "";
-
-      const aadhaarUpload =
-        req.files?.aadhaarCard?.[0] ||
-        req.files?.aadhaarFile?.[0];
-
-      const panUpload =
-        req.files?.panCard?.[0] ||
-        req.files?.panFile?.[0];
-
-      const photoUpload =
-        req.files?.photo?.[0] ||
-        req.files?.photoFile?.[0];
-
-      if (aadhaarNumber) {
-        user.aadhaar = aadhaarNumber;
-      }
-
-      if (panNumber) {
-        user.pan = String(panNumber).toUpperCase();
-      }
-
-      if (aadhaarUpload) {
-        user.aadhaarFile = `/uploads/${aadhaarUpload.filename}`;
-      }
-
-      if (panUpload) {
-        user.panFile = `/uploads/${panUpload.filename}`;
-      }
-
-      if (photoUpload) {
-        const photoPath = `/uploads/${photoUpload.filename}`;
-
-        user.photo = photoPath;
-        user.photoImage = photoPath;
-        user.avatar = photoPath;
-      }
-
-      user.kycStatus = "Pending";
-      user.kycRejectReason = "";
-
-      await user.save();
-
-      return res.json({
-        success: true,
-        msg: "KYC submitted successfully",
-        user
-      });
     } catch (err) {
-      console.log("SUBMIT KYC ERROR:", err);
-
-      return res.status(500).json({
-        success: false,
-        msg: err.message || "Server error"
-      });
+      console.log("KYC ERROR:", err);
+      res.status(500).json({ msg: "Server error" });
     }
   }
 );
@@ -6047,4 +5983,3 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);  
 });
-
