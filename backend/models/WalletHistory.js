@@ -11,7 +11,18 @@ const walletHistorySchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["Credit", "Debit"],
+      enum: [
+        "Credit",
+        "Debit",
+        "Admin Credit",
+        "Admin Debit",
+        "Withdraw",
+        "Withdraw Success",
+        "Withdraw Refund",
+        "Daily Reward",
+        "Transfer Sent",
+        "Transfer Received"
+      ],
       default: "Credit"
     },
 

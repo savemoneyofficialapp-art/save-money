@@ -4175,8 +4175,8 @@ app.post("/admin/wallet-adjust", async (req, res) => {
     await WalletHistory.create({
   email: String(user.email).toLowerCase(),
       amount: Number(amount),
-      type: type === "add" ? "Admin Credit" : "Admin Debit",
-      description: reason,
+type: type === "add" ? "Credit" : "Debit",
+title: type === "add" ? "Admin Credit" : "Admin Debit",      description: reason,
       note: reason,
       status: "success",
       date: new Date()
