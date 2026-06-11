@@ -2974,14 +2974,21 @@ app.post(
     { name: "aadhaarCard", maxCount: 1 },
     { name: "panCard", maxCount: 1 },
     { name: "photo", maxCount: 1 },
+
     { name: "aadhaarFile", maxCount: 1 },
-    { name: "panFile", maxCount: 1 }
+    { name: "panFile", maxCount: 1 },
+    { name: "photoFile", maxCount: 1 }
   ]),
   async (req, res) => {
     try {
-      const email = String(req.body.email || "").toLowerCase();
-      const aadhaar = req.body.aadhaar || req.body.aadhaarNumber || "";
-      const pan = req.body.pan || req.body.panNumber || "";
+      const email = String(req.body.email || "").trim().toLowerCase();
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          msg: "Email required"
+        });
+      }
 
       const user = await User.findOne({ email });
 
@@ -2992,28 +2999,54 @@ app.post(
         });
       }
 
-      const aadhaarFile =
-        req.files?.aadhaarCard?.[0]?.filename ||
-        req.files?.aadhaarFile?.[0]?.filename ||
-        user.aadhaarFile ||
+      const aadhaarNumber =
+        req.body.aadhaar ||
+        req.body.aadhaarNumber ||
+        req.body.aadhaarNo ||
         "";
 
-      const panFile =
-        req.files?.panCard?.[0]?.filename ||
-        req.files?.panFile?.[0]?.filename ||
-        user.panFile ||
+      const panNumber =
+        req.body.pan ||
+        req.body.panNumber ||
+        req.body.panNo ||
         "";
 
-      const photo =
-        req.files?.photo?.[0]?.filename ||
-        user.photo ||
-        "";
+      const aadhaarUpload =
+        req.files?.aadhaarCard?.[0] ||
+        req.files?.aadhaarFile?.[0];
 
-      user.aadhaar = aadhaar || user.aadhaar;
-      user.pan = pan || user.pan;
-      user.aadhaarFile = aadhaarFile;
-      user.panFile = panFile;
-      user.photo = photo;
+      const panUpload =
+        req.files?.panCard?.[0] ||
+        req.files?.panFile?.[0];
+
+      const photoUpload =
+        req.files?.photo?.[0] ||
+        req.files?.photoFile?.[0];
+
+      if (aadhaarNumber) {
+        user.aadhaar = aadhaarNumber;
+      }
+
+      if (panNumber) {
+        user.pan = String(panNumber).toUpperCase();
+      }
+
+      if (aadhaarUpload) {
+        user.aadhaarFile = `/uploads/${aadhaarUpload.filename}`;
+      }
+
+      if (panUpload) {
+        user.panFile = `/uploads/${panUpload.filename}`;
+      }
+
+      if (photoUpload) {
+        const photoPath = `/uploads/${photoUpload.filename}`;
+
+        user.photo = photoPath;
+        user.photoImage = photoPath;
+        user.avatar = photoPath;
+      }
+
       user.kycStatus = "Pending";
       user.kycRejectReason = "";
 
@@ -3026,6 +3059,7 @@ app.post(
       });
     } catch (err) {
       console.log("SUBMIT KYC ERROR:", err);
+
       return res.status(500).json({
         success: false,
         msg: err.message || "Server error"
