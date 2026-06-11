@@ -350,8 +350,7 @@ export default function Refer() {
           {!performance.completed && !performance.expired && (
             <>
               <p style={styles.infoBox}>
-                Joining এর 30 দিনের মধ্যে 10 জন Active Save Money Refer করলে
-                Performance Bonus Active হবে।
+                Your performance bonus will be activated only if you can make 10 direct referrals within 30 days of joining.
               </p>
               <button style={styles.greenBtn} onClick={() => navigate("/save-money")}>
                 Go to Save Money Invest
@@ -361,14 +360,13 @@ export default function Refer() {
 
           {performance.expired && (
             <p style={styles.dangerText}>
-              তুমি task complete করতে পারোনি। Please upline এর সঙ্গে contact করো।
+              You Do Not Complete Your Task.Please Contact Your Upline.
             </p>
           )}
 
           {performance.completed && (
             <p style={styles.successText}>
-              তুমি task complete করেছো। এখন থেকে তুমি Performance Bonus পাবে।
-            </p>
+                 You Complete Your Task.Now You Get PerformanceBonus            </p>
           )}
 
           <BonusHistory type="performance" data={bonusHistory} />
@@ -412,8 +410,7 @@ export default function Refer() {
           <p>Last Month Royalty: <b>{money(royalty.lastMonthRoyalty)}</b></p>
 
           <p style={styles.infoBox}>
-            50 Direct Refer complete হলে Royalty Active হবে। Active হওয়ার পরের
-            business থেকে 3% Royalty Bonus পাবেন।
+            Royalty status will become active once 50 direct referrals are completed. You will receive a 3% royalty bonus on business generated after becoming active.
           </p>
 
           <BonusHistory type="royalty" data={bonusHistory} />
