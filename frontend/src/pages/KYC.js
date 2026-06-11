@@ -319,7 +319,10 @@ function FileBox({ file, setFile, text }) {
     <label style={styles.fileBox}>
       <span>☁️</span>
       <b>{file ? file.name : text}</b>
-      <small>PNG, JPG (Max 2MB)</small>
+      if (selected.size > 2 * 1024 * 1024) {
+  toast.info("File size must be under 2MB");
+  return;
+}
       <input
         type="file"
         hidden
