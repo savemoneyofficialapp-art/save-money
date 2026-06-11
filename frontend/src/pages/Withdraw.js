@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { API } from "../config";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
 
 export default function Withdraw() {
   const navigate = useNavigate();
@@ -50,12 +52,12 @@ export default function Withdraw() {
 
   const submitWithdraw = async () => {
     if (Number(amount) < 100) {
-      alert("Minimum withdraw amount is ₹100");
+      toast.info("Minimum withdraw amount is ₹100");
       return;
     }
 
     if (Number(amount) > withdrawableBalance) {
-      alert("You can withdraw only 80% of wallet balance");
+      toast.info("You can withdraw only 80% of wallet balance");
       return;
     }
 
@@ -80,7 +82,7 @@ export default function Withdraw() {
         loadInfo();
       }
     } catch (err) {
-      alert("Server error");
+      toast.warning("Server error");
     } finally {
       setLoading(false);
     }

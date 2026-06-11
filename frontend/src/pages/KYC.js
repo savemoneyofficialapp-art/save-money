@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function KYC() {
@@ -45,17 +47,17 @@ export default function KYC() {
 
   const submitKyc = async () => {
     if (!aadhaarNumber || aadhaarNumber.length !== 12) {
-      alert("Enter valid 12 digit Aadhaar number");
+      toast.info("Enter valid 12 digit Aadhaar number");
       return;
     }
 
     if (!panNumber || panNumber.length !== 10) {
-      alert("Enter valid 10 digit PAN number");
+      toast.info("Enter valid 10 digit PAN number");
       return;
     }
 
     if (!aadhaarFile || !panFile || !photoFile) {
-      alert("Please upload Aadhaar, PAN and Photo");
+      toast.info("Please upload Aadhaar, PAN and Photo");
       return;
     }
 
@@ -77,7 +79,7 @@ export default function KYC() {
       });
 
       const data = await res.json();
-      alert(data.msg || "KYC submitted");
+      toast.success(data.msg || "KYC submitted");
 
       if (data.success) {
         setKycStatus("reviewing");
@@ -85,7 +87,7 @@ export default function KYC() {
       }
     } catch (err) {
       console.log("KYC SUBMIT ERROR:", err);
-      alert("KYC submit failed");
+      toast.info("KYC submit failed");
     } finally {
       setLoading(false);
     }

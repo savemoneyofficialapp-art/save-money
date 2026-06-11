@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function ForgotPassword() {
@@ -20,7 +21,7 @@ export default function ForgotPassword() {
 
   const sendOTP = async () => {
     if (!email) {
-      alert("Email required");
+      toast.info("Email required");
       return;
     }
 
@@ -38,7 +39,7 @@ export default function ForgotPassword() {
       });
 
       const data = await res.json();
-      alert(data.msg || "OTP sent");
+      toast.success(data.msg || "OTP sent");
 
       if (res.ok || data.success) {
         setOtpSent(true);
@@ -57,7 +58,7 @@ export default function ForgotPassword() {
 
     } catch (err) {
       console.log("SEND OTP ERROR:", err);
-      alert("OTP send failed");
+      toast.info("OTP send failed");
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export default function ForgotPassword() {
     const finalOtp = otp.join("");
 
     if (finalOtp.length !== 6) {
-      alert("Enter 6 digit OTP");
+      toast.info("Enter 6 digit OTP");
       return;
     }
 
@@ -101,15 +102,15 @@ export default function ForgotPassword() {
       const data = await res.json();
 
       if (data.success) {
-        alert("OTP Verified");
+        toast.verifyOTP("OTP Verified");
         setOtpVerified(true);
       } else {
-        alert(data.msg || "OTP verification failed");
+        toast.info(data.msg || "OTP verification failed");
       }
 
     } catch (err) {
       console.log("VERIFY OTP ERROR:", err);
-      alert("Verification failed");
+      toast.info("Verification failed");
     } finally {
       setVerifyLoading(false);
     }
@@ -119,12 +120,12 @@ export default function ForgotPassword() {
     const finalOtp = otp.join("");
 
     if (!newPassword || !confirmPassword) {
-      alert("Enter new password");
+      toast.info("Enter new password");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      alert("Password not matched");
+      toast.error("Password not matched");
       return;
     }
 
@@ -145,7 +146,7 @@ export default function ForgotPassword() {
 
       const data = await res.json();
 
-      alert(data.msg || "Password reset done");
+      toast.success(data.msg || "Password reset done");
 
       if (data.success) {
         navigate("/login");
@@ -153,7 +154,7 @@ export default function ForgotPassword() {
 
     } catch (err) {
       console.log("RESET PASSWORD ERROR:", err);
-      alert("Password reset failed");
+      toast.error("Password reset failed");
     } finally {
       setResetLoading(false);
     }

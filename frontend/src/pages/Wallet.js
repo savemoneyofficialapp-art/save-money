@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function Wallet() {
@@ -98,9 +100,9 @@ photoImage: data.user?.photoImage || "",          balance: Number(data.balance |
   const copyWalletId = async () => {
     try {
       await navigator.clipboard.writeText(wallet.walletId);
-      alert("Wallet ID copied");
+      toast.success("Wallet ID copied");
     } catch {
-      alert("Copy failed");
+      toast.error("Copy failed");
     }
   };
 
@@ -113,15 +115,15 @@ photoImage: data.user?.photoImage || "",          balance: Number(data.balance |
 
 const submitDepositRequest = async () => {
   if (!addAmount || Number(addAmount) <= 0) {
-    return alert("Enter valid amount");
+    return toast.info("Enter valid amount");
   }
 
   if (!depositTxnId.trim()) {
-    return alert("Enter transaction ID");
+    return toast.info("Enter transaction ID");
   }
 
   if (!depositScreenshot) {
-    return alert("Upload payment screenshot");
+    return toast.info("Upload payment screenshot");
   }
 
   const formData = new FormData();
@@ -142,10 +144,10 @@ const submitDepositRequest = async () => {
     const data = await res.json();
 
     if (!res.ok || !data.success) {
-      return alert(data.msg || "Deposit request failed");
+      return toast.error(data.msg || "Deposit request failed");
     }
 
-    alert("Deposit request submitted. Admin approval pending.");
+    toast.info("Deposit request submitted. Admin approval pending.");
 
     setAddOpen(false);
     setAddAmount("");
@@ -154,17 +156,17 @@ const submitDepositRequest = async () => {
     loadWallet();
   } catch (err) {
     console.log("DEPOSIT ERROR:", err);
-    alert("Server error");
+    toast.warning("Server error");
   }
 };
 
   const checkReceiver = async () => {
     if (!receiverWalletId.trim()) {
-      return alert("Enter receiver wallet ID");
+      return toast.info("Enter receiver wallet ID");
     }
 
     if (!transferAmount || Number(transferAmount) <= 0) {
-      return alert("Enter valid amount");
+      return toast.info("Enter valid amount");
     }
 
     try {
@@ -182,14 +184,14 @@ const submitDepositRequest = async () => {
       const data = await res.json();
 
       if (!data.success) {
-        return alert(data.msg || "Receiver not found");
+        return toast.error(data.msg || "Receiver not found");
       }
 
       setReceiverInfo(data.user);
       setConfirmTransferOpen(true);
     } catch (err) {
       console.log("RECEIVER CHECK ERROR:", err);
-      alert("Receiver check failed");
+      toast.error("Receiver check failed");
     }
   };
 
@@ -210,7 +212,7 @@ const submitDepositRequest = async () => {
 
       const data = await res.json();
 
-      alert(data.msg || "Transfer completed");
+      toast.success(data.msg || "Transfer completed");
 
       if (data.success) {
         setReceiverWalletId("");
@@ -221,7 +223,7 @@ const submitDepositRequest = async () => {
       }
     } catch (err) {
       console.log("TRANSFER ERROR:", err);
-      alert("Transfer failed");
+      toast.error("Transfer failed");
     }
   };
 
@@ -251,9 +253,9 @@ const submitDepositRequest = async () => {
   const copyInviteLink = async () => {
     try {
       await navigator.clipboard.writeText(inviteLink);
-      alert("Referral link copied");
+      toast.success("Referral link copied");
     } catch {
-      alert("Copy failed");
+      toast.error("Copy failed");
     }
   };
 
@@ -692,7 +694,7 @@ const visibleHistory = showAllHistory
           style={styles.copyBtn}
           onClick={() => {
             navigator.clipboard.writeText(DEPOSIT_ADDRESS);
-            alert("Wallet address copied");
+            toast.success("Wallet address copied");
           }}
         >
           Copy

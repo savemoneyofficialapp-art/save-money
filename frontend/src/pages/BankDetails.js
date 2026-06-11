@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function BankDetails() {
@@ -61,7 +62,7 @@ export default function BankDetails() {
 
   const save = async () => {
     if (!editMode) {
-      alert("Please click UPDATE / CHANGE BANK DETAILS first");
+      toast.alert("Please click UPDATE / CHANGE BANK DETAILS first");
       return;
     }
 
@@ -72,7 +73,7 @@ export default function BankDetails() {
       !form.accountNumber ||
       !form.ifscCode
     ) {
-      alert("Please fill all required fields");
+      toast.info("Please fill all required fields");
       return;
     }
 
@@ -91,15 +92,15 @@ export default function BankDetails() {
       const data = await res.json();
 
       if (data.success) {
-        alert("Bank details saved successfully");
+        toast.success("Bank details saved successfully");
         setSaved(true);
         setEditMode(false);
       } else {
-        alert(data.msg || "Failed to save bank details");
+        toast.faild(data.msg || "Failed to save bank details");
       }
     } catch (err) {
       console.log("BANK SAVE ERROR:", err);
-      alert("Server error");
+      toast.error("Server error");
     } finally {
       setLoading(false);
     }

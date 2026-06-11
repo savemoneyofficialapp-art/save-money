@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 import axios from "axios";
 
@@ -132,7 +133,7 @@ const downloadCertificate = (plan) => {
   const id = plan?._id || plan?.investmentId;
 
   if (!id) {
-    alert("Investment ID not found");
+    toast.error("Investment ID not found");
     return;
   }
 
@@ -190,9 +191,9 @@ const downloadSlip = (planId, historyId) => {
   const copyId = async (id) => {
     try {
       await navigator.clipboard.writeText(id);
-      alert("Investment ID copied");
+      toast.success("Investment ID copied");
     } catch {
-      alert("Copy failed");
+      toast.error("Copy failed");
     }
   };
 
@@ -208,7 +209,7 @@ const downloadSlip = (planId, historyId) => {
   const id = inv?._id || inv?.investmentId;
 
   if (!id) {
-    alert("Investment ID not found");
+    toast.error("Investment ID not found");
     return;
   }
 
@@ -374,7 +375,7 @@ const renewNow = (inv) => {
 
     } catch (err) {
 
-      alert(
+      toast.error(
         err?.response?.data?.msg ||
         "Renew failed"
       );

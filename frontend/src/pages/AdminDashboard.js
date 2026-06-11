@@ -19,10 +19,9 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [withdraws, setWithdraws] = useState([]);
 
-  const [withdrawFilter, setWithdrawFilter] = useState("all");
-  const [withdrawFrom, setWithdrawFrom] = useState("");
-  const [withdrawTo, setWithdrawTo] = useState("");
   const [openWithdrawId, setOpenWithdrawId] = useState(null);
+  const [transactionPopup, setTransactionPopup] = useState(false);
+  const [transactionFilter, setTransactionFilter] = useState("all");
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -61,7 +60,6 @@ export default function AdminDashboard() {
     const res = await fetch(`${API}${path}`, {
       headers: { authorization: token || "" }
     });
-
     const d = await safeJson(res);
     if (checkAuthError(d)) return null;
     return d;
@@ -76,7 +74,6 @@ export default function AdminDashboard() {
       },
       body: JSON.stringify(body)
     });
-
     const d = await safeJson(res);
     if (checkAuthError(d)) return null;
     return d;
@@ -107,7 +104,11 @@ export default function AdminDashboard() {
       setUsers(Array.isArray(uData) ? uData : []);
 
       const wData = await apiGet("/admin/withdraw-requests");
-      setWithdraws(wData?.success && Array.isArray(wData.requests) ? wData.requests : []);
+      setWithdraws(
+        wData?.success && Array.isArray(wData.requests)
+          ? wData.requests
+          : []
+      );
     } catch (err) {
       console.log("ADMIN LOAD ERROR:", err);
       setError("Backend API not connected. Check Render URL / CORS / token.");
@@ -163,13 +164,15 @@ export default function AdminDashboard() {
             ? {
                 ...w,
                 status,
-                rejectReason: status === "Rejected" ? rejectReason : w.rejectReason,
+                rejectReason:
+                  status === "Rejected" ? rejectReason : w.rejectReason,
                 actionDate: new Date().toISOString()
               }
             : w
         )
       );
 
+      setOpenWithdrawId(null);
       toast.success(d.msg || `Withdraw ${status}`);
       await load();
     } else {
@@ -223,41 +226,19 @@ export default function AdminDashboard() {
     );
   }
 
-  const now = new Date();
-  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+  const pendingWithdraws = withdraws.filter((w) => w.status === "Pending");
 
-  const filteredWithdraws = withdraws.filter((w) => {
-    const d = new Date(w.createdAt || w.date);
-
-    if (withdrawFilter === "pending" && w.status !== "Pending") return false;
-    if (withdrawFilter === "success" && w.status !== "Success") return false;
-    if (withdrawFilter === "rejected" && w.status !== "Rejected") return false;
-    if (withdrawFilter === "thisMonth" && d < startOfThisMonth) return false;
-    if (withdrawFilter === "lastMonth" && (d < startOfLastMonth || d > endOfLastMonth)) return false;
-
-    if (withdrawFrom) {
-      const from = new Date(withdrawFrom);
-      if (d < from) return false;
-    }
-
-    if (withdrawTo) {
-      const to = new Date(withdrawTo);
-      to.setHours(23, 59, 59, 999);
-      if (d > to) return false;
-    }
-
-    return true;
+  const transactionWithdraws = withdraws.filter((w) => {
+    if (transactionFilter === "all") return true;
+    return String(w.status || "").toLowerCase() === transactionFilter;
   });
 
-  const pendingWithdraw = withdraws.filter((x) => x.status === "Pending").length;
+  const pendingWithdrawAmount = pendingWithdraws.reduce(
+    (sum, w) => sum + Number(w.amount || 0),
+    0
+  );
 
   const totalWithdrawAmount = withdraws
-    .filter((w) => w.status === "Success")
-    .reduce((sum, w) => sum + Number(w.amount || 0), 0);
-
-  const filteredWithdrawAmount = filteredWithdraws
     .filter((w) => w.status === "Success")
     .reduce((sum, w) => sum + Number(w.amount || 0), 0);
 
@@ -265,7 +246,7 @@ export default function AdminDashboard() {
     { name: "Users", value: data.totalUsers || 0 },
     { name: "KYC", value: data.kycApproved || 0 },
     { name: "Plans", value: data.activePlans || 0 },
-    { name: "Withdraw", value: pendingWithdraw || 0 }
+    { name: "Pending Withdraw", value: pendingWithdraws.length || 0 }
   ];
 
   return (
@@ -275,15 +256,24 @@ export default function AdminDashboard() {
       {error && <div style={styles.error}>{error}</div>}
 
       <div style={styles.quick}>
-        <button style={styles.green} onClick={() => (window.location.href = "/admin-analytics")}>
+        <button
+          style={styles.green}
+          onClick={() => (window.location.href = "/admin-analytics")}
+        >
           Advanced Analytics
         </button>
 
-        <button style={styles.green} onClick={() => (window.location.href = "/admin-user-control")}>
+        <button
+          style={styles.green}
+          onClick={() => (window.location.href = "/admin-user-control")}
+        >
           User Control
         </button>
 
-        <button style={styles.green} onClick={() => (window.location.href = "/admin-support")}>
+        <button
+          style={styles.green}
+          onClick={() => (window.location.href = "/admin-support")}
+        >
           Support Tickets
         </button>
       </div>
@@ -315,7 +305,7 @@ export default function AdminDashboard() {
         </div>
 
         <div style={styles.card}>
-          <h2>{pendingWithdraw}</h2>
+          <h2>{pendingWithdraws.length}</h2>
           <p>Pending Withdraw</p>
         </div>
 
@@ -359,64 +349,38 @@ export default function AdminDashboard() {
       </div>
 
       <div style={styles.section}>
-        <h2>Withdraw Details</h2>
-
-        <div style={styles.withdrawFilterBox}>
-          <select
-            style={styles.filterInput}
-            value={withdrawFilter}
-            onChange={(e) => setWithdrawFilter(e.target.value)}
-          >
-            <option value="all">All Withdraw</option>
-            <option value="pending">Pending</option>
-            <option value="success">Success</option>
-            <option value="rejected">Rejected</option>
-            <option value="thisMonth">This Month</option>
-            <option value="lastMonth">Last Month</option>
-          </select>
-
-          <input
-            style={styles.filterInput}
-            type="date"
-            value={withdrawFrom}
-            onChange={(e) => setWithdrawFrom(e.target.value)}
-          />
-
-          <input
-            style={styles.filterInput}
-            type="date"
-            value={withdrawTo}
-            onChange={(e) => setWithdrawTo(e.target.value)}
-          />
+        <div style={styles.sectionTop}>
+          <div>
+            <h2>Pending Withdraw Requests</h2>
+            <p style={{ color: "#94a3b8" }}>
+              Only pending requests will show here.
+            </p>
+          </div>
 
           <button
-            style={styles.smallBlue}
-            onClick={() => {
-              setWithdrawFilter("all");
-              setWithdrawFrom("");
-              setWithdrawTo("");
-            }}
+            style={styles.viewTransactionBtn}
+            onClick={() => setTransactionPopup(true)}
           >
-            Reset
+            View Transactions
           </button>
         </div>
 
         <div style={styles.withdrawSummary}>
           <div style={styles.summaryMini}>
-            <b>Total List</b>
-            <h3>{filteredWithdraws.length}</h3>
+            <b>Pending Requests</b>
+            <h3>{pendingWithdraws.length}</h3>
           </div>
 
           <div style={styles.summaryMini}>
-            <b>Success Amount</b>
-            <h3>{money(filteredWithdrawAmount)}</h3>
+            <b>Pending Amount</b>
+            <h3>{money(pendingWithdrawAmount)}</h3>
           </div>
         </div>
 
-        {filteredWithdraws.length === 0 ? (
-          <p>No withdraw details found</p>
+        {pendingWithdraws.length === 0 ? (
+          <p>No pending withdraw request found</p>
         ) : (
-          filteredWithdraws.map((w) => (
+          pendingWithdraws.map((w) => (
             <div key={w._id} style={styles.withdrawMiniCard}>
               <div style={styles.withdrawMiniTop}>
                 <div>
@@ -429,21 +393,11 @@ export default function AdminDashboard() {
                   <span
                     style={{
                       ...styles.statusPill,
-                      background:
-                        w.status === "Success"
-                          ? "#dcfce7"
-                          : w.status === "Rejected"
-                          ? "#ffe4e6"
-                          : "#fef9c3",
-                      color:
-                        w.status === "Success"
-                          ? "#16a34a"
-                          : w.status === "Rejected"
-                          ? "#e11d48"
-                          : "#ca8a04"
+                      background: "#fef9c3",
+                      color: "#ca8a04"
                     }}
                   >
-                    {w.status}
+                    Pending
                   </span>
 
                   <br />
@@ -489,37 +443,43 @@ export default function AdminDashboard() {
 
                   <div style={styles.bankBox}>
                     <h4>Bank Details</h4>
-                    <p><b>Name:</b> {w.bankDetails?.accountHolderName || "N/A"}</p>
-                    <p><b>Mobile:</b> {w.bankDetails?.mobile || "N/A"}</p>
-                    <p><b>Bank:</b> {w.bankDetails?.bankName || "N/A"}</p>
-                    <p><b>Account:</b> {w.bankDetails?.accountNumber || "N/A"}</p>
-                    <p><b>IFSC:</b> {w.bankDetails?.ifscCode || "N/A"}</p>
-                    <p><b>UPI:</b> {w.bankDetails?.upiId || "N/A"}</p>
+                    <p>
+                      <b>Name:</b>{" "}
+                      {w.bankDetails?.accountHolderName || "N/A"}
+                    </p>
+                    <p>
+                      <b>Mobile:</b> {w.bankDetails?.mobile || "N/A"}
+                    </p>
+                    <p>
+                      <b>Bank:</b> {w.bankDetails?.bankName || "N/A"}
+                    </p>
+                    <p>
+                      <b>Account:</b>{" "}
+                      {w.bankDetails?.accountNumber || "N/A"}
+                    </p>
+                    <p>
+                      <b>IFSC:</b> {w.bankDetails?.ifscCode || "N/A"}
+                    </p>
+                    <p>
+                      <b>UPI:</b> {w.bankDetails?.upiId || "N/A"}
+                    </p>
                   </div>
 
-                  {w.rejectReason && (
-                    <p style={styles.rejectReason}>
-                      Reject Reason: {w.rejectReason}
-                    </p>
-                  )}
+                  <div style={styles.actionRow}>
+                    <button
+                      style={styles.approveBtn}
+                      onClick={() => withdrawAction(w._id, "Success")}
+                    >
+                      Approve Success
+                    </button>
 
-                  {w.status === "Pending" && (
-                    <div style={styles.actionRow}>
-                      <button
-                        style={styles.approveBtn}
-                        onClick={() => withdrawAction(w._id, "Success")}
-                      >
-                        Approve Success
-                      </button>
-
-                      <button
-                        style={styles.rejectBtn}
-                        onClick={() => withdrawAction(w._id, "Rejected")}
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
+                    <button
+                      style={styles.rejectBtn}
+                      onClick={() => withdrawAction(w._id, "Rejected")}
+                    >
+                      Reject
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -540,19 +500,34 @@ export default function AdminDashboard() {
 
             <div style={styles.docGrid}>
               {u.aadhaarFile && (
-                <a href={fileUrl(u.aadhaarFile)} target="_blank" rel="noreferrer" style={styles.docBtn}>
+                <a
+                  href={fileUrl(u.aadhaarFile)}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={styles.docBtn}
+                >
                   View Aadhaar
                 </a>
               )}
 
               {u.panFile && (
-                <a href={fileUrl(u.panFile)} target="_blank" rel="noreferrer" style={styles.docBtn}>
+                <a
+                  href={fileUrl(u.panFile)}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={styles.docBtn}
+                >
                   View PAN
                 </a>
               )}
 
               {u.photo && (
-                <a href={fileUrl(u.photo)} target="_blank" rel="noreferrer" style={styles.docBtn}>
+                <a
+                  href={fileUrl(u.photo)}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={styles.docBtn}
+                >
                   View Photo
                 </a>
               )}
@@ -599,21 +574,35 @@ export default function AdminDashboard() {
                       <button
                         style={styles.smallBlue}
                         onClick={() =>
-                          window.open(r.screenshot || r.screenshotUrl || r.image || r.photo, "_blank")
+                          window.open(
+                            r.screenshot ||
+                              r.screenshotUrl ||
+                              r.image ||
+                              r.photo,
+                            "_blank"
+                          )
                         }
                       >
                         View
                       </button>
                     </td>
                     <td>
-                      {r.createdAt ? new Date(r.createdAt).toLocaleString("en-IN") : "N/A"}
+                      {r.createdAt
+                        ? new Date(r.createdAt).toLocaleString("en-IN")
+                        : "N/A"}
                     </td>
                     <td>{r.status || "pending"}</td>
                     <td>
-                      <button style={styles.smallGreen} onClick={() => approveCash(r._id)}>
+                      <button
+                        style={styles.smallGreen}
+                        onClick={() => approveCash(r._id)}
+                      >
                         Approve
                       </button>
-                      <button style={styles.smallRed} onClick={() => rejectCash(r._id)}>
+                      <button
+                        style={styles.smallRed}
+                        onClick={() => rejectCash(r._id)}
+                      >
                         Reject
                       </button>
                     </td>
@@ -644,6 +633,75 @@ export default function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {transactionPopup && (
+        <div style={styles.popupOverlay}>
+          <div style={styles.popupBox}>
+            <div style={styles.popupTop}>
+              <h2>Withdraw Transactions</h2>
+
+              <button
+                style={styles.closePopup}
+                onClick={() => setTransactionPopup(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <select
+              style={styles.filterInput}
+              value={transactionFilter}
+              onChange={(e) => setTransactionFilter(e.target.value)}
+            >
+              <option value="all">All Transactions</option>
+              <option value="pending">Pending</option>
+              <option value="success">Success</option>
+              <option value="rejected">Rejected</option>
+            </select>
+
+            <div style={{ marginTop: 15 }}>
+              {transactionWithdraws.length === 0 ? (
+                <p>No transaction found</p>
+              ) : (
+                transactionWithdraws.map((w) => (
+                  <div key={w._id} style={styles.transactionItem}>
+                    <div>
+                      <b>{w.name || "User"}</b>
+                      <p>{w.email}</p>
+                      <p>{money(w.amount)}</p>
+                      <small>
+                        {w.createdAt
+                          ? new Date(w.createdAt).toLocaleString("en-IN")
+                          : "N/A"}
+                      </small>
+                    </div>
+
+                    <span
+                      style={{
+                        ...styles.statusPill,
+                        background:
+                          w.status === "Success"
+                            ? "#dcfce7"
+                            : w.status === "Rejected"
+                            ? "#ffe4e6"
+                            : "#fef9c3",
+                        color:
+                          w.status === "Success"
+                            ? "#16a34a"
+                            : w.status === "Rejected"
+                            ? "#e11d48"
+                            : "#ca8a04"
+                      }}
+                    >
+                      {w.status}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -748,6 +806,13 @@ const styles = {
     border: "1px solid #334155"
   },
 
+  sectionTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px"
+  },
+
   row: {
     background: "#0f172a",
     marginTop: "10px",
@@ -797,19 +862,13 @@ const styles = {
     color: "white"
   },
 
-  withdrawFilterBox: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr auto",
-    gap: "10px",
-    marginBottom: "14px"
-  },
-
-  filterInput: {
-    padding: "12px",
-    borderRadius: "10px",
-    border: "1px solid #334155",
-    background: "#020617",
-    color: "white"
+  viewTransactionBtn: {
+    background: "linear-gradient(90deg,#2563eb,#7c3aed)",
+    border: "none",
+    color: "white",
+    padding: "12px 18px",
+    borderRadius: "12px",
+    fontWeight: 900
   },
 
   withdrawSummary: {
@@ -885,11 +944,6 @@ const styles = {
     borderRadius: "14px",
     marginTop: "15px",
     border: "1px solid #334155"
-  },
-
-  rejectReason: {
-    color: "#fca5a5",
-    fontWeight: 800
   },
 
   actionRow: {
@@ -979,5 +1033,63 @@ const styles = {
     padding: "7px 12px",
     borderRadius: "8px",
     fontWeight: 900
+  },
+
+  popupOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,.65)",
+    zIndex: 9999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20
+  },
+
+  popupBox: {
+    width: "min(760px,96vw)",
+    maxHeight: "85vh",
+    overflowY: "auto",
+    background: "#0f172a",
+    color: "white",
+    borderRadius: "20px",
+    padding: 20,
+    border: "1px solid #334155"
+  },
+
+  popupTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+
+  closePopup: {
+    background: "#ef4444",
+    border: "none",
+    color: "white",
+    borderRadius: "10px",
+    padding: "8px 12px",
+    fontWeight: 900
+  },
+
+  filterInput: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "10px",
+    border: "1px solid #334155",
+    background: "#020617",
+    color: "white"
+  },
+
+  transactionItem: {
+    background: "#020617",
+    border: "1px solid #334155",
+    borderRadius: "14px",
+    padding: "14px",
+    marginTop: "10px",
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "12px",
+    alignItems: "center"
   }
 };

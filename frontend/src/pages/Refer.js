@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function Refer() {
@@ -69,9 +70,9 @@ export default function Refer() {
   const copyText = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert("Copied Successfully");
+      toast.success("Copied Successfully");
     } catch {
-      alert("Copy failed");
+      toast.info("Copy failed");
     }
   };
 

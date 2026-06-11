@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function InvestNow() {
@@ -70,7 +71,7 @@ export default function InvestNow() {
 };
 
   const comingSoon = () => {
-    alert("Temporary Unavailable - Coming Soon");
+    toast.info("Temporary Unavailable - Coming Soon");
   };
 
   const plans = useMemo(() => {

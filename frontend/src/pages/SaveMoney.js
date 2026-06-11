@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function SaveMoney() {
@@ -97,7 +99,7 @@ export default function SaveMoney() {
 
   const confirmSip = async () => {
     if (Number(amount) < 2000) {
-      return alert("Minimum SIP amount ₹2000 required");
+      return toast.info("Minimum SIP amount ₹2000 required");
     }
 
     if (!accepted) {
@@ -106,7 +108,7 @@ export default function SaveMoney() {
     }
 
     if (Number(balance) < Number(amount)) {
-      return alert("Insufficient wallet balance");
+      return toast.error("Insufficient wallet balance");
     }
 
     try {
@@ -129,12 +131,12 @@ export default function SaveMoney() {
 
       if (data.msg === "Token expired or invalid") {
         localStorage.clear();
-        alert("Session expired. Please login again.");
+        toast.error("Session expired. Please login again.");
         window.location.href = "/login";
         return;
       }
 
-      alert(data.msg || "SIP started successfully");
+      toast.success(data.msg || "SIP started successfully");
 
       if (data.success) {
         setAmount("");
@@ -143,7 +145,7 @@ export default function SaveMoney() {
       }
     } catch (err) {
       console.log("START SIP ERROR:", err);
-      alert("Something went wrong");
+      toast.info("Something went wrong");
     } finally {
       setLoading(false);
     }
