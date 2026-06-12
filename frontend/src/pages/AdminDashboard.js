@@ -204,10 +204,17 @@ export default function AdminDashboard() {
   };
 
   const fileUrl = (file) => {
-    if (!file) return "#";
-    if (file.startsWith("http")) return file;
-    return `${API}/uploads/${file}`;
-  };
+  if (!file) return "#";
+  if (file.startsWith("http")) return file;
+
+  const clean = String(file).replace(/\\/g, "/");
+
+  if (clean.startsWith("uploads/")) {
+    return `${API}/${clean}`;
+  }
+
+  return `${API}/uploads/${clean}`;
+};
 
   const money = (n) =>
     `₹${Number(n || 0).toLocaleString("en-IN", {
