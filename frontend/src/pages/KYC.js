@@ -36,8 +36,8 @@ export default function KYC() {
       if (data.success) {
         const u = data.user || {};
         setUser(u);
-        setAadhaarNumber(u.aadhaarNumber || "");
-        setPanNumber(u.panNumber || "");
+        setAadhaarNumber(u.aadhaarNumber || u.aadhaar || "");
+setPanNumber(u.panNumber || u.pan || "");
         setKycStatus(u.kycStatus || "pending");
       }
     } catch (err) {
@@ -68,8 +68,8 @@ export default function KYC() {
       formData.append("email", email);
       formData.append("aadhaarNumber", aadhaarNumber);
       formData.append("panNumber", panNumber);
-      formData.append("aadhaarCard", aadhaarFile);
-      formData.append("panCard", panFile);
+      formData.append("aadhaarFile", aadhaarFile);
+      formData.append("panFile", panFile);
       formData.append("photo", photoFile);
 
       const res = await fetch(`${API}/submit-kyc`, {
