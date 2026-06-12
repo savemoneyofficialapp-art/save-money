@@ -1714,13 +1714,14 @@ app.post("/invest", async (req, res) => {
 app.post("/start-invest", async (req, res) => {
   try {
     const {
-      email,
-      amount,
-      years,
-      rate,
-      totalInterest,
-      maturityAmount
-    } = req.body;
+  email,
+  amount,
+  years,
+  rate,
+  totalPlanAmount,
+  totalInterest,
+  maturityAmount
+} = req.body;
 
     const investAmount = Number(amount);
 
@@ -1795,12 +1796,13 @@ app.post("/start-invest", async (req, res) => {
       years: Number(years || 1),
 
       rate: Number(rate || 0),
+returnRate: Number(rate || 0),
 
-      totalInterest:
-        Number(totalInterest || 0),
+totalPlanAmount: Number(totalPlanAmount || investAmount * 12 * Number(years || 1)),
 
-      maturityAmount:
-        Number(maturityAmount || 0),
+totalInterest: Number(totalInterest || 0),
+
+maturityAmount: Number(maturityAmount || 0),
 
       certificateNo,
       slipNo,
@@ -2801,10 +2803,13 @@ amount: requiredInvestment,
 monthlyAmount: monthly,
     monthlyReturn: monthly,
     years,
-    returnRate: i.rate || 0,
+    returnRate: Number(i.rate || i.returnRate || 0),
 
-    totalReturn: i.totalInterest || 0,
-    maturityAmount: i.maturityAmount || 0,
+    totalReturn: Number(i.totalInterest || 0),
+maturityAmount: Number(
+  i.maturityAmount ||
+  (Number(i.totalPlanAmount || requiredInvestment) + Number(i.totalInterest || 0))
+),
 
     startDate,
     endDate,
