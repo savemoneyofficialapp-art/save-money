@@ -732,7 +732,7 @@ const performanceDeadline = new Date(sponsorJoin);
 performanceDeadline.setDate(performanceDeadline.getDate() + 30);
 
 const taskExpired = new Date() > performanceDeadline;
-
+const refId = `FIRST-${investment._id}`;
 let performanceAmount = 0;
 
 if (activeDirectCount >= 10 && !taskExpired) {
@@ -753,8 +753,6 @@ if (activeDirectCount >= 10 && !taskExpired) {
     refId: refId + "-PERFORMANCE"
   });
 }
-
-  const refId = `FIRST-${investment._id}`;
 
   // Direct Referral Bonus
   await addBonus({
@@ -1880,10 +1878,11 @@ try {
         await WalletHistory.create({
           email: referrer.email.toLowerCase(),
           amount: bonusAmount,
-          type: "credit",
+          type: "Credit",
+          title: "Referral Bonus",
+          status: "Success",
           description: `Referral bonus received from ${investor.name || investor.email}`,
           note: "Referral bonus",
-          status: "success",
           date: new Date()
         });
       } else {
@@ -1896,7 +1895,7 @@ try {
 } catch (bonusErr) {
   console.log("REFERRAL BONUS ERROR:", bonusErr.message);
 }
-await distributeSaveMoneyBonuses(user, investAmount);
+await processFirstInvestmentBonuses(email.toLowerCase(), investment);
 
    await WalletHistory.create({
   email,
