@@ -2983,6 +2983,19 @@ app.post(
 
       const user = await User.findOne({ email });
 
+      const currentStatus = String(user.kycStatus || "").toLowerCase();
+
+if (
+  currentStatus === "pending" ||
+  currentStatus === "reviewing" ||
+  currentStatus === "approved"
+) {
+  return res.status(400).json({
+    success: false,
+    msg: "KYC already submitted. You can resubmit only if rejected."
+  });
+}
+
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -3086,10 +3099,15 @@ app.post("/reject-kyc", auth, adminAuth, async (req, res) => {
       userId,
       {
         kycStatus: "rejected",
-        kycRejectReason: reason
+        kycRejectReason: reason,
+        rejectReason: reason
       },
       { new: true }
     );
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
     await Notification.create({
       email: user.email,
@@ -3098,9 +3116,13 @@ app.post("/reject-kyc", auth, adminAuth, async (req, res) => {
       read: false
     });
 
-    res.json({ msg: "KYC Rejected" });
-
+    res.json({
+      success: true,
+      msg: "KYC Rejected",
+      user
+    });
   } catch (err) {
+    console.log("REJECT KYC ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
