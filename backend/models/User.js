@@ -160,7 +160,7 @@ balance: {
     "pending",
     "rejected"
   ],
-  default:"Pending"
+  default:"none"
 },
 
 kycRejectReason: {
