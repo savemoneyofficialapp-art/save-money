@@ -121,10 +121,14 @@ export default function SaveMoney() {
           authorization: token || ""
         },
         body: JSON.stringify({
-          email,
-          amount: Number(amount),
-          years: Number(years)
-        })
+  email,
+  amount: Number(amount),
+  years: Number(years),
+  rate: Number(rate),
+  totalPlanAmount: Number(calc.totalInvestment),
+  totalInterest: Number(calc.totalInterest),
+  maturityAmount: Number(calc.totalReturn)
+})
       });
 
       const data = await res.json();
