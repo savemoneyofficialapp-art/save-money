@@ -1896,13 +1896,14 @@ try {
 } catch (bonusErr) {
   console.log("REFERRAL BONUS ERROR:", bonusErr.message);
 }
-await distributeBonuses(email, investAmount);
+await distributeSaveMoneyBonuses(user, investAmount);
 
    await WalletHistory.create({
   email,
   amount: investAmount,
-  type: "debit",
-  status: "success",
+  type: "Debit",
+status: "Success",
+title: "Save Money SIP Started",
   description: "Save Money SIP Started",
   date: new Date()
 });
