@@ -2977,33 +2977,61 @@ app.post(
   ]),
   async (req, res) => {
     try {
-      const { email, aadhaar, pan  } = req.body;
-      await sendNotification(email, "KYC Submitted Successfully");
+      const email = String(req.body.email || "").toLowerCase();
+      const aadhaarNumber = req.body.aadhaarNumber || req.body.aadhaar || "";
+      const panNumber = req.body.panNumber || req.body.pan || "";
 
-      console.log("KYC API HIT:", email);
+      const user = await User.findOne({ email });
 
-      await User.updateOne(
-        { email },
-        { aadhaar, 
-          pan,
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          msg: "User not found"
+        });
+      }
 
-          aadhaarFile: req.files.aadhaarFile[0].path,
-          panFile: req.files.panFile[0].path,
-          photo: req.files.photo[0].path,
-          kycStatus: "reviewing"
-        }
-      );
-      await createNotification(email, "KYC Submitted Successfully");
+      if (!req.files?.aadhaarFile?.[0]) {
+        return res.status(400).json({ success: false, msg: "Aadhaar file required" });
+      }
 
-      res.json({ msg: "KYC Submitted Successfully" });
+      if (!req.files?.panFile?.[0]) {
+        return res.status(400).json({ success: false, msg: "PAN file required" });
+      }
 
+      if (!req.files?.photo?.[0]) {
+        return res.status(400).json({ success: false, msg: "Photo required" });
+      }
+
+      user.aadhaar = aadhaarNumber;
+      user.pan = panNumber;
+      user.aadhaarNumber = aadhaarNumber;
+      user.panNumber = panNumber;
+
+      user.aadhaarFile = req.files.aadhaarFile[0].path;
+      user.panFile = req.files.panFile[0].path;
+      user.photo = req.files.photo[0].path;
+
+      user.kycStatus = "Pending";
+      user.rejectReason = "";
+      user.kycRejectReason = "";
+
+      await user.save();
+
+      return res.json({
+        success: true,
+        msg: "KYC Submitted Successfully",
+        user
+      });
     } catch (err) {
-      console.log("KYC ERROR:", err);
-      res.status(500).json({ msg: "Server error" });
+      console.log("KYC SUBMIT ERROR:", err);
+      return res.status(500).json({
+        success: false,
+        msg: "Server error",
+        error: err.message
+      });
     }
   }
 );
-
 app.post("/kyc-info", async (req, res) => {
 
   try {
