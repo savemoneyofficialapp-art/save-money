@@ -46,6 +46,16 @@ setPanNumber(u.panNumber || u.pan || "");
   };
 
   const submitKyc = async () => {
+
+      if (
+  String(kycStatus).toLowerCase() === "pending" ||
+  String(kycStatus).toLowerCase() === "reviewing" ||
+  String(kycStatus).toLowerCase() === "approved"
+) {
+  toast.info("KYC already submitted.");
+  return;
+      }
+    
     if (!aadhaarNumber || aadhaarNumber.length !== 12) {
       toast.info("Enter valid 12 digit Aadhaar number");
       return;
@@ -213,9 +223,26 @@ setPanNumber(u.panNumber || u.pan || "");
             <FileBox file={photoFile} setFile={setPhotoFile} text="Upload Photo" />
           </div>
 
-          <button style={styles.submitBtn} onClick={submitKyc} disabled={loading}>
-            🛡 {loading ? "Submitting..." : "Submit KYC"} →
-          </button>
+          <button
+  style={{
+    ...styles.submitBtn,
+    opacity:
+      ["pending", "reviewing", "approved"].includes(
+        String(kycStatus).toLowerCase()
+      )
+        ? 0.5
+        : 1
+  }}
+  onClick={submitKyc}
+  disabled={
+    loading ||
+    ["pending", "reviewing", "approved"].includes(
+      String(kycStatus).toLowerCase()
+    )
+  }
+>
+  🛡 {loading ? "Submitting..." : "Submit KYC"} →
+</button>
 
           <p style={styles.safe}>🔒 Your information is 100% secure and encrypted</p>
         </div>
