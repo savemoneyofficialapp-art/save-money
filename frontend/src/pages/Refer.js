@@ -41,14 +41,18 @@ export default function Refer() {
       const data = await res.json();
 
       if (data.success) {
-        setUser(data.user || {});
-        setHistory(Array.isArray(data.history) ? data.history : []);
-        setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
-        setPerformance(data.performance || {});
-        setTeam(data.team || {});
-        setRoyalty(data.royalty || {});
-        setTreeData(data.treeData || {});
-      }
+  setUser({
+    ...(data.user || {}),
+    activeStatus: data.activeStatus || "Inactive"
+  });
+
+  setHistory(Array.isArray(data.history) ? data.history : []);
+  setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
+  setPerformance(data.performance || {});
+  setTeam(data.team || {});
+  setRoyalty(data.royalty || {});
+  setTreeData(data.treeData || {});
+}
     } catch (err) {
       console.log("REFER DATA ERROR:", err);
     } finally {
