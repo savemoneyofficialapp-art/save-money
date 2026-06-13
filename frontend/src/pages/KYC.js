@@ -13,7 +13,7 @@ export default function KYC() {
   const [aadhaarFile, setAadhaarFile] = useState(null);
   const [panFile, setPanFile] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
-  const [kycStatus, setKycStatus] = useState("pending");
+  const [kycStatus, setKycStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function KYC() {
         setUser(u);
         setAadhaarNumber(u.aadhaarNumber || u.aadhaar || "");
 setPanNumber(u.panNumber || u.pan || "");
-        setKycStatus(u.kycStatus || "pending");
+        setKycStatus(u.kycStatus || "");
       }
     } catch (err) {
       console.log("KYC LOAD ERROR:", err);
@@ -47,14 +47,12 @@ setPanNumber(u.panNumber || u.pan || "");
 
   const submitKyc = async () => {
 
-      if (
-  String(kycStatus).toLowerCase() === "pending" ||
-  String(kycStatus).toLowerCase() === "reviewing" ||
-  String(kycStatus).toLowerCase() === "approved"
-) {
+      const status = String(kycStatus || "").toLowerCase();
+
+if (["reviewing", "approved"].includes(status)) {
   toast.info("KYC already submitted.");
   return;
-      }
+}
     
     if (!aadhaarNumber || aadhaarNumber.length !== 12) {
       toast.info("Enter valid 12 digit Aadhaar number");
@@ -104,11 +102,13 @@ setPanNumber(u.panNumber || u.pan || "");
   };
 
   const statusText =
-    kycStatus === "approved"
-      ? "Approved"
-      : kycStatus === "reviewing"
-      ? "Reviewing"
-      : "Pending";
+  kycStatus === "approved"
+    ? "Approved"
+    : kycStatus === "reviewing"
+    ? "Reviewing"
+    : kycStatus === "rejected"
+    ? "Rejected"
+    : "Not Submitted";
 
   return (
     <div style={styles.page}>
@@ -227,19 +227,19 @@ setPanNumber(u.panNumber || u.pan || "");
   style={{
     ...styles.submitBtn,
     opacity:
-      ["pending", "reviewing", "approved"].includes(
-        String(kycStatus).toLowerCase()
-      )
-        ? 0.5
-        : 1
+  ["reviewing", "approved"].includes(
+    String(kycStatus || "").toLowerCase()
+  )
+    ? 0.5
+    : 1
   }}
   onClick={submitKyc}
   disabled={
-    loading ||
-    ["pending", "reviewing", "approved"].includes(
-      String(kycStatus).toLowerCase()
-    )
-  }
+  loading ||
+  ["reviewing", "approved"].includes(
+    String(kycStatus || "").toLowerCase()
+  )
+}
 >
   🛡 {loading ? "Submitting..." : "Submit KYC"} →
 </button>
