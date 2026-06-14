@@ -150,15 +150,16 @@ balance: {
 },
 
   // 🔹 KYC STATUS
-  kycStatus:{
-  type:String,
-  enum:[
+  kycStatus: {
+  type: String,
+  enum: [
     "none",
+    "pending",
     "reviewing",
     "approved",
     "rejected"
   ],
-  default:"none"
+  default: "none"
 },
 
   // 🔹 FILE UPLOAD PATHS
