@@ -3037,7 +3037,7 @@ if (
       user.panFile = req.files.panFile[0].path;
       user.photo = req.files.photo[0].path;
 
-      user.kycStatus = "Pending";
+      user.kycStatus = "pending";
       user.rejectReason = "";
       user.kycRejectReason = "";
 
