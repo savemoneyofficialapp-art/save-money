@@ -1338,7 +1338,7 @@ app.post("/register", async (req, res) => {
 
       activeStatus: "Inactive",
 
-      kycStatus: "",
+      kycStatus: "none",
 
       banned: false,
 
@@ -2988,7 +2988,22 @@ app.post(
 
       const user = await User.findOne({ email });
 
-      const currentStatus = String(user.kycStatus || "").toLowerCase();
+if (!user) {
+  return res.status(404).json({
+    success: false,
+    msg: "User not found"
+  });
+}
+
+const currentStatus = String(user.kycStatus || "none").toLowerCase();
+
+/*
+none      → প্রথমবার submit করতে পারবে
+rejected  → আবার submit করতে পারবে
+pending   → submit বন্ধ
+reviewing → submit বন্ধ
+approved  → submit বন্ধ
+*/
 
 if (
   currentStatus === "pending" ||
@@ -3000,13 +3015,6 @@ if (
     msg: "KYC already submitted. You can resubmit only if rejected."
   });
 }
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          msg: "User not found"
-        });
-      }
 
       if (!req.files?.aadhaarFile?.[0]) {
         return res.status(400).json({ success: false, msg: "Aadhaar file required" });
