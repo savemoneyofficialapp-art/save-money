@@ -153,19 +153,12 @@ balance: {
   kycStatus:{
   type:String,
   enum:[
-    "Pending",
-    "Approved",
-    "Rejected",
+    "none",
+    "reviewing",
     "approved",
-    "pending",
     "rejected"
   ],
   default:"none"
-},
-
-kycRejectReason: {
-  type: String,
-  default: ""
 },
 
   // 🔹 FILE UPLOAD PATHS
