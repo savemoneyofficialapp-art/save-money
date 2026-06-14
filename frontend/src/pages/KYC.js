@@ -106,6 +106,8 @@ if (["reviewing", "approved"].includes(status)) {
     ? "Approved"
     : kycStatus === "reviewing"
     ? "Reviewing"
+    : kycStatus === "pending"
+    ? "Pending"
     : kycStatus === "rejected"
     ? "Rejected"
     : "Not Submitted";
