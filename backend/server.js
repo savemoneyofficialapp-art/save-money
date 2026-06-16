@@ -629,7 +629,8 @@ async function addBonus({
     user.wallet = Number(user.wallet || 0) + bonusAmount;
     user.balance = Number(user.balance || 0) + bonusAmount;
     user.walletBalance = Number(user.walletBalance || 0) + bonusAmount;
-    user.totalEarning = Number(user.totalEarning || 0) + bonusAmount;
+    user.totalIncome =
+  Number(user.totalIncome || 0) + bonusAmount;
 
     if (bonusType === "Referral Bonus") {
       user.referralIncome = Number(user.referralIncome || 0) + bonusAmount;
@@ -664,13 +665,21 @@ async function addBonus({
     });
 
     await WalletHistory.create({
-      email: String(email).toLowerCase(),
-      type: bonusType,
-      amount: bonusAmount,
-      note: note || `${bonusType} received from ${fromName}`,
-      status: "Success",
-      date: new Date()
-    });
+  email: String(email).toLowerCase(),
+  amount: bonusAmount,
+
+  type: "Credit",
+
+  title: bonusType,
+
+  description:
+    note ||
+    `${bonusType} received from ${fromName}`,
+
+  status: "Success",
+
+  date: new Date()
+});
 
     if (typeof sendNotification === "function") {
       await sendNotification(
@@ -743,25 +752,17 @@ performanceDeadline.setDate(performanceDeadline.getDate() + 30);
 
 const taskExpired = new Date() > performanceDeadline;
 const refId = `FIRST-${investment._id}`;
-let performanceAmount = 0;
 
-if (activeDirectCount >= 10 && !taskExpired) {
-  performanceAmount = 699;
+  if (
+    activeDirectCount >= 10 &&
+    !taskExpired &&
+    sponsor.performanceBonusEnabled
+) {
+    // শুধু Performance Unlock হবে
+    sponsor.performanceBonusEnabled = true;
+    sponsor.performanceActivatedAt = new Date();
 
-  if (activeDirectCount >= 15) performanceAmount = 799;
-  if (activeDirectCount >= 20) performanceAmount = 899;
-  if (activeDirectCount >= 21) performanceAmount = 999;
-
-  await addBonus({
-    email: sponsor.email,
-    fromEmail: investor.email,
-    fromName: investor.name,
-    type: "Performance Bonus",
-    level: 1,
-    amount: performanceAmount,
-    note: "Direct active referral performance bonus",
-    refId: refId + "-PERFORMANCE"
-  });
+    await sponsor.save();
 }
 
   // Direct Referral Bonus
