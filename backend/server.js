@@ -686,15 +686,25 @@ async function addBonus({
 }
 
 function referralBonusRate(years) {
-  if (Number(years) === 1) return 499;
-  if (Number(years) === 2) return 599;
-  return 699;
+  years = Number(years);
+
+  if (years === 1) return 499;
+  if (years === 3) return 599;
+  if (years === 5) return 699;
+  if (years === 10) return 799;
+
+  return 0;
 }
 
 function performanceBonusRate(years) {
-  if (Number(years) === 1) return 699;
-  if (Number(years) === 2) return 799;
-  return 899;
+  years = Number(years);
+
+  if (years === 1) return 699;
+  if (years === 3) return 799;
+  if (years === 5) return 899;
+  if (years === 10) return 999;
+
+  return 0;
 }
 
 async function processFirstInvestmentBonuses(investorEmail, investment) {
@@ -1993,18 +2003,15 @@ app.post("/renew-invest", async (req, res) => {
 
    await investment.save();
 
-if (!investment.referralBonusGiven) {
-  const investUser = await User.findOne({
-    email: String(investment.email).toLowerCase()
-  });
+const investUser = await User.findOne({
+  email: String(investment.email).toLowerCase()
+});
 
-  await distributeSaveMoneyBonuses(
-    investUser,
-    Number(investment.amount || investment.monthlyAmount || 2000)
+if (investUser) {
+  await processRenewBonuses(
+    investUser.email.toLowerCase(),
+    investment
   );
-
-  investment.referralBonusGiven = true;
-  await investment.save();
 }
 
 res.json({
