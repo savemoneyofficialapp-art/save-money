@@ -339,53 +339,87 @@ cloudinary.config({
 
 
 
-async function payRoyaltyBonus(newInvestorEmail, amount) {
+async function processRoyaltyBonus(userEmail) {
 
-  const newUser = await User.findOne({
-    email: newInvestorEmail
-  });
+    const user = await User.findOne({
+        email: userEmail.toLowerCase()
+    });
 
-  if (!newUser || !newUser.referredBy) return;
+    if (!user) return;
 
-  // sponsor = B
-  const sponsor = await User.findOne({
-    referCode: newUser.referredBy
-  });
+    if (!user.royaltyBonusEnabled) return;
 
-  if (!sponsor || !sponsor.referredBy) return;
+    const directUsers = await User.find({
+        referredBy: user.referCode
+    });
 
-  // owner = A
-  const owner = await User.findOne({
-    referCode: sponsor.referredBy
-  });
+    const directCodes = directUsers.map(x => x.referCode);
 
-  if (!owner) return;
+    const totalBusiness = await Investment.aggregate([
+        {
+            $match: {
+                status: "Active"
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "email",
+                foreignField: "email",
+                as: "user"
+            }
+        },
+        {
+            $unwind: "$user"
+        },
+        {
+            $match: {
+                "user.referredBy": {
+                    $in: directCodes
+                }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                business: {
+                    $sum: "$amount"
+                }
+            }
+        }
+    ]);
 
-  let rb = await RoyaltyBonus.findOne({
-    email: owner.email
-  });
+    const business =
+        totalBusiness[0]?.business || 0;
 
-  if (!rb || !rb.isActive) return;
+    const royaltyAmount =
+        Math.floor(business * 0.03);
 
-  const royalty = Math.floor(amount * 0.01);
+    if (royaltyAmount <= 0) return;
 
-  rb.wallet += royalty;
+    await addBonus({
+        email: user.email,
+        type: "Royalty Bonus",
+        amount: royaltyAmount,
+        note: "3% Royalty from team business",
+        refId:
+          `ROYALTY-${new Date().getFullYear()}-${new Date().getMonth()+1}`
+    });
 
-  rb.thisMonthTurnover += amount;
-
-  rb.history.push({
-    fromUser: newUser.name,
-    investAmount: amount,
-    royalty,
-    date: new Date()
-  });
-
-  await rb.save();
-
-  owner.wallet += royalty;
-
-  await owner.save();
+    await BonusLedger.updateOne(
+        {
+            email: user.email,
+            refId:
+              `ROYALTY-${new Date().getFullYear()}-${new Date().getMonth()+1}`
+        },
+        {
+            $set: {
+                businessAmount: business
+            }
+        }
+    );
 }
+
 
 async function checkKYC(email) {
 
