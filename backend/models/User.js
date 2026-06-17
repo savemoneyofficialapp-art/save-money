@@ -238,6 +238,8 @@ performanceBonusEnabled: {
   default: false
 },
 
+performanceActivatedAt: Date,
+
 teamBonusEnabled: {
   type: Boolean,
   default: false
@@ -246,7 +248,9 @@ teamBonusEnabled: {
 royaltyBonusEnabled: {
   type: Boolean,
   default: false
-}
+},
+
+royaltyActivatedAt: Date,
 
 });
 
