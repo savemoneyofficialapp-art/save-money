@@ -18,7 +18,7 @@ export default function Register() {
   const [showTerms, setShowTerms] = useState(false);
 
   const register = async () => {
-    if (!name || !mobile || !email || !password || !walletAddress) {
+    if (!name || !mobile || !email || !password) {
       toast.warning("Please fill all required fields");
       return;
     }
@@ -42,7 +42,6 @@ export default function Register() {
           email: email.trim().toLowerCase(),
           password,
           walletAddress: walletAddress.trim(),
-          usdtWallet: walletAddress.trim(),
           referCode: referCode.trim(),
           termsAccepted: true
         })
@@ -136,7 +135,7 @@ export default function Register() {
             </button>
           </div>
 
-          <InputBox color="#06b6d4" icon="💰" placeholder="USDT Wallet Address" value={walletAddress} setValue={setWalletAddress} />
+          
           <InputBox color="#f59e0b" icon="🎁" placeholder="Refer Code Optional" value={referCode} setValue={setReferCode} />
 
           <label style={styles.checkRow}>
