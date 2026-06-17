@@ -1874,75 +1874,13 @@ maturityAmount: Number(maturityAmount || 0),
       ]
     });
 
-    // Referral bonus only if referrer has active Save Money investment
-try {
-  const investor = await User.findOne({
-    email: email.toLowerCase()
-  });
-
-  const refCode =
-    investor.referredBy ||
-    investor.referBy ||
-    investor.refBy ||
-    investor.sponsorCode;
-
-  if (refCode) {
-    const referrer = await User.findOne({
-      $or: [
-        { referCode: refCode },
-        { referralCode: refCode },
-        { walletId: refCode }
-      ]
-    });
-
-    if (referrer) {
-      const referrerActiveInvestment =
-        await Investment.findOne({
-          email: referrer.email.toLowerCase(),
-          status: "Active"
-        });
-
-      if (referrerActiveInvestment) {
-        const bonusAmount = 499; // তোমার referral bonus amount
-
-        const oldBalance = Number(
-          referrer.balance ??
-          referrer.wallet ??
-          referrer.walletBalance ??
-          0
-        );
-
-        const newBalance = oldBalance + bonusAmount;
-
-        referrer.balance = newBalance;
-        referrer.wallet = newBalance;
-        referrer.walletBalance = newBalance;
-        referrer.referralIncome =
-          Number(referrer.referralIncome || 0) + bonusAmount;
-
-        await referrer.save();
-
-        await WalletHistory.create({
-          email: referrer.email.toLowerCase(),
-          amount: bonusAmount,
-          type: "Credit",
-          title: "Referral Bonus",
-          status: "Success",
-          description: `Referral bonus received from ${investor.name || investor.email}`,
-          note: "Referral bonus",
-          date: new Date()
-        });
-      } else {
-        console.log(
-          "Referral bonus skipped: Referrer has no active Save Money investment"
-        );
-      }
-    }
-  }
-} catch (bonusErr) {
-  console.log("REFERRAL BONUS ERROR:", bonusErr.message);
-}
+    
 await processFirstInvestmentBonuses(email.toLowerCase(), investment);
+
+    user.activeStatus = "Active";
+user.accountActive = true;
+
+await user.save();
 
    await WalletHistory.create({
   email,
@@ -2037,6 +1975,17 @@ app.post("/renew-invest", async (req, res) => {
       "Renewed";
 
    await investment.save();
+
+    const renewUser = await User.findOne({
+  email: investment.email
+});
+
+if (renewUser) {
+  renewUser.activeStatus = "Active";
+  renewUser.accountActive = true;
+
+  await renewUser.save();
+}
 
 const investUser = await User.findOne({
   email: String(investment.email).toLowerCase()
@@ -4693,6 +4642,8 @@ app.post("/refer-data", async (req, res) => {
   try {
     const { email } = req.body;
 
+    await updateInvestmentStatus(email);
+
     const user = await User.findOne({
       email: String(email || "").toLowerCase()
     });
@@ -4714,7 +4665,7 @@ app.post("/refer-data", async (req, res) => {
     const selfActiveInvestment = await Investment.findOne({
       email: String(user.email).toLowerCase(),
       status: "Active",
-      renewStatus: { $ne: "Expired" }
+      renewStatus: { $ne: "Overdue" }
     });
 
     const memberStatus = selfActiveInvestment
@@ -4734,7 +4685,7 @@ app.post("/refer-data", async (req, res) => {
     const activeInvestments = await Investment.find({
       email: { $in: directEmails },
       status: "Active",
-      renewStatus: { $ne: "Expired" }
+      renewStatus: { $ne: "Overdue" }
     });
 
     const activeEmailSet = new Set(
