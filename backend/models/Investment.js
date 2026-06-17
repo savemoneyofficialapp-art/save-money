@@ -33,9 +33,15 @@ const schema = new mongoose.Schema(
     startDate: Date,
 
     renewStatus: {
-      type: String,
-      default: "Waiting" // Waiting / Open / Overdue / Completed
-    },
+  type: String,
+  enum: [
+    "Waiting",
+    "Renewed",
+    "Overdue",
+    "Completed"
+  ],
+  default: "Waiting"
+},
 
     
 
@@ -52,14 +58,22 @@ const schema = new mongoose.Schema(
     ],
 
     status: {
-      type: String,
-      default: "Active"
-    },
+  type: String,
+  enum: [
+    "Active",
+    "Completed",
+    "Cancelled"
+  ],
+  default: "Active"
+},
 
-    referralBonusGiven: {
-      type: Boolean,
-      default: false
-    }
+     planName: {
+  type: String,
+  default: "Save Money SIP"
+},
+
+    
+    
   },
   {
     timestamps: true
