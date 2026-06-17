@@ -19,9 +19,21 @@ const bonusLedgerSchema = new mongoose.Schema(
       default: ""
     },
 
+    // Referral Bonus / Performance Bonus / Team Bonus / Royalty Bonus
+    type: {
+      type: String,
+      default: ""
+    },
+
+    // referral / performance / team / royalty
     bonusType: {
       type: String,
-      enum: ["referral", "performance", "team", "royalty"],
+      enum: [
+        "referral",
+        "performance",
+        "team",
+        "royalty"
+      ],
       required: true
     },
 
@@ -45,12 +57,27 @@ const bonusLedgerSchema = new mongoose.Schema(
       default: ""
     },
 
+    status: {
+      type: String,
+      default: "Paid"
+    },
+
+    refId: {
+      type: String,
+      default: ""
+    },
+
     date: {
       type: Date,
       default: Date.now
     }
   },
-  { timestamps: true }
+  {
+    timestamps: true
+  }
 );
 
-module.exports = mongoose.model("BonusLedger", bonusLedgerSchema);
+module.exports = mongoose.model(
+  "BonusLedger",
+  bonusLedgerSchema
+);
