@@ -685,18 +685,35 @@ async function addBonus({
     await user.save();
 
     await BonusLedger.create({
-      email: String(email).toLowerCase(),
-      fromEmail,
-      fromName: fromName || "User",
-      type: bonusType,
-      bonusType,
-      level,
-      amount: bonusAmount,
-      note,
-      status: "Paid",
-      refId,
-      date: new Date()
-    });
+  email: String(email).toLowerCase(),
+
+  fromEmail,
+
+  fromName: fromName || "User",
+
+  type: bonusType,
+
+  bonusType:
+    bonusType === "Referral Bonus"
+      ? "referral"
+      : bonusType === "Performance Bonus"
+      ? "performance"
+      : bonusType === "Team Bonus"
+      ? "team"
+      : "royalty",
+
+  level,
+
+  amount: bonusAmount,
+
+  note,
+
+  status: "Paid",
+
+  refId,
+
+  date: new Date()
+});
 
     await WalletHistory.create({
   email: String(email).toLowerCase(),
