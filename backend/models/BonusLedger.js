@@ -27,15 +27,9 @@ const bonusLedgerSchema = new mongoose.Schema(
 
     // referral / performance / team / royalty
     bonusType: {
-      type: String,
-      enum: [
-        "referral",
-        "performance",
-        "team",
-        "royalty"
-      ],
-      required: true
-    },
+  type: String,
+  default: ""
+}
 
     level: {
       type: Number,
