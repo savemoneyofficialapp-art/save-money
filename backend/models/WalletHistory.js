@@ -12,17 +12,32 @@ const walletHistorySchema = new mongoose.Schema(
     type: {
       type: String,
       enum: [
-        "Credit",
-        "Debit",
-        "Admin Credit",
-        "Admin Debit",
-        "Withdraw",
-        "Withdraw Success",
-        "Withdraw Refund",
-        "Daily Reward",
-        "Transfer Sent",
-        "Transfer Received"
-      ],
+
+"Credit",
+"Debit",
+
+"Admin Credit",
+"Admin Debit",
+
+"Withdraw",
+"Withdraw Success",
+"Withdraw Refund",
+
+"Daily Reward",
+
+"Transfer Sent",
+"Transfer Received",
+
+
+"Refer Bonus",
+
+"Performance Bonus",
+
+"Team Bonus",
+
+"Royalty Bonus"
+
+],
       default: "Credit"
     },
 
@@ -30,6 +45,11 @@ const walletHistorySchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+
+    balance:{
+type:Number,
+default:0
+},
 
     title: {
       type: String,
