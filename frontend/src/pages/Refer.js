@@ -110,7 +110,7 @@ export default function Refer() {
     {
       key: "performance",
       title: "Performance Bonus",
-      amount: performance.balance || user.performanceIncome || 0,
+      amount: Number(performance.balance || 0)
       icon: "📈",
       color: "#c026d3",
       bg: "#fff0ff"
@@ -118,7 +118,7 @@ export default function Refer() {
     {
       key: "team",
       title: "Team Bonus",
-      amount: team.balance || user.teamIncome || 0,
+      amount: Number(team.balance || 0)
       icon: "👥",
       color: "#2563eb",
       bg: "#eff6ff"
@@ -126,7 +126,7 @@ export default function Refer() {
     {
       key: "royalty",
       title: "Royalty Bonus",
-      amount: royalty.balance || user.royaltyIncome || 0,
+      amount: Number(royalty.balance || 0)
       icon: "👑",
       color: "#f97316",
       bg: "#fff7ed"
@@ -448,7 +448,23 @@ export default function Refer() {
 }
 
 function BonusHistory({ type, data }) {
-  const rows = (data || []).filter((x) => x.bonusType === type);
+  const rows = (data || []).filter((x) => {
+
+  const t = String(
+    x.bonusType || x.type || ""
+  ).toLowerCase();
+
+  if (type === "performance")
+    return t.includes("performance");
+
+  if (type === "team")
+    return t.includes("team");
+
+  if (type === "royalty")
+    return t.includes("royalty");
+
+  return false;
+});
 
   return (
     <div style={{ marginTop: 20 }}>
