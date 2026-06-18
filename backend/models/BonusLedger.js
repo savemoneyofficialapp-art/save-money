@@ -20,16 +20,38 @@ const bonusLedgerSchema = new mongoose.Schema(
     },
 
     // Referral Bonus / Performance Bonus / Team Bonus / Royalty Bonus
-    type: {
-      type: String,
-      default: ""
-    },
+    type:{
+type:String,
+
+enum:[
+
+"Refer Bonus",
+
+"Performance Bonus",
+
+"Team Bonus",
+
+"Royalty Bonus"
+
+],
+
+default:"Refer Bonus"
+
+},
 
     // referral / performance / team / royalty
-    bonusType: {
-  type: String,
-  default: ""
-}
+    bonusType:{
+type:String,
+
+enum:[
+"refer",
+"performance",
+"team",
+"royalty"
+],
+
+default:"refer"
+},
 
     level: {
       type: Number,
@@ -40,6 +62,27 @@ const bonusLedgerSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+
+    month:{
+type:Number,
+default:new Date().getMonth()+1
+},
+    
+    year:{
+type:Number,
+default:new Date().getFullYear()
+},
+
+    fromPhoto:{
+type:String,
+default:""
+},
+
+    fromMobile:{
+type:String,
+default:""
+},
+    
 
     businessAmount: {
       type: Number,
