@@ -44,10 +44,6 @@ refreshToken: {
   default: ""
 },
 
-banned: {
-  type: Boolean,
-  default: false
-},
 
 banned: {
   type: Boolean,
@@ -90,9 +86,9 @@ pan:{
   default:""
 },
 
-  referralIncome: {
-  type: Number,
-  default: 0
+  referIncome:{
+type:Number,
+default:0
 },
 
 performanceIncome: {
@@ -251,6 +247,71 @@ royaltyBonusEnabled: {
 },
 
 royaltyActivatedAt: Date,
+  
+  performanceTaskCompleted:{
+type:Boolean,
+default:false
+},
+
+performanceDeadline:{
+type:Date,
+default:null
+},
+
+directCount:{
+type:Number,
+default:0
+},
+
+requiredDirect:{
+type:Number,
+default:10
+},
+
+royaltyRequired:{
+type:Number,
+default:50
+},
+
+firstInvestmentDone:{
+type:Boolean,
+default:false
+},
+
+firstInvestmentDate:{
+type:Date,
+default:null
+},
+
+kycRejectReason:{
+type:String,
+default:""
+},
+
+aadhaarNumber:{
+type:String,
+default:""
+},
+
+panNumber:{
+type:String,
+default:""
+},
+
+performanceBonusDisabled:{
+type:Boolean,
+default:false
+},
+
+teamBonusDisabled:{
+type:Boolean,
+default:false
+},
+
+royaltyBonusDisabled:{
+type:Boolean,
+default:false
+},
 
 });
 
