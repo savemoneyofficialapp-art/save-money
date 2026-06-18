@@ -4874,9 +4874,7 @@ app.post("/refer-data", async (req, res) => {
         ? "Active"
         : "Inactive",
 
-      earning: Number(
-        u.referralIncome || 0
-      ),
+      earning: 0
 
       photo: u.photo || ""
     }));
