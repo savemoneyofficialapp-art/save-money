@@ -1272,7 +1272,6 @@ app.post("/register", async (req, res) => {
       mobile,
       email,
       password,
-      walletAddress,
       referCode
     } = req.body;
 
@@ -1281,8 +1280,7 @@ app.post("/register", async (req, res) => {
       !name ||
       !mobile ||
       !email ||
-      !password ||
-      !walletAddress
+      !password
     ) {
       return res.status(400).json({
         msg: "Please fill all required fields"
