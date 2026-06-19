@@ -772,6 +772,209 @@ return 699;
 
 }
 
+function royaltyAmount(
+
+
+business
+
+
+){
+
+return Math.floor(
+
+
+business*0.03
+
+
+);
+
+}
+
+      async function checkRoyaltyEligibility(
+
+
+email
+
+
+){
+
+const rb=await RoyaltyBonus.findOne({
+
+email
+
+});
+
+
+if(!rb) return;
+
+
+
+const user=await User.findOne({
+
+email
+
+});
+
+
+if(!user) return;
+
+
+
+const directs=await User.countDocuments({
+
+referredBy:user.referCode
+
+});
+
+
+
+rb.directCount=directs;
+
+
+
+if(
+
+
+directs>=50
+
+){
+
+
+rb.isActive=true;
+
+
+}
+
+
+
+await rb.save();
+
+
+      }
+
+async function giveRoyaltyBonus(
+
+
+investor,
+investment
+
+
+){
+
+
+
+
+if(!investor.referredBy){
+
+return;
+}
+
+
+
+
+const sponsor=await User.findOne({
+
+
+referCode:
+investor.referredBy
+
+
+});
+
+
+
+if(!sponsor){
+
+return;
+}
+
+const business=Number(
+
+investment.monthlyAmount
+
+);
+
+
+const rb=await RoyaltyBonus.findOne({
+
+
+email:sponsor.email
+
+
+});
+
+
+
+if(!rb){
+
+return;
+}
+
+
+
+
+if(!rb.isActive){
+
+return;
+}
+
+
+
+if(
+
+rb.isFailed
+
+){
+
+return;
+
+}
+
+  const business=Number(
+
+investment.monthlyAmount
+
+);
+
+
+
+const royalty=royaltyAmount(
+
+business
+
+);
+
+  rb.wallet+=royalty;
+
+rb.totalEarned+=royalty;
+
+
+rb.totalBusiness+=business;
+
+
+rb.thisMonthBusiness+=business;
+
+  rb.history.push({
+
+
+fromUser:investor.name,
+
+
+investAmount:business,
+
+
+royalty,
+
+
+date:new Date()
+
+
+});
+
+
+
+await rb.save();
+
 async function processFirstInvestmentBonuses(investorEmail, investment) {
   const investor = await User.findOne({ email: investorEmail });
   if (!investor || !investor.referredBy) return;
@@ -1207,6 +1410,12 @@ refId:
 
 });
 
+  await checkRoyaltyEligibility(
+
+sponsor.email
+
+);
+
 
 }
 async function updateInvestmentStatus(email) {
@@ -1529,7 +1738,7 @@ app.post("/register", async (req, res) => {
         minLength: 6,
         minNumbers: 1,
         minLowercase: 1,
-        minUppercase: 0,
+        minUppercase: 1,
         minSymbols: 0
       })
     ) {
@@ -1603,8 +1812,6 @@ app.post("/register", async (req, res) => {
 
       password: hashedPassword,
 
-      walletAddress,
-
       referCode: myReferCode,
 
       referredBy,
@@ -1617,7 +1824,7 @@ app.post("/register", async (req, res) => {
 
       totalIncome: 0,
 
-      referralIncome: 0,
+      referIncome: 0,
 
       performanceIncome: 0,
 
@@ -1663,6 +1870,12 @@ challengeStart:new Date(),
 
 deadline
 
+
+});
+
+    await RoyaltyBonus.create({
+
+email:newUser.email
 
 });
 
