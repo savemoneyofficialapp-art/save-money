@@ -1093,67 +1093,131 @@ refId+
   }
 }
 
-async function processRenewBonuses(investorEmail, investment) {
-  const investor = await User.findOne({ email: investorEmail });
-  if (!investor || !investor.referredBy) return;
+async function processRenewBonuses(
+investorEmail,
+investment
+){
 
-  const sponsor = await User.findOne({ referCode: investor.referredBy });
-  if (!sponsor) return;
+const investor=await User.findOne({
+email:investorEmail
+});
 
-  const pb = await PerformanceBonus.findOne({ email: sponsor.email });
 
-  if (!pb || !pb.isActive || pb.isFailed) return;
+if(!investor) return;
 
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+if(!investor.referredBy) return;
 
-  const monthlyNewDirect = await User.findOne({
-    referredBy: sponsor.referCode,
-    createdAt: { $gte: monthStart }
-  });
 
-  const renewRefId = `RENEW-${investment._id}-${investment.monthsPaid}`;
+const sponsor=await User.findOne({
 
-  if (!monthlyNewDirect) {
-    pb.history.push({
-      fromUser: investor.name,
-      amount: 0,
-      plan: investment.years + " Year",
-      date: new Date(),
-      status: "Pending"
-    });
+referCode:investor.referredBy
 
-    await pb.save();
-    return;
-  }
+});
 
-  const bonus = performanceBonusRate(investment.years);
 
-  pb.thisMonthBonus += bonus;
-  pb.totalBonus += bonus;
+if(!sponsor) return;
 
-  pb.history.push({
-    fromUser: investor.name,
-    amount: bonus,
-    plan: investment.years + " Year",
-    date: new Date(),
-    status: "Paid"
-  });
 
-  await pb.save();
 
-  await addBonus({
-    email: sponsor.email,
-    fromEmail: investor.email,
-    fromName: investor.name,
-    type: "Performance Bonus",
-    level: 0,
-    amount: bonus,
-    note: "Monthly renewal performance bonus",
-    refId: renewRefId + "-PERFORMANCE"
-  });
+if(!sponsor.performanceBonusEnabled){
+
+return;
 }
 
+
+
+if(sponsor.disablePerformanceBonus){
+
+return;
+}
+
+
+
+const activeInvestment=await Investment.findOne({
+
+email:sponsor.email,
+
+status:"Active"
+
+});
+
+
+if(!activeInvestment){
+
+return;
+}
+
+
+
+const amount=performanceBonusRate(
+
+investment.years
+
+);
+
+
+
+sponsor.wallet+=amount;
+
+sponsor.balance+=amount;
+
+sponsor.totalIncome+=amount;
+
+sponsor.performanceIncome+=amount;
+
+
+await sponsor.save();
+
+
+
+await WalletHistory.create({
+
+email:sponsor.email,
+
+type:"Credit",
+
+amount,
+
+title:"Performance Bonus",
+
+description:`${investor.name} renewed investment`,
+
+status:"Success"
+
+});
+
+
+
+await BonusLedger.create({
+
+email:sponsor.email,
+
+fromEmail:investor.email,
+
+fromName:investor.name,
+
+type:"Performance Bonus",
+
+bonusType:"performance",
+
+amount,
+
+level:0,
+
+status:"Paid",
+
+businessAmount:
+investment.monthlyAmount,
+
+note:"Renew Performance Bonus",
+
+refId:
+"PF-"+investment._id
+
+});
+
+
+}
 async function updateInvestmentStatus(email) {
   const user = await User.findOne({ email });
   if (!user) return;
