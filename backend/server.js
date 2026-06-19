@@ -757,27 +757,18 @@ function referralBonusRate(years) {
   return 0;
 }
 
-function performanceRate(years){
+function performanceBonusRate(years){
+
+years=Number(years);
 
 
-if(years>=10)
-return 999;
+if(years>=10) return 999;
 
+if(years>=5) return 899;
 
-
-if(years>=5)
-return 899;
-
-
-
-if(years>=3)
-return 799;
-
-
+if(years>=3) return 799;
 
 return 699;
-
-
 
 }
 
