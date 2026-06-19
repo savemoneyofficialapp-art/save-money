@@ -38,6 +38,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
+const giveTeamBonus=require("./utils/giveTeamBonus");
 
 
 
@@ -828,55 +829,165 @@ const refId = `FIRST-${investment._id}`;
     refId: refId + "-REF"
   });
 
-  // Team Bonus: Sponsor's uplines get bonus
-  const level1Owner = sponsor.referredBy
-    ? await User.findOne({ referCode: sponsor.referredBy })
-    : null;
+  /*==================================
+TEAM BONUS
+===================================*/
 
-  const level2Owner = level1Owner?.referredBy
-    ? await User.findOne({ referCode: level1Owner.referredBy })
-    : null;
 
-  const level3Owner = level2Owner?.referredBy
-    ? await User.findOne({ referCode: level2Owner.referredBy })
-    : null;
+const sponsor1 = sponsor;
 
-  const teamPayouts = [
-    { user: level1Owner, level: 1, amount: 70 },
-    { user: level2Owner, level: 2, amount: 50 },
-    { user: level3Owner, level: 3, amount: 35 }
-  ];
 
-  for (let p of teamPayouts) {
-    if (!p.user) continue;
+const sponsor2 = sponsor1.referredBy
+? await User.findOne({
+referCode:sponsor1.referredBy
+})
+:null;
 
-    const tb = await TeamBonus.findOne({ email: p.user.email });
 
-    if (tb && tb.isActive && !tb.isFailed) {
-      tb.wallet += p.amount;
 
-      tb.history.push({
-        fromUser: investor.name,
-        level: p.level,
-        amount: p.amount,
-        date: new Date(),
-        status: "Paid"
-      });
+const sponsor3 = sponsor2?.referredBy
+? await User.findOne({
+referCode:sponsor2.referredBy
+})
+:null;
 
-      await tb.save();
 
-      await addBonus({
-        email: p.user.email,
-        fromEmail: investor.email,
-        fromName: investor.name,
-        type: "Team Bonus",
-        level: p.level,
-        amount: p.amount,
-        note: `Level ${p.level} first investment bonus`,
-        refId: refId + "-TEAM-" + p.level
-      });
-    }
-  }
+
+const sponsor4 = sponsor3?.referredBy
+? await User.findOne({
+referCode:sponsor3.referredBy
+})
+:null;
+
+
+
+
+const payouts=[
+
+{
+user:sponsor2,
+level:1,
+amount:70
+},
+
+{
+user:sponsor3,
+level:2,
+amount:50
+},
+
+{
+user:sponsor4,
+level:3,
+amount:35
+}
+
+];
+
+
+
+
+
+for(const p of payouts){
+
+
+if(!p.user) continue;
+
+
+
+const tb=await TeamBonus.findOne({
+
+email:p.user.email
+
+});
+
+
+
+if(!tb) continue;
+
+
+if(!tb.isActive) continue;
+
+
+if(tb.isFailed) continue;
+
+
+
+
+
+tb.wallet+=p.amount;
+
+
+
+
+tb.history.push({
+
+
+fromUser:investor.name,
+
+
+fromEmail:investor.email,
+
+
+level:p.level,
+
+
+amount:p.amount,
+
+
+status:"Paid",
+
+
+date:new Date()
+
+
+});
+
+
+
+await tb.save();
+
+
+
+
+await addBonus({
+
+
+email:p.user.email,
+
+
+fromEmail:investor.email,
+
+
+fromName:investor.name,
+
+
+type:"Team Bonus",
+
+
+bonusType:"team",
+
+
+level:p.level,
+
+
+amount:p.amount,
+
+
+note:`Level ${p.level} Team Bonus`,
+
+
+refId:
+refId+
+"-TEAM-"+p.level
+
+
+
+});
+
+
+
+}
 
   // Royalty Bonus
   const directSponsor = sponsor;
