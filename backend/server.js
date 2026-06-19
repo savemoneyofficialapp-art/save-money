@@ -757,15 +757,28 @@ function referralBonusRate(years) {
   return 0;
 }
 
-function performanceBonusRate(years) {
-  years = Number(years);
+function performanceRate(years){
 
-  if (years === 1) return 699;
-  if (years === 3) return 799;
-  if (years === 5) return 899;
-  if (years === 10) return 999;
 
-  return 0;
+if(years>=10)
+return 999;
+
+
+
+if(years>=5)
+return 899;
+
+
+
+if(years>=3)
+return 799;
+
+
+
+return 699;
+
+
+
 }
 
 async function processFirstInvestmentBonuses(investorEmail, investment) {
@@ -773,6 +786,56 @@ async function processFirstInvestmentBonuses(investorEmail, investment) {
   if (!investor || !investor.referredBy) return;
 
   const sponsor = await User.findOne({ referCode: investor.referredBy });
+  let pb=await PerformanceBonus.findOne({
+
+email:sponsor.email
+
+});
+
+
+
+if(pb){
+
+
+pb.directCount=activeDirectCount;
+
+
+
+
+if(
+
+activeDirectCount>=10 &&
+
+new Date()<pb.deadline
+
+){
+
+pb.isActive=true;
+
+pb.activatedAt=new Date();
+
+}
+
+
+
+if(
+
+activeDirectCount<10 &&
+
+new Date()>pb.deadline
+
+){
+
+pb.isFailed=true;
+
+}
+
+
+
+
+await pb.save();
+
+}
   if (!sponsor) return;
 
   const sponsorActiveInvestment = await Investment.findOne({
@@ -1526,6 +1589,27 @@ app.post("/register", async (req, res) => {
     });
 
     await newUser.save();
+
+    const deadline=new Date();
+
+
+deadline.setDate(
+deadline.getDate()+30
+);
+
+
+
+await PerformanceBonus.create({
+
+email:newUser.email,
+
+
+challengeStart:new Date(),
+
+deadline
+
+
+});
 
     // notification
     try {
