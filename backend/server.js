@@ -975,6 +975,81 @@ date:new Date()
 
 await rb.save();
 
+  sponsor.wallet+=royalty;
+
+
+sponsor.balance+=royalty;
+
+
+sponsor.royaltyIncome+=royalty;
+
+
+sponsor.totalIncome+=royalty;
+
+
+
+await sponsor.save();
+
+await WalletHistory.create({
+
+
+email:sponsor.email,
+
+
+type:"Credit",
+
+
+amount:royalty,
+
+
+title:"Royalty Bonus",
+
+
+
+description:
+
+`${investor.name} business royalty`,
+
+
+
+status:"Success"
+
+});
+
+  await BonusLedger.create({
+
+
+email:sponsor.email,
+
+
+fromEmail:investor.email,
+
+
+fromName:investor.name,
+
+
+type:"Royalty Bonus",
+
+
+bonusType:"royalty",
+
+
+amount:royalty,
+
+
+businessAmount:business,
+
+
+status:"Paid",
+
+
+refId:
+
+"ROY-"+investment._id
+
+
+});
+  
 async function processFirstInvestmentBonuses(investorEmail, investment) {
   const investor = await User.findOne({ email: investorEmail });
   if (!investor || !investor.referredBy) return;
@@ -1246,42 +1321,15 @@ refId+
 
 }
 
-  // Royalty Bonus
-  const directSponsor = sponsor;
+  await checkRoyaltyEligibility(
+sponsor.email
+);
 
-  if (directSponsor.referredBy) {
-    const royaltyOwner = await User.findOne({
-      referCode: directSponsor.referredBy
-    });
 
-    if (royaltyOwner) {
-      const rb = await RoyaltyBonus.findOne({ email: royaltyOwner.email });
-
-      if (rb && rb.isActive) {
-        const royalty = Math.floor(investment.monthlyAmount * 0.03);
-
-        rb.wallet += royalty;
-        rb.thisMonthTurnover += investment.monthlyAmount;
-
-        rb.history.push({
-          fromUser: investor.name,
-          investAmount: investment.monthlyAmount,
-          royalty,
-          date: new Date()
-        });
-
-        await rb.save();
-
-        await addBonus({
-          email: royaltyOwner.email,
-          fromEmail: investor.email,
-          fromName: investor.name,
-          type: "Royalty Bonus",
-          level: 0,
-          amount: royalty,
-          note: "3% royalty from network first investment",
-          refId: refId + "-ROYALTY"
-        });
+await giveRoyaltyBonus(
+investor,
+investment
+);
       }
     }
   }
@@ -1410,12 +1458,7 @@ refId:
 
 });
 
-  await checkRoyaltyEligibility(
-
-sponsor.email
-
-);
-
+  
 
 }
 async function updateInvestmentStatus(email) {
