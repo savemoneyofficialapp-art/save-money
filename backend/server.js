@@ -2981,26 +2981,48 @@ app.post(
   ]),
   async (req, res) => {
     try {
-      const { email, aadhaar, pan  } = req.body;
+      const email = String(req.body.email || "").toLowerCase();
+
+const aadhaarNumber =
+req.body.aadhaarNumber ||
+req.body.aadhaar ||
+"";
+
+const panNumber =
+req.body.panNumber ||
+req.body.pan ||
+"";
       await sendNotification(email, "KYC Submitted Successfully");
 
       console.log("KYC API HIT:", email);
 
       await User.updateOne(
-  { email },
-  {
-    aadhaar,
-    pan,
 
-    aadhaarFile:req.files.aadhaarFile[0].path,
-    panFile:req.files.panFile[0].path,
-    photo:req.files.photo[0].path,
+{ email },
 
-    kycStatus:"reviewing",
+{
 
-    kycRejectReason:"",
-    rejectReason:""
-  }
+aadhaar: aadhaarNumber,
+
+pan: panNumber,
+
+aadhaarNumber: aadhaarNumber,
+
+panNumber: panNumber,
+
+
+aadhaarFile:req.files.aadhaarFile[0].path,
+
+panFile:req.files.panFile[0].path,
+
+photo:req.files.photo[0].path,
+
+kycStatus:"reviewing",
+
+kycRejectReason:""
+
+}
+
 );
       await createNotification(email, "KYC Submitted Successfully");
 
