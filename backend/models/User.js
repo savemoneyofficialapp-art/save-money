@@ -153,11 +153,12 @@ balance: {
   kycStatus:{
   type:String,
   enum:[
+    "Not Submitted"
     "reviewing",
     "approved",
     "rejected"
   ],
-  default:"reviewing"
+  default:"Not Submitted"
 },
 
 kycRejectReason:{
