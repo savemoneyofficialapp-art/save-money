@@ -3362,52 +3362,157 @@ app.get("/all-users",auth, adminAuth, async (req, res) => {
   res.json(data);
 });
 
-app.get("/pending-kyc", auth, adminAuth, async (req, res) => {
+app.get("/pending-kyc", auth, adminAuth, async (req,res)=>{
 
-  try {
+try{
 
-    const users = await User.find({
+const users = await User.find({
 
-      kycStatus: {
-        $in: ["reviewing", "pending"]
-      }
+kycStatus:{
+$in:[
+"reviewing",
+"pending",
+"Pending",
+"Reviewing"
+]
+}
 
-    }).select("-password");
+})
+.select("-password");
 
 
-    res.json({
-      success: true,
-      users
-    });
+res.json(users);
 
 
-  } catch (err) {
+}
 
-    console.log(err);
+catch(err){
 
-    res.status(500).json({
-      success: false,
-      msg: "Server error"
-    });
+console.log(err);
 
-  }
+res.status(500).json({
+msg:"Server error"
+})
 
-});
+}
 
-app.post("/approve-kyc", auth, adminAuth, async (req, res) => {
-  try {
-    const { userId } = req.body;
+})
 
-    await User.findByIdAndUpdate(userId, {
-      kycStatus: "approved"
-    });
+app.post("/approve-kyc",auth,adminAuth,async(req,res)=>{
 
-    res.json({ msg: "KYC Approved" });
 
-  } catch (err) {
-    res.status(500).json({ msg: "Server error" });
-  }
-});
+try{
+
+
+const {userId}=req.body;
+
+
+
+await User.findByIdAndUpdate(
+
+userId,
+
+{
+
+kycStatus:"approved",
+
+kycRejectReason:""
+
+}
+
+);
+
+
+
+res.json({
+
+success:true,
+
+msg:"KYC Approved"
+
+})
+
+
+}
+
+catch(err){
+
+
+res.status(500).json({
+
+success:false,
+
+msg:"Server error"
+
+})
+
+
+}
+
+
+})
+
+app.post("/reject-kyc",auth,adminAuth,async(req,res)=>{
+
+
+try{
+
+
+const{
+
+userId,
+
+reason
+
+}=req.body;
+
+
+
+
+await User.findByIdAndUpdate(
+
+userId,
+
+{
+
+kycStatus:"rejected",
+
+kycRejectReason:reason
+
+}
+
+);
+
+
+
+res.json({
+
+success:true,
+
+msg:"KYC Rejected"
+
+})
+
+
+}
+
+
+catch(err){
+
+res.status(500).json({
+
+success:false,
+
+msg:"Server error"
+
+})
+
+}
+
+
+})
+
+
 app.post("/reply-ticket", auth, adminAuth, async (req, res) => {
   try {
     const { ticketId, message } = req.body;
@@ -3817,43 +3922,7 @@ app.post("/close-ticket", auth, async (req, res) => {
   res.json({ msg: "Ticket closed" });
 });
 
-app.post("/approve-kyc",
-auth,
-adminAuth,
-async (req, res) => {
 
-  const { userId } = req.body;
-
-  const user = await User.findById(userId);
-
-  user.kycStatus = "approved";
-
-  await user.save();
-
-  res.json({
-    msg: "KYC Approved"
-  });
-
-});
-
-app.post("/reject-kyc",
-auth,
-adminAuth,
-async (req, res) => {
-
-  const { userId } = req.body;
-
-  const user = await User.findById(userId);
-
-  user.kycStatus = "rejected";
-
-  await user.save();
-
-  res.json({
-    msg: "KYC Rejected"
-  });
-
-});
 
 app.get("/cash-requests", auth, adminAuth, async (req, res) => {
   try {
