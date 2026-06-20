@@ -521,6 +521,15 @@ export default function AdminDashboard() {
             <h3>{u.name}</h3>
             <p>{u.email}</p>
             <p>Mobile: {u.mobile}</p>
+          <p>
+  <b>Aadhaar:</b>{" "}
+  {u.aadhaarNumber || u.aadhaar || "Not Submitted"}
+</p>
+
+<p>
+  <b>PAN:</b>{" "}
+  {u.panNumber || u.pan || "Not Submitted"}
+</p>
 
             <div style={styles.docGrid}>
               {u.aadhaarFile && (
