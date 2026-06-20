@@ -153,20 +153,17 @@ balance: {
   kycStatus:{
   type:String,
   enum:[
-    "Pending",
-    "Approved",
-    "Rejected",
+    "reviewing",
     "approved",
-    "pending",
     "rejected"
   ],
-  default:"Pending"
+  default:"reviewing"
 },
 
-kycRejectReason: {
-  type: String,
-  default: ""
-},
+kycRejectReason:{
+   type:String,
+   default:""
+}
 
   // ðŸ”¹ FILE UPLOAD PATHS
   aadhaarFile: {
