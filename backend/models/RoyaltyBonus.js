@@ -1,87 +1,41 @@
-const mongoose=require("mongoose");
+const mongoose = require("mongoose");
 
-const schema=new mongoose.Schema({
+const royaltySchema = new mongoose.Schema({
 
+  email: String,
 
-email:String,
+  directCount: {
+    type: Number,
+    default: 0
+  },
 
+  isActive: {
+    type: Boolean,
+    default: false
+  },
 
-directCount:{
-type:Number,
-default:0
-},
+  wallet: {
+    type: Number,
+    default: 0
+  },
 
+  thisMonthTurnover: {
+    type: Number,
+    default: 0
+  },
 
-requiredDirect:{
-type:Number,
-default:50
-},
-
-
-
-isActive:{
-type:Boolean,
-default:false
-},
-
-
-
-isFailed:{
-type:Boolean,
-default:false
-},
-
-
-
-wallet:{
-type:Number,
-default:0
-},
-
-
-
-thisMonthBusiness:{
-type:Number,
-default:0
-},
-
-
-
-totalBusiness:{
-type:Number,
-default:0
-},
-
-
-
-totalEarned:{
-type:Number,
-default:0
-},
-
-
-
-
-history:[{
-
-fromUser:String,
-
-investAmount:Number,
-
-royalty:Number,
-
-date:Date
-
-}]
-
-
+  history: [
+    {
+      fromUser: String,
+      investAmount: Number,
+      royalty: Number,
+      date: Date
+    }
+  ]
 
 });
 
-
-module.exports=mongoose.model(
-
-"RoyaltyBonus",
-schema
-
+module.exports = mongoose.model(
+  "RoyaltyBonus",
+  royaltySchema
 );
