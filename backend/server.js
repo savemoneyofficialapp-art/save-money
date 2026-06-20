@@ -1055,6 +1055,15 @@ async function processFirstInvestmentBonuses(investorEmail, investment) {
   if (!investor || !investor.referredBy) return;
 
   const sponsor = await User.findOne({ referCode: investor.referredBy });
+
+if(!sponsor) return;
+
+
+// Admin Bonus Disable
+if(sponsor.disableBonus)
+   return;
+
+  
   let pb=await PerformanceBonus.findOne({
 
 email:sponsor.email
