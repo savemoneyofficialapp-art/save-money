@@ -81,13 +81,23 @@ banReason: {
 
   // ðŸ”¹ DOCUMENT INFO
   aadhaar:{
-  type:String,
-  default:""
+type:String,
+default:""
 },
 
 pan:{
-  type:String,
-  default:""
+type:String,
+default:""
+},
+
+aadhaarNumber:{
+type:String,
+default:""
+},
+
+panNumber:{
+type:String,
+default:""
 },
 
   referralIncome: {
