@@ -1336,7 +1336,7 @@ app.post("/register", async (req, res) => {
 
       activeStatus: "Inactive",
 
-      kycStatus: "Pending",
+      kycStatus: "Not Submitted",
 
       banned: false,
 
