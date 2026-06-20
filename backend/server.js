@@ -2878,15 +2878,23 @@ const panFile = req.files["panFile"][0].path;
 const photo = req.files["photo"][0].path;
 
   await User.updateOne(
-    { email },
-    {
-      aadhaarFile,
-      panFile,
-      photo,
-      kycStatus: "pending",
-      rejectReason: "" // 🔥 reset
-    }
-  );
+
+{email},
+
+{
+
+aadhaarFile,
+panFile,
+photo,
+
+kycStatus:"reviewing",
+
+rejectReason:"",
+kycRejectReason:""
+
+}
+
+);
 
   res.json({ msg: "KYC submitted again" });
 });
@@ -2979,16 +2987,21 @@ app.post(
       console.log("KYC API HIT:", email);
 
       await User.updateOne(
-        { email },
-        { aadhaar, 
-          pan,
+  { email },
+  {
+    aadhaar,
+    pan,
 
-          aadhaarFile: req.files.aadhaarFile[0].path,
-          panFile: req.files.panFile[0].path,
-          photo: req.files.photo[0].path,
-          kycStatus: "reviewing"
-        }
-      );
+    aadhaarFile:req.files.aadhaarFile[0].path,
+    panFile:req.files.panFile[0].path,
+    photo:req.files.photo[0].path,
+
+    kycStatus:"reviewing",
+
+    kycRejectReason:"",
+    rejectReason:""
+  }
+);
       await createNotification(email, "KYC Submitted Successfully");
 
       res.json({ msg: "KYC Submitted Successfully" });
@@ -3035,7 +3048,7 @@ app.post("/kyc-info", async (req, res) => {
 
 app.get("/kyc-list", async (req, res) => {
 
-  const users = await User.find({ kycStatus: "pending" });
+  const users = await User.find({ kycStatus: "reviewing" });
 
   res.json(users);
 });
@@ -3264,7 +3277,7 @@ app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
   });
 
   const kycPending = await User.countDocuments({
-    kycStatus: { $ne: "approved" }
+    kycStatus: "reviewing"
   });
 
   const totalInvestment = await Investment.aggregate([
@@ -3356,7 +3369,7 @@ app.get("/pending-kyc", auth, adminAuth, async (req, res) => {
     const users = await User.find({
 
       kycStatus: {
-        $in: ["Reviewing", "Pending"]
+        $in: ["reviewing", "pending"]
       }
 
     }).select("-password");
