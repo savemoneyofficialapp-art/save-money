@@ -163,7 +163,7 @@ balance: {
 kycRejectReason:{
    type:String,
    default:""
-}
+},
 
   // ðŸ”¹ FILE UPLOAD PATHS
   aadhaarFile: {
