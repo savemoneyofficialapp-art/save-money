@@ -3350,15 +3350,35 @@ app.get("/all-users",auth, adminAuth, async (req, res) => {
 });
 
 app.get("/pending-kyc", auth, adminAuth, async (req, res) => {
+
   try {
+
     const users = await User.find({
-      kycStatus: { $in: ["Pending", "pending"] }
+
+      kycStatus: {
+        $in: ["reviewing", "pending"]
+      }
+
     }).select("-password");
 
-    res.json(users);
+
+    res.json({
+      success: true,
+      users
+    });
+
+
   } catch (err) {
-    res.status(500).json({ msg: "Server error" });
+
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+
   }
+
 });
 
 app.post("/approve-kyc", auth, adminAuth, async (req, res) => {
