@@ -38,7 +38,6 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
-const giveTeamBonus=require("./utils/giveTeamBonus");
 
 
 
@@ -340,87 +339,53 @@ cloudinary.config({
 
 
 
-async function processRoyaltyBonus(userEmail) {
+async function payRoyaltyBonus(newInvestorEmail, amount) {
 
-    const user = await User.findOne({
-        email: userEmail.toLowerCase()
-    });
+  const newUser = await User.findOne({
+    email: newInvestorEmail
+  });
 
-    if (!user) return;
+  if (!newUser || !newUser.referredBy) return;
 
-    if (!user.royaltyBonusEnabled) return;
+  // sponsor = B
+  const sponsor = await User.findOne({
+    referCode: newUser.referredBy
+  });
 
-    const directUsers = await User.find({
-        referredBy: user.referCode
-    });
+  if (!sponsor || !sponsor.referredBy) return;
 
-    const directCodes = directUsers.map(x => x.referCode);
+  // owner = A
+  const owner = await User.findOne({
+    referCode: sponsor.referredBy
+  });
 
-    const totalBusiness = await Investment.aggregate([
-        {
-            $match: {
-                status: "Active"
-            }
-        },
-        {
-            $lookup: {
-                from: "users",
-                localField: "email",
-                foreignField: "email",
-                as: "user"
-            }
-        },
-        {
-            $unwind: "$user"
-        },
-        {
-            $match: {
-                "user.referredBy": {
-                    $in: directCodes
-                }
-            }
-        },
-        {
-            $group: {
-                _id: null,
-                business: {
-                    $sum: "$amount"
-                }
-            }
-        }
-    ]);
+  if (!owner) return;
 
-    const business =
-        totalBusiness[0]?.business || 0;
+  let rb = await RoyaltyBonus.findOne({
+    email: owner.email
+  });
 
-    const royaltyAmount =
-        Math.floor(business * 0.03);
+  if (!rb || !rb.isActive) return;
 
-    if (royaltyAmount <= 0) return;
+  const royalty = Math.floor(amount * 0.01);
 
-    await addBonus({
-        email: user.email,
-        type: "Royalty Bonus",
-        amount: royaltyAmount,
-        note: "3% Royalty from team business",
-        refId:
-          `ROYALTY-${new Date().getFullYear()}-${new Date().getMonth()+1}`
-    });
+  rb.wallet += royalty;
 
-    await BonusLedger.updateOne(
-        {
-            email: user.email,
-            refId:
-              `ROYALTY-${new Date().getFullYear()}-${new Date().getMonth()+1}`
-        },
-        {
-            $set: {
-                businessAmount: business
-            }
-        }
-    );
+  rb.thisMonthTurnover += amount;
+
+  rb.history.push({
+    fromUser: newUser.name,
+    investAmount: amount,
+    royalty,
+    date: new Date()
+  });
+
+  await rb.save();
+
+  owner.wallet += royalty;
+
+  await owner.save();
 }
-
 
 async function checkKYC(email) {
 
@@ -664,8 +629,7 @@ async function addBonus({
     user.wallet = Number(user.wallet || 0) + bonusAmount;
     user.balance = Number(user.balance || 0) + bonusAmount;
     user.walletBalance = Number(user.walletBalance || 0) + bonusAmount;
-    user.totalIncome =
-  Number(user.totalIncome || 0) + bonusAmount;
+    user.totalEarning = Number(user.totalEarning || 0) + bonusAmount;
 
     if (bonusType === "Referral Bonus") {
       user.referralIncome = Number(user.referralIncome || 0) + bonusAmount;
@@ -686,52 +650,27 @@ async function addBonus({
     await user.save();
 
     await BonusLedger.create({
-  email: String(email).toLowerCase(),
-
-  fromEmail,
-
-  fromName: fromName || "User",
-
-  type: bonusType,
-
-  bonusType:
-    bonusType === "Referral Bonus"
-      ? "referral"
-      : bonusType === "Performance Bonus"
-      ? "performance"
-      : bonusType === "Team Bonus"
-      ? "team"
-      : "royalty",
-
-  level,
-
-  amount: bonusAmount,
-
-  note,
-
-  status: "Paid",
-
-  refId,
-
-  date: new Date()
-});
+      email: String(email).toLowerCase(),
+      fromEmail,
+      fromName: fromName || "User",
+      type: bonusType,
+      bonusType,
+      level,
+      amount: bonusAmount,
+      note,
+      status: "Paid",
+      refId,
+      date: new Date()
+    });
 
     await WalletHistory.create({
-  email: String(email).toLowerCase(),
-  amount: bonusAmount,
-
-  type: "Credit",
-
-  title: bonusType,
-
-  description:
-    note ||
-    `${bonusType} received from ${fromName}`,
-
-  status: "Success",
-
-  date: new Date()
-});
+      email: String(email).toLowerCase(),
+      type: bonusType,
+      amount: bonusAmount,
+      note: note || `${bonusType} received from ${fromName}`,
+      status: "Success",
+      date: new Date()
+    });
 
     if (typeof sendNotification === "function") {
       await sendNotification(
@@ -747,373 +686,22 @@ async function addBonus({
 }
 
 function referralBonusRate(years) {
-  years = Number(years);
-
-  if (years === 1) return 499;
-  if (years === 3) return 599;
-  if (years === 5) return 699;
-  if (years === 10) return 799;
-
-  return 0;
+  if (Number(years) === 1) return 499;
+  if (Number(years) === 2) return 599;
+  return 699;
 }
 
-function performanceBonusRate(years){
-
-years=Number(years);
-
-
-if(years>=10) return 999;
-
-if(years>=5) return 899;
-
-if(years>=3) return 799;
-
-return 699;
-
+function performanceBonusRate(years) {
+  if (Number(years) === 1) return 699;
+  if (Number(years) === 2) return 799;
+  return 899;
 }
 
-function royaltyAmount(
-
-
-business
-
-
-){
-
-return Math.floor(
-
-
-business*0.03
-
-
-);
-
-}
-
-      async function checkRoyaltyEligibility(
-
-
-email
-
-
-){
-
-const rb=await RoyaltyBonus.findOne({
-
-email
-
-});
-
-
-if(!rb) return;
-
-
-
-const user=await User.findOne({
-
-email
-
-});
-
-
-if(!user) return;
-
-
-
-const directs=await User.countDocuments({
-
-referredBy:user.referCode
-
-});
-
-
-
-rb.directCount=directs;
-
-
-
-if(
-
-
-directs>=50
-
-){
-
-
-rb.isActive=true;
-
-
-}
-
-
-
-await rb.save();
-
-
-      }
-
-async function giveRoyaltyBonus(
-
-
-investor,
-investment
-
-
-){
-
-
-
-
-if(!investor.referredBy){
-
-return;
-}
-
-
-
-
-const sponsor=await User.findOne({
-
-
-referCode:
-investor.referredBy
-
-
-});
-
-
-
-if(!sponsor){
-
-return;
-}
-
-const business=Number(
-
-investment.monthlyAmount
-
-);
-
-
-const rb=await RoyaltyBonus.findOne({
-
-
-email:sponsor.email
-
-
-});
-
-
-
-if(!rb){
-
-return;
-}
-
-
-
-
-if(!rb.isActive){
-
-return;
-}
-
-
-
-if(
-
-rb.isFailed
-
-){
-
-return;
-
-}
-
-  const business=Number(
-
-investment.monthlyAmount
-
-);
-
-
-
-const royalty=royaltyAmount(
-
-business
-
-);
-
-  rb.wallet+=royalty;
-
-rb.totalEarned+=royalty;
-
-
-rb.totalBusiness+=business;
-
-
-rb.thisMonthBusiness+=business;
-
-  rb.history.push({
-
-
-fromUser:investor.name,
-
-
-investAmount:business,
-
-
-royalty,
-
-
-date:new Date()
-
-
-});
-
-
-
-await rb.save();
-
-  sponsor.wallet+=royalty;
-
-
-sponsor.balance+=royalty;
-
-
-sponsor.royaltyIncome+=royalty;
-
-
-sponsor.totalIncome+=royalty;
-
-
-
-await sponsor.save();
-
-await WalletHistory.create({
-
-
-email:sponsor.email,
-
-
-type:"Credit",
-
-
-amount:royalty,
-
-
-title:"Royalty Bonus",
-
-
-
-description:
-
-`${investor.name} business royalty`,
-
-
-
-status:"Success"
-
-});
-
-  await BonusLedger.create({
-
-
-email:sponsor.email,
-
-
-fromEmail:investor.email,
-
-
-fromName:investor.name,
-
-
-type:"Royalty Bonus",
-
-
-bonusType:"royalty",
-
-
-amount:royalty,
-
-
-businessAmount:business,
-
-
-status:"Paid",
-
-
-refId:
-
-"ROY-"+investment._id
-
-
-});
-  
 async function processFirstInvestmentBonuses(investorEmail, investment) {
   const investor = await User.findOne({ email: investorEmail });
   if (!investor || !investor.referredBy) return;
 
   const sponsor = await User.findOne({ referCode: investor.referredBy });
-
-if(!sponsor) return;
-
-
-// Admin Bonus Disable
-if(sponsor.disableBonus)
-   return;
-
-  
-  let pb=await PerformanceBonus.findOne({
-
-email:sponsor.email
-
-});
-
-
-
-if(pb){
-
-
-pb.directCount=activeDirectCount;
-
-
-
-
-if(
-
-activeDirectCount>=10 &&
-
-new Date()<pb.deadline
-
-){
-
-pb.isActive=true;
-
-pb.activatedAt=new Date();
-
-}
-
-
-
-if(
-
-activeDirectCount<10 &&
-
-new Date()>pb.deadline
-
-){
-
-pb.isFailed=true;
-
-}
-
-
-
-
-await pb.save();
-
-}
   if (!sponsor) return;
 
   const sponsorActiveInvestment = await Investment.findOne({
@@ -1144,19 +732,29 @@ const performanceDeadline = new Date(sponsorJoin);
 performanceDeadline.setDate(performanceDeadline.getDate() + 30);
 
 const taskExpired = new Date() > performanceDeadline;
-const refId = `FIRST-${investment._id}`;
 
-  if (
-    activeDirectCount >= 10 &&
-    !taskExpired &&
-    sponsor.performanceBonusEnabled
-) {
-    // শুধু Performance Unlock হবে
-    sponsor.performanceBonusEnabled = true;
-    sponsor.performanceActivatedAt = new Date();
+let performanceAmount = 0;
 
-    await sponsor.save();
+if (activeDirectCount >= 10 && !taskExpired) {
+  performanceAmount = 699;
+
+  if (activeDirectCount >= 15) performanceAmount = 799;
+  if (activeDirectCount >= 20) performanceAmount = 899;
+  if (activeDirectCount >= 21) performanceAmount = 999;
+
+  await addBonus({
+    email: sponsor.email,
+    fromEmail: investor.email,
+    fromName: investor.name,
+    type: "Performance Bonus",
+    level: 1,
+    amount: performanceAmount,
+    note: "Direct active referral performance bonus",
+    refId: refId + "-PERFORMANCE"
+  });
 }
+
+  const refId = `FIRST-${investment._id}`;
 
   // Direct Referral Bonus
   await addBonus({
@@ -1170,306 +768,158 @@ const refId = `FIRST-${investment._id}`;
     refId: refId + "-REF"
   });
 
-  /*==================================
-TEAM BONUS
-===================================*/
-
-
-const sponsor1 = sponsor;
-
-
-const sponsor2 = sponsor1.referredBy
-? await User.findOne({
-referCode:sponsor1.referredBy
-})
-:null;
-
-
-
-const sponsor3 = sponsor2?.referredBy
-? await User.findOne({
-referCode:sponsor2.referredBy
-})
-:null;
-
-
-
-const sponsor4 = sponsor3?.referredBy
-? await User.findOne({
-referCode:sponsor3.referredBy
-})
-:null;
-
-
-
-
-const payouts=[
-
-{
-user:sponsor2,
-level:1,
-amount:70
-},
-
-{
-user:sponsor3,
-level:2,
-amount:50
-},
-
-{
-user:sponsor4,
-level:3,
-amount:35
-}
-
-];
-
-
-
-
-
-for(const p of payouts){
-
-
-if(!p.user) continue;
-
-
-
-const tb=await TeamBonus.findOne({
-
-email:p.user.email
-
-});
-
-
-
-if(!tb) continue;
-
-
-if(!tb.isActive) continue;
-
-
-if(tb.isFailed) continue;
-
-
-
-
-
-tb.wallet+=p.amount;
-
-
-
-
-tb.history.push({
-
-
-fromUser:investor.name,
-
-
-fromEmail:investor.email,
-
-
-level:p.level,
-
-
-amount:p.amount,
-
-
-status:"Paid",
-
-
-date:new Date()
-
-
-});
-
-
-
-await tb.save();
-
-
-
-
-await addBonus({
-
-
-email:p.user.email,
-
-
-fromEmail:investor.email,
-
-
-fromName:investor.name,
-
-
-type:"Team Bonus",
-
-
-bonusType:"team",
-
-
-level:p.level,
-
-
-amount:p.amount,
-
-
-note:`Level ${p.level} Team Bonus`,
-
-
-refId:
-refId+
-"-TEAM-"+p.level
-
-
-
-});
-
-
-
-}
-
-  await checkRoyaltyEligibility(
-sponsor.email
-);
-
-
-await giveRoyaltyBonus(
-investor,
-investment
-);
+  // Team Bonus: Sponsor's uplines get bonus
+  const level1Owner = sponsor.referredBy
+    ? await User.findOne({ referCode: sponsor.referredBy })
+    : null;
+
+  const level2Owner = level1Owner?.referredBy
+    ? await User.findOne({ referCode: level1Owner.referredBy })
+    : null;
+
+  const level3Owner = level2Owner?.referredBy
+    ? await User.findOne({ referCode: level2Owner.referredBy })
+    : null;
+
+  const teamPayouts = [
+    { user: level1Owner, level: 1, amount: 70 },
+    { user: level2Owner, level: 2, amount: 50 },
+    { user: level3Owner, level: 3, amount: 35 }
+  ];
+
+  for (let p of teamPayouts) {
+    if (!p.user) continue;
+
+    const tb = await TeamBonus.findOne({ email: p.user.email });
+
+    if (tb && tb.isActive && !tb.isFailed) {
+      tb.wallet += p.amount;
+
+      tb.history.push({
+        fromUser: investor.name,
+        level: p.level,
+        amount: p.amount,
+        date: new Date(),
+        status: "Paid"
+      });
+
+      await tb.save();
+
+      await addBonus({
+        email: p.user.email,
+        fromEmail: investor.email,
+        fromName: investor.name,
+        type: "Team Bonus",
+        level: p.level,
+        amount: p.amount,
+        note: `Level ${p.level} first investment bonus`,
+        refId: refId + "-TEAM-" + p.level
+      });
+    }
+  }
+
+  // Royalty Bonus
+  const directSponsor = sponsor;
+
+  if (directSponsor.referredBy) {
+    const royaltyOwner = await User.findOne({
+      referCode: directSponsor.referredBy
+    });
+
+    if (royaltyOwner) {
+      const rb = await RoyaltyBonus.findOne({ email: royaltyOwner.email });
+
+      if (rb && rb.isActive) {
+        const royalty = Math.floor(investment.monthlyAmount * 0.03);
+
+        rb.wallet += royalty;
+        rb.thisMonthTurnover += investment.monthlyAmount;
+
+        rb.history.push({
+          fromUser: investor.name,
+          investAmount: investment.monthlyAmount,
+          royalty,
+          date: new Date()
+        });
+
+        await rb.save();
+
+        await addBonus({
+          email: royaltyOwner.email,
+          fromEmail: investor.email,
+          fromName: investor.name,
+          type: "Royalty Bonus",
+          level: 0,
+          amount: royalty,
+          note: "3% royalty from network first investment",
+          refId: refId + "-ROYALTY"
+        });
       }
     }
   }
 }
 
-async function processRenewBonuses(
-investorEmail,
-investment
-){
+async function processRenewBonuses(investorEmail, investment) {
+  const investor = await User.findOne({ email: investorEmail });
+  if (!investor || !investor.referredBy) return;
 
-const investor=await User.findOne({
-email:investorEmail
-});
+  const sponsor = await User.findOne({ referCode: investor.referredBy });
+  if (!sponsor) return;
 
+  const pb = await PerformanceBonus.findOne({ email: sponsor.email });
 
-if(!investor) return;
+  if (!pb || !pb.isActive || pb.isFailed) return;
 
-if(!investor.referredBy) return;
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+  const monthlyNewDirect = await User.findOne({
+    referredBy: sponsor.referCode,
+    createdAt: { $gte: monthStart }
+  });
 
-const sponsor=await User.findOne({
+  const renewRefId = `RENEW-${investment._id}-${investment.monthsPaid}`;
 
-referCode:investor.referredBy
+  if (!monthlyNewDirect) {
+    pb.history.push({
+      fromUser: investor.name,
+      amount: 0,
+      plan: investment.years + " Year",
+      date: new Date(),
+      status: "Pending"
+    });
 
-});
+    await pb.save();
+    return;
+  }
 
+  const bonus = performanceBonusRate(investment.years);
 
-if(!sponsor) return;
+  pb.thisMonthBonus += bonus;
+  pb.totalBonus += bonus;
 
+  pb.history.push({
+    fromUser: investor.name,
+    amount: bonus,
+    plan: investment.years + " Year",
+    date: new Date(),
+    status: "Paid"
+  });
 
+  await pb.save();
 
-if(!sponsor.performanceBonusEnabled){
-
-return;
+  await addBonus({
+    email: sponsor.email,
+    fromEmail: investor.email,
+    fromName: investor.name,
+    type: "Performance Bonus",
+    level: 0,
+    amount: bonus,
+    note: "Monthly renewal performance bonus",
+    refId: renewRefId + "-PERFORMANCE"
+  });
 }
 
-
-
-if(sponsor.disablePerformanceBonus){
-
-return;
-}
-
-
-
-const activeInvestment=await Investment.findOne({
-
-email:sponsor.email,
-
-status:"Active"
-
-});
-
-
-if(!activeInvestment){
-
-return;
-}
-
-
-
-const amount=performanceBonusRate(
-
-investment.years
-
-);
-
-
-
-sponsor.wallet+=amount;
-
-sponsor.balance+=amount;
-
-sponsor.totalIncome+=amount;
-
-sponsor.performanceIncome+=amount;
-
-
-await sponsor.save();
-
-
-
-await WalletHistory.create({
-
-email:sponsor.email,
-
-type:"Credit",
-
-amount,
-
-title:"Performance Bonus",
-
-description:`${investor.name} renewed investment`,
-
-status:"Success"
-
-});
-
-
-
-await BonusLedger.create({
-
-email:sponsor.email,
-
-fromEmail:investor.email,
-
-fromName:investor.name,
-
-type:"Performance Bonus",
-
-bonusType:"performance",
-
-amount,
-
-level:0,
-
-status:"Paid",
-
-businessAmount:
-investment.monthlyAmount,
-
-note:"Renew Performance Bonus",
-
-refId:
-"PF-"+investment._id
-
-});
-
-  
-
-}
 async function updateInvestmentStatus(email) {
   const user = await User.findOne({ email });
   if (!user) return;
@@ -1762,6 +1212,7 @@ app.post("/register", async (req, res) => {
       mobile,
       email,
       password,
+      walletAddress,
       referCode
     } = req.body;
 
@@ -1770,7 +1221,8 @@ app.post("/register", async (req, res) => {
       !name ||
       !mobile ||
       !email ||
-      !password
+      !password ||
+      !walletAddress
     ) {
       return res.status(400).json({
         msg: "Please fill all required fields"
@@ -1790,7 +1242,7 @@ app.post("/register", async (req, res) => {
         minLength: 6,
         minNumbers: 1,
         minLowercase: 1,
-        minUppercase: 1,
+        minUppercase: 0,
         minSymbols: 0
       })
     ) {
@@ -1864,6 +1316,8 @@ app.post("/register", async (req, res) => {
 
       password: hashedPassword,
 
+      walletAddress,
+
       referCode: myReferCode,
 
       referredBy,
@@ -1876,7 +1330,7 @@ app.post("/register", async (req, res) => {
 
       totalIncome: 0,
 
-      referIncome: 0,
+      referralIncome: 0,
 
       performanceIncome: 0,
 
@@ -1886,7 +1340,7 @@ app.post("/register", async (req, res) => {
 
       activeStatus: "Inactive",
 
-      kycStatus: "none",
+      kycStatus: "Pending",
 
       banned: false,
 
@@ -1903,33 +1357,6 @@ app.post("/register", async (req, res) => {
     });
 
     await newUser.save();
-
-    const deadline=new Date();
-
-
-deadline.setDate(
-deadline.getDate()+30
-);
-
-
-
-await PerformanceBonus.create({
-
-email:newUser.email,
-
-
-challengeStart:new Date(),
-
-deadline
-
-
-});
-
-    await RoyaltyBonus.create({
-
-email:newUser.email
-
-});
 
     // notification
     try {
@@ -2289,14 +1716,13 @@ app.post("/invest", async (req, res) => {
 app.post("/start-invest", async (req, res) => {
   try {
     const {
-  email,
-  amount,
-  years,
-  rate,
-  totalPlanAmount,
-  totalInterest,
-  maturityAmount
-} = req.body;
+      email,
+      amount,
+      years,
+      rate,
+      totalInterest,
+      maturityAmount
+    } = req.body;
 
     const investAmount = Number(amount);
 
@@ -2371,13 +1797,12 @@ app.post("/start-invest", async (req, res) => {
       years: Number(years || 1),
 
       rate: Number(rate || 0),
-returnRate: Number(rate || 0),
 
-totalPlanAmount: Number(totalPlanAmount || investAmount * 12 * Number(years || 1)),
+      totalInterest:
+        Number(totalInterest || 0),
 
-totalInterest: Number(totalInterest || 0),
-
-maturityAmount: Number(maturityAmount || 0),
+      maturityAmount:
+        Number(maturityAmount || 0),
 
       certificateNo,
       slipNo,
@@ -2404,20 +1829,80 @@ maturityAmount: Number(maturityAmount || 0),
       ]
     });
 
-    
-await processFirstInvestmentBonuses(email.toLowerCase(), investment);
+    // Referral bonus only if referrer has active Save Money investment
+try {
+  const investor = await User.findOne({
+    email: email.toLowerCase()
+  });
 
-    user.activeStatus = "Active";
-user.accountActive = true;
+  const refCode =
+    investor.referredBy ||
+    investor.referBy ||
+    investor.refBy ||
+    investor.sponsorCode;
 
-await user.save();
+  if (refCode) {
+    const referrer = await User.findOne({
+      $or: [
+        { referCode: refCode },
+        { referralCode: refCode },
+        { walletId: refCode }
+      ]
+    });
+
+    if (referrer) {
+      const referrerActiveInvestment =
+        await Investment.findOne({
+          email: referrer.email.toLowerCase(),
+          status: "Active"
+        });
+
+      if (referrerActiveInvestment) {
+        const bonusAmount = 499; // তোমার referral bonus amount
+
+        const oldBalance = Number(
+          referrer.balance ??
+          referrer.wallet ??
+          referrer.walletBalance ??
+          0
+        );
+
+        const newBalance = oldBalance + bonusAmount;
+
+        referrer.balance = newBalance;
+        referrer.wallet = newBalance;
+        referrer.walletBalance = newBalance;
+        referrer.referralIncome =
+          Number(referrer.referralIncome || 0) + bonusAmount;
+
+        await referrer.save();
+
+        await WalletHistory.create({
+          email: referrer.email.toLowerCase(),
+          amount: bonusAmount,
+          type: "credit",
+          description: `Referral bonus received from ${investor.name || investor.email}`,
+          note: "Referral bonus",
+          status: "success",
+          date: new Date()
+        });
+      } else {
+        console.log(
+          "Referral bonus skipped: Referrer has no active Save Money investment"
+        );
+      }
+    }
+  }
+} catch (bonusErr) {
+  console.log("REFERRAL BONUS ERROR:", bonusErr.message);
+}
+await distributeBonuses(email, investAmount);
 
    await WalletHistory.create({
   email,
   amount: investAmount,
-  type: "Debit",
-status: "Success",
-title: "Save Money SIP Started",
+  type: "debit",
+  status: "success",
   description: "Save Money SIP Started",
   date: new Date()
 });
@@ -2506,26 +1991,18 @@ app.post("/renew-invest", async (req, res) => {
 
    await investment.save();
 
-    const renewUser = await User.findOne({
-  email: investment.email
-});
+if (!investment.referralBonusGiven) {
+  const investUser = await User.findOne({
+    email: String(investment.email).toLowerCase()
+  });
 
-if (renewUser) {
-  renewUser.activeStatus = "Active";
-  renewUser.accountActive = true;
-
-  await renewUser.save();
-}
-
-const investUser = await User.findOne({
-  email: String(investment.email).toLowerCase()
-});
-
-if (investUser) {
-  await processRenewBonuses(
-    investUser.email.toLowerCase(),
-    investment
+  await distributeSaveMoneyBonuses(
+    investUser,
+    Number(investment.amount || investment.monthlyAmount || 2000)
   );
+
+  investment.referralBonusGiven = true;
+  await investment.save();
 }
 
 res.json({
@@ -3324,13 +2801,10 @@ amount: requiredInvestment,
 monthlyAmount: monthly,
     monthlyReturn: monthly,
     years,
-    returnRate: Number(i.rate || i.returnRate || 0),
+    returnRate: i.rate || 0,
 
-    totalReturn: Number(i.totalInterest || 0),
-maturityAmount: Number(
-  i.maturityAmount ||
-  (Number(i.totalPlanAmount || requiredInvestment) + Number(i.totalInterest || 0))
-),
+    totalReturn: i.totalInterest || 0,
+    maturityAmount: i.maturityAmount || 0,
 
     startDate,
     endDate,
@@ -3503,82 +2977,33 @@ app.post(
   ]),
   async (req, res) => {
     try {
-      const email = String(req.body.email || "").toLowerCase();
-      const aadhaarNumber = req.body.aadhaarNumber || req.body.aadhaar || "";
-      const panNumber = req.body.panNumber || req.body.pan || "";
+      const { email, aadhaar, pan  } = req.body;
+      await sendNotification(email, "KYC Submitted Successfully");
 
-      const user = await User.findOne({ email });
+      console.log("KYC API HIT:", email);
 
-if (!user) {
-  return res.status(404).json({
-    success: false,
-    msg: "User not found"
-  });
-}
+      await User.updateOne(
+        { email },
+        { aadhaar, 
+          pan,
 
-const currentStatus = String(user.kycStatus || "none").toLowerCase();
+          aadhaarFile: req.files.aadhaarFile[0].path,
+          panFile: req.files.panFile[0].path,
+          photo: req.files.photo[0].path,
+          kycStatus: "reviewing"
+        }
+      );
+      await createNotification(email, "KYC Submitted Successfully");
 
-/*
-none      → প্রথমবার submit করতে পারবে
-rejected  → আবার submit করতে পারবে
-pending   → submit বন্ধ
-reviewing → submit বন্ধ
-approved  → submit বন্ধ
-*/
+      res.json({ msg: "KYC Submitted Successfully" });
 
-if (
-  currentStatus === "pending" ||
-  currentStatus === "reviewing" ||
-  currentStatus === "approved"
-) {
-  return res.status(400).json({
-    success: false,
-    msg: "KYC already submitted. You can resubmit only if rejected."
-  });
-}
-
-      if (!req.files?.aadhaarFile?.[0]) {
-        return res.status(400).json({ success: false, msg: "Aadhaar file required" });
-      }
-
-      if (!req.files?.panFile?.[0]) {
-        return res.status(400).json({ success: false, msg: "PAN file required" });
-      }
-
-      if (!req.files?.photo?.[0]) {
-        return res.status(400).json({ success: false, msg: "Photo required" });
-      }
-
-      user.aadhaar = aadhaarNumber;
-      user.pan = panNumber;
-      user.aadhaarNumber = aadhaarNumber;
-      user.panNumber = panNumber;
-
-      user.aadhaarFile = req.files.aadhaarFile[0].path;
-      user.panFile = req.files.panFile[0].path;
-      user.photo = req.files.photo[0].path;
-
-      user.kycStatus = "pending";
-      user.rejectReason = "";
-      user.kycRejectReason = "";
-
-      await user.save();
-
-      return res.json({
-        success: true,
-        msg: "KYC Submitted Successfully",
-        user
-      });
     } catch (err) {
-      console.log("KYC SUBMIT ERROR:", err);
-      return res.status(500).json({
-        success: false,
-        msg: "Server error",
-        error: err.message
-      });
+      console.log("KYC ERROR:", err);
+      res.status(500).json({ msg: "Server error" });
     }
   }
 );
+
 app.post("/kyc-info", async (req, res) => {
 
   try {
@@ -3633,15 +3058,10 @@ app.post("/reject-kyc", auth, adminAuth, async (req, res) => {
       userId,
       {
         kycStatus: "rejected",
-        kycRejectReason: reason,
-        rejectReason: reason
+        kycRejectReason: reason
       },
       { new: true }
     );
-
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
 
     await Notification.create({
       email: user.email,
@@ -3650,13 +3070,9 @@ app.post("/reject-kyc", auth, adminAuth, async (req, res) => {
       read: false
     });
 
-    res.json({
-      success: true,
-      msg: "KYC Rejected",
-      user
-    });
+    res.json({ msg: "KYC Rejected" });
+
   } catch (err) {
-    console.log("REJECT KYC ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
@@ -5165,44 +4581,20 @@ app.post("/refer-tree", async (req, res) => {
   }
 });
 
-    
-        
-
 app.post("/refer-data", async (req, res) => {
   try {
     const { email } = req.body;
-
-    await updateInvestmentStatus(email);
 
     const user = await User.findOne({
       email: String(email || "").toLowerCase()
     });
 
     if (!user) {
-      return res.json({
-        success: false,
-        msg: "User not found"
-      });
+      return res.json({ success: false, msg: "User not found" });
     }
 
-    const referCode =
-      user.referCode ||
-      user.referralCode ||
-      user.walletId ||
-      "";
+    const referCode = user.referCode || user.referralCode || user.walletId || "";
 
-    // নিজের Active/Inactive Status
-    const selfActiveInvestment = await Investment.findOne({
-      email: String(user.email).toLowerCase(),
-      status: "Active",
-      renewStatus: { $ne: "Overdue" }
-    });
-
-    const memberStatus = selfActiveInvestment
-      ? "Active"
-      : "Inactive";
-
-    // Direct Refers
     const directUsers = await User.find({
       referredBy: referCode
     }).sort({ createdAt: -1 });
@@ -5211,76 +4603,43 @@ app.post("/refer-data", async (req, res) => {
       String(u.email || "").toLowerCase()
     );
 
-    // Active Direct Users
     const activeInvestments = await Investment.find({
       email: { $in: directEmails },
-      status: "Active",
-      renewStatus: { $ne: "Overdue" }
+      status: "Active"
     });
 
     const activeEmailSet = new Set(
-      activeInvestments.map((i) =>
-        String(i.email || "").toLowerCase()
-      )
+      activeInvestments.map((i) => String(i.email || "").toLowerCase())
     );
 
     const directActiveCount = directUsers.filter((u) =>
-      activeEmailSet.has(
-        String(u.email || "").toLowerCase()
-      )
+      activeEmailSet.has(String(u.email || "").toLowerCase())
     ).length;
 
     const joinDate = user.createdAt || new Date();
-
     const deadline = new Date(joinDate);
     deadline.setDate(deadline.getDate() + 30);
 
     const now = new Date();
 
-    const performanceCompleted =
-      directActiveCount >= 10;
+    const performanceCompleted = directActiveCount >= 10;
+    const performanceExpired = now > deadline && !performanceCompleted;
 
-    const performanceExpired =
-      now > deadline && !performanceCompleted;
-
-    if (
-      performanceCompleted &&
-      !user.performanceBonusEnabled
-    ) {
+    if (performanceCompleted && !user.performanceBonusEnabled) {
       user.performanceBonusEnabled = true;
       user.performanceActivatedAt = new Date();
       await user.save();
     }
 
-    if (
-      directUsers.length >= 50 &&
-      !user.royaltyBonusEnabled
-    ) {
+    if (directUsers.length >= 50 && !user.royaltyBonusEnabled) {
       user.royaltyBonusEnabled = true;
       user.royaltyActivatedAt = new Date();
       await user.save();
     }
 
-    const startThisMonth = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      1
-    );
-
-    const startLastMonth = new Date(
-      now.getFullYear(),
-      now.getMonth() - 1,
-      1
-    );
-
-    const endLastMonth = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      0,
-      23,
-      59,
-      59
-    );
+    const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
     const allBonusHistory = await BonusLedger.find({
       email: String(user.email).toLowerCase()
@@ -5290,248 +4649,332 @@ app.post("/refer-data", async (req, res) => {
       return allBonusHistory
         .filter((x) => {
           const d = new Date(x.date);
-
           return (
             x.bonusType === type &&
             d >= from &&
             (!to || d <= to)
           );
         })
-        .reduce(
-          (sum, x) =>
-            sum + Number(x.amount || 0),
-          0
-        );
+        .reduce((sum, x) => sum + Number(x.amount || 0), 0);
     };
 
     const level1Users = directUsers;
 
     const level2Users = await User.find({
-      referredBy: {
-        $in: level1Users.map(
-          (u) => u.referCode || u.walletId
-        )
-      }
+      referredBy: { $in: level1Users.map((u) => u.referCode || u.walletId) }
     });
 
     const level3Users = await User.find({
-      referredBy: {
-        $in: level2Users.map(
-          (u) => u.referCode || u.walletId
-        )
-      }
+      referredBy: { $in: level2Users.map((u) => u.referCode || u.walletId) }
     });
 
     const levelIncome = (level) =>
       allBonusHistory
-        .filter(
-          (x) =>
-            x.bonusType === "team" &&
-            Number(x.level) === level
-        )
-        .reduce(
-          (sum, x) =>
-            sum + Number(x.amount || 0),
-          0
-        );
+        .filter((x) => x.bonusType === "team" && Number(x.level) === level)
+        .reduce((sum, x) => sum + Number(x.amount || 0), 0);
 
-    const royaltyBusinessRows =
-      allBonusHistory.filter(
-        (x) => x.bonusType === "royalty"
-      );
+    const royaltyBusinessRows = allBonusHistory.filter(
+      (x) => x.bonusType === "royalty"
+    );
 
-    const thisMonthBusiness =
-      royaltyBusinessRows
-        .filter(
-          (x) =>
-            new Date(x.date) >=
-            startThisMonth
-        )
-        .reduce(
-          (sum, x) =>
-            sum +
-            Number(x.businessAmount || 0),
-          0
-        );
+    const thisMonthBusiness = royaltyBusinessRows
+      .filter((x) => new Date(x.date) >= startThisMonth)
+      .reduce((sum, x) => sum + Number(x.businessAmount || 0), 0);
 
-    const lastMonthBusiness =
-      royaltyBusinessRows
-        .filter((x) => {
-          const d = new Date(x.date);
+    const lastMonthBusiness = royaltyBusinessRows
+      .filter((x) => {
+        const d = new Date(x.date);
+        return d >= startLastMonth && d <= endLastMonth;
+      })
+      .reduce((sum, x) => sum + Number(x.businessAmount || 0), 0);
 
-          return (
-            d >= startLastMonth &&
-            d <= endLastMonth
-          );
-        })
-        .reduce(
-          (sum, x) =>
-            sum +
-            Number(x.businessAmount || 0),
-          0
-        );
+    const getLevelUsers = async (baseUsers, level, result = {}) => {
+      if (level > 7 || baseUsers.length === 0) return result;
+
+      const codes = baseUsers.map((u) => u.referCode || u.walletId).filter(Boolean);
+
+      const nextUsers = await User.find({
+        referredBy: { $in: codes }
+      });
+
+      result[`level${level}Count`] = baseUsers.length;
+      result[`level${level}ThisMonth`] = baseUsers.filter(
+        (u) => new Date(u.createdAt) >= startThisMonth
+      ).length;
+      result[`level${level}LastMonth`] = baseUsers.filter((u) => {
+        const d = new Date(u.createdAt);
+        return d >= startLastMonth && d <= endLastMonth;
+      }).length;
+
+      return getLevelUsers(nextUsers, level + 1, result);
+    };
+
+    const treeData = await getLevelUsers(directUsers, 1, {});
 
     const history = directUsers.map((u) => ({
       name: u.name || "User",
       email: u.email || "",
       mobile: u.mobile || "",
-      referId:
-        u.referCode ||
-        u.walletId ||
-        "",
+      referId: u.referCode || u.walletId || "",
       joinDate: u.createdAt,
-
-      status: activeEmailSet.has(
-        String(u.email || "").toLowerCase()
-      )
+      status: activeEmailSet.has(String(u.email || "").toLowerCase())
         ? "Active"
         : "Inactive",
-
-      earning: 0
-
+      earning: Number(u.referralIncome || 0),
       photo: u.photo || ""
     }));
 
     return res.json({
       success: true,
-
-      user: {
-        ...user.toObject(),
-        memberStatus
-      },
-
+      user,
       referCode,
 
       history,
 
       performance: {
-        enabled:
-          !!user.performanceBonusEnabled,
-
-        balance: Number(
-          user.performanceIncome ||
-            user.performanceBonus ||
-            0
-        ),
-
+        enabled: !!user.performanceBonusEnabled,
+        balance: Number(user.performanceIncome || user.performanceBonus || 0),
         directActiveCount,
-
         required: 10,
-
-        remaining: Math.max(
-          10 - directActiveCount,
-          0
-        ),
-
+        remaining: Math.max(10 - directActiveCount, 0),
         deadline,
-
         expired: performanceExpired,
-
-        completed:
-          performanceCompleted,
-
-        thisMonthBonus: sumBonus(
-          "performance",
-          startThisMonth
-        ),
-
-        lastMonthBonus: sumBonus(
-          "performance",
-          startLastMonth,
-          endLastMonth
-        )
+        completed: performanceCompleted,
+        thisMonthBonus: sumBonus("performance", startThisMonth),
+        lastMonthBonus: sumBonus("performance", startLastMonth, endLastMonth)
       },
 
       team: {
         enabled: true,
-
-        balance: Number(
-          user.teamIncome || 0
-        ),
-
-        level1Count:
-          level1Users.length,
-
-        level2Count:
-          level2Users.length,
-
-        level3Count:
-          level3Users.length,
-
-        level1Income:
-          levelIncome(1),
-
-        level2Income:
-          levelIncome(2),
-
-        level3Income:
-          levelIncome(3),
-
-        thisMonthBonus: sumBonus(
-          "team",
-          startThisMonth
-        ),
-
-        lastMonthBonus: sumBonus(
-          "team",
-          startLastMonth,
-          endLastMonth
-        )
+        balance: Number(user.teamIncome || 0),
+        level1Count: level1Users.length,
+        level2Count: level2Users.length,
+        level3Count: level3Users.length,
+        level1Income: levelIncome(1),
+        level2Income: levelIncome(2),
+        level3Income: levelIncome(3),
+        thisMonthBonus: sumBonus("team", startThisMonth),
+        lastMonthBonus: sumBonus("team", startLastMonth, endLastMonth)
       },
 
       royalty: {
-        enabled:
-          !!user.royaltyBonusEnabled,
-
-        balance: Number(
-          user.royaltyIncome || 0
-        ),
-
-        directCount:
-          directUsers.length,
-
+        enabled: !!user.royaltyBonusEnabled,
+        balance: Number(user.royaltyIncome || 0),
+        directCount: directUsers.length,
         required: 50,
-
-        remaining: Math.max(
-          50 - directUsers.length,
-          0
-        ),
-
+        remaining: Math.max(50 - directUsers.length, 0),
         thisMonthBusiness,
-
         lastMonthBusiness,
-
-        thisMonthRoyalty:
-          sumBonus(
-            "royalty",
-            startThisMonth
-          ),
-
-        lastMonthRoyalty:
-          sumBonus(
-            "royalty",
-            startLastMonth,
-            endLastMonth
-          )
+        thisMonthRoyalty: sumBonus("royalty", startThisMonth),
+        lastMonthRoyalty: sumBonus("royalty", startLastMonth, endLastMonth)
       },
 
+      treeData,
       bonusHistory: allBonusHistory
     });
-
   } catch (err) {
-    console.log(
-      "REFER DATA ERROR:",
-      err
-    );
-
-    return res.status(500).json({
-      success: false,
-      msg: "Server error"
-    });
+    console.log("REFER DATA ERROR:", err);
+    return res.status(500).json({ success: false, msg: "Server error" });
   }
 });
 
-        
+app.post("/refer-data", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({
+      email: String(email || "").toLowerCase()
+    });
+
+    if (!user) {
+      return res.json({ success: false, msg: "User not found" });
+    }
+
+    const referCode = user.referCode || user.referralCode || user.walletId || "";
+
+    const directUsers = await User.find({
+      referredBy: referCode
+    }).sort({ createdAt: -1 });
+
+    const directEmails = directUsers.map((u) =>
+      String(u.email || "").toLowerCase()
+    );
+
+    const activeInvestments = await Investment.find({
+      email: { $in: directEmails },
+      status: "Active"
+    });
+
+    const activeEmailSet = new Set(
+      activeInvestments.map((i) => String(i.email || "").toLowerCase())
+    );
+
+    const directActiveCount = directUsers.filter((u) =>
+      activeEmailSet.has(String(u.email || "").toLowerCase())
+    ).length;
+
+    const joinDate = user.createdAt || new Date();
+    const deadline = new Date(joinDate);
+    deadline.setDate(deadline.getDate() + 30);
+
+    const now = new Date();
+
+    const performanceCompleted = directActiveCount >= 10;
+    const performanceExpired = now > deadline && !performanceCompleted;
+
+    if (performanceCompleted && !user.performanceBonusEnabled) {
+      user.performanceBonusEnabled = true;
+      user.performanceActivatedAt = new Date();
+      await user.save();
+    }
+
+    if (directUsers.length >= 50 && !user.royaltyBonusEnabled) {
+      user.royaltyBonusEnabled = true;
+      user.royaltyActivatedAt = new Date();
+      await user.save();
+    }
+
+    const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+    const allBonusHistory = await BonusLedger.find({
+      email: String(user.email).toLowerCase()
+    }).sort({ date: -1 });
+
+    const sumBonus = (type, from, to) => {
+      return allBonusHistory
+        .filter((x) => {
+          const d = new Date(x.date);
+          return (
+            x.bonusType === type &&
+            d >= from &&
+            (!to || d <= to)
+          );
+        })
+        .reduce((sum, x) => sum + Number(x.amount || 0), 0);
+    };
+
+    const level1Users = directUsers;
+
+    const level2Users = await User.find({
+      referredBy: { $in: level1Users.map((u) => u.referCode || u.walletId) }
+    });
+
+    const level3Users = await User.find({
+      referredBy: { $in: level2Users.map((u) => u.referCode || u.walletId) }
+    });
+
+    const levelIncome = (level) =>
+      allBonusHistory
+        .filter((x) => x.bonusType === "team" && Number(x.level) === level)
+        .reduce((sum, x) => sum + Number(x.amount || 0), 0);
+
+    const royaltyBusinessRows = allBonusHistory.filter(
+      (x) => x.bonusType === "royalty"
+    );
+
+    const thisMonthBusiness = royaltyBusinessRows
+      .filter((x) => new Date(x.date) >= startThisMonth)
+      .reduce((sum, x) => sum + Number(x.businessAmount || 0), 0);
+
+    const lastMonthBusiness = royaltyBusinessRows
+      .filter((x) => {
+        const d = new Date(x.date);
+        return d >= startLastMonth && d <= endLastMonth;
+      })
+      .reduce((sum, x) => sum + Number(x.businessAmount || 0), 0);
+
+    const getLevelUsers = async (baseUsers, level, result = {}) => {
+      if (level > 7 || baseUsers.length === 0) return result;
+
+      const codes = baseUsers.map((u) => u.referCode || u.walletId).filter(Boolean);
+
+      const nextUsers = await User.find({
+        referredBy: { $in: codes }
+      });
+
+      result[`level${level}Count`] = baseUsers.length;
+      result[`level${level}ThisMonth`] = baseUsers.filter(
+        (u) => new Date(u.createdAt) >= startThisMonth
+      ).length;
+      result[`level${level}LastMonth`] = baseUsers.filter((u) => {
+        const d = new Date(u.createdAt);
+        return d >= startLastMonth && d <= endLastMonth;
+      }).length;
+
+      return getLevelUsers(nextUsers, level + 1, result);
+    };
+
+    const treeData = await getLevelUsers(directUsers, 1, {});
+
+    const history = directUsers.map((u) => ({
+      name: u.name || "User",
+      email: u.email || "",
+      mobile: u.mobile || "",
+      referId: u.referCode || u.walletId || "",
+      joinDate: u.createdAt,
+      status: activeEmailSet.has(String(u.email || "").toLowerCase())
+        ? "Active"
+        : "Inactive",
+      earning: Number(u.referralIncome || 0),
+      photo: u.photo || ""
+    }));
+
+    return res.json({
+      success: true,
+      user,
+      referCode,
+
+      history,
+
+      performance: {
+        enabled: !!user.performanceBonusEnabled,
+        balance: Number(user.performanceIncome || user.performanceBonus || 0),
+        directActiveCount,
+        required: 10,
+        remaining: Math.max(10 - directActiveCount, 0),
+        deadline,
+        expired: performanceExpired,
+        completed: performanceCompleted,
+        thisMonthBonus: sumBonus("performance", startThisMonth),
+        lastMonthBonus: sumBonus("performance", startLastMonth, endLastMonth)
+      },
+
+      team: {
+        enabled: true,
+        balance: Number(user.teamIncome || 0),
+        level1Count: level1Users.length,
+        level2Count: level2Users.length,
+        level3Count: level3Users.length,
+        level1Income: levelIncome(1),
+        level2Income: levelIncome(2),
+        level3Income: levelIncome(3),
+        thisMonthBonus: sumBonus("team", startThisMonth),
+        lastMonthBonus: sumBonus("team", startLastMonth, endLastMonth)
+      },
+
+      royalty: {
+        enabled: !!user.royaltyBonusEnabled,
+        balance: Number(user.royaltyIncome || 0),
+        directCount: directUsers.length,
+        required: 50,
+        remaining: Math.max(50 - directUsers.length, 0),
+        thisMonthBusiness,
+        lastMonthBusiness,
+        thisMonthRoyalty: sumBonus("royalty", startThisMonth),
+        lastMonthRoyalty: sumBonus("royalty", startLastMonth, endLastMonth)
+      },
+
+      treeData,
+      bonusHistory: allBonusHistory
+    });
+  } catch (err) {
+    console.log("REFER DATA ERROR:", err);
+    return res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
 app.post("/my-bonus-ledger", auth, async (req, res) => {
   const { email } = req.body;
 
