@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
 
-  // 🔹 BASIC INFO
+  // ðŸ”¹ BASIC INFO
   name: {
     type: String,
     required: true
@@ -44,6 +44,10 @@ refreshToken: {
   default: ""
 },
 
+banned: {
+  type: Boolean,
+  default: false
+},
 
 banned: {
   type: Boolean,
@@ -75,7 +79,7 @@ banReason: {
   default: ""
 },
 
-  // 🔹 DOCUMENT INFO
+  // ðŸ”¹ DOCUMENT INFO
   aadhaar:{
   type:String,
   default:""
@@ -86,9 +90,9 @@ pan:{
   default:""
 },
 
-  referIncome:{
-type:Number,
-default:0
+  referralIncome: {
+  type: Number,
+  default: 0
 },
 
 performanceIncome: {
@@ -107,7 +111,7 @@ royaltyIncome: {
   },
   
 
-  // 🔹 TEAM / REFERRAL
+  // ðŸ”¹ TEAM / REFERRAL
   referredBy: {
     type: String,
     default: ""
@@ -123,7 +127,7 @@ activeStatus: {
   default: "Inactive"
 },
 
-  // 🔹 WALLET SYSTEM
+  // ðŸ”¹ WALLET SYSTEM
 
   walletId: {
   type: String,
@@ -145,20 +149,26 @@ balance: {
   default: 0 
 },
 
-  // 🔹 KYC STATUS
-  kycStatus: {
-  type: String,
-  enum: [
-    "none",
-    "pending",
-    "reviewing",
+  // ðŸ”¹ KYC STATUS
+  kycStatus:{
+  type:String,
+  enum:[
+    "Pending",
+    "Approved",
+    "Rejected",
     "approved",
+    "pending",
     "rejected"
   ],
-  default: "none"
+  default:"Pending"
 },
 
-  // 🔹 FILE UPLOAD PATHS
+kycRejectReason: {
+  type: String,
+  default: ""
+},
+
+  // ðŸ”¹ FILE UPLOAD PATHS
   aadhaarFile: {
     type: String,
     default: ""
@@ -174,7 +184,7 @@ balance: {
     default: ""
   },
 
-  // 🔹 INVESTMENT SUMMARY (optional quick access)
+  // ðŸ”¹ INVESTMENT SUMMARY (optional quick access)
   activeInvestment: {
     amount: Number,
     years: Number,
@@ -188,13 +198,13 @@ balance: {
     default: 0
   },
 
-  // 🔹 ACCOUNT STATUS
+  // ðŸ”¹ ACCOUNT STATUS
   isBlocked: {
     type: Boolean,
     default: false
   },
 
-  // 🔹 CREATED TIME
+  // ðŸ”¹ CREATED TIME
   createdAt: {
     type: Date,
     default: Date.now
@@ -234,84 +244,15 @@ performanceBonusEnabled: {
   default: false
 },
 
-performanceActivatedAt: Date,
-
 teamBonusEnabled: {
   type: Boolean,
-  default: true
+  default: false
 },
 
 royaltyBonusEnabled: {
   type: Boolean,
   default: false
-},
-
-royaltyActivatedAt: Date,
-  
-  performanceTaskCompleted:{
-type:Boolean,
-default:false
-},
-
-performanceDeadline:{
-type:Date,
-default:null
-},
-
-directCount:{
-type:Number,
-default:0
-},
-
-requiredDirect:{
-type:Number,
-default:10
-},
-
-royaltyRequired:{
-type:Number,
-default:50
-},
-
-firstInvestmentDone:{
-type:Boolean,
-default:false
-},
-
-firstInvestmentDate:{
-type:Date,
-default:null
-},
-
-kycRejectReason:{
-type:String,
-default:""
-},
-
-aadhaarNumber:{
-type:String,
-default:""
-},
-
-panNumber:{
-type:String,
-default:""
-},
-
-performanceBonusDisabled:{
-type:Boolean,
-default:false
-},
-
-teamBonusDisabled:{
-type:Boolean,
-default:false
-},
-
-royaltyBonusDisabled:{
-type:Boolean,
-default:false
-},
+}
 
 });
 
