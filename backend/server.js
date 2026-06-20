@@ -1212,7 +1212,6 @@ app.post("/register", async (req, res) => {
       mobile,
       email,
       password,
-      walletAddress,
       referCode
     } = req.body;
 
@@ -1222,7 +1221,6 @@ app.post("/register", async (req, res) => {
       !mobile ||
       !email ||
       !password ||
-      !walletAddress
     ) {
       return res.status(400).json({
         msg: "Please fill all required fields"
@@ -1242,7 +1240,7 @@ app.post("/register", async (req, res) => {
         minLength: 6,
         minNumbers: 1,
         minLowercase: 1,
-        minUppercase: 0,
+        minUppercase: 1,
         minSymbols: 0
       })
     ) {
@@ -1315,8 +1313,6 @@ app.post("/register", async (req, res) => {
       email: email.toLowerCase(),
 
       password: hashedPassword,
-
-      walletAddress,
 
       referCode: myReferCode,
 
