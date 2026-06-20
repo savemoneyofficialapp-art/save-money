@@ -3356,7 +3356,7 @@ app.get("/pending-kyc", auth, adminAuth, async (req, res) => {
     const users = await User.find({
 
       kycStatus: {
-        $in: ["reviewing", "pending"]
+        $in: ["Reviewing", "Pending"]
       }
 
     }).select("-password");
