@@ -41,18 +41,14 @@ export default function Refer() {
       const data = await res.json();
 
       if (data.success) {
-  setUser({
-    ...(data.user || {}),
-    activeStatus: data.activeStatus || "Inactive"
-  });
-
-  setHistory(Array.isArray(data.history) ? data.history : []);
-  setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
-  setPerformance(data.performance || {});
-  setTeam(data.team || {});
-  setRoyalty(data.royalty || {});
-  setTreeData(data.treeData || {});
-}
+        setUser(data.user || {});
+        setHistory(Array.isArray(data.history) ? data.history : []);
+        setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
+        setPerformance(data.performance || {});
+        setTeam(data.team || {});
+        setRoyalty(data.royalty || {});
+        setTreeData(data.treeData || {});
+      }
     } catch (err) {
       console.log("REFER DATA ERROR:", err);
     } finally {
@@ -110,7 +106,7 @@ export default function Refer() {
     {
       key: "performance",
       title: "Performance Bonus",
-      amount: Number(performance.balance || 0)
+      amount: performance.balance || user.performanceIncome || 0,
       icon: "📈",
       color: "#c026d3",
       bg: "#fff0ff"
@@ -118,7 +114,7 @@ export default function Refer() {
     {
       key: "team",
       title: "Team Bonus",
-      amount: Number(team.balance || 0)
+      amount: team.balance || user.teamIncome || 0,
       icon: "👥",
       color: "#2563eb",
       bg: "#eff6ff"
@@ -126,7 +122,7 @@ export default function Refer() {
     {
       key: "royalty",
       title: "Royalty Bonus",
-      amount: Number(royalty.balance || 0)
+      amount: royalty.balance || user.royaltyIncome || 0,
       icon: "👑",
       color: "#f97316",
       bg: "#fff7ed"
@@ -448,23 +444,7 @@ export default function Refer() {
 }
 
 function BonusHistory({ type, data }) {
-  const rows = (data || []).filter((x) => {
-
-  const t = String(
-    x.bonusType || x.type || ""
-  ).toLowerCase();
-
-  if (type === "performance")
-    return t.includes("performance");
-
-  if (type === "team")
-    return t.includes("team");
-
-  if (type === "royalty")
-    return t.includes("royalty");
-
-  return false;
-});
+  const rows = (data || []).filter((x) => x.bonusType === type);
 
   return (
     <div style={{ marginTop: 20 }}>
