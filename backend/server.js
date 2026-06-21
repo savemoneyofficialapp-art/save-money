@@ -2260,29 +2260,50 @@ const todayRoyalty = todayHistory
 .reduce((a,b)=>a+Number(b.amount||0),0);
 
 
+const mainBalance = Number(
+  user.balance ||
+  user.wallet ||
+  user.walletBalance ||
+  0
+);
+
 const todayBalance =
+    referralToday +
+    performanceToday +
+    teamToday +
+    royaltyToday;
 
-todayReferral+
-todayPerformance+
-todayTeam+
-todayRoyalty;
+res.json({
 
-    res.json({
-      success: true,
-      user,
-      name: user.name,
-      walletId: user.walletId || user.referralCode || user._id.toString(),
-      balance: todayBalance,
+  success:true,
 
-referral: todayReferral,
+  user,
 
-performance: todayPerformance,
+  name:user.name,
 
-team: todayTeam,
+  walletId:
+  user.walletId ||
+  user.referralCode ||
+  user._id.toString(),
 
-royalty: todayRoyalty,
-      history
-    });
+  // উপরের Available Balance
+  balance: mainBalance,
+
+  // নিচের Today Income
+  referral: referralToday,
+
+  performance: performanceToday,
+
+  team: teamToday,
+
+  royalty: royaltyToday,
+
+  // নিচের Today Wallet
+  todayBalance,
+
+  history
+
+});
 
   } catch (err) {
     console.log("WALLET SUMMARY ERROR:", err);
