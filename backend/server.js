@@ -2287,7 +2287,12 @@ res.json({
   user._id.toString(),
 
   // উপরের Available Balance
-  balance: mainBalance,
+  balance: Number(
+    user.balance ||
+    user.wallet ||
+    user.walletBalance ||
+    0
+  ),
 
   // নিচের Today Income
   referral: referralToday,
