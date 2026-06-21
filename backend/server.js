@@ -2221,16 +2221,66 @@ app.post("/wallet-summary", async (req, res) => {
 .sort({ date: -1 })
 .limit(20);
 
+    const today = new Date();
+
+today.setHours(0, 0, 0, 0);
+
+const tomorrow = new Date(today);
+tomorrow.setDate(tomorrow.getDate() + 1);
+
+
+const todayHistory = await WalletHistory.find({
+
+  email: email.toLowerCase(),
+
+  date: {
+    $gte: today,
+    $lt: tomorrow
+  }
+
+});
+
+    const todayReferral = todayHistory
+.filter(i=>i.type==="Referral Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+const todayPerformance = todayHistory
+.filter(i=>i.type==="Performance Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+const todayTeam = todayHistory
+.filter(i=>i.type==="Team Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+const todayRoyalty = todayHistory
+.filter(i=>i.type==="Royalty Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+const todayBalance =
+
+todayReferral+
+todayPerformance+
+todayTeam+
+todayRoyalty;
+
     res.json({
       success: true,
       user,
       name: user.name,
       walletId: user.walletId || user.referralCode || user._id.toString(),
-      balance: Number(user.balance || user.wallet || 0),
-      referral: Number(user.referralIncome || 0),
-      performance: Number(user.performanceBonus || 0),
-      team: Number(user.teamIncome || 0),
-      royalty: Number(user.royaltyIncome || user.realityIncome || 0),
+      balance: todayBalance,
+
+referral: todayReferral,
+
+performance: todayPerformance,
+
+team: todayTeam,
+
+royalty: todayRoyalty,
       history
     });
 
