@@ -10,17 +10,28 @@ export default function Wallet() {
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
 
+  
   const [wallet, setWallet] = useState({
-    walletId: "",
-    name: "",
-    avatar: "",
-    balance: 0,
-    referral: 0,
-    performance: 0,
-    team: 0,
-    royalty: 0
-  });
 
+  walletId:"",
+
+  name:"",
+
+  avatar:"",
+
+  balance:0,      // Main Wallet
+
+  todayBalance:0,
+
+  referral:0,
+
+  performance:0,
+
+  team:0,
+
+  royalty:0
+
+});
   const [history, setHistory] = useState([]);
 
   const [addOpen, setAddOpen] = useState(false);
@@ -71,7 +82,11 @@ avatar:
   data.user?.photoImage ||
   "",
 photo: data.user?.photo || "",
-photoImage: data.user?.photoImage || "",          balance: Number(data.balance || 0),
+photoImage: data.user?.photoImage || "",         
+          balance: Number(data.balance || 0),
+          todayBalance:Number(
+             data.todayBalance || 0
+                          ),
           referral: Number(data.referral || 0),
           performance: Number(data.performance || 0),
           team: Number(data.team || 0),
@@ -388,11 +403,11 @@ const visibleHistory = showAllHistory
           />
 
           <IncomeCard
-            icon="👛"
-            title="BALANCE"
-            amount={wallet.balance}
-            color="#14b8a6"
-          />
+ icon="👛"
+ title="TODAY WALLET"
+ amount={wallet.todayBalance}
+ color="#14b8a6"
+/>
         </section>
 {/* Wallet Transfer + Invite */}
 
