@@ -1919,8 +1919,8 @@ err
    await WalletHistory.create({
   email,
   amount: investAmount,
-  type: "debit",
-  status: "success",
+  type: "Debit",
+  status: "Success",
   description: "Save Money SIP Started",
   date: new Date()
 });
