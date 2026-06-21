@@ -698,6 +698,7 @@ function performanceBonusRate(years) {
 }
 
 async function processFirstInvestmentBonuses(investorEmail, investment) {
+    const refId = `FIRST-${investment._id}`;
   const investor = await User.findOne({ email: investorEmail });
   if (!investor || !investor.referredBy) return;
 
@@ -754,7 +755,7 @@ if (activeDirectCount >= 10 && !taskExpired) {
   });
 }
 
-  const refId = `FIRST-${investment._id}`;
+
 
   // Direct Referral Bonus
   await addBonus({
@@ -1892,7 +1893,28 @@ try {
 } catch (bonusErr) {
   console.log("REFERRAL BONUS ERROR:", bonusErr.message);
 }
-await distributeBonuses(email, investAmount);
+try{
+
+await processFirstInvestmentBonuses(
+    email,
+    investment
+);
+
+await payTeamBonus(email);
+
+await payRoyaltyBonus(
+    email,
+    investAmount
+);
+
+}catch(err){
+
+console.log(
+"BONUS ERROR:",
+err
+);
+
+}
 
    await WalletHistory.create({
   email,
