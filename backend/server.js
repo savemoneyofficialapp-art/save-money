@@ -5581,9 +5581,56 @@ app.post("/withdraw-info", async (req, res) => {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
 
-    // ✅ Wallet page এর same balance
-    const walletBalance = Number(user.balance || 0);
-    const withdrawableBalance = Math.floor(walletBalance * 0.8);
+    const today = new Date();
+today.setHours(0,0,0,0);
+
+const tomorrow = new Date(today);
+tomorrow.setDate(tomorrow.getDate()+1);
+
+
+const todayHistory = await WalletHistory.find({
+
+email,
+
+date:{
+$gte:today,
+$lt:tomorrow
+}
+
+});
+
+
+const referral = todayHistory
+.filter(i=>i.type==="Referral Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+const performance = todayHistory
+.filter(i=>i.type==="Performance Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+const team = todayHistory
+.filter(i=>i.type==="Team Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+const royalty = todayHistory
+.filter(i=>i.type==="Royalty Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+
+const walletBalance =
+referral+
+performance+
+team+
+royalty;
+
+
+
+const withdrawableBalance=
+Math.floor(walletBalance*0.8);
 
     return res.json({
       success: true,
@@ -5617,8 +5664,66 @@ app.post("/withdraw-request", async (req, res) => {
       });
     }
 
-    const walletBalance = Number(user.balance || 0);
-    const withdrawableBalance = Math.floor(walletBalance * 0.8);
+    const today = new Date();
+
+today.setHours(0,0,0,0);
+
+
+const tomorrow = new Date(today);
+
+tomorrow.setDate(
+tomorrow.getDate()+1
+);
+
+
+const todayHistory =
+await WalletHistory.find({
+
+email,
+
+date:{
+$gte:today,
+$lt:tomorrow
+}
+
+});
+
+
+
+const referral = todayHistory
+.filter(i=>i.type==="Referral Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+
+const performance = todayHistory
+.filter(i=>i.type==="Performance Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+
+const team = todayHistory
+.filter(i=>i.type==="Team Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+
+const royalty = todayHistory
+.filter(i=>i.type==="Royalty Bonus")
+.reduce((a,b)=>a+Number(b.amount||0),0);
+
+
+
+const walletBalance=
+referral+
+performance+
+team+
+royalty;
+
+
+
+const withdrawableBalance=
+Math.floor(walletBalance*0.8);
 
     if (amount < 100) {
       return res.status(400).json({
@@ -5646,9 +5751,7 @@ app.post("/withdraw-request", async (req, res) => {
       });
     }
 
-    user.balance = Number(user.balance || 0) - amount;
-user.wallet = Number(user.wallet || 0) - amount;
-await user.save();
+    
 
     const request = await WithdrawRequest.create({
       email,
