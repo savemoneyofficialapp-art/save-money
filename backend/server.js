@@ -1826,6 +1826,10 @@ app.post("/start-invest", async (req, res) => {
       ]
     });
 
+    user.activeStatus = "Active";
+
+await user.save();
+
     // Referral bonus only if referrer has active Save Money investment
 try {
   const investor = await User.findOne({
