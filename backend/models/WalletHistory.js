@@ -31,7 +31,7 @@ const walletHistorySchema = new mongoose.Schema(
   "Performance Bonus",
   "Team Bonus",
   "Royalty Bonus"
-]
+],
       default: "Credit"
     },
 
