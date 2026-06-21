@@ -2268,48 +2268,39 @@ const mainBalance = Number(
 );
 
 const todayBalance =
-    referralToday +
-    performanceToday +
-    teamToday +
-    royaltyToday;
+    todayReferral +
+    todayPerformance +
+    todayTeam +
+    todayRoyalty;
 
 res.json({
 
-  success:true,
+success:true,
 
-  user,
+user,
 
-  name:user.name,
+name:user.name,
 
-  walletId:
-  user.walletId ||
-  user.referralCode ||
-  user._id.toString(),
+walletId:
+user.walletId ||
+user.referralCode ||
+user._id.toString(),
 
-  // উপরের Available Balance
-  balance: Number(
-    user.balance ||
-    user.wallet ||
-    user.walletBalance ||
-    0
-  ),
+balance: mainBalance,
 
-  // নিচের Today Income
-  referral: referralToday,
+referral: todayReferral,
 
-  performance: performanceToday,
+performance: todayPerformance,
 
-  team: teamToday,
+team: todayTeam,
 
-  royalty: royaltyToday,
+royalty: todayRoyalty,
 
-  // নিচের Today Wallet
-  todayBalance,
+todayBalance,
 
-  history
+history
 
 });
-
   } catch (err) {
     console.log("WALLET SUMMARY ERROR:", err);
     res.status(500).json({
