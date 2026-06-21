@@ -2286,7 +2286,7 @@ user.walletId ||
 user.referralCode ||
 user._id.toString(),
 
-balance: mainBalance,
+balance: mainBalance,         // Main Wallet
 
 referral: todayReferral,
 
@@ -2296,7 +2296,7 @@ team: todayTeam,
 
 royalty: todayRoyalty,
 
-todayBalance,
+todayBalance,               // Withdrawable Wallet
 
 history
 
