@@ -100,7 +100,7 @@ export default function Withdraw() {
       <section style={styles.balanceGrid}>
         <div style={styles.balanceCard}>
           <span>💰</span>
-          <p>Wallet Balance</p>
+          <p>Today Wallet</p>
           <h2>{money(walletBalance)}</h2>
         </div>
 
@@ -108,7 +108,7 @@ export default function Withdraw() {
           <span>⚡</span>
           <p>Withdrawable Balance</p>
           <h2>{money(withdrawableBalance)}</h2>
-          <small>80% of wallet balance</small>
+          <small>80% of Today Wallet</small>
         </div>
       </section>
 
