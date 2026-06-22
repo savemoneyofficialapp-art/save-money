@@ -1716,9 +1716,7 @@ app.post("/start-invest", async (req, res) => {
       email,
       amount,
       years,
-      rate,
-      totalInterest,
-      maturityAmount
+      rate      
     } = req.body;
 
     const investAmount = Number(amount);
