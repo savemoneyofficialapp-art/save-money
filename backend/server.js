@@ -2000,39 +2000,40 @@ err
 });
 
 app.post("/renew-invest", async (req, res) => {
-  try {
-    const { investmentId } = req.body;
 
-    const investment = await Investment.findById(investmentId);
+try{
 
-    if (!investment) {
-      return res.status(404).json({
-        success: false,
-        msg: "Investment not found"
-      });
-    }
+const { investmentId } = req.body;
 
-    
 
-    // Renew
-    const today = new Date();
-    const currentDay = today.getDate();
+const investment =
+await Investment.findById(investmentId);
 
-    if (currentDay < 1 || currentDay > 3) {
-      return res.status(400).json({
-        success: false,
-        msg: "Please ComeBack After 30 Days"
-      });
-    }
 
-    const user = await User.findOne({
+if(!investment){
 
-email:
-investment.email.toLowerCase()
+return res.json({
+
+success:false,
+
+msg:"Investment not found"
 
 });
 
-    if (!user) {
+}
+
+
+const user =
+await User.findOne({
+
+email:
+String(investment.email)
+.toLowerCase()
+
+});
+
+
+if(!user){
 
 return res.json({
 
@@ -2042,19 +2043,59 @@ msg:"User not found"
 
 });
 
-    }
+}
+
+
+if(
+
+investment.renewStatus !== "Due"
+
+&&
+
+investment.status==="Active"
+
+){
+
+return res.json({
+
+success:false,
+
+msg:"Investment is not due"
+
+});
+
+}
+
 
 
 const renewAmount =
 Number(
-investment.monthlyAmount
+
+investment.monthlyAmount ||
+
+investment.amount ||
+
+0
+
 );
 
 
+
+const balance =
+Number(
+
+user.balance ||
+
+0
+
+);
+
+
+
 if(
-Number(user.balance||0)
-<
-renewAmount
+
+balance < renewAmount
+
 ){
 
 return res.json({
@@ -2068,55 +2109,108 @@ msg:"Insufficient Balance"
 }
 
 
+
 user.balance =
-Number(user.balance||0)-renewAmount;
+Number(user.balance||0)
+-
+renewAmount;
+
 
 user.wallet =
-Number(user.wallet||0)-renewAmount;
+Number(user.wallet||0)
+-
+renewAmount;
+
 
 user.walletBalance =
-Number(user.walletBalance||0)-renewAmount;
+Number(user.walletBalance||0)
+-
+renewAmount;
+
 
 
 await user.save();
 
-    // Add Renew History
-    investment.history.push({
-      type: "RENEW",
-      amount: investment.monthlyAmount || investment.amount,
-      date: new Date(),
-      slipNo: "RN-" + Date.now()
-    });
 
-    investment.renewCount =
-      (investment.renewCount || 0) + 1;
 
-    investment.monthsPaid =
+
+investment.history.push({
+
+type:"RENEW",
+
+amount:renewAmount,
+
+date:new Date(),
+
+slipNo:
+"RN-"+Date.now()
+
+});
+
+
+
+investment.monthsPaid =
+
 Number(
+
 investment.monthsPaid||1
+
 )+1;
 
-    investment.lastRenewDate =
-      new Date();
 
-    // Next renew date = next month 1st
-    const nextRenew = new Date();
 
-    nextRenew.setMonth(
-      nextRenew.getMonth() + 1
-    );
+investment.renewCount =
 
-    nextRenew.setDate(1);
+Number(
 
-    investment.nextRenewDate =
-      nextRenew;
+investment.renewCount||0
 
-    investment.renewStatus =
-      "Renewed";
+)+1;
 
-   await investment.save();
 
-    await WalletHistory.create({
+
+
+investment.lastRenewDate =
+new Date();
+
+
+
+
+const nextRenew =
+new Date();
+
+
+
+nextRenew.setMonth(
+
+nextRenew.getMonth()+1
+
+);
+
+
+nextRenew.setDate(1);
+
+
+
+investment.nextRenewDate =
+nextRenew;
+
+user.activeStatus = "Active";
+  
+user.status = "Active";
+
+investment.status =
+"Active";
+
+investment.renewStatus =
+"Renewed";
+  
+await investment.save();
+
+
+
+
+await WalletHistory.create({
 
 email:user.email,
 
@@ -2126,46 +2220,61 @@ type:"Debit",
 
 status:"Success",
 
-description:"SIP Renew Payment",
+description:
+"SIP Renew Payment",
 
 date:new Date()
 
 });
 
-if (!investment.referralBonusGiven) {
-  const investUser = await User.findOne({
-    email: String(investment.email).toLowerCase()
-  });
 
-  await distributeSaveMoneyBonuses(
-    investUser,
-    Number(investment.amount || investment.monthlyAmount || 2000)
-  );
 
-  investment.referralBonusGiven = true;
-  await investment.save();
-}
 
 res.json({
-  success: true,
-  msg: "Investment renewed successfully",
-      nextRenewDate:
-        investment.nextRenewDate,
-      renewCount:
-        investment.renewCount
-    });
 
-  } catch (err) {
+success:true,
 
-    console.log(err);
+msg:
+"Investment renewed successfully",
 
-    res.status(500).json({
-      success: false,
-      msg: "Server error"
-    });
+nextRenewDate:
+investment.nextRenewDate,
 
-  }
+renewCount:
+investment.renewCount,
+
+monthsPaid:
+investment.monthsPaid
+
+
 });
+
+
+}catch(err){
+
+console.log(
+
+"RENEW ERROR:",
+
+err
+
+);
+
+
+res.status(500).json({
+
+success:false,
+
+msg:"Server error"
+
+});
+
+
+}
+
+
+});
+
 
 app.post("/team-bonus-data", async (req, res) => {
   try {
@@ -6465,6 +6574,197 @@ await User.updateMany(
   }
 
 });
+
+// =============== AUTO RENEW =================
+
+cron.schedule(
+
+'0 0 1 * *',
+
+async()=>{
+
+try{
+
+
+const investments =
+await Investment.find({
+
+status:"Active"
+
+});
+
+
+for(const inv of investments){
+
+
+const user =
+await User.findOne({
+
+email:
+inv.email.toLowerCase()
+
+});
+
+
+if(!user) continue;
+
+
+const amount =
+Number(
+inv.monthlyAmount||0
+);
+
+
+
+const balance =
+Number(
+user.balance||0
+);
+
+
+
+if(balance>=amount){
+
+
+user.balance-=amount;
+
+user.wallet-=amount;
+
+user.walletBalance-=amount;
+
+
+await user.save();
+
+
+
+inv.history.push({
+
+type:"AUTO RENEW",
+
+amount,
+
+date:new Date(),
+
+slipNo:"AR-"+Date.now()
+
+});
+
+
+
+inv.monthsPaid=
+Number(inv.monthsPaid||1)+1;
+
+
+
+inv.renewCount=
+Number(inv.renewCount||0)+1;
+
+
+
+inv.lastRenewDate=
+new Date();
+
+
+
+
+const nextRenew =
+new Date();
+
+
+nextRenew.setMonth(
+nextRenew.getMonth()+1
+);
+
+
+nextRenew.setDate(1);
+
+
+
+inv.nextRenewDate=
+nextRenew;
+
+
+
+inv.renewStatus=
+"Renewed";
+
+
+inv.status=
+"Active";
+
+
+await inv.save();
+
+
+
+await WalletHistory.create({
+
+email:user.email,
+
+amount,
+
+type:"Debit",
+
+description:
+"SIP Auto Renew",
+
+status:"Success",
+
+date:new Date()
+
+});
+
+
+}else{
+
+
+inv.status=
+"Inactive";
+
+
+inv.renewStatus=
+"Due";
+
+
+await inv.save();
+
+
+
+}
+
+
+
+}
+
+
+
+console.log(
+
+"Auto Renew Completed"
+
+);
+
+
+
+}catch(err){
+
+
+console.log(
+
+"AUTO RENEW ERROR",
+
+err
+
+);
+}
+
+},
+{
+timezone:"Asia/Kolkata"
+}
+
+
+);
 
 //================== AUTO INACTIVE CHECK ===================
 
