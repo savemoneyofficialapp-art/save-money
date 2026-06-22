@@ -1783,65 +1783,69 @@ app.post("/start-invest", async (req, res) => {
       nextRenewDate.getDate() + 30
     );
 
-    const investment = await Investment.create({
-      email,
+            const P = investAmount;
 
-      planName: "Save Money SIP",
+const r = Number(rate || 0) / 100 / 12;
 
-      monthlyAmount: investAmount,
-      amount: investAmount,
-
-      years: Number(years || 1),
- 
-      monthsPaid:1,
-
-      rate: Number(rate || 0),
-
-      const P = investAmount;
-const r = Number(rate)/100/12;
-const n = Number(years)*12;
+const n = Number(years || 1) * 12;
 
 const maturityAmount =
-P * (((Math.pow(1+r,n)-1)/r)*(1+r));
+P *
+(
+((Math.pow(1 + r, n) - 1) / r)
+*
+(1 + r)
+);
 
 const totalInterest =
-maturityAmount-(P*n);
+maturityAmount - (P * n);
+
     const investment = await Investment.create({
 
-...
+  email,
 
-totalInterest,
+  planName: "Save Money SIP",
 
-maturityAmount,
+  monthlyAmount: investAmount,
 
-...
+  amount: investAmount,
 
-})
+  years: Number(years || 1),
 
-      certificateNo,
-      slipNo,
+  monthsPaid: 1,
 
-      startDate,
+  rate: Number(rate || 0),
 
-      nextRenewDate,
+  totalInterest,
 
-      renewCount: 0,
+  maturityAmount,
 
-      renewStatus: "Waiting",
+  certificateNo,
 
-      status: "Active",
+  slipNo,
 
-      lastRenewDate: startDate,
+  startDate,
 
-      history: [
-        {
-          type: "START SIP",
-          amount: investAmount,
-          date: startDate,
-          slipNo
-        }
-      ]
-    });
+  nextRenewDate,
+
+  renewCount: 0,
+
+  renewStatus: "Waiting",
+
+  status: "Active",
+
+  lastRenewDate: startDate,
+
+  history: [
+    {
+      type: "START SIP",
+      amount: investAmount,
+      date: startDate,
+      slipNo
+    }
+  ]
+
+});
 
     user.activeStatus = "Active";
 
