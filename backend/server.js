@@ -1792,14 +1792,31 @@ app.post("/start-invest", async (req, res) => {
       amount: investAmount,
 
       years: Number(years || 1),
+ 
+      monthsPaid:1,
 
       rate: Number(rate || 0),
 
-      totalInterest:
-        Number(totalInterest || 0),
+      const P = investAmount;
+const r = Number(rate)/100/12;
+const n = Number(years)*12;
 
-      maturityAmount:
-        Number(maturityAmount || 0),
+const maturityAmount =
+P * (((Math.pow(1+r,n)-1)/r)*(1+r));
+
+const totalInterest =
+maturityAmount-(P*n);
+    const investment = await Investment.create({
+
+...
+
+totalInterest,
+
+maturityAmount,
+
+...
+
+})
 
       certificateNo,
       slipNo,
@@ -1971,6 +1988,8 @@ app.post("/renew-invest", async (req, res) => {
       });
     }
 
+    
+
     // Renew
     const today = new Date();
     const currentDay = today.getDate();
@@ -1982,6 +2001,42 @@ app.post("/renew-invest", async (req, res) => {
       });
     }
 
+    const user = await User.findOne({
+
+email:
+investment.email.toLowerCase()
+
+});
+
+
+const renewAmount =
+Number(
+investment.monthlyAmount
+);
+
+
+if(
+Number(user.balance||0)
+<
+renewAmount
+){
+
+return res.json({
+
+success:false,
+
+msg:"Insufficient Balance"
+
+});
+
+}
+
+
+user.balance -= renewAmount;
+user.wallet -= renewAmount;
+
+await user.save();
+
     // Add Renew History
     investment.history.push({
       type: "RENEW",
@@ -1992,6 +2047,11 @@ app.post("/renew-invest", async (req, res) => {
 
     investment.renewCount =
       (investment.renewCount || 0) + 1;
+
+    investment.monthsPaid =
+Number(
+investment.monthsPaid||1
+)+1;
 
     investment.lastRenewDate =
       new Date();
@@ -2892,8 +2952,36 @@ monthlyAmount: monthly,
     years,
     returnRate: i.rate || 0,
 
-    totalReturn: i.totalInterest || 0,
-    maturityAmount: i.maturityAmount || 0,
+    const monthly =
+Number(i.monthlyAmount || 0);
+
+const rate =
+Number(i.rate || 0);
+
+const years =
+Number(i.years || 0);
+
+const r = rate/100/12;
+
+const n = years*12;
+
+
+const maturityAmount =
+monthly*
+(
+((Math.pow(1+r,n)-1)/r)
+*
+(1+r)
+);
+
+
+const totalReturn =
+maturityAmount -
+(monthly*n);
+
+       totalReturn,
+
+maturityAmount,
 
     startDate,
     endDate,
