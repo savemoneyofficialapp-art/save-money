@@ -1781,22 +1781,44 @@ app.post("/start-invest", async (req, res) => {
       nextRenewDate.getDate() + 30
     );
 
-            const P = investAmount;
+            const monthly = investAmount;
 
-const r = Number(rate || 0) / 100 / 12;
+const annualRate = Number(rate || 0);
 
-const n = Number(years || 1) * 12;
+const totalYears = Number(years || 1);
 
-const maturityAmount =
-P *
-(
-((Math.pow(1 + r, n) - 1) / r)
-*
-(1 + r)
-);
+const r = annualRate / 100 / 12;
 
-const totalInterest =
-maturityAmount - (P * n);
+const n = totalYears * 12;
+
+
+let maturityAmount = 0;
+
+let totalInterest = 0;
+
+
+if (r > 0) {
+
+  maturityAmount =
+    monthly *
+    (
+      ((Math.pow(1 + r, n) - 1) / r)
+      *
+      (1 + r)
+    );
+
+  totalInterest =
+    maturityAmount -
+    (monthly * n);
+
+} else {
+
+  maturityAmount =
+    monthly * n;
+
+  totalInterest = 0;
+
+}
 
     const investment = await Investment.create({
 
@@ -2010,6 +2032,18 @@ investment.email.toLowerCase()
 
 });
 
+    if (!user) {
+
+return res.json({
+
+success:false,
+
+msg:"User not found"
+
+});
+
+    }
+
 
 const renewAmount =
 Number(
@@ -2034,8 +2068,15 @@ msg:"Insufficient Balance"
 }
 
 
-user.balance -= renewAmount;
-user.wallet -= renewAmount;
+user.balance =
+Number(user.balance||0)-renewAmount;
+
+user.wallet =
+Number(user.wallet||0)-renewAmount;
+
+user.walletBalance =
+Number(user.walletBalance||0)-renewAmount;
+
 
 await user.save();
 
@@ -2074,6 +2115,22 @@ investment.monthsPaid||1
       "Renewed";
 
    await investment.save();
+
+    await WalletHistory.create({
+
+email:user.email,
+
+amount:renewAmount,
+
+type:"Debit",
+
+status:"Success",
+
+description:"SIP Renew Payment",
+
+date:new Date()
+
+});
 
 if (!investment.referralBonusGiven) {
   const investUser = await User.findOne({
@@ -2925,86 +2982,205 @@ for (const inv of investments) {
   }
 }
 
-   const fixedInvestments = investments.map((i, index) => {
+const fixedInvestments = investments.map((i, index) => {
+
   const monthly = Number(i.monthlyAmount || i.amount || 0);
+
   const years = Number(i.years || 0);
+
+  const rate = Number(i.rate || 0);
+
+
   const requiredInvestment = monthly * 12 * years;
-const investedAmount = monthly * Number(i.monthsPaid || 1);
 
- const startDate = i.startDate || i.createdAt;
 
-const endDate = new Date(startDate);
+  const investedAmount =
+    monthly * Number(i.monthsPaid || 1);
 
-endDate.setFullYear(
-  endDate.getFullYear() + Number(i.years || 0)
-);
+
+  const startDate =
+    i.startDate || i.createdAt;
+
+
+  const endDate = new Date(startDate);
+
+  endDate.setFullYear(
+
+    endDate.getFullYear() + years
+
+  );
+
+
+
+  // SIP Calculation
+
+  let maturityAmount = 0;
+
+  let totalReturn = 0;
+
+
+  if (rate > 0) {
+
+    const r = rate / 100 / 12;
+
+    const n = years * 12;
+
+
+    maturityAmount =
+
+      monthly *
+
+      (
+
+        ((Math.pow(1 + r, n) - 1) / r)
+
+        *
+
+        (1 + r)
+
+      );
+
+
+    totalReturn =
+
+      maturityAmount -
+
+      (monthly * n);
+
+  }
+
+
 
   return {
+
     _id: i._id,
-    investmentId: `SM${new Date(startDate).getFullYear()}${String(index + 1).padStart(4, "0")}${String(i._id).slice(-4)}`,
+
+
+    investmentId:
+      `SM${new Date(startDate).getFullYear()}${String(index + 1).padStart(4, "0")}${String(i._id).slice(-4)}`,
+
+
+
     planType: "save",
+
     planName: "Save Money",
+
     planSub: "SIP Invest Plan",
 
+
+
     requiredInvestment,
-investedAmount,
-amount: requiredInvestment,
-monthlyAmount: monthly,
+
+    investedAmount,
+
+
+
+    amount: requiredInvestment,
+
+
+    monthlyAmount: monthly,
+
+
     monthlyReturn: monthly,
+
+
     years,
-    returnRate: i.rate || 0,
-
-    const monthly =
-Number(i.monthlyAmount || 0);
-
-const rate =
-Number(i.rate || 0);
-
-const years =
-Number(i.years || 0);
-
-const r = rate/100/12;
-
-const n = years*12;
 
 
-const maturityAmount =
-monthly*
-(
-((Math.pow(1+r,n)-1)/r)
-*
-(1+r)
-);
+    returnRate: rate,
 
 
-const totalReturn =
-maturityAmount -
-(monthly*n);
 
-       totalReturn,
+    totalReturn,
 
-maturityAmount,
+
+    maturityAmount,
+
+
 
     startDate,
+
+
     endDate,
+
+
     renewDate: i.nextRenewDate,
 
+
+
     daysLeft: i.nextRenewDate
+
       ? Math.max(
+
           0,
-          Math.ceil((new Date(i.nextRenewDate) - new Date()) / (1000 * 60 * 60 * 24))
+
+          Math.ceil(
+
+            (
+
+              new Date(i.nextRenewDate) -
+
+              new Date()
+
+            )
+
+            /
+
+            (1000 * 60 * 60 * 24)
+
+          )
+
         )
+
       : 0,
 
-    status: i.status || "Active",
-    progress: i.monthsPaid
-      ? Math.min(Math.floor((i.monthsPaid / (years * 12)) * 100), 100)
-      : 1,
 
-    history: i.history || []
+
+    status:
+
+      i.status || "Active",
+
+
+
+    progress:
+
+      i.monthsPaid
+
+        ?
+
+        Math.min(
+
+          Math.floor(
+
+            (
+
+              i.monthsPaid /
+
+              (years * 12)
+
+            )
+
+            * 100
+
+          ),
+
+          100
+
+        )
+
+        : 1,
+
+
+
+    history:
+
+      i.history || []
+
   };
+
 });
 
+    
    const summary = {
   totalInvestment: fixedInvestments.reduce(
     (a, b) => a + (b.requiredInvestment || 0),
