@@ -90,8 +90,11 @@ const isOverdue = (renewDate) => {
   };
 
   const money = (n) => {
-    return `₹ ${Number(n || 0).toLocaleString("en-IN")}.00`;
-  };
+  return `₹ ${Number(n || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
+};
 
   const date = (d) => {
     if (!d) return "N/A";
