@@ -5735,91 +5735,9 @@ monthlyInvestment+=monthly;
 
 
 
-let maturityAmount=0;
-
-let interest=0;
-
-
-
-if(rate>0){
-
-
-const r =
-rate/100/12;
-
-
-const n =
-years*12;
-
-
-
-maturityAmount=
-
-monthly*
-
-(
-
-(
-
-Math.pow(
-
-1+r,
-
-n
-
-)
-
--1
-
-)
-
-/
-
-r
-
-)
-
-*
-
-(
-
-1+r
-
+totalReturn += Number(
+    inv.totalInterest || 0
 );
-
-
-
-
-interest=
-
-maturityAmount-
-
-(
-
-monthly*n
-
-);
-
-
-
-}else{
-
-
-maturityAmount=
-monthly*
-12*
-years;
-
-
-interest=0;
-
-
-}
-
-
-
-
-totalReturn+=interest;
 
 
 
