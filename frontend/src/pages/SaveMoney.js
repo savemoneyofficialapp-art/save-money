@@ -55,27 +55,110 @@ export default function SaveMoney() {
 
   const rate = getRate(years);
 
-  const calc = useMemo(() => {
-    const monthly = Number(amount || 0);
-    const totalInvestment =
-      monthly * 12 * Number(years);
+  const calc = useMemo(()=>{
 
-    const totalInterest = Math.floor(
-      (totalInvestment * rate) / 100
-    );
+const monthly =
+Number(amount||0);
 
-    const totalReturn =
-      totalInvestment + totalInterest;
+const annualRate =
+Number(rate||0);
 
-    return {
-      monthly,
-      totalInvestment,
-      totalInterest,
-      totalReturn,
-      estimatedReturn: totalInterest
-    };
-  }, [amount, years, rate]);
+const totalYears =
+Number(years||1);
 
+const r =
+annualRate/100/12;
+
+const n =
+totalYears*12;
+
+
+let maturityAmount=0;
+let totalInterest=0;
+
+
+if(r>0){
+
+maturityAmount=
+
+monthly*
+
+(
+
+(
+
+Math.pow(
+
+1+r,
+
+n
+
+)
+
+-1
+
+)
+
+/
+
+r
+
+)
+
+*
+
+(
+
+1+r
+
+);
+
+
+
+totalInterest=
+
+maturityAmount-
+
+(
+
+monthly*n
+
+);
+
+}else{
+
+maturityAmount=
+monthly*n;
+
+totalInterest=0;
+
+}
+
+
+
+return{
+
+monthly,
+
+totalInvestment:
+monthly*n,
+
+estimatedReturn:
+totalInterest,
+
+totalInterest,
+
+totalReturn:
+maturityAmount
+
+};
+
+
+},[
+amount,
+years,
+rate
+]);
   const money = (n) => {
     return `₹ ${Number(n || 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
