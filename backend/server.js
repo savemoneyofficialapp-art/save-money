@@ -5728,7 +5728,7 @@ created.getFullYear()
 
 ){
 
-monthlyInvestment+=monthly;
+monthlyInvestment+=investedAmount;
 
 }
 
