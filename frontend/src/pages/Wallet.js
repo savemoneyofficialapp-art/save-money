@@ -778,7 +778,7 @@ Your earnings will be automatically withdrawn every month on the <b>5th date</b>
 
 <br/><br/>
 
-✅ Auto withdrawal will only be processed if your <b>Save Money Investment</b> has been renewed on time.
+✅ Auto withdrawal will be processed if your <b>Save Money Investment</b> has been renewed on time.
 
 
 <br/><br/>
