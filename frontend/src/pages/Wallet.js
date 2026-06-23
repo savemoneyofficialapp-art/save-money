@@ -756,40 +756,61 @@ const visibleHistory = showAllHistory
 
         {withdrawOpen && (
 
-          <div style={styles.modalOverlay}>
+<div style={styles.modalOverlay}>
 
-            <div style={styles.modal}>
+<div style={styles.modal}>
 
-              <h2>
-                Auto Withdrawal
-              </h2>
+<h2>
+💳 Auto Withdrawal
+</h2>
 
-              <p
-                style={{
-                  lineHeight:"28px",
-                  color:"#64748b"
-                }}
-              >
-                Every month auto withdrawal
-                will be processed on the
-                5th date if your Save Money
-                investment is renewed on time.
-              </p>
 
-              <button
-                style={styles.closeBtn}
-                onClick={() =>
-                  setWithdrawOpen(false)
-                }
-              >
-                Okay
-              </button>
+<p
+style={{
+lineHeight:"30px",
+color:"#475569",
+fontSize:"15px"
+}}
+>
 
-            </div>
+Your earnings will be automatically withdrawn every month on the <b>5th date</b>.
 
-          </div>
 
-        )}
+<br/><br/>
+
+✅ Auto withdrawal will only be processed if your <b>Save Money Investment</b> has been renewed on time.
+
+
+<br/><br/>
+
+❌ If your investment renewal is pending, overdue or inactive, withdrawal will not be processed.
+
+
+<br/><br/>
+
+🔄 Once your investment is renewed again, the system will automatically process withdrawal on the next upcoming <b>5th date</b>.
+
+
+</p>
+
+
+<button
+style={styles.closeBtn}
+onClick={() => setWithdrawOpen(false)}
+>
+
+Okay, I Understand
+
+</button>
+
+
+</div>
+
+</div>
+
+)}
+
+
         {/* Transfer Confirm Modal */}
 
 {confirmTransferOpen && receiverInfo && (
