@@ -5573,71 +5573,329 @@ app.post("/my-bonus-ledger", auth, async (req, res) => {
 });
 
 app.post("/investment-summary", async (req, res) => {
-  try {
-    const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ msg: "Email required" });
-    }
+try{
 
-    const investments = await Investment.find({
-      email: email.toLowerCase()
-    });
+const { email } = req.body;
 
-    let totalInvestment = 0;
-    let monthlyInvestment = 0;
-    let totalReturn = 0;
-    let activePlan = 0;
-    let rateSum = 0;
-    let rateCount = 0;
 
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+if(!email){
 
-    investments.forEach((inv) => {
-      const amount = Number(inv.amount || inv.monthlyAmount || inv.totalAmount || 0);
-      const rate = Number(inv.returnRate || inv.interestRate || inv.percent || 0);
+return res.status(400).json({
 
-      totalInvestment += amount;
+success:false,
+msg:"Email required"
 
-      if (inv.status === "Active" || inv.status === "active") {
-        activePlan += 1;
-      }
+});
 
-      if (rate > 0) {
-        rateSum += rate;
-        rateCount += 1;
-      }
+}
 
-      const created = new Date(inv.createdAt || inv.date);
 
-      if (
-        created.getMonth() === currentMonth &&
-        created.getFullYear() === currentYear
-      ) {
-        monthlyInvestment += amount;
-      }
+const investments =
+await Investment.find({
 
-      totalReturn += (amount * rate) / 100;
-    });
+email:email.toLowerCase()
 
-    const returnRate =
-      rateCount > 0 ? Number((rateSum / rateCount).toFixed(2)) : 0;
+});
 
-    res.json({
-      success: true,
-      totalInvestment,
-      monthlyInvestment,
-      totalReturn,
-      returnRate,
-      activePlan
-    });
 
-  } catch (err) {
-    console.log("INVESTMENT SUMMARY ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
-  }
+let totalInvestment=0;
+
+let monthlyInvestment=0;
+
+let totalReturn=0;
+
+let activePlan=0;
+
+let rateSum=0;
+
+let rateCount=0;
+
+
+
+const now = new Date();
+
+const currentMonth =
+now.getMonth();
+
+const currentYear =
+now.getFullYear();
+
+
+
+for(const inv of investments){
+
+
+const monthly =
+Number(
+
+inv.monthlyAmount||
+
+inv.amount||
+
+0
+
+);
+
+
+
+const years =
+Number(
+
+inv.years||
+
+1
+
+);
+
+
+
+const rate =
+Number(
+
+inv.rate||
+
+0
+
+);
+
+
+
+
+const investedAmount =
+monthly*
+Number(
+inv.monthsPaid||1
+);
+
+
+
+
+totalInvestment+=investedAmount;
+
+
+
+
+if(
+
+String(inv.status)
+==="Active"
+
+){
+
+activePlan++;
+
+}
+
+
+
+
+if(rate>0){
+
+rateSum+=rate;
+
+rateCount++;
+
+}
+
+
+
+
+
+const created=
+new Date(
+
+inv.createdAt||
+
+inv.startDate||
+
+new Date()
+
+);
+
+
+
+
+if(
+
+created.getMonth()
+===currentMonth
+
+&&
+
+created.getFullYear()
+===currentYear
+
+){
+
+monthlyInvestment+=monthly;
+
+}
+
+
+
+
+let maturityAmount=0;
+
+let interest=0;
+
+
+
+if(rate>0){
+
+
+const r =
+rate/100/12;
+
+
+const n =
+years*12;
+
+
+
+maturityAmount=
+
+monthly*
+
+(
+
+(
+
+Math.pow(
+
+1+r,
+
+n
+
+)
+
+-1
+
+)
+
+/
+
+r
+
+)
+
+*
+
+(
+
+1+r
+
+);
+
+
+
+
+interest=
+
+maturityAmount-
+
+(
+
+monthly*n
+
+);
+
+
+
+}else{
+
+
+maturityAmount=
+monthly*
+12*
+years;
+
+
+interest=0;
+
+
+}
+
+
+
+
+totalReturn+=interest;
+
+
+
+}
+
+
+
+const returnRate =
+
+rateCount>0
+
+?
+
+Number(
+
+(
+
+rateSum/
+
+rateCount
+
+)
+
+.toFixed(2)
+
+)
+
+:
+
+0;
+
+
+
+
+res.json({
+
+success:true,
+
+totalInvestment,
+
+monthlyInvestment,
+
+totalReturn,
+
+returnRate,
+
+activePlan
+
+});
+
+
+}catch(err){
+
+
+console.log(
+
+"INVESTMENT SUMMARY ERROR",
+
+err
+
+);
+
+
+
+res.status(500).json({
+
+success:false,
+
+msg:"Server error"
+
+});
+
+
+}
+
+
 });
 
 app.post("/create-razorpay-order", async (req, res) => {
