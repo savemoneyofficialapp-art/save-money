@@ -160,11 +160,16 @@ years,
 rate
 ]);
   const money = (n) => {
-    return `₹ ${Number(n || 0).toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`;
-  };
+
+const amount = Math.floor(Number(n || 0));
+
+return `₹ $
+  {amount.toLocaleString("en-IN",{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}`;
+
+};
 
   const openTerms = () => {
     if (accepted) {
