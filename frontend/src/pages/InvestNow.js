@@ -61,10 +61,12 @@ export default function InvestNow() {
     }
   };
 
-  const money = (amount) => {
-    return `₹ ${Number(amount || 0).toLocaleString("en-IN")}.00`;
-  
-  };
+  const money = (n) => {
+  return `₹ ${Number(n || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
+};
 
   const showMoney = (amount) => {
   return showInvestment ? money(amount) : "₹ ••••••••";
