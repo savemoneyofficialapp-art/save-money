@@ -6683,6 +6683,11 @@ nextRenew.setDate(1);
 inv.nextRenewDate=
 nextRenew;
 
+  user.activeStatus="Active";
+user.status="Active";
+
+await user.save();
+
 
 
 inv.renewStatus=
@@ -6725,7 +6730,11 @@ inv.status=
 inv.renewStatus=
 "Due";
 
+user.activeStatus="Inactive";
+user.status="Inactive";
 
+
+await user.save();
 await inv.save();
 
 
