@@ -7159,27 +7159,41 @@ cron.schedule(
 
 async()=>{
 
+
 try{
 
 
 console.log(
+
 "AUTO WITHDRAW STARTED"
+
 );
 
 
+
 const investments =
+
 await Investment.find({
+
 
 status:"Active",
 
+
 renewStatus:{
+
 $nin:[
+
 "Due",
+
 "Overdue"
+
 ]
+
 }
 
+
 });
+
 
 
 
@@ -7188,6 +7202,7 @@ for(const inv of investments){
 
 
 const user =
+
 await User.findOne({
 
 email:
@@ -7196,7 +7211,13 @@ inv.email.toLowerCase()
 });
 
 
-if(!user) continue;
+
+if(!user){
+
+continue;
+
+}
+
 
 
 
@@ -7212,49 +7233,23 @@ continue;
 
 
 
-const now =
-new Date();
+
+const amount = Number(
+
+user.balance||
+
+user.wallet||
+
+user.walletBalance||
+
+0
+
+);
 
 
 
-const alreadyPaid =
-await WalletHistory.findOne({
 
-email:user.email,
-
-description:
-"AUTO WITHDRAWAL",
-
-
-createdAt:{
-
-$gte:new Date(
-
-now.getFullYear(),
-
-now.getMonth(),
-
-1
-
-),
-
-$lt:new Date(
-
-now.getFullYear(),
-
-now.getMonth()+1,
-
-1
-
-)
-
-}
-
-});
-
-
-
-if(alreadyPaid){
+if(amount<=0){
 
 continue;
 
@@ -7262,70 +7257,88 @@ continue;
 
 
 
-const amount = Number(
 
-inv.monthlyAmount||0
+if(
 
-);
+!user.bankName ||
 
+!user.accountNumber ||
 
+!user.ifsc
 
-user.balance=
-Number(
+){
 
-user.balance||0
+continue;
 
-)+amount;
-
-
-
-user.wallet=
-Number(
-
-user.wallet||0
-
-)+amount;
-
-
-
-user.walletBalance=
-Number(
-
-user.walletBalance||0
-
-)+amount;
-
-
-
-await user.save();
+}
 
 
 
 
-await WalletHistory.create({
+const exists =
+
+await AutoWithdrawal.findOne({
 
 
 email:user.email,
 
 
+status:"Pending"
+
+
+});
+
+
+
+if(exists){
+
+continue;
+
+}
+
+
+
+
+await AutoWithdrawal.create({
+
+
+email:user.email,
+
+
+name:user.name,
+
+
+walletId:user.walletId,
+
+
 amount,
 
 
-type:"credit",
+bankName:user.bankName,
 
 
-description:
-"AUTO WITHDRAWAL",
+accountName:
+
+user.accountHolder,
 
 
-note:
-"Monthly SIP Return",
+accountNumber:
+
+user.accountNumber,
 
 
-status:"Success",
+ifsc:
+
+user.ifsc,
 
 
-date:new Date()
+upiId:
+
+user.upiId,
+
+
+status:"Pending"
+
 
 
 });
@@ -7335,13 +7348,13 @@ date:new Date()
 
 console.log(
 
-`WITHDRAW DONE ${user.email}`
+`REQUEST CREATED ${user.email}`
 
 );
 
 
-
 }
+
 
 
 
@@ -7368,8 +7381,9 @@ err
 }
 
 
-
 });
+
+
 app.use((err, req, res, next) => {
 
   console.log("GLOBAL ERROR:", err);
