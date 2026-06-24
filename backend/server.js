@@ -38,7 +38,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
-const AutoWithdrawal = require("./models/AutoWithdrawal");
+const AutoWithdraw = require("./models/AutoWithdraw");
 
 
 
@@ -3889,6 +3889,50 @@ msg:"Server error"
 
 })
 
+
+app.get(
+"/admin/auto-withdraws",
+verifyToken,
+verifyAdmin,
+
+async(req,res)=>{
+
+
+try{
+
+
+const requests=await AutoWithdraw.find()
+
+.sort({createdAt:-1});
+
+
+
+res.send({
+
+success:true,
+
+requests
+
+});
+
+
+}
+
+
+catch{
+
+
+res.send({
+
+success:false
+
+});
+
+}
+
+
+});
+
 app.post("/auto-withdraw-status", async (req, res) => {
 
 try{
@@ -4070,6 +4114,70 @@ msg:"Server error"
 
 
 }
+
+
+});
+
+
+app.post(
+
+"/admin/auto-withdraw-action",
+
+verifyToken,
+verifyAdmin,
+
+async(req,res)=>{
+
+
+const {
+
+id,
+
+status,
+
+rejectReason
+
+}=req.body;
+
+
+
+const reqData=await AutoWithdraw.findById(id);
+
+
+
+if(!reqData){
+
+return res.send({
+
+success:false
+
+});
+
+}
+
+
+
+reqData.status=status;
+
+
+reqData.rejectReason=rejectReason;
+
+
+reqData.actionDate=new Date();
+
+
+
+await reqData.save();
+
+
+
+res.send({
+
+success:true,
+
+msg:"Updated"
+
+});
 
 
 });
@@ -7310,16 +7418,24 @@ continue;
 
 
 
+const start = new Date();
+start.setHours(0,0,0,0);
+
+const end = new Date();
+end.setHours(23,59,59,999);
+
+
 const exists =
-
 await AutoWithdrawal.findOne({
-
 
 email:user.email,
 
+status:"Pending",
 
-status:"Pending"
-
+createdAt:{
+$gte:start,
+$lte:end
+}
 
 });
 
@@ -7336,45 +7452,29 @@ continue;
 
 await AutoWithdrawal.create({
 
-
 email:user.email,
-
 
 name:user.name,
 
-
 walletId:user.walletId,
-
 
 amount,
 
+status:"Pending",
+
+bankDetails:{
 
 bankName:user.bankName,
 
+accountName:user.accountHolder,
 
-accountName:
+accountNumber:user.accountNumber,
 
-user.accountHolder,
+ifsc:user.ifsc,
 
+upiId:user.upiId
 
-accountNumber:
-
-user.accountNumber,
-
-
-ifsc:
-
-user.ifsc,
-
-
-upiId:
-
-user.upiId,
-
-
-status:"Pending"
-
-
+}
 
 });
 
