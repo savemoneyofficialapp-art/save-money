@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [cash, setCash] = useState([]);
   const [users, setUsers] = useState([]);
   const [withdraws, setWithdraws] = useState([]);
+  const [autoWithdraws,setAutoWithdraws]=useState([]);
 
   const [openWithdrawId, setOpenWithdrawId] = useState(null);
   const [transactionPopup, setTransactionPopup] = useState(false);
@@ -111,6 +112,17 @@ export default function AdminDashboard() {
           ? wData.requests
           : []
       );
+
+       const aw = await apiGet("/admin/auto-withdraws");
+
+setAutoWithdraws(
+
+aw?.success
+? aw.requests
+: []
+
+);
+      
     } catch (err) {
       console.log("ADMIN LOAD ERROR:", err);
       setError("Backend API not connected. Check Render URL / CORS / token.");
@@ -181,6 +193,56 @@ export default function AdminDashboard() {
       toast.error(d?.msg || "Withdraw action failed");
     }
   };
+
+  const autoAction=async(id,status)=>{
+
+
+let rejectReason="";
+
+
+if(status==="Rejected"){
+
+rejectReason=prompt("Reason");
+
+
+}
+
+
+
+
+const d=await apiPost(
+
+
+"/admin/auto-withdraw-action",
+
+
+{
+
+
+id,
+
+
+status,
+
+
+rejectReason
+
+
+}
+
+
+);
+
+
+
+toast.success(d.msg);
+
+
+load();
+
+
+
+  }
 
   const banUser = async (id) => {
     const d = await apiPost("/ban-user", { userId: id });
@@ -532,6 +594,178 @@ export default function AdminDashboard() {
           ))
         )}
       </div>
+
+        <div style={styles.section}>
+
+
+<h2>
+
+🤖 Auto Withdraw Requests
+
+</h2>
+
+
+
+{
+autoWithdraws.length===0 &&
+
+<p>No auto withdraw request</p>
+}
+
+
+
+{
+autoWithdraws.map((w)=>(
+
+
+<div
+key={w._id}
+style={styles.withdrawMiniCard}
+>
+
+
+
+
+<h3>
+
+{w.name}
+
+</h3>
+
+
+
+<p>
+
+{w.email}
+
+</p>
+
+
+
+<p>
+
+Amount :
+
+₹{Number(w.amount).toLocaleString()}
+
+</p>
+
+
+
+<p>
+
+Bank :
+
+{w.bankDetails?.bankName}
+
+</p>
+
+
+
+<p>
+
+Account :
+
+{w.bankDetails?.accountNumber}
+
+</p>
+
+
+
+<p>
+
+IFSC :
+
+{w.bankDetails?.ifscCode}
+
+</p>
+
+
+
+<p>
+
+UPI :
+
+{w.bankDetails?.upiId}
+
+</p>
+
+
+
+<p>
+
+Status :
+
+{w.status}
+
+</p>
+
+
+
+<div
+style={styles.actionRow}
+>
+
+
+<button
+
+
+style={styles.approveBtn}
+
+
+onClick={()=>autoAction(
+
+w._id,
+
+"Success"
+
+)}
+>
+
+
+Approve
+
+
+</button>
+
+
+
+<button
+
+
+style={styles.rejectBtn}
+
+
+onClick={()=>autoAction(
+
+w._id,
+
+"Rejected"
+
+)}
+>
+
+
+Reject
+
+
+</button>
+
+
+
+</div>
+
+
+
+</div>
+
+))
+
+}
+
+
+
+</div>
 
       <div style={styles.section}>
         <h2>Pending KYC</h2>
