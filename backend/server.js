@@ -38,6 +38,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
+const AutoWithdrawal = require("./models/AutoWithdrawal");
 
 
 
@@ -4070,6 +4071,40 @@ msg:"Server error"
 
 }
 
+
+});
+
+app.post("/admin-withdraw-list", async(req,res)=>{
+
+try{
+
+const requests =
+await AutoWithdrawal.find()
+.sort({
+createdAt:-1
+});
+
+
+res.json({
+
+success:true,
+
+requests
+
+});
+
+}catch(err){
+
+console.log(err);
+
+res.status(500).json({
+
+success:false,
+msg:"Server error"
+
+});
+
+}
 
 });
 
