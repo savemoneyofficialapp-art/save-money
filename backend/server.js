@@ -3888,6 +3888,192 @@ msg:"Server error"
 
 })
 
+app.post("/auto-withdraw-status", async (req, res) => {
+
+try{
+
+const { email } = req.body;
+
+
+if(!email){
+
+return res.status(400).json({
+
+success:false,
+msg:"Email required"
+
+});
+
+}
+
+
+const investment =
+await Investment.findOne({
+
+email:email.toLowerCase(),
+
+status:"Active"
+
+}).sort({
+
+createdAt:-1
+
+});
+
+
+if(!investment){
+
+return res.json({
+
+success:true,
+
+enabled:false,
+
+status:"Inactive",
+
+msg:"No Active Investment"
+
+});
+
+}
+
+
+
+if(
+
+investment.renewStatus==="Due"
+
+||
+
+investment.renewStatus==="Overdue"
+
+){
+
+return res.json({
+
+success:true,
+
+enabled:false,
+
+status:"Paused",
+
+msg:"Investment renewal required",
+
+renewStatus:
+investment.renewStatus,
+
+nextWithdrawal:null
+
+});
+
+}
+
+
+
+const today = new Date();
+
+
+
+let nextWithdrawal =
+new Date(
+
+today.getFullYear(),
+
+today.getMonth(),
+
+5
+
+);
+
+
+
+if(
+
+today.getDate()>5
+
+){
+
+nextWithdrawal =
+
+new Date(
+
+today.getFullYear(),
+
+today.getMonth()+1,
+
+5
+
+);
+
+}
+
+
+
+return res.json({
+
+
+success:true,
+
+
+enabled:true,
+
+
+status:"Active",
+
+
+renewStatus:
+investment.renewStatus,
+
+
+amount:
+
+Number(
+
+investment.monthlyAmount||0
+
+),
+
+
+
+nextWithdrawal,
+
+
+message:
+"Auto withdrawal enabled"
+
+
+
+});
+
+
+}catch(err){
+
+
+console.log(
+
+"AUTO STATUS ERROR",
+
+err
+
+);
+
+
+
+res.status(500).json({
+
+success:false,
+
+msg:"Server error"
+
+});
+
+
+}
+
+
+});
+
+
 app.post("/approve-kyc",auth,adminAuth,async(req,res)=>{
 
 
@@ -6967,73 +7153,223 @@ cron.schedule("0 0 * * *", async () => {
 
 // ================= AUTO MONTH WITHDRAWAL =================
 
-cron.schedule("0 0 5 * *", async () => {
+cron.schedule(
 
-  console.log("AUTO WITHDRAWAL STARTED");
+'0 0 5 * *',
 
-  const users = await User.find();
+async()=>{
 
-  for (let user of users) {
+try{
 
-    // active investment খুঁজবে
-    const inv = await Investment.findOne({
-      email: user.email,
-      status: "Active"
-    });
 
-    if (!inv) continue;
+console.log(
+"AUTO WITHDRAW STARTED"
+);
 
-    const now = new Date();
 
-    // renew check
-    const renewed = inv.history.find(h => {
+const investments =
+await Investment.find({
 
-      const d = new Date(h.date);
+status:"Active",
 
-      return (
-        d.getMonth() === now.getMonth() &&
-        d.getDate() >= 1 &&
-        d.getDate() <= 3
-      );
-
-    });
-
-    // যদি renew থাকে
-    if (renewed) {
-
-      const amount = user.wallet;
-
-      // wallet empty
-      user.wallet = 0;
-
-      await user.save();
-
-      // history add
-      await WalletHistory.create({
-        email: user.email,
-        type: "Auto Withdrawal",
-        amount,
-        note: "Monthly Auto Withdrawal"
-      });
-
-      console.log(
-        user.email,
-        "withdraw successful"
-      );
-
-    } else {
-
-      console.log(
-        user.email,
-        "renew not found"
-      );
-
-    }
-
-  }
+renewStatus:{
+$nin:[
+"Due",
+"Overdue"
+]
+}
 
 });
 
+
+
+for(const inv of investments){
+
+
+
+const user =
+await User.findOne({
+
+email:
+inv.email.toLowerCase()
+
+});
+
+
+if(!user) continue;
+
+
+
+if(
+
+user.activeStatus!=="Active"
+
+){
+
+continue;
+
+}
+
+
+
+const now =
+new Date();
+
+
+
+const alreadyPaid =
+await WalletHistory.findOne({
+
+email:user.email,
+
+description:
+"AUTO WITHDRAWAL",
+
+
+createdAt:{
+
+$gte:new Date(
+
+now.getFullYear(),
+
+now.getMonth(),
+
+1
+
+),
+
+$lt:new Date(
+
+now.getFullYear(),
+
+now.getMonth()+1,
+
+1
+
+)
+
+}
+
+});
+
+
+
+if(alreadyPaid){
+
+continue;
+
+}
+
+
+
+const amount = Number(
+
+inv.monthlyAmount||0
+
+);
+
+
+
+user.balance=
+Number(
+
+user.balance||0
+
+)+amount;
+
+
+
+user.wallet=
+Number(
+
+user.wallet||0
+
+)+amount;
+
+
+
+user.walletBalance=
+Number(
+
+user.walletBalance||0
+
+)+amount;
+
+
+
+await user.save();
+
+
+
+
+await WalletHistory.create({
+
+
+email:user.email,
+
+
+amount,
+
+
+type:"credit",
+
+
+description:
+"AUTO WITHDRAWAL",
+
+
+note:
+"Monthly SIP Return",
+
+
+status:"Success",
+
+
+date:new Date()
+
+
+});
+
+
+
+
+console.log(
+
+`WITHDRAW DONE ${user.email}`
+
+);
+
+
+
+}
+
+
+
+console.log(
+
+"AUTO WITHDRAW COMPLETED"
+
+);
+
+
+
+}catch(err){
+
+
+console.log(
+
+"AUTO WITHDRAW ERROR",
+
+err
+
+);
+
+
+}
+
+
+
+});
 app.use((err, req, res, next) => {
 
   console.log("GLOBAL ERROR:", err);
