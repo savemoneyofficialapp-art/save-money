@@ -47,6 +47,7 @@ export default function Wallet() {
   const [depositScreenshot, setDepositScreenshot] = useState(null);
 
   const [shareOpen, setShareOpen] = useState(false);
+  const [withdrawStatus, setWithdrawStatus] = useState(null);
 
 
   const [historyFilter, setHistoryFilter] = useState("all");
@@ -54,8 +55,12 @@ export default function Wallet() {
 
 
   useEffect(() => {
-    loadWallet();
-  }, []);
+
+loadWallet();
+
+loadWithdrawStatus();
+
+}, []);
 
   const loadWallet = async () => {
     try {
@@ -101,6 +106,57 @@ photoImage: data.user?.photoImage || "",
       setLoading(false);
     }
   };
+
+  const loadWithdrawStatus = async () => {
+
+try{
+
+const res = await fetch(
+
+`${API}/auto-withdraw-status`,
+
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+authorization:token || ""
+},
+
+body:JSON.stringify({
+email
+})
+
+}
+
+);
+
+
+const data = await res.json();
+
+
+if(data.success){
+
+setWithdrawStatus(data);
+
+}
+
+
+}catch(err){
+
+console.log(
+
+"WITHDRAW STATUS ERROR",
+
+err
+
+);
+
+}
+
+
+};
 
   const money = (n) => {
     return `₹ ${Number(n || 0).toLocaleString("en-IN")}.00`;
@@ -765,33 +821,123 @@ const visibleHistory = showAllHistory
 </h2>
 
 
-<p
+{
+
+withdrawStatus && (
+
+<div
 style={{
-lineHeight:"30px",
-color:"#475569",
-fontSize:"15px"
+
+marginTop:"15px",
+
+padding:"15px",
+
+borderRadius:"12px",
+
+background:"#f8fafc"
+
 }}
 >
 
-Your earnings will be automatically withdrawn every month on the <b>5th date</b>.
+<p>
 
+Status :
 
-<br/><br/>
+<b>
 
-✅ Auto withdrawal will be processed if your <b>Save Money Investment</b> has been renewed on time.
+{
 
+withdrawStatus.enabled
 
-<br/><br/>
+?
 
-❌ If your investment renewal is pending, overdue or inactive, withdrawal will not be processed.
+" ✅ Active"
 
+:
 
-<br/><br/>
+" ❌ Paused"
 
-🔄 Once your investment is renewed again, the system will automatically process withdrawal on the next upcoming <b>5th date</b>.
+}
 
+</b>
 
 </p>
+
+
+
+{
+
+withdrawStatus.nextWithdrawal && (
+
+<p>
+
+Next Withdrawal :
+
+<b>
+
+{
+
+new Date(
+
+withdrawStatus.nextWithdrawal
+
+)
+
+.toLocaleDateString(
+
+"en-IN"
+
+)
+
+}
+
+</b>
+
+</p>
+
+)
+
+}
+
+
+
+{
+
+withdrawStatus.amount>0 && (
+
+<p>
+
+Amount :
+
+<b>
+
+₹{
+
+Number(
+
+withdrawStatus.amount
+
+)
+
+.toLocaleString()
+
+}
+
+</b>
+
+</p>
+
+)
+
+}
+
+
+
+</div>
+
+)
+
+}
 
 
 <button
