@@ -415,6 +415,28 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+{withdrawals.map((item)=>(
+
+<div>
+
+<h3>{item.name}</h3>
+
+<p>{item.email}</p>
+
+<p>₹{item.amount}</p>
+
+<p>{item.bankName}</p>
+
+<p>{item.accountNumber}</p>
+
+<p>{item.ifsc}</p>
+
+<p>{item.status}</p>
+
+</div>
+
+))}
+
         {pendingWithdraws.length === 0 ? (
           <p>No pending withdraw request found</p>
         ) : (
