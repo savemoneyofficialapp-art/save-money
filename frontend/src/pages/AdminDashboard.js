@@ -116,11 +116,9 @@ export default function AdminDashboard() {
        const aw = await apiGet("/admin/auto-withdraws");
 
 setAutoWithdraws(
-
-aw?.success
-? aw.requests
-: []
-
+  aw?.success && Array.isArray(aw.requests)
+    ? aw.requests
+    : []
 );
       
     } catch (err) {
