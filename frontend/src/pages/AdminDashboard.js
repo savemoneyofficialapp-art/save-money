@@ -192,55 +192,24 @@ setAutoWithdraws(
     }
   };
 
-  const autoAction=async(id,status)=>{
+  const autoWithdrawAction = async (id,status)=>{
 
-
-let rejectReason="";
-
-
-if(status==="Rejected"){
-
-rejectReason=prompt("Reason");
-
-
-}
-
-
-
-
-const d=await apiPost(
-
+const d = await apiPost(
 
 "/admin/auto-withdraw-action",
 
-
 {
-
-
 id,
-
-
-status,
-
-
-rejectReason
-
-
+status
 }
-
 
 );
 
-
-
 toast.success(d.msg);
-
 
 load();
 
-
-
-  }
+};
 
   const banUser = async (id) => {
     const d = await apiPost("/ban-user", { userId: id });
@@ -593,167 +562,61 @@ load();
         )}
       </div>
 
-        <div style={styles.section}>
+          <div style={styles.section}>
 
-
-<h2>
-
-🤖 Auto Withdraw Requests
-
-</h2>
-
-
+<h2>Auto Withdrawal Requests</h2>
 
 {
-autoWithdraws.length===0 &&
+autoWithdraws.length===0 ?
 
-<p>No auto withdraw request</p>
-}
+<p>No Auto Withdrawal Found</p>
 
+:
 
-
-{
-autoWithdraws.map((w)=>(
-
+autoWithdraws.map((item)=>(
 
 <div
-key={w._id}
+key={item._id}
 style={styles.withdrawMiniCard}
 >
 
+<h3>{item.name}</h3>
 
+<p>{item.email}</p>
 
+<p>₹{item.amount}</p>
 
-<h3>
+<p>{item.bankDetails?.bankName}</p>
 
-{w.name}
+<p>{item.bankDetails?.accountNumber}</p>
 
-</h3>
+<p>{item.bankDetails?.ifscCode}</p>
 
-
-
-<p>
-
-{w.email}
-
-</p>
-
-
-
-<p>
-
-Amount :
-
-₹{Number(w.amount).toLocaleString()}
-
-</p>
-
-
-
-<p>
-
-Bank :
-
-{w.bankDetails?.bankName}
-
-</p>
-
-
-
-<p>
-
-Account :
-
-{w.bankDetails?.accountNumber}
-
-</p>
-
-
-
-<p>
-
-IFSC :
-
-{w.bankDetails?.ifscCode}
-
-</p>
-
-
-
-<p>
-
-UPI :
-
-{w.bankDetails?.upiId}
-
-</p>
-
-
-
-<p>
-
-Status :
-
-{w.status}
-
-</p>
-
-
-
-<div
-style={styles.actionRow}
->
-
+<p>Status : {item.status}</p>
 
 <button
-
-
 style={styles.approveBtn}
-
-
-onClick={()=>autoAction(
-
-w._id,
-
+onClick={()=>
+autoWithdrawAction(
+item._id,
 "Success"
-
-)}
+)
+}
 >
-
-
 Approve
-
-
 </button>
-
-
 
 <button
-
-
 style={styles.rejectBtn}
-
-
-onClick={()=>autoAction(
-
-w._id,
-
+onClick={()=>
+autoWithdrawAction(
+item._id,
 "Rejected"
-
-)}
+)
+}
 >
-
-
 Reject
-
-
 </button>
-
-
-
-</div>
-
-
 
 </div>
 
@@ -761,9 +624,8 @@ Reject
 
 }
 
-
-
 </div>
+        
 
       <div style={styles.section}>
         <h2>Pending KYC</h2>
