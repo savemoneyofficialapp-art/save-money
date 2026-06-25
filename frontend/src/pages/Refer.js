@@ -50,6 +50,7 @@ export default function Refer() {
         setRoyalty(data.royalty || {});
         setTreeData(data.treeData || {});
         setReferBonus(data.referBonus || {});
+                   }
     } catch (err) {
       console.log("REFER DATA ERROR:", err);
     } finally {
