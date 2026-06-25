@@ -414,6 +414,196 @@ async function checkKYC(email) {
 
 }
 
+async function processPerformanceBonus(
+
+email,
+
+investment
+
+){
+
+
+
+
+const investor=
+
+await User.findOne({
+
+email
+
+});
+
+
+
+if(!investor)return;
+
+
+
+
+
+const code=
+
+investor.referredBy;
+
+
+if(!code)return;
+
+
+
+
+
+
+const sponsor=
+
+await User.findOne({
+
+walletId:code
+
+});
+
+
+if(!sponsor)return;
+
+
+
+
+
+
+if(
+
+!sponsor.performanceEnabled
+
+)return;
+
+
+
+
+
+if(
+
+sponsor.performanceStatus!=="Active"
+
+)return;
+
+
+
+
+
+
+let amount=0;
+
+
+
+
+if(investment.years==1){
+
+amount=699;
+
+}
+
+
+
+else if(
+
+investment.years==3
+
+){
+
+amount=799;
+
+}
+
+
+
+else if(
+
+investment.years==5
+
+){
+
+amount=899;
+
+}
+
+
+
+else if(
+
+investment.years==10
+
+){
+
+amount=999;
+
+}
+
+
+
+
+
+if(amount<=0)return;
+
+
+
+
+
+
+sponsor.performanceIncome=
+
+Number(
+
+sponsor.performanceIncome||0
+
+)+amount;
+
+
+
+
+
+sponsor.balance+=amount;
+
+
+sponsor.wallet+=amount;
+
+
+sponsor.walletBalance+=amount;
+
+
+
+
+
+await sponsor.save();
+
+
+
+
+
+await BonusHistory.create({
+
+
+email:sponsor.email,
+
+
+bonusType:"performance",
+
+
+fromName:investor.name,
+
+
+fromEmail:investor.email,
+
+
+amount,
+
+
+date:new Date()
+
+});
+
+
+
+}
+
 async function updateTeamChallenge(email) {
 
   const tb = await TeamBonus.findOne({ email });
@@ -1355,6 +1545,48 @@ app.post("/register", async (req, res) => {
     });
 
     await newUser.save();
+
+
+// Update sponsor performance progress
+if(referredBy){
+
+try{
+
+const sponsor = await User.findOne({
+
+$or:[
+
+{referCode:referredBy},
+{walletId:referredBy}
+
+]
+
+});
+
+
+if(sponsor){
+
+await updatePerformanceStatus(
+
+sponsor.email
+
+);
+
+}
+
+}catch(err){
+
+console.log(
+
+"PERFORMANCE UPDATE ERROR",
+
+err
+
+);
+
+}
+
+}
 
     // notification
     try {
@@ -2347,6 +2579,28 @@ investment.renewStatus =
 "Renewed";
   
 await investment.save();
+
+  try{
+
+   await processPerformanceBonus(
+
+       investment.email,
+
+       investment
+
+   );
+
+}catch(err){
+
+   console.log(
+
+      "PERFORMANCE BONUS ERROR",
+
+      err
+
+   );
+
+  }
 
 
 
