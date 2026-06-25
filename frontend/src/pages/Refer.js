@@ -20,6 +20,7 @@ export default function Refer() {
   const [treeOpen, setTreeOpen] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [statusFilter, setStatusFilter] = useState("All");
+  const [referBonus,setReferBonus] = useState({});
 
   useEffect(() => {
     loadReferData();
@@ -48,7 +49,7 @@ export default function Refer() {
         setTeam(data.team || {});
         setRoyalty(data.royalty || {});
         setTreeData(data.treeData || {});
-      }
+        setReferBonus(data.referBonus || {});
     } catch (err) {
       console.log("REFER DATA ERROR:", err);
     } finally {
@@ -126,7 +127,18 @@ export default function Refer() {
       icon: "👑",
       color: "#f97316",
       bg: "#fff7ed"
-    }
+    },
+    {
+key:"refer",
+title:"Refer Bonus",
+amount: referBonus.balance || user.referIncome || 0,
+
+icon:"🎁",
+
+color:"#16a34a",
+
+bg:"#ecfdf5"
+},
   ];
 
   if (loading) {
@@ -238,17 +250,6 @@ export default function Refer() {
           </div>
         ))}
 
-        <div style={{ ...styles.bonusCard, background: "#ecfdf5" }}>
-          <div style={{ ...styles.bonusIcon, background: "#10b981" }}>🌳</div>
-          <h3>Tree View</h3>
-          <p style={styles.treeText}>View your whole team structure</p>
-          <button
-            style={{ ...styles.detailBtn, color: "#10b981" }}
-            onClick={() => setTreeOpen(true)}
-          >
-            View Tree
-          </button>
-        </div>
       </section>
 
       <section style={styles.historyCard}>
@@ -418,27 +419,259 @@ export default function Refer() {
         </Modal>
       )}
 
-      {treeOpen && (
-        <Modal onClose={() => setTreeOpen(false)}>
-          <h2>🌳 7 Level Tree View</h2>
+      {
+bonusModal==="refer" && (
 
-          <div style={styles.levelGrid}>
-            {[1, 2, 3, 4, 5, 6, 7].map((level) => (
-              <div key={level}>
-                Level {level}
-                <br />
-                Total: <b>{treeData[`level${level}Count`] || 0}</b>
-                <br />
-                This Month: <b>{treeData[`level${level}ThisMonth`] || 0}</b>
-                <br />
-                Last Month: <b>{treeData[`level${level}LastMonth`] || 0}</b>
-              </div>
-            ))}
-          </div>
+<Modal
+onClose={()=>
+setBonusModal(null)
+}
+>
 
-          <button style={styles.closeBtn} onClick={() => setTreeOpen(false)}>Close</button>
-        </Modal>
-      )}
+<h2>
+
+🎁 Refer Bonus
+
+</h2>
+
+
+<h1>
+
+{
+money(
+referBonus.balance
+)
+}
+
+</h1>
+
+
+
+<p>
+
+Status :
+
+<b>
+
+{
+user.activeStatus==="Active"
+
+?
+
+"Active"
+
+:
+
+"Inactive"
+
+}
+
+</b>
+
+</p>
+
+
+
+<p>
+
+Total Bonus :
+
+<b>
+
+{
+money(
+
+referBonus.totalBonus
+
+)
+
+}
+
+</b>
+
+</p>
+
+
+
+<p>
+
+Eligible Refers :
+
+<b>
+
+{
+referBonus.count||0
+}
+
+</b>
+
+</p>
+
+
+
+<div
+style={styles.infoBox}
+>
+
+<p>
+
+1 Year Investment = ₹499
+
+</p>
+
+
+<p>
+
+3 Year Investment = ₹599
+
+</p>
+
+
+<p>
+
+5 Year Investment = ₹699
+
+</p>
+
+
+<p>
+
+10 Year Investment = ₹799
+
+</p>
+
+</div>
+
+
+
+<h3>
+
+Refer List
+
+</h3>
+
+
+
+<table
+style={styles.table}
+>
+
+<thead>
+
+<tr>
+
+<th>Name</th>
+
+<th>Status</th>
+
+<th>First Invest</th>
+
+<th>Bonus</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+{
+
+(referBonus.list||[])
+
+.map(
+
+(item,i)=>(
+
+
+<tr key={i}>
+
+
+<td>
+
+{item.name}
+
+</td>
+
+
+
+<td>
+
+{item.status}
+
+</td>
+
+
+
+<td>
+
+{
+
+item.firstInvestment
+
+?
+
+"✅ Yes"
+
+:
+
+"❌ No"
+
+}
+
+</td>
+
+
+
+<td>
+
+₹{
+
+item.bonus||0
+
+}
+
+</td>
+
+
+</tr>
+
+
+)
+
+)
+
+}
+
+
+</tbody>
+
+</table>
+
+
+
+<button
+
+style={styles.closeBtn}
+
+onClick={()=>
+
+setBonusModal(null)
+
+}
+
+>
+
+Close
+
+</button>
+
+</Modal>
+
+)
+
+}
     </div>
   );
 }
