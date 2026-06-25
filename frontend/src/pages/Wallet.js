@@ -901,35 +901,64 @@ withdrawStatus.nextWithdrawal
 
 
 
+
 {
 
-withdrawStatus.amount>0 && (
+withdrawStatus.note?.length > 0 && (
 
-<p>
+<>
 
-Amount :
+<h4
+style={{
 
-<b>
+marginTop:"20px",
+marginBottom:"10px",
+color:"#0f172a"
 
-₹{
+}}
+>
 
-Number(
+NOTE :
 
-withdrawStatus.amount
+</h4>
+
+
+<ul
+style={{
+
+paddingLeft:"18px",
+lineHeight:"28px",
+fontSize:"14px",
+color:"#475569"
+
+}}
+>
+
+{
+
+withdrawStatus.note.map(
+
+(item,index)=>(
+
+<li key={index}>
+
+{item}
+
+</li>
 
 )
 
-.toLocaleString()
-
-}
-
-</b>
-
-</p>
-
 )
 
 }
+
+</ul>
+
+</>
+
+)
+
+  }
 
 
 
