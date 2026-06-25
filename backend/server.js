@@ -11,7 +11,7 @@ const { Server } = require("socket.io");
 const User = require("./models/User");
 const Notification = require("./models/Notification");
 const Investment = require("./models/Investment");
-const PerformanceBonus = require("./models/PerformanceBonus");
+const {updatePerformanceStatus}=require("../models/performanceHelper");
 const cron = require("node-cron");
 const TeamBonus = require("./models/TeamBonus");
 const RoyaltyBonus = require("./models/RoyaltyBonus");
@@ -1871,6 +1871,31 @@ if (r > 0) {
     user.activeStatus = "Active";
 
 await user.save();
+
+    if(!user.performanceStartDate){
+
+const start = new Date();
+
+const expire = new Date(start);
+
+expire.setDate(
+
+expire.getDate()+30
+
+);
+
+
+user.performanceStartDate=start;
+
+user.performanceExpireDate=expire;
+
+
+user.performanceStatus="Pending";
+
+
+await user.save();
+
+    }
 
     // ================= REFER BONUS LOGIC ==================
 
