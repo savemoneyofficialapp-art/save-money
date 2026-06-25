@@ -115,6 +115,12 @@ export default function AdminDashboard() {
 
        const aw = await apiGet("/admin/auto-withdraws");
 
+if(aw?.success){
+   setAutoWithdraws(aw.requests || []);
+}else{
+   setAutoWithdraws([]);
+}
+
 setAutoWithdraws(
   aw?.success && Array.isArray(aw.requests)
     ? aw.requests
@@ -192,22 +198,18 @@ setAutoWithdraws(
     }
   };
 
-  const autoWithdrawAction = async (id,status)=>{
+const autoWithdrawAction = async(id,status)=>{
 
 const d = await apiPost(
-
 "/admin/auto-withdraw-action",
-
-{
-id,
-status
-}
-
+{id,status}
 );
 
-toast.success(d.msg);
+if(!d) return;
 
-load();
+toast.success(d.msg || "Updated");
+
+await load();
 
 };
 
@@ -444,27 +446,7 @@ load();
           </div>
         </div>
 
-{withdrawals.map((item)=>(
 
-<div>
-
-<h3>{item.name}</h3>
-
-<p>{item.email}</p>
-
-<p>₹{item.amount}</p>
-
-<p>{item.bankName}</p>
-
-<p>{item.accountNumber}</p>
-
-<p>{item.ifsc}</p>
-
-<p>{item.status}</p>
-
-</div>
-
-))}
 
         {pendingWithdraws.length === 0 ? (
           <p>No pending withdraw request found</p>
