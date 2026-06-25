@@ -3933,11 +3933,11 @@ success:false
 
 });
 
-app.post("/auto-withdraw-status", async (req, res) => {
+app.post("/auto-withdraw-status", async(req,res)=>{
 
 try{
 
-const { email } = req.body;
+const {email} = req.body;
 
 
 if(!email){
@@ -3952,11 +3952,9 @@ msg:"Email required"
 }
 
 
-const investment =
-await Investment.findOne({
+const investment = await Investment.findOne({
 
 email:email.toLowerCase(),
-
 status:"Active"
 
 }).sort({
@@ -3965,6 +3963,10 @@ createdAt:-1
 
 });
 
+
+/*
+No active investment
+*/
 
 if(!investment){
 
@@ -3976,13 +3978,19 @@ enabled:false,
 
 status:"Inactive",
 
-msg:"No Active Investment"
+nextWithdrawal:null,
+
+message:"No Active Investment"
 
 });
 
 }
 
 
+
+/*
+Renew pending
+*/
 
 if(
 
@@ -4002,12 +4010,10 @@ enabled:false,
 
 status:"Paused",
 
-msg:"Investment renewal required",
+nextWithdrawal:null,
 
-renewStatus:
-investment.renewStatus,
-
-nextWithdrawal:null
+message:
+"Investment renewal required"
 
 });
 
@@ -4015,37 +4021,33 @@ nextWithdrawal:null
 
 
 
+/*
+Next withdrawal date
+*/
+
+
 const today = new Date();
 
 
+let nextWithdrawal;
 
-let nextWithdrawal =
-new Date(
+
+if(today.getDate()<=5){
+
+nextWithdrawal = new Date(
 
 today.getFullYear(),
-
 today.getMonth(),
-
 5
 
 );
 
+}else{
 
-
-if(
-
-today.getDate()>5
-
-){
-
-nextWithdrawal =
-
-new Date(
+nextWithdrawal = new Date(
 
 today.getFullYear(),
-
 today.getMonth()+1,
-
 5
 
 );
@@ -4066,26 +4068,33 @@ enabled:true,
 status:"Active",
 
 
-renewStatus:
-investment.renewStatus,
-
-
-amount:
-
-Number(
-
-investment.monthlyAmount||0
-
-),
-
-
-
 nextWithdrawal,
 
 
 message:
-"Auto withdrawal enabled"
+"Auto Withdrawal Active",
 
+
+
+note:[
+
+
+"Auto withdrawal runs automatically on the 5th of every month.",
+
+
+"Investment must remain active.",
+
+
+"If investment renewal is Due or Overdue, auto withdrawal will be paused.",
+
+
+"Entire Main Wallet balance available on the withdrawal date will be submitted automatically.",
+
+
+"Bank details updated by the user will be used for payment."
+
+
+]
 
 
 });
@@ -4093,15 +4102,7 @@ message:
 
 }catch(err){
 
-
-console.log(
-
-"AUTO STATUS ERROR",
-
-err
-
-);
-
+console.log(err);
 
 
 res.status(500).json({
@@ -4112,12 +4113,10 @@ msg:"Server error"
 
 });
 
-
 }
 
 
 });
-
 
 app.post(
 
