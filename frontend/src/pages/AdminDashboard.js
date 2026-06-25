@@ -29,7 +29,7 @@ export default function AdminDashboard() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [autoStatus,setAutoStatus]=useState(null);
+  
 
   useEffect(() => {
     load();
@@ -576,31 +576,6 @@ style={styles.withdrawMiniCard}
 <p>{item.bankDetails?.ifscCode}</p>
 
 <p>Status : {item.status}</p>
-
-  <div style={styles.noteBox}>
-
-
-<h3>NOTE :</h3>
-
-
-{
-
-autoStatus?.note?.map((item,index)=>(
-
-
-<p key={index}>
-
-✅ {item}
-
-</p>
-
-
-))
-
-}
-
-
-</div>
 
 <button
 style={styles.approveBtn}
@@ -1276,22 +1251,6 @@ const styles = {
     gridTemplateColumns: "1fr 1fr",
     gap: "10px",
     marginTop: "14px"
-  },
-
-  noteBox:{
-
-
-marginTop:20,
-
-padding:15,
-
-background:"#111827",
-
-borderRadius:12,
-
-border:"1px solid #334155"
-
-
   },
 
   transactionItem: {
