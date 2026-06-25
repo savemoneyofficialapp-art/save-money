@@ -105,9 +105,28 @@ default:""
   default: 0
 },
 
-performanceIncome: {
-  type: Number,
-  default: 0
+performanceEnabled:{
+type:Boolean,
+default:false
+},
+
+performanceStatus:{
+type:String,
+default:"Pending"
+},
+
+performanceStartDate:Date,
+
+performanceExpireDate:Date,
+
+performanceAdminOverride:{
+type:Boolean,
+default:false
+},
+
+performanceIncome:{
+type:Number,
+default:0
 },
 
 royaltyIncome: {
@@ -245,11 +264,6 @@ resetOtp: {
 resetOtpExpire: {
   type: Date,
   default: null
-},
-
-performanceBonusEnabled: {
-  type: Boolean,
-  default: false
 },
 
 teamBonusEnabled: {
