@@ -3892,8 +3892,8 @@ msg:"Server error"
 
 app.get(
 "/admin/auto-withdraws",
-verifyToken,
-verifyAdmin,
+auth,
+adminAuth,
 
 async(req,res)=>{
 
