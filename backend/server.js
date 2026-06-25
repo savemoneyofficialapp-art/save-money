@@ -4123,9 +4123,9 @@ app.post(
 
 "/admin/auto-withdraw-action",
 
-verifyToken,
-verifyAdmin,
-
+auth,
+adminAuth,
+  
 async(req,res)=>{
 
 
