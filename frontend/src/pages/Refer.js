@@ -339,42 +339,275 @@ bg:"#ecfdf5"
       </section>
 
       {bonusModal === "performance" && (
-        <Modal onClose={() => setBonusModal(null)}>
-          <h2>📈 Performance Bonus</h2>
-          <h1>{money(performance.balance)}</h1>
 
-          <p>Status: <b>{performance.enabled ? "Active" : "Inactive"}</b></p>
-          <p>Direct Active Refer: <b>{performance.directActiveCount || 0}</b> / 10</p>
-          <p>Remaining: <b>{performance.remaining || 0}</b></p>
-          <p>This Month Bonus: <b>{money(performance.thisMonthBonus)}</b></p>
-          <p>Last Month Bonus: <b>{money(performance.lastMonthBonus)}</b></p>
+<Modal onClose={() => setBonusModal(null)}>
 
-          {!performance.completed && !performance.expired && (
-            <>
-              <p style={styles.infoBox}>
-                Your performance bonus will be activated only if you can make 10 direct referrals within 30 days of joining.
-              </p>
-              <button style={styles.greenBtn} onClick={() => navigate("/save-money")}>
-                Go to Save Money Invest
-              </button>
-            </>
-          )}
+<h2>📈 Performance Bonus</h2><h1>
+{money(performance.balance || 0)}
+</h1><p>Status :
 
-          {performance.expired && (
-            <p style={styles.dangerText}>
-              You Do Not Complete Your Task.Please Contact Your Upline.
-            </p>
-          )}
+<b style={{
+color:
+performance.enabled
+? "#16a34a"
+: "#ef4444"
+}}
 
-          {performance.completed && (
-            <p style={styles.successText}>
-                 You Complete Your Task.Now You Get PerformanceBonus            </p>
-          )}
+«»
 
-          <BonusHistory type="performance" data={bonusHistory} />
-          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </Modal>
-      )}
+{performance.enabled
+? "Active"
+: "Inactive"}
+
+</b></p>{
+
+!performance.enabled
+
+&&
+
+!performance.expired
+
+&&
+
+!performance.manualActivated
+
+&& (
+
+<>
+
+<div style={styles.infoBox}><p><b>Task Progress
+
+</b></p><p>Direct Refers :
+
+<b>{
+
+performance.directActiveCount || 0
+
+}
+
+</b>/10
+
+</p><p>Remaining :
+
+<b>{
+
+performance.remaining || 0
+
+}
+
+</b></p><p>Days Left :
+
+<b>{
+
+performance.daysLeft || 0
+
+}
+
+</b>Days
+
+</p></div></>
+
+)
+
+}
+
+{
+
+performance.expired
+
+&&
+
+!performance.enabled
+
+&& (
+
+<p style={styles.dangerText}>You did not complete your task.
+
+Please contact your upline.
+
+</p>)
+
+}
+
+{
+
+performance.enabled
+
+&& (
+
+<>
+
+<p>This Month Bonus
+
+</p><h3>{
+
+money(
+
+performance.thisMonthBonus
+
+)
+
+}
+
+</h3><p>Last Month Bonus
+
+</p><h3>{
+
+money(
+
+performance.lastMonthBonus
+
+)
+
+}
+
+</h3><div
+style={{marginTop:20
+
+}}
+
+«»
+
+<select
+
+value={
+
+performance.selectedMonth ||
+
+"thisMonth"
+
+}
+
+onChange={e=>{
+
+setPerformance(
+
+prev=>({
+
+...prev,
+
+selectedMonth:
+
+e.target.value
+
+})
+
+);
+
+}}
+
+style={styles.filterSelect}
+
+«»
+
+<option value="thisMonth">This Month
+
+</option><option value="lastMonth">Last Month
+
+</option></select></div><div
+style={{marginTop:20
+
+}}
+
+«»
+
+<h3>Performance History
+
+</h3>{
+
+performance.history?.length===0
+
+?
+
+<p>No history found
+
+</p>:
+
+performance.history.map(
+
+(item,index)=>(
+
+<divkey={index}
+
+style={{
+
+padding:15,
+
+marginTop:10,
+
+borderRadius:12,
+
+background:"#f8fafc"
+
+}}
+
+«»
+
+<p><b>{
+
+item.fromName
+
+}
+
+</b></p><p>Bonus :
+
+₹{
+
+Number(
+
+item.amount||0
+
+)
+
+.toLocaleString()
+
+}
+
+</p><p>Date :
+
+{
+
+new Date(
+
+item.date
+
+)
+
+.toLocaleDateString(
+
+"en-IN"
+
+)
+
+}
+
+</p></div>)
+
+)
+
+}
+
+</div></>
+
+)
+
+}
+
+<button
+
+style={styles.closeBtn}
+
+onClick={()=>
+
+setBonusModal(null)
+
+}
+
+«»
+
+Close
+
+</button></Modal>)}
 
       {bonusModal === "team" && (
         <Modal onClose={() => setBonusModal(null)}>
