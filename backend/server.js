@@ -5769,12 +5769,6 @@ app.post("/refer-data", async (req, res) => {
     const performanceCompleted = directActiveCount >= 10;
     const performanceExpired = now > deadline && !performanceCompleted;
 
-    if (performanceCompleted && !user.performanceBonusEnabled) {
-      user.performanceBonusEnabled = true;
-      user.performanceActivatedAt = new Date();
-      await user.save();
-    }
-
     if (directUsers.length >= 50 && !user.royaltyBonusEnabled) {
       user.royaltyBonusEnabled = true;
       user.royaltyActivatedAt = new Date();
@@ -5854,19 +5848,49 @@ app.post("/refer-data", async (req, res) => {
     };
 
     const treeData = await getLevelUsers(directUsers, 1, {});
+    
+    const referralBonusMap = {};
 
-    const history = directUsers.map((u) => ({
-      name: u.name || "User",
-      email: u.email || "",
-      mobile: u.mobile || "",
-      referId: u.referCode || u.walletId || "",
-      joinDate: u.createdAt,
-      status: activeEmailSet.has(String(u.email || "").toLowerCase())
-        ? "Active"
-        : "Inactive",
-      earning: Number(u.referralIncome || 0),
-      photo: u.photo || ""
-    }));
+allBonusHistory
+  .filter(x => x.type === "Referral Bonus")
+  .forEach(x => {
+    referralBonusMap[
+      String(x.fromEmail || "").toLowerCase()
+    ] = Number(x.amount || 0);
+  });
+    
+    const history = directUsers.map((u) => {
+
+  const inv = activeInvestments.find(
+    i => i.email.toLowerCase() === u.email.toLowerCase()
+  );
+
+  return {
+
+    name: u.name,
+
+    email: u.email,
+
+    referId: u.referCode || u.walletId,
+
+    joinDate: u.createdAt,
+
+    status: inv ? "Active" : "Inactive",
+
+    firstInvestment: !!inv,
+
+    investmentYears: inv?.years || 0,
+
+    
+    earning:
+      referralBonusMap[
+        String(u.email).toLowerCase()
+      ] || 0
+  
+
+  };
+
+});
 
     return res.json({
       success: true,
@@ -5876,17 +5900,42 @@ app.post("/refer-data", async (req, res) => {
       history,
 
       performance: {
-        enabled: !!user.performanceBonusEnabled,
-        balance: Number(user.performanceIncome || user.performanceBonus || 0),
-        directActiveCount,
-        required: 10,
-        remaining: Math.max(10 - directActiveCount, 0),
-        deadline,
-        expired: performanceExpired,
-        completed: performanceCompleted,
-        thisMonthBonus: sumBonus("performance", startThisMonth),
-        lastMonthBonus: sumBonus("performance", startLastMonth, endLastMonth)
-      },
+  enabled: !!user.performanceEnabled,
+  status: user.performanceStatus || "Inactive",
+
+  balance: Number(user.performanceIncome || 0),
+
+  directActiveCount,
+
+  required: 10,
+
+  remaining: Math.max(10 - directActiveCount, 0),
+
+  deadline,
+
+  daysLeft: Math.max(
+    0,
+    Math.ceil((deadline - now) / (1000 * 60 * 60 * 24))
+  ),
+
+  expired: user.performanceStatus === "Expired",
+
+  completed: directActiveCount >= 10,
+
+  adminOverride: !!user.performanceAdminOverride,
+
+  thisMonthBonus: sumBonus("Performance Bonus", startThisMonth),
+
+  lastMonthBonus: sumBonus(
+    "Performance Bonus",
+    startLastMonth,
+    endLastMonth
+  ),
+
+  history: allBonusHistory.filter(
+    x => x.type === "Performance Bonus"
+  )
+},
 
       team: {
         enabled: true,
