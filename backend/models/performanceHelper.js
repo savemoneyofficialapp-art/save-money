@@ -32,15 +32,30 @@ const totalDirect=
 
 await User.countDocuments({
 
+
 referredBy:user.walletId,
 
+
 activeStatus:"Active"
+
 
 });
 
 
 
-const now=new Date();
+
+
+
+const within30Days =
+
+
+new Date()
+
+<=
+
+user.performanceExpireDate;
+
+
 
 
 
@@ -50,13 +65,14 @@ totalDirect>=10
 
 &&
 
-now<=user.performanceExpireDate
+within30Days
 
 ){
 
 user.performanceEnabled=true;
 
 user.performanceStatus="Active";
+
 
 await user.save();
 
@@ -66,9 +82,16 @@ return;
 
 
 
+
 if(
 
-now>
+!user.performanceEnabled
+
+&&
+
+new Date()
+
+>
 
 user.performanceExpireDate
 
