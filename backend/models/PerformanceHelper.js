@@ -1,114 +1,74 @@
 const User = require("./User");
 const Investment = require("./Investment");
 
+async function updatePerformanceStatus(email) {
 
-async function updatePerformanceStatus(email){
+    const user = await User.findOne({
+        email: String(email).toLowerCase()
+    });
 
-const user=await User.findOne({
-email
-});
+    if (!user) return;
 
-if(!user) return;
+    // Admin manually control করছে
+    if (user.performanceAdminOverride) {
+        return;
+    }
 
+    // আগেই Active
+    if (user.performanceEnabled) {
+        return;
+    }
 
-/*
-Admin manually active করেছে
-তাহলে আর auto check করবে না
-*/
+    // 30 days শেষ
+    if (
+        user.performanceExpireDate &&
+        new Date() > user.performanceExpireDate
+    ) {
 
-if(user.performanceAdminOverride)
-return;
+        user.performanceStatus = "Expired";
+        await user.save();
+        return;
+    }
 
+    // Direct referrals
+    const directs = await User.find({
+        referredBy: user.referCode || user.walletId
+    });
 
-/*
-আগেই active
-*/
+    let qualified = 0;
 
-if(user.performanceEnabled)
-return;
+    for (const d of directs) {
 
+        const firstInvestment =
+            await Investment.findOne({
+                email: d.email.toLowerCase(),
+                status: "Active"
+            });
 
+        if (firstInvestment) {
+            qualified++;
+        }
 
-const totalDirect=
+    }
 
-await User.countDocuments({
+    if (qualified >= 10) {
 
+        user.performanceEnabled = true;
 
-referredBy:user.walletId,
+        user.performanceCompleted = true;
 
+        user.performanceStatus = "Active";
 
-activeStatus:"Active"
+        user.performanceActivatedAt = new Date();
 
+        user.performanceActivatedBy = "AUTO";
 
-});
+        await user.save();
 
-
-
-
-
-
-const within30Days =
-
-
-new Date()
-
-<=
-
-user.performanceExpireDate;
-
-
-
-
-
-if(
-
-totalDirect>=10
-
-&&
-
-within30Days
-
-){
-
-user.performanceEnabled=true;
-
-user.performanceStatus="Active";
-
-
-await user.save();
-
-return;
+    }
 
 }
 
-
-
-
-if(
-
-!user.performanceEnabled
-
-&&
-
-new Date()
-
->
-
-user.performanceExpireDate
-
-){
-
-user.performanceStatus="Expired";
-
-await user.save();
-
-}
-
-
-}
-
-
-
-module.exports={
-updatePerformanceStatus
+module.exports = {
+    updatePerformanceStatus
 };
