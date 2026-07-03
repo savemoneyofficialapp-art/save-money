@@ -110,6 +110,22 @@ type:Boolean,
 default:false
 },
 
+  performanceActivatedAt: {
+  type: Date,
+  default: null
+},
+
+  performanceActivatedBy: {
+  type: String,
+  enum: ["AUTO", "ADMIN"],
+  default: ""
+},
+
+  performanceCompleted: {
+  type: Boolean,
+  default: false
+},
+
 performanceStatus:{
 type:String,
 default:"Pending"
