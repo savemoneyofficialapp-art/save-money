@@ -1,4 +1,5 @@
-const User=require("./User");
+const User = require("./User");
+const Investment = require("./Investment");
 
 
 async function updatePerformanceStatus(email){
