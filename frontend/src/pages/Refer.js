@@ -454,7 +454,7 @@ e.target.value
 
 style={styles.filterSelect}
 
-«»
+
 
         {bonusModal === "performance" && (
 
