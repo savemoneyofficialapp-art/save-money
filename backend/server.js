@@ -4957,29 +4957,140 @@ app.post("/admin-user-tree", auth, adminAuth, async (req, res) => {
 });
 
 app.post("/admin/update-bonus-status", async (req, res) => {
+
   try {
+
     const {
+
       userId,
+
       performanceBonusEnabled,
+
       teamBonusEnabled,
+
       royaltyBonusEnabled
+
     } = req.body;
 
-    await User.findByIdAndUpdate(userId, {
-      performanceBonusEnabled,
-      teamBonusEnabled,
-      royaltyBonusEnabled
-    });
+    const user = await User.findById(userId);
+
+    if (!user) {
+
+      return res.json({
+
+        success: false,
+
+        msg: "User not found"
+
+      });
+
+    }
+
+    // Performance Bonus
+    if (typeof performanceBonusEnabled === "boolean") {
+
+      user.performanceAdminOverride = true;
+
+      user.performanceEnabled = performanceBonusEnabled;
+
+      user.performanceStatus = performanceBonusEnabled
+        ? "Active"
+        : "Inactive";
+
+    }
+
+    // Team Bonus
+    if (typeof teamBonusEnabled === "boolean") {
+
+      user.teamBonusEnabled = teamBonusEnabled;
+
+    }
+
+    // Royalty Bonus
+    if (typeof royaltyBonusEnabled === "boolean") {
+
+      user.royaltyBonusEnabled = royaltyBonusEnabled;
+
+    }
+
+    await user.save();
 
     res.json({
-      success: true
+
+      success: true,
+
+      msg: "Bonus status updated successfully"
+
     });
 
-  } catch (err) {
-    res.status(500).json({
-      success: false
-    });
   }
+
+  catch (err) {
+
+    console.log("ADMIN BONUS UPDATE ERROR:", err);
+
+    res.status(500).json({
+
+      success: false,
+
+      msg: "Server error"
+
+    });
+
+  }
+
+});
+
+app.post("/admin/reset-performance-auto", async (req, res) => {
+
+  try {
+
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+
+      return res.json({
+
+        success: false,
+
+        msg: "User not found"
+
+      });
+
+    }
+
+    user.performanceAdminOverride = false;
+
+    await user.save();
+
+    await updatePerformanceStatus(user.email);
+
+    res.json({
+
+      success: true,
+
+      msg: "Performance bonus returned to Auto Mode"
+
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+
+      success: false,
+
+      msg: "Server error"
+
+    });
+
+  }
+
 });
 
 app.post("/admin/deposit-approve", auth, async (req, res) => {
