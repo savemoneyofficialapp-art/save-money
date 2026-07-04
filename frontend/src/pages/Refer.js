@@ -1404,10 +1404,29 @@ const styles = {
     borderRadius: 14,
     lineHeight: 1.6
   },
-  dangerText: {
-    color: "#ef4444",
-    fontWeight: 900
-  },
+  historyItem:{
+
+padding:15,
+
+marginTop:10,
+
+background:"#f8fafc",
+
+borderRadius:12,
+
+border:"1px solid #e5e7eb"
+
+},
+
+dangerText:{
+
+color:"#dc2626",
+
+fontWeight:"bold",
+
+marginTop:20
+
+},
   successText: {
     color: "#16a34a",
     fontWeight: 900
