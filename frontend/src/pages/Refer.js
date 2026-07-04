@@ -21,6 +21,38 @@ export default function Refer() {
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [statusFilter, setStatusFilter] = useState("All");
   const [referBonus,setReferBonus] = useState({});
+  const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
+
+const filteredPerformanceHistory = (
+  performance.history || []
+).filter((item) => {
+
+  const d = new Date(item.date);
+  const now = new Date();
+
+  if (performanceFilter === "thisMonth") {
+    return (
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    );
+  }
+
+  if (performanceFilter === "lastMonth") {
+
+    const last = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1
+    );
+
+    return (
+      d.getMonth() === last.getMonth() &&
+      d.getFullYear() === last.getFullYear()
+    );
+  }
+
+  return true;
+});
 
   useEffect(() => {
     loadReferData();
@@ -338,83 +370,7 @@ bg:"#ecfdf5"
         </button>
       </section>
 
-      {bonusModal === "performance" && (
-
-<Modal onClose={() => setBonusModal(null)}>
-
-<h2>📈 Performance Bonus</h2><h1>
-{money(performance.balance || 0)}
-</h1><p>Status :
-
-<b style={{
-color:
-performance.enabled
-? "#16a34a"
-: "#ef4444"
-}}
-
-«»
-
-{performance.enabled
-? "Active"
-: "Inactive"}
-
-</b></p>{
-
-!performance.enabled
-
-&&
-
-!performance.expired
-
-&&
-
-!performance.manualActivated
-
-&& (
-
-<>
-
-<div style={styles.infoBox}><p><b>Task Progress
-
-</b></p><p>Direct Refers :
-
-<b>{
-
-performance.directActiveCount || 0
-
-}
-
-</b>/10
-
-</p><p>Remaining :
-
-<b>{
-
-performance.remaining || 0
-
-}
-
-</b></p><p>Days Left :
-
-<b>{
-
-performance.daysLeft || 0
-
-}
-
-</b>Days
-
-</p></div></>
-
-)
-
-}
-
-{
-
-performance.expired
-
+      
 &&
 
 !performance.enabled
@@ -500,94 +456,241 @@ style={styles.filterSelect}
 
 «»
 
-<option value="thisMonth">This Month
+        {bonusModal === "performance" && (
 
-</option><option value="lastMonth">Last Month
+<Modal onClose={() => setBonusModal(null)}>
 
-</option></select></div><div
-style={{marginTop:20
+<h2>📈 Performance Bonus</h2>
 
-}}
+<h1>{money(performance.balance)}</h1>
 
-«»
+<p>
 
-<h3>Performance History
+Status :
 
-</h3>{
-
-performance.history?.length===0
-
-?
-
-<p>No history found
-
-</p>:
-
-performance.history.map(
-
-(item,index)=>(
-
-<divkey={index}
-
+<b
 style={{
-
-padding:15,
-
-marginTop:10,
-
-borderRadius:12,
-
-background:"#f8fafc"
-
+color:
+performance.enabled
+?
+"#16a34a"
+:
+"#ef4444"
 }}
+>
 
-«»
+{performance.enabled
+?
+"Active"
+:
+"Inactive"}
 
-<p><b>{
+</b>
 
-item.fromName
+</p>
 
-}
+{
+!performance.enabled
+&&
+!performance.adminOverride
+&&
+!performance.expired
+&&(
 
-</b></p><p>Bonus :
+<div style={styles.infoBox}>
 
-₹{
+<h3>Task Progress</h3>
 
-Number(
+<p>
 
-item.amount||0
+Completed :
+
+<b>
+
+{performance.directActiveCount}
+
+</b>
+
+/10
+
+</p>
+
+<p>
+
+Remaining :
+
+<b>
+
+{performance.remaining}
+
+</b>
+
+</p>
+
+<p>
+
+Days Left :
+
+<b>
+
+{performance.daysLeft}
+
+</b>
+
+Days
+
+</p>
+
+</div>
 
 )
+}
 
-.toLocaleString()
+{
+performance.expired
+&&
+!performance.enabled
+&&(
+
+<p style={styles.dangerText}>
+
+You did not complete your task.
+
+Please contact your upline.
+
+</p>
+
+)
+}
+
+{
+performance.enabled
+&&(
+
+<>
+
+<p>
+
+This Month Bonus
+
+</p>
+
+<h3>
+
+{money(performance.thisMonthBonus)}
+
+</h3>
+
+<p>
+
+Last Month Bonus
+
+</p>
+
+<h3>
+
+{money(performance.lastMonthBonus)}
+
+</h3>
+
+<select
+
+value={performanceFilter}
+
+onChange={(e)=>
+
+setPerformanceFilter(
+e.target.value
+)
 
 }
 
-</p><p>Date :
+style={styles.filterSelect}
+
+>
+
+<option value="thisMonth">
+
+This Month
+
+</option>
+
+<option value="lastMonth">
+
+Last Month
+
+</option>
+
+<option value="all">
+
+All
+
+</option>
+
+</select>
+
+<div style={{marginTop:20}}>
+
+<h3>
+
+Performance History
+
+</h3>
 
 {
 
-new Date(
+filteredPerformanceHistory.length===0
 
-item.date
+?
 
-)
+<p>No History</p>
 
-.toLocaleDateString(
+:
 
-"en-IN"
+filteredPerformanceHistory.map((item,index)=>(
 
-)
+<div
+key={index}
+style={styles.historyItem}
+>
+
+<b>
+
+{item.fromName}
+
+</b>
+
+<p>
+
+Bonus :
+
+{money(item.amount)}
+
+</p>
+
+<p>
+
+Date :
+
+{
+
+new Date(item.date)
+
+.toLocaleDateString("en-IN")
 
 }
 
-</p></div>)
+</p>
 
-)
+</div>
+
+))
 
 }
 
-</div></>
+</div>
+
+</>
 
 )
 
@@ -597,17 +700,17 @@ item.date
 
 style={styles.closeBtn}
 
-onClick={()=>
+onClick={()=>setBonusModal(null)}
 
-setBonusModal(null)
-
-}
-
-«»
+>
 
 Close
 
-</button></Modal>)}
+</button>
+
+</Modal>
+
+)}
 
       {bonusModal === "team" && (
         <Modal onClose={() => setBonusModal(null)}>
