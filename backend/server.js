@@ -704,245 +704,202 @@ function performanceBonusRate(years) {
   return 899;
 }
 
+
 async function processFirstInvestmentBonuses(investorEmail, investment) {
-    const refId = `FIRST-${investment._id}`;
-  const investor = await User.findOne({ email: investorEmail });
-  if (!investor || !investor.referredBy) return;
 
-  const sponsor = await User.findOne({ referCode: investor.referredBy });
-  if (!sponsor) return;
+    try {
 
-  const sponsorActiveInvestment = await Investment.findOne({
-  email: sponsor.email,
-  status: "Active"
-});
-
-if (!sponsorActiveInvestment) return;
-
-  // Direct Referral Bonus
-  await addBonus({
-
-email:sponsor.email,
-
-fromEmail:investor.email,
-
-fromName:investor.name,
-
-type:"Referral Bonus",
-
-amount:
-
-referralBonusRate(
-
-investment.years
-
-),
-
-level:0,
-
-note:"First Investment Bonus",
-
-refId:
-
-`${investment._id}-REF`
-
-});
-
-  // Team Bonus: Sponsor's uplines get bonus
-  const level1Owner = sponsor.referredBy
-    ? await User.findOne({ referCode: sponsor.referredBy })
-    : null;
-
-  const level2Owner = level1Owner?.referredBy
-    ? await User.findOne({ referCode: level1Owner.referredBy })
-    : null;
-
-  const level3Owner = level2Owner?.referredBy
-    ? await User.findOne({ referCode: level2Owner.referredBy })
-    : null;
-
-  const teamPayouts = [
-    { user: level1Owner, level: 1, amount: 70 },
-    { user: level2Owner, level: 2, amount: 50 },
-    { user: level3Owner, level: 3, amount: 35 }
-  ];
-
-  for (let p of teamPayouts) {
-    if (!p.user) continue;
-
-    const tb = await TeamBonus.findOne({ email: p.user.email });
-
-    if (tb && tb.isActive && !tb.isFailed) {
-      tb.wallet += p.amount;
-
-      tb.history.push({
-        fromUser: investor.name,
-        level: p.level,
-        amount: p.amount,
-        date: new Date(),
-        status: "Paid"
-      });
-
-      await tb.save();
-
-      await addBonus({
-        email: p.user.email,
-        fromEmail: investor.email,
-        fromName: investor.name,
-        type: "Team Bonus",
-        level: p.level,
-        amount: p.amount,
-        note: `Level ${p.level} first investment bonus`,
-        refId: refId + "-TEAM-" + p.level
-      });
-    }
-  }
-
-  // Royalty Bonus
-  const directSponsor = sponsor;
-
-  if (directSponsor.referredBy) {
-    const royaltyOwner = await User.findOne({
-      referCode: directSponsor.referredBy
-    });
-
-    if (royaltyOwner) {
-      const rb = await RoyaltyBonus.findOne({ email: royaltyOwner.email });
-
-      if (rb && rb.isActive) {
-        const royalty = Math.floor(investment.monthlyAmount * 0.03);
-
-        rb.wallet += royalty;
-        rb.thisMonthTurnover += investment.monthlyAmount;
-
-        rb.history.push({
-          fromUser: investor.name,
-          investAmount: investment.monthlyAmount,
-          royalty,
-          date: new Date()
+        const investor = await User.findOne({
+            email: String(investorEmail).toLowerCase()
         });
 
-        await rb.save();
+        if (!investor) return;
+
+        if (!investor.referredBy) return;
+
+        const sponsor = await User.findOne({
+            $or: [
+                { referCode: investor.referredBy },
+                { walletId: investor.referredBy }
+            ]
+        });
+
+        if (!sponsor) return;
+
+        // Sponsor-এর Active Investment থাকতে হবে
+        const sponsorInvestment = await Investment.findOne({
+            email: sponsor.email.toLowerCase(),
+            status: "Active"
+        });
+
+        if (!sponsorInvestment) return;
+
+        // একই First Investment-এ Bonus যেন একবারই যায়
+        const refId = `FIRST-${investment._id}`;
+
+        let referralBonus = 0;
+
+        switch (Number(investment.years)) {
+
+            case 1:
+                referralBonus = 499;
+                break;
+
+            case 3:
+                referralBonus = 599;
+                break;
+
+            case 5:
+                referralBonus = 699;
+                break;
+
+            case 10:
+                referralBonus = 799;
+                break;
+
+            default:
+                referralBonus = 0;
+
+        }
+
+        if (referralBonus > 0) {
+
+            await addBonus({
+
+                email: sponsor.email,
+
+                fromEmail: investor.email,
+
+                fromName: investor.name,
+
+                type: "Referral Bonus",
+
+                amount: referralBonus,
+
+                level: 0,
+
+                note: `First Investment (${investment.years} Year)`,
+
+                refId: refId + "-REF"
+
+            });
+
+        }
+
+        // নতুন Direct Active Member যুক্ত হয়েছে,
+        // তাই Performance Status Auto Check
+        await updatePerformanceStatus(
+            sponsor.email
+        );
+
+    }
+
+    catch (err) {
+
+        console.log(
+            "FIRST INVESTMENT BONUS ERROR:",
+            err
+        );
+
+    }
+
+}
+
+
+async function processRenewBonuses(investorEmail, investment) {
+
+    try {
+
+        const investor = await User.findOne({
+            email: String(investorEmail).toLowerCase()
+        });
+
+        if (!investor) return;
+
+        if (!investor.referredBy) return;
+
+        const sponsor = await User.findOne({
+            $or: [
+                { referCode: investor.referredBy },
+                { walletId: investor.referredBy }
+            ]
+        });
+
+        if (!sponsor) return;
+
+        // Sponsor investment active থাকতে হবে
+        const sponsorInvestment =
+            await Investment.findOne({
+                email: sponsor.email.toLowerCase(),
+                status: "Active"
+            });
+
+        if (!sponsorInvestment) return;
+
+        // Performance Bonus Active থাকতে হবে
+        if (!sponsor.performanceEnabled) return;
+
+        if (sponsor.performanceStatus !== "Active") return;
+
+        let bonus = 0;
+
+        switch (Number(investment.years)) {
+
+            case 1:
+                bonus = 699;
+                break;
+
+            case 3:
+                bonus = 799;
+                break;
+
+            case 5:
+                bonus = 899;
+                break;
+
+            case 10:
+                bonus = 999;
+                break;
+
+            default:
+                bonus = 0;
+
+        }
+
+        if (bonus <= 0) return;
 
         await addBonus({
-          email: royaltyOwner.email,
-          fromEmail: investor.email,
-          fromName: investor.name,
-          type: "Royalty Bonus",
-          level: 0,
-          amount: royalty,
-          note: "3% royalty from network first investment",
-          refId: refId + "-ROYALTY"
+
+            email: sponsor.email,
+
+            fromEmail: investor.email,
+
+            fromName: investor.name,
+
+            type: "Performance Bonus",
+
+            amount: bonus,
+
+            level: 0,
+
+            note:
+                `Performance Bonus (${investment.years} Year Renewal)`,
+
+            refId:
+                `PERFORMANCE-RENEW-${investment._id}-${investment.monthsPaid}`
+
         });
-      }
+
     }
-  }
-}
 
-async function processRenewBonuses(
+    catch (err) {
 
-investorEmail,
-investment
+        console.log(
+            "PROCESS PERFORMANCE RENEW ERROR:",
+            err
+        );
 
-){
-
-const investor=
-await User.findOne({
-
-email:investorEmail
-
-});
-
-if(
-!investor
-||
-!investor.referredBy
-)return;
-
-const sponsor=
-await User.findOne({
-
-referCode:
-investor.referredBy
-
-});
-
-if(!sponsor)
-return;
-
-/*
-Admin inactive
-*/
-
-if(
-sponsor.performanceStatus!=="Active"
-)
-return;
-
-if(
-!sponsor.performanceEnabled
-)
-return;
-
-let amount=0;
-
-const years=
-Number(
-investment.years
-);
-
-if(years===1){
-
-amount=699;
-
-}
-
-else if(years===3){
-
-amount=799;
-
-}
-
-else if(years===5){
-
-amount=899;
-
-}
-
-else if(years===10){
-
-amount=999;
-
-}
-
-if(amount<=0)
-return;
-
-await addBonus({
-
-email:sponsor.email,
-
-fromEmail:
-investor.email,
-
-fromName:
-investor.name,
-
-type:
-"Performance Bonus",
-
-amount,
-
-level:0,
-
-note:
-"Monthly Renew Performance Bonus",
-
-refId:
-
-"PERFORMANCE-${investment._id}-${investment.monthsPaid}"
-
-});
+    }
 
 }
 
@@ -1936,6 +1893,21 @@ if (r > 0) {
 
     user.activeStatus = "Active";
 
+if (!user.performanceStartDate) {
+
+    const start = new Date();
+
+    const expire = new Date(start);
+
+    expire.setDate(expire.getDate() + 30);
+
+    user.performanceStartDate = start;
+
+    user.performanceExpireDate = expire;
+
+    user.performanceStatus = "Pending";
+}
+
 await user.save();
 
     if(!user.performanceStartDate){
@@ -1963,186 +1935,6 @@ await user.save();
 
     }
 
-    // ================= REFER BONUS LOGIC ==================
-
-    try{
-
-const investor = user;
-
-
-// First Investment Check
-
-const totalInvestments =
-await Investment.countDocuments({
-
-email:investor.email.toLowerCase()
-
-});
-
-
-if(totalInvestments===1){
-
-
-const refCode =
-
-investor.referredBy ||
-investor.referBy ||
-investor.refBy ||
-investor.sponsorCode;
-
-
-
-if(refCode){
-
-
-const sponsor = await User.findOne({
-
-$or:[
-
-{walletId:refCode},
-{referCode:refCode},
-{referralCode:refCode}
-
-]
-
-});
-
-
-if(sponsor){
-
-
-
-// Sponsor Active Check
-
-if(
-
-sponsor.activeStatus==="Active"
-
-){
-
-
-
-let bonus=0;
-
-
-
-if(Number(years)===1){
-
-bonus=499;
-
-}
-
-
-else if(Number(years)===3){
-
-bonus=599;
-
-}
-
-
-else if(Number(years)===5){
-
-bonus=699;
-
-}
-
-
-else if(Number(years)===10){
-
-bonus=799;
-
-}
-
-
-
-if(bonus>0){
-
-
-sponsor.referBonus =
-
-Number(
-
-sponsor.referBonus||0
-
-)+bonus;
-
-
-
-sponsor.referralIncome =
-
-Number(
-
-sponsor.referralIncome||0
-
-)+bonus;
-
-
-
-sponsor.balance =
-
-Number(
-
-sponsor.balance||0
-
-)+bonus;
-
-
-
-sponsor.wallet = sponsor.balance;
-sponsor.walletBalance = sponsor.balance;
-
-
-
-await sponsor.save();
-
-
-
-
-await WalletHistory.create({
-
-email:sponsor.email,
-
-amount:bonus,
-
-type:"Credit",
-
-status:"Success",
-
-description:
-`Refer Bonus from ${investor.name}`,
-
-date:new Date()
-
-});
-
-
-
-}
-
-
-}
-
-
-}
-
-
-}
-
-
-}
-
-
-}catch(err){
-
-console.log(
-
-"REFER BONUS ERROR",
-
-err
-
-);
-
-    }
 
 
 try{
@@ -2151,6 +1943,9 @@ await processFirstInvestmentBonuses(
     email,
     investment
 );
+
+// Performance Task Check
+await updatePerformanceStatus(email);
 
 await payTeamBonus(email);
 
@@ -2414,7 +2209,11 @@ investment.renewStatus =
   
 await investment.save();
 
-  try {
+try {
+
+  await updatePerformanceStatus(
+    investment.email
+  );
 
   await processRenewBonuses(
     investment.email,
@@ -5727,7 +5526,11 @@ app.post("/refer-tree", async (req, res) => {
 
 app.post("/refer-data", async (req, res) => {
   try {
-    const { email } = req.body;
+    const {
+  email,
+  month,
+  year
+} = req.body;
 
     const user = await User.findOne({
       email: String(email || "").toLowerCase()
@@ -5778,23 +5581,78 @@ app.post("/refer-data", async (req, res) => {
     const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    let filterStart = startThisMonth;
+let filterEnd = null;
+
+if (
+  Number.isInteger(Number(month)) &&
+  Number.isInteger(Number(year))
+) {
+
+  filterStart = new Date(
+    Number(year),
+    Number(month) - 1,
+    1
+  );
+
+  filterEnd = new Date(
+    Number(year),
+    Number(month),
+    0,
+    23,
+    59,
+    59
+  );
+
+}
 
     const allBonusHistory = await BonusLedger.find({
       email: String(user.email).toLowerCase()
     }).sort({ date: -1 });
 
+    const performanceHistory = allBonusHistory
+  .filter(
+    x =>
+      x.bonusType === "performance" ||
+      x.type === "Performance Bonus"
+  )
+  .sort((a, b) => new Date(b.date) - new Date(a.date));
+
     const sumBonus = (type, from, to) => {
-      return allBonusHistory
-        .filter((x) => {
-          const d = new Date(x.date);
-          return (
-            x.bonusType === type &&
-            d >= from &&
-            (!to || d <= to)
-          );
-        })
-        .reduce((sum, x) => sum + Number(x.amount || 0), 0);
-    };
+
+  return allBonusHistory
+
+    .filter(x => {
+
+      const bonusType =
+        String(
+          x.bonusType || x.type || ""
+        ).toLowerCase();
+
+      const target =
+        String(type).toLowerCase();
+
+      const d = new Date(x.date);
+
+      return (
+
+        bonusType === target &&
+
+        d >= from &&
+
+        (!to || d <= to)
+
+      );
+
+    })
+
+    .reduce(
+      (sum, x) =>
+        sum + Number(x.amount || 0),
+      0
+    );
+
+};
 
     const level1Users = directUsers;
 
@@ -5905,6 +5763,8 @@ allBonusHistory
 
   balance: Number(user.performanceIncome || 0),
 
+totalIncome: Number(user.performanceIncome || 0),
+
   directActiveCount,
 
   required: 10,
@@ -5932,9 +5792,25 @@ allBonusHistory
     endLastMonth
   ),
 
-  history: allBonusHistory.filter(
-    x => x.type === "Performance Bonus"
-  )
+        selectedMonthBonus: sumBonus(
+    "Performance Bonus",
+    filterStart,
+    filterEnd
+),
+
+  history: performanceHistory.filter(item => {
+
+  if (!filterEnd) {
+
+    return new Date(item.date) >= filterStart;
+
+  }
+
+  const d = new Date(item.date);
+
+  return d >= filterStart && d <= filterEnd;
+
+}),
 },
 
       team: {
