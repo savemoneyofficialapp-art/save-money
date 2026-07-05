@@ -13,7 +13,7 @@ const Notification = require("./models/Notification");
 const Investment = require("./models/Investment");
 const {updatePerformanceStatus}=require("./models/PerformanceHelper");
 const cron = require("node-cron");
-const TeamBonus = require("./models/TeamBonus");
+const {getUplines,teamBonusAmount} = require("./models/teamHelper");
 const RoyaltyBonus = require("./models/RoyaltyBonus");
 const WalletHistory = require("./models/WalletHistory");
 const AddCash = require("./models/AddCash");
@@ -414,142 +414,81 @@ async function checkKYC(email) {
 
 }
 
-async function updateTeamChallenge(email) {
-
-  const tb = await TeamBonus.findOne({ email });
-
-  if (!tb || tb.isActive || tb.isFailed) return;
-
-  const days =
-    (new Date() - new Date(tb.challengeStart))
-    / (1000 * 60 * 60 * 24);
-
-  // ❌ failed
-  if (days > 30 && tb.directCount < 10) {
-
-    tb.isFailed = true;
-
-    await tb.save();
-
-    return;
-  }
-
-  // ✅ active
-  if (tb.directCount >= 10) {
-
-    tb.isActive = true;
-
-    await tb.save();
-  }
-}
 
 
+  async function payTeamBonus(newInvestorEmail, investment) {
 
-// 🔥 PAY TEAM BONUS
-async function payTeamBonus(newInvestorEmail) {
+  try {
 
-  // NEW USER
-  const user = await User.findOne({
-    email: newInvestorEmail
-  });
-
-  if (!user || !user.referredBy) return;
-
-
-  // LEVEL A
-  const sponsor1 = await User.findOne({
-    referCode: user.referredBy
-  });
-
-  if (!sponsor1) return;
-
-
-  // LEVEL B
-  const sponsor2 = sponsor1.referredBy
-    ? await User.findOne({
-        referCode: sponsor1.referredBy
-      })
-    : null;
-
-
-  // LEVEL C
-  const sponsor3 = sponsor2?.referredBy
-    ? await User.findOne({
-        referCode: sponsor2.referredBy
-      })
-    : null;
-
-
-  // LEVEL D
-  const sponsor4 = sponsor3?.referredBy
-    ? await User.findOne({
-        referCode: sponsor3.referredBy
-      })
-    : null;
-
-
-  // BONUS SYSTEM
-  const payouts = [
-
-    {
-      user: sponsor2,
-      level: 1,
-      amount: 70
-    },
-
-    {
-      user: sponsor3,
-      level: 2,
-      amount: 50
-    },
-
-    {
-      user: sponsor4,
-      level: 3,
-      amount: 35
-    }
-
-  ];
-
-
-  // LOOP
-  for (let p of payouts) {
-
-    if (!p.user) continue;
-
-    const tb = await TeamBonus.findOne({
-      email: p.user.email
+    const investor = await User.findOne({
+      email: String(newInvestorEmail).toLowerCase()
     });
 
-    // ONLY ACTIVE USER GET BONUS
-    if (tb && tb.isActive && !tb.isFailed) {
+    if (!investor) return;
 
-      // WALLET ADD
-      tb.wallet += p.amount;
+    if (!investor.referredBy) return;
 
-      // HISTORY ADD
-      tb.history.push({
+    // Only first investment
+    const totalInvestments = await Investment.countDocuments({
+      email: investor.email.toLowerCase()
+    });
 
-        fromUser: user.name,
+    if (totalInvestments !== 1) return;
 
-        level: p.level,
+    const uplines = await getUplines(investor, 5);
 
-        amount: p.amount,
+    for (const item of uplines) {
 
-        date: new Date(),
+      const sponsor = item.user;
+      const level = item.level;
 
-        status: "Paid"
+      if (!sponsor) continue;
+
+      // Admin disabled
+      if (sponsor.teamBonusEnabled === false)
+        continue;
+
+      // Bonus amount
+      const amount = teamBonusAmount(level);
+
+      // Level 1 = ₹0
+      if (amount <= 0)
+        continue;
+
+      await addBonus({
+
+        email: sponsor.email,
+
+        fromEmail: investor.email,
+
+        fromName: investor.name,
+
+        type: "Team Bonus",
+
+        level,
+
+        amount,
+
+        note:
+          `Level ${level} Team Bonus`,
+
+        refId:
+          `TEAM-${investment._id}-L${level}`
+
       });
 
-      await tb.save();
-
-      // MAIN USER WALLET ADD
-      p.user.wallet += p.amount;
-
-      await p.user.save();
     }
+
+  } catch (err) {
+
+    console.log(
+      "TEAM BONUS ERROR:",
+      err
+    );
+
   }
-}
+
+  }     
 
 async function updateUserRank(email) {
   const user = await User.findOne({ email });
@@ -1947,7 +1886,10 @@ await processFirstInvestmentBonuses(
 // Performance Task Check
 await updatePerformanceStatus(email);
 
-await payTeamBonus(email);
+await payTeamBonus(
+  email,
+  investment
+);
 
 await payRoyaltyBonus(
     email,
@@ -5692,6 +5634,22 @@ app.post("/refer-data", async (req, res) => {
     const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+     const startToday = new Date(
+  now.getFullYear(),
+  now.getMonth(),
+  now.getDate()
+);
+
+const endToday = new Date(
+  now.getFullYear(),
+  now.getMonth(),
+  now.getDate(),
+  23,
+  59,
+  59
+);
+    
     let filterStart = startThisMonth;
 let filterEnd = null;
 
@@ -5765,6 +5723,56 @@ if (
 
 };
 
+    const teamRows = allBonusHistory.filter(
+  x => x.bonusType === "Team Bonus"
+);
+
+const teamSum = (from, to) => {
+
+  return teamRows
+
+    .filter(x => {
+
+      const d = new Date(x.date);
+
+      return d >= from && d <= to;
+
+    })
+
+    .reduce(
+
+      (sum, x) => sum + Number(x.amount || 0),
+
+      0
+
+    );
+
+};
+
+const teamLevelIncome = level => {
+
+  return teamRows
+
+    .filter(x => Number(x.level) === level)
+
+    .reduce(
+
+      (sum, x) => sum + Number(x.amount || 0),
+
+      0
+
+    );
+
+};
+
+const todayTeamRows = teamRows.filter(x => {
+
+  const d = new Date(x.date);
+
+  return d >= startToday && d <= endToday;
+
+});
+
     const level1Users = directUsers;
 
     const level2Users = await User.find({
@@ -5817,6 +5825,27 @@ if (
     };
 
     const treeData = await getLevelUsers(directUsers, 1, {});
+
+   const todayJoinCount = {};
+
+for (let level = 1; level <= 5; level++) {
+
+  todayJoinCount[level] = 0;
+
+}
+
+todayTeamRows.forEach(row => {
+
+  const lvl = Number(row.level || 0);
+
+  if (todayJoinCount[lvl] !== undefined) {
+
+    todayJoinCount[lvl]++;
+
+  }
+
+});
+    
     
     const referralBonusMap = {};
 
@@ -5925,17 +5954,58 @@ totalIncome: Number(user.performanceIncome || 0),
 },
 
       team: {
-        enabled: true,
-        balance: Number(user.teamIncome || 0),
-        level1Count: level1Users.length,
-        level2Count: level2Users.length,
-        level3Count: level3Users.length,
-        level1Income: levelIncome(1),
-        level2Income: levelIncome(2),
-        level3Income: levelIncome(3),
-        thisMonthBonus: sumBonus("team", startThisMonth),
-        lastMonthBonus: sumBonus("team", startLastMonth, endLastMonth)
-      },
+
+  enabled: !!user.teamBonusEnabled,
+
+  balance: Number(user.teamIncome || 0),
+
+  todayBonus: teamSum(
+    startToday,
+    endToday
+  ),
+
+  thisMonthBonus: teamSum(
+    startThisMonth,
+    now
+  ),
+
+  lastMonthBonus: teamSum(
+    startLastMonth,
+    endLastMonth
+  ),
+
+  todayJoin: todayTeamRows.length,
+
+  todayJoinCount,
+
+  level1Income: teamLevelIncome(1),
+
+  level2Income: teamLevelIncome(2),
+
+  level3Income: teamLevelIncome(3),
+
+  level4Income: teamLevelIncome(4),
+
+  level5Income: teamLevelIncome(5),
+
+  history: teamRows,
+
+  level1Count:
+    treeData.level1Count || 0,
+
+  level2Count:
+    treeData.level2Count || 0,
+
+  level3Count:
+    treeData.level3Count || 0,
+
+  level4Count:
+    treeData.level4Count || 0,
+
+  level5Count:
+    treeData.level5Count || 0
+
+},
 
       royalty: {
         enabled: !!user.royaltyBonusEnabled,
