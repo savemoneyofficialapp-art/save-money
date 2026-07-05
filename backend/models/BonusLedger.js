@@ -19,6 +19,11 @@ const bonusLedgerSchema = new mongoose.Schema(
       default: ""
     },
 
+    uplineName: {
+  type: String,
+  default: ""
+},
+
     bonusType: {
   type: String,
   enum: [
