@@ -612,10 +612,10 @@ async function addBonus({
     const bonusType = type;
 
     const exists = await BonusLedger.findOne({
-      email: String(email).toLowerCase(),
-      type: bonusType,
-      refId
-    });
+  email: String(email).toLowerCase(),
+  bonusType,
+  refId
+});
 
     if (exists) return;
 
