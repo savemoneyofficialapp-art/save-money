@@ -988,6 +988,11 @@ User :
 
 </p>
 
+  <p>
+<b>Upline :</b>
+{item.uplineName || "-"}
+</p>
+
 <p>
 
 <b>
@@ -1001,10 +1006,19 @@ Level :
 </p>
 
 <p>
+<b>Bonus :</b>
+
+Level {item.level}
+
+→ {money(item.amount)}
+
+</p>
+
+<p>
 
 <b>
 
-Bonus :
+You Earned :
 
 </b>
 
