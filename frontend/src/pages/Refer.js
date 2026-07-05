@@ -23,6 +23,8 @@ export default function Refer() {
   const [referBonus,setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
   const [teamMonthFilter, setTeamMonthFilter] = useState("thisMonth");
+  const [bonusFilter, setBonusFilter] = useState("All");
+  const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
 
 const filteredPerformanceHistory = (
   performance.history || []
@@ -142,6 +144,12 @@ const filteredPerformanceHistory = (
   const referCode =
     user.referCode || user.referralCode || user.walletId || "SMREF0001";
 
+  const totalReferWallet =
+  Number(user.referralIncome || 0) +
+  Number(user.performanceIncome || 0) +
+  Number(user.teamIncome || 0) +
+  Number(user.royaltyIncome || 0);
+
   const referLink = `${window.location.origin}/register?ref=${referCode}`;
 
   const copyText = async (text) => {
@@ -169,6 +177,30 @@ const filteredPerformanceHistory = (
   };
 
   const safeHistory = Array.isArray(history) ? history : [];
+
+  const safeBonusHistory = Array.isArray(bonusHistory)
+  ? bonusHistory
+  : [];
+
+  const filteredBonusHistory =
+
+bonusFilter === "All"
+
+? safeBonusHistory
+
+: safeBonusHistory.filter(
+
+x => x.bonusType === bonusFilter
+
+);
+
+const visibleBonusHistory =
+
+showAllBonusHistory
+
+? filteredBonusHistory
+
+: filteredBonusHistory.slice(0,5);
 
   const visibleHistory =
     statusFilter === "All"
@@ -282,7 +314,7 @@ bg:"#ecfdf5"
         <div style={styles.heroRight}>
           <div style={styles.walletRound}>💸</div>
           <p>Refer Wallet Balance</p>
-          <h1>{money(user.referralIncome || user.referWallet || 0)}</h1>
+          <h1>{money(totalReferWallet)}</h1>
         </div>
       </section>
 
@@ -329,78 +361,192 @@ bg:"#ecfdf5"
       </section>
 
       <section style={styles.historyCard}>
-        <div style={styles.historyTop}>
-          <div>
-            <h2>🕘 Refer History</h2>
-            <p>Only your direct referred users will show here.</p>
-          </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={styles.filterSelect}
-          >
-            <option value="All">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-        </div>
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20
+  }}
+>
+  <div>
+    <h2>💰 All Bonus History</h2>
+    <p>Referral, Performance, Team & Royalty সব Bonus এখানে দেখাবে।</p>
+  </div>
 
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Refer ID</th>
-                <th>Join Date</th>
-                <th>Status</th>
-                <th>Earning</th>
-              </tr>
-            </thead>
+  <select
+    value={bonusFilter}
+    onChange={(e) => setBonusFilter(e.target.value)}
+    style={styles.filterSelect}
+  >
+    <option value="All">All Bonus</option>
+    <option value="Referral Bonus">🎁 Referral</option>
+    <option value="Performance Bonus">📈 Performance</option>
+    <option value="Team Bonus">👥 Team</option>
+    <option value="Royalty Bonus">👑 Royalty</option>
+  </select>
+</div>
 
-            <tbody>
-              {finalHistory.length === 0 ? (
-                <tr>
-                  <td colSpan="5" style={styles.emptyTd}>No refer history found</td>
-                </tr>
-              ) : (
-                finalHistory.map((x, i) => (
-                  <tr key={i}>
-                    <td>
-                      <b>{x.name}</b>
-                      <br />
-                      <small>{x.mobile || x.email}</small>
-                    </td>
-                    <td>{x.referId || "N/A"}</td>
-                    <td>{x.joinDate ? new Date(x.joinDate).toLocaleString("en-IN") : "N/A"}</td>
-                    <td>
-                      <span
-                        style={{
-                          ...styles.statusPill,
-                          background: x.status === "Active" ? "#dcfce7" : "#ffe4e6",
-                          color: x.status === "Active" ? "#16a34a" : "#e11d48"
-                        }}
-                      >
-                        {x.status}
-                      </span>
-                    </td>
-                    <td>{money(x.earning || 0)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+<div style={styles.tableWrap}>
 
-        {visibleHistory.length > 3 && (
-          <button
-            style={styles.viewMoreBtn}
-            onClick={() => setShowAllHistory(!showAllHistory)}
-          >
-            {showAllHistory ? "Show Less ⌃" : "View More ⌄"}
-          </button>
-        )}
-      </section>
+<table style={styles.table}>
+
+<thead>
+
+<tr>
+
+<th>Bonus</th>
+
+<th>From User</th>
+
+<th>Level</th>
+
+<th>Amount</th>
+
+<th>Date</th>
+
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{
+safeBonusHistory.length===0 ?
+
+<tr>
+
+<td colSpan="6">
+
+No Bonus History
+
+</td>
+
+</tr>
+
+:
+
+visibleBonusHistory.map((item,index)=>(
+
+<tr key={index}>
+
+<td>
+
+{item.bonusType}
+
+</td>
+
+<td>
+
+<b>
+
+{item.fromName || "-"}
+
+</b>
+
+<br/>
+
+<small>
+
+{item.fromEmail}
+
+</small>
+
+</td>
+
+<td>
+
+{item.level || "-"}
+
+</td>
+
+<td>
+
+{money(item.amount)}
+
+</td>
+
+<td>
+
+{
+new Date(item.date)
+.toLocaleString("en-IN")
+}
+
+</td>
+
+<td>
+
+<span
+style={{
+padding:"6px 12px",
+borderRadius:20,
+background:"#dcfce7",
+color:"#15803d",
+fontWeight:700
+}}
+>
+
+Paid
+
+</span>
+
+</td>
+
+</tr>
+
+))
+
+}
+
+</tbody>
+
+</table>
+
+</div>
+
+</section>
+
+  {
+filteredBonusHistory.length>5 && (
+
+<button
+
+style={styles.viewMoreBtn}
+
+onClick={()=>
+
+setShowAllBonusHistory(
+
+!showAllBonusHistory
+
+)
+
+}
+
+>
+
+{
+
+showAllBonusHistory
+
+?
+
+"Show Less ⌃"
+
+:
+
+"View More ⌄"
+
+}
+
+</button>
+
+)
+}
 
       <section style={styles.bottomBanner}>
         <div style={styles.bottomGift}>🎁</div>
