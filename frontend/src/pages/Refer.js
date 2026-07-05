@@ -22,6 +22,7 @@ export default function Refer() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [referBonus,setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
+  const [teamMonthFilter, setTeamMonthFilter] = useState("thisMonth");
 
 const filteredPerformanceHistory = (
   performance.history || []
@@ -89,6 +90,48 @@ const filteredPerformanceHistory = (
       setLoading(false);
     }
   };
+
+  const getTeamHistory = () => {
+
+  if (!team.history) return [];
+
+  const now = new Date();
+
+  return team.history.filter(item => {
+
+    const d = new Date(item.date);
+
+    if (teamMonthFilter === "thisMonth") {
+
+      return (
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear()
+      );
+
+    }
+
+    if (teamMonthFilter === "lastMonth") {
+
+      const last = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1
+      );
+
+      return (
+        d.getMonth() === last.getMonth() &&
+        d.getFullYear() === last.getFullYear()
+      );
+
+    }
+
+    return (
+      d.getMonth() === Number(teamMonthFilter)
+    );
+
+  });
+
+};
 
   const money = (n) =>
     `₹ ${Number(n || 0).toLocaleString("en-IN", {
@@ -629,26 +672,391 @@ Close
 )}
 
       {bonusModal === "team" && (
-        <Modal onClose={() => setBonusModal(null)}>
-          <h2>👥 Team Bonus</h2>
-          <p style={styles.successText}>
-            Congratulations! Your Team Bonus is Active and Growing.
-          </p>
 
-          <h1>{money(team.balance)}</h1>
-          <p>This Month Bonus: <b>{money(team.thisMonthBonus)}</b></p>
-          <p>Last Month Bonus: <b>{money(team.lastMonthBonus)}</b></p>
+<Modal onClose={() => setBonusModal(null)}>
 
-          <div style={styles.levelGrid}>
-            <div>Level 1 Members: <b>{team.level1Count || 0}</b><br />Income: {money(team.level1Income)}</div>
-            <div>Level 2 Members: <b>{team.level2Count || 0}</b><br />Income: {money(team.level2Income)}</div>
-            <div>Level 3 Members: <b>{team.level3Count || 0}</b><br />Income: {money(team.level3Income)}</div>
-          </div>
+<h2>👥 Team Bonus</h2>
 
-          <BonusHistory type="team" data={bonusHistory} />
-          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </Modal>
-      )}
+<h1>{money(team.balance || 0)}</h1>
+
+<p>
+
+Status :
+
+<b
+style={{
+color:
+team.enabled
+? "#16a34a"
+: "#ef4444"
+}}
+>
+
+{team.enabled
+? "Active"
+: "Inactive"}
+
+</b>
+
+</p>
+
+<hr/>
+
+<h3>Today's Report</h3>
+
+<p>
+
+Today's Income :
+
+<b>
+
+{money(team.todayBonus)}
+
+</b>
+
+</p>
+
+<p>
+
+Today's New Joining :
+
+<b>
+
+{team.todayJoin || 0}
+
+</b>
+
+</p>
+
+<div style={styles.levelGrid}>
+
+<div>
+
+<b>L1</b>
+
+<br/>
+
+Join :
+
+{team.todayJoinCount?.[1] || 0}
+
+</div>
+
+<div>
+
+<b>L2</b>
+
+<br/>
+
+Join :
+
+{team.todayJoinCount?.[2] || 0}
+
+</div>
+
+<div>
+
+<b>L3</b>
+
+<br/>
+
+Join :
+
+{team.todayJoinCount?.[3] || 0}
+
+</div>
+
+<div>
+
+<b>L4</b>
+
+<br/>
+
+Join :
+
+{team.todayJoinCount?.[4] || 0}
+
+</div>
+
+<div>
+
+<b>L5</b>
+
+<br/>
+
+Join :
+
+{team.todayJoinCount?.[5] || 0}
+
+</div>
+
+</div>
+
+<hr/>
+
+  <div
+style={{
+marginTop:20,
+marginBottom:20
+}}
+>
+
+<select
+
+value={teamMonthFilter}
+
+onChange={e=>
+setTeamMonthFilter(
+e.target.value
+)
+}
+
+style={styles.filterSelect}
+
+>
+
+<option value="thisMonth">
+This Month
+</option>
+
+<option value="lastMonth">
+Last Month
+</option>
+
+<option value="0">January</option>
+
+<option value="1">February</option>
+
+<option value="2">March</option>
+
+<option value="3">April</option>
+
+<option value="4">May</option>
+
+<option value="5">June</option>
+
+<option value="6">July</option>
+
+<option value="7">August</option>
+
+<option value="8">September</option>
+
+<option value="9">October</option>
+
+<option value="10">November</option>
+
+<option value="11">December</option>
+
+</select>
+
+</div>
+
+<h3>Income Summary</h3>
+
+<p>
+
+This Month :
+
+<b>
+
+{money(team.thisMonthBonus)}
+
+</b>
+
+</p>
+
+<p>
+
+Last Month :
+
+<b>
+
+{money(team.lastMonthBonus)}
+
+</b>
+
+</p>
+
+<hr/>
+
+<h3>Level Income</h3>
+
+<div style={styles.levelGrid}>
+
+<div>
+
+Level 1
+
+<br/>
+
+{money(team.level1Income)}
+
+</div>
+
+<div>
+
+Level 2
+
+<br/>
+
+{money(team.level2Income)}
+
+</div>
+
+<div>
+
+Level 3
+
+<br/>
+
+{money(team.level3Income)}
+
+</div>
+
+<div>
+
+Level 4
+
+<br/>
+
+{money(team.level4Income)}
+
+</div>
+
+<div>
+
+Level 5
+
+<br/>
+
+{money(team.level5Income)}
+
+</div>
+
+</div>
+
+<hr/>
+
+<h3>Team Bonus History</h3>
+
+<div
+style={{
+maxHeight:350,
+overflowY:"auto"
+}}
+>
+
+{
+
+getTeamHistory().length === 0
+
+?
+
+<p>No Team Bonus History</p>
+
+:
+
+getTeamHistory().map((item,index)=>(
+
+<div
+
+key={index}
+
+style={{
+
+padding:12,
+
+marginBottom:12,
+
+background:"#f8fafc",
+
+borderRadius:12
+
+}}
+
+>
+
+<p>
+
+<b>
+
+User :
+
+</b>
+
+{item.fromName}
+
+</p>
+
+<p>
+
+<b>
+
+Level :
+
+</b>
+
+{item.level}
+
+</p>
+
+<p>
+
+<b>
+
+Bonus :
+
+</b>
+
+{money(item.amount)}
+
+</p>
+
+<p>
+
+<b>
+
+Date :
+
+</b>
+
+{
+
+new Date(item.date)
+
+.toLocaleDateString("en-IN")
+
+}
+
+</p>
+
+</div>
+
+))
+
+}
+
+</div>
+
+<button
+
+style={styles.closeBtn}
+
+onClick={()=>
+
+setBonusModal(null)
+
+}
+
+>
+
+Close
+
+</button>
+
+</Modal>
+
+)}
 
       {bonusModal === "royalty" && (
         <Modal onClose={() => setBonusModal(null)}>
