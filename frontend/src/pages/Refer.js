@@ -372,7 +372,7 @@ bg:"#ecfdf5"
 >
   <div>
     <h2>💰 All Bonus History</h2>
-    <p>Referral, Performance, Team & Royalty সব Bonus এখানে দেখাবে।</p>
+    
   </div>
 
   <select
