@@ -462,6 +462,7 @@ async function checkKYC(email) {
         fromEmail: investor.email,
 
         fromName: investor.name,
+        uplineName: sponsor.name,
 
         type: "Team Bonus",
 
@@ -538,12 +539,14 @@ async function addBonus({
   email,
   fromEmail,
   fromName,
+  uplineName = "",
   type,
   level = 0,
   amount = 0,
   note = "",
   refId = ""
-}) {
+}) 
+{
   try {
     const bonusAmount = Number(amount || 0);
     if (!email || bonusAmount <= 0) return;
@@ -593,6 +596,7 @@ async function addBonus({
       email: String(email).toLowerCase(),
       fromEmail,
       fromName: fromName || "User",
+      uplineName: uplineName || "",
       type: bonusType,
       bonusType,
       level,
