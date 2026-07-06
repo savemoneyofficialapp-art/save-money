@@ -4516,39 +4516,7 @@ app.post("/admin-disable-bonus", auth, adminAuth, async (req, res) => {
 
 });
 
-app.post("/admin-search-users", auth, adminAuth, async (req, res) => {
-  try {
-    const { search, filter } = req.body;
 
-    let query = {};
-
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { mobile: { $regex: search, $options: "i" } },
-        { walletId: { $regex: search, $options: "i" } },
-        { referCode: { $regex: search, $options: "i" } }
-      ];
-    }
-
-    if (filter === "kyc") query.kycStatus = "approved";
-    if (filter === "pending") query.kycStatus = { $ne: "approved" };
-    if (filter === "active") query.activeStatus = "Active";
-    if (filter === "inactive") query.activeStatus = "Inactive";
-    if (filter === "banned") query.banned = true;
-
-    const users = await User.find(query).select("-password")
-      .sort({ createdAt: -1 })
-      .limit(100);
-
-    res.json(users);
-
-  } catch (err) {
-    console.log("ADMIN SEARCH ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
-  }
-});
 
 app.get("/admin-advanced-analytics", auth, adminAuth, async (req, res) => {
   try {
@@ -4686,13 +4654,29 @@ app.post("/admin-search-users", auth, adminAuth, async (req, res) => {
     }
 
     const users = await User.find(query)
-      .sort({ createdAt: -1 })
-      .limit(100);
+.select("-password")
+.sort({ createdAt: -1 })
+.limit(100);
 
-    res.json(users);
+const finalUsers = users.map(u => ({
+
+    ...u.toObject(),
+
+    performanceBonusEnabled:
+      u.performanceEnabled,
+
+    teamBonusEnabled:
+      u.teamBonusEnabled,
+
+    royaltyBonusEnabled:
+      u.royaltyBonusEnabled
+
+}));
+
+res.json(finalUsers);
 
   } catch (err) {
-    console.log("SEARCH ERROR:", err);
+    console.log("ADMIN SEARCH ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
@@ -4938,6 +4922,7 @@ app.post("/admin/update-bonus-status", async (req, res) => {
       user.performanceAdminOverride = true;
 
       user.performanceEnabled = performanceBonusEnabled;
+      user.performanceBonusEnabled = performanceBonusEnabled;
 
       user.performanceStatus = performanceBonusEnabled
         ? "Active"
