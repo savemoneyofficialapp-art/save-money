@@ -5959,7 +5959,7 @@ totalIncome: Number(user.performanceIncome || 0),
 
   enabled:
 user.activeStatus === "Active" &&
-user.teamBonusEnabled !== false
+user.teamBonusEnabled !== false,
 
   balance: Number(user.teamIncome || 0),
 
