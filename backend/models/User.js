@@ -117,7 +117,7 @@ default:false
 
   performanceActivatedBy: {
   type: String,
-  enum: ["AUTO", "ADMIN"],
+  enum: ["AUTO", "ADMIN", "" ],
   default: ""
 },
 
