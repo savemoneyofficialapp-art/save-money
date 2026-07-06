@@ -445,8 +445,17 @@ async function checkKYC(email) {
       if (!sponsor) continue;
 
       // Admin disabled
-      if (sponsor.teamBonusEnabled === false)
-        continue;
+      // Sponsor must be active
+if (sponsor.activeStatus !== "Active")
+    continue;
+
+// Admin disabled
+if (sponsor.teamBonusEnabled === false)
+    continue;
+
+// Bonus disabled
+if (sponsor.disableBonus)
+    continue;
 
       // Bonus amount
       const amount = teamBonusAmount(level);
@@ -1835,6 +1844,10 @@ if (r > 0) {
 });
 
     user.activeStatus = "Active";
+    if (!user.firstInvestmentDone) {
+    user.firstInvestmentDone = true;
+    user.teamBonusEnabled = true;
+    }
 
 if (!user.performanceStartDate) {
 
@@ -5944,7 +5957,9 @@ totalIncome: Number(user.performanceIncome || 0),
 
       team: {
 
-  enabled: !!user.teamBonusEnabled,
+  enabled:
+user.activeStatus === "Active" &&
+user.teamBonusEnabled !== false
 
   balance: Number(user.teamIncome || 0),
 
