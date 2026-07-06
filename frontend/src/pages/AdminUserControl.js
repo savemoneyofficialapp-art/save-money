@@ -66,7 +66,7 @@ const [selectedUser, setSelectedUser] = useState(null);
   setBonusOpen(false);
 
   try {
-    await searchUser();
+    await searchUsers();
   } catch (e) {
     console.log("search refresh failed", e);
   }
@@ -103,7 +103,7 @@ const walletAdjust = async (type, userData) => {
   setAdjustReason("");
 
   try {
-    await searchUser();
+    await searchUsers();
   } catch (e) {
     console.log("search refresh failed", e);
   }
@@ -333,10 +333,17 @@ const walletAdjust = async (type, userData) => {
     setSelectedUser(u);
 
     setBonus({
-      performanceBonusEnabled: !!u.performanceBonusEnabled,
-      teamBonusEnabled: !!u.teamBonusEnabled,
-      royaltyBonusEnabled: !!u.royaltyBonusEnabled
-    });
+
+performanceBonusEnabled:
+!!u.performanceEnabled,
+
+teamBonusEnabled:
+!!u.teamBonusEnabled,
+
+royaltyBonusEnabled:
+!!u.royaltyBonusEnabled
+
+});
 
     setBonusOpen(true);
   }}
