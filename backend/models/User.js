@@ -284,7 +284,7 @@ resetOtpExpire: {
 
 teamBonusEnabled: {
   type: Boolean,
-  default: false
+  default: true
 },
 
 royaltyBonusEnabled: {
