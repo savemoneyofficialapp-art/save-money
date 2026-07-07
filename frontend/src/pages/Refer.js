@@ -1256,7 +1256,7 @@ Close
         </Modal>
       )}
 
-      {
+      
 
         {bonusModal === "refer" && (
 
