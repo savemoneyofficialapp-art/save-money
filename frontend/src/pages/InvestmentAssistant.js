@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 
 export default function InvestmentAssistant() {
@@ -330,5 +329,3 @@ const styles = {
     justifyContent: "center"
   }
 };
-
-```
