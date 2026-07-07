@@ -138,10 +138,10 @@ export default function InvestmentAssistant() {
             Unlock smart wealth insights. Choose your language to start / চ্যাট শুরু করতে ভাষা বেছে নিন
           </p>
           <button style={{ ...styles.btn, background: "linear-gradient(135deg, #22c55e, #15803d)", marginBottom: "14px" }} onClick={() => setLanguage("bn")}>
-            🇧🇩 বাংলা (Bengali)
+             বাংলা (Bengali)
           </button>
           <button style={{ ...styles.btn, background: "linear-gradient(135deg, #3b82f6, #1d4ed8)" }} onClick={() => setLanguage("en")}>
-            🇺🇸 English
+             English
           </button>
         </div>
       </div>
