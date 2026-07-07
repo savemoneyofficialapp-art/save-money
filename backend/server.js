@@ -5892,12 +5892,54 @@ allBonusHistory
 
 });
 
+    const referralRows = allBonusHistory.filter(
+  x => x.bonusType === "Referral Bonus"
+);
+
+const referBonus = {
+
+  enabled: user.activeStatus === "Active",
+
+  balance: Number(user.referralIncome || 0),
+
+  totalBonus: referralRows.reduce(
+    (sum, x) => sum + Number(x.amount || 0),
+    0
+  ),
+
+  count: history.filter(x => x.firstInvestment).length,
+
+  todayBonus: referralRows
+    .filter(x => {
+      const d = new Date(x.date);
+      return d >= startToday && d <= endToday;
+    })
+    .reduce((sum, x) => sum + Number(x.amount || 0), 0),
+
+  thisMonthBonus: referralRows
+    .filter(x => new Date(x.date) >= startThisMonth)
+    .reduce((sum, x) => sum + Number(x.amount || 0), 0),
+
+  lastMonthBonus: referralRows
+    .filter(x => {
+      const d = new Date(x.date);
+      return d >= startLastMonth && d <= endLastMonth;
+    })
+    .reduce((sum, x) => sum + Number(x.amount || 0), 0),
+
+  list: history,
+
+  history: referralRows
+
+};
+
     return res.json({
       success: true,
       user,
       referCode,
 
       history,
+      referBonus,
 
       performance: {
   enabled: !!user.performanceEnabled,
