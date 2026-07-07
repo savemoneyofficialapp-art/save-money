@@ -49,7 +49,6 @@ export default function InvestmentAssistant() {
     const cleanText = text.toLowerCase();
     const numbers = cleanText.match(/\d+/g);
     
-    // ১. মাসিক হিসাবের ক্যালকুলেশন চেক
     if (
       (cleanText.includes("invest") || cleanText.includes("মাসিক") || cleanText.includes("ইনভেস্ট") || cleanText.includes("জমা") || cleanText.includes("টাকা") || cleanText.includes("পাব")) &&
       numbers && numbers.length >= 2
@@ -69,49 +68,42 @@ export default function InvestmentAssistant() {
       return calculateInvestment(amount, years);
     }
 
-    // ২. SIP কী?
     if (cleanText.includes("sip") || cleanText.includes("এসআইপি") || cleanText.includes("সিস্টেমেটিক")) {
       return language === "bn"
         ? "💡 SIP (Systematic Investment Plan) হলো প্রতি মাসে একটি নির্দিষ্ট পরিমাণ টাকা (যেমন- ১০০০ বা ২০০০ টাকা) নিয়মিত ইনভেস্ট করার সহজ মাধ্যম। এতে একসাথে বড় অঙ্কের চাপ পড়ে না এবং চক্রবৃদ্ধি হরে ভালো রিটার্ন পাওয়া যায়।"
         : "💡 SIP (Systematic Investment Plan) is a method where you invest a fixed amount of money regularly (e.g., monthly) instead of a lump sum. It helps in averaging costs and multiplying wealth through compounding.";
     }
 
-    // ৩. One time invest / লাম্পসাম কী?
     if (cleanText.includes("one time") || cleanText.includes("onetime") || cleanText.includes("এককালীন") || cleanText.includes("একসাথে")) {
       return language === "bn"
         ? "💰 One-Time Invest (এককালীন বিনিয়োগ) হলো আপনার কাছে থাকা অলস টাকা একসাথে একবারে নির্দিষ্ট সময়ের জন্য ফিক্সড বা বিনিয়োগ করে দেওয়া। আমাদের এখানে দীর্ঘমেয়াদে ওয়ান-টাইমেও আকর্ষণীয় প্রফিট পাওয়া যায়।"
         : "💰 One-Time Investment means investing a lump sum amount all at once for a specific tenure, rather than making small monthly payments. It offers maximum compounding advantages over time.";
     }
 
-    // ৪. রেফার করে কীভাবে টাকা কামানো যায়?
     if (cleanText.includes("refer") || cleanText.includes("রেফার") || cleanText.includes("শেয়ার") || cleanText.includes("share")) {
       return language === "bn"
         ? "👥 রেফার করে আয় করা খুবই সহজ! আপনার ওয়ালেট পেজে একটি ইউনিক রেফারাল লিংক পাবেন। সেই লিংক বন্ধুদের সাথে শেয়ার করুন। তারা যখন আপনার কোড ব্যবহার করে যুক্ত হবে এবং প্ল্যাটফর্ম ব্যবহার করবে, আপনি সরাসরি আপনার ওয়ালেটে রেফারাল বোনাস ও টিম কমিশন পাবেন।"
         : "👥 Earning through referral is easy! Copy your unique Referral Link from the Wallet page and share it with friends. When they sign up and use the platform, you will receive referral rewards, team income, and lifetime commissions.";
     }
 
-    // ৫. কীভাবে ইনভেস্ট করব?
     if (cleanText.includes("কীভাবে ইনভেস্ট") || cleanText.includes("how to invest") || cleanText.includes("কিভাবে ইনভেস্ট") || cleanText.includes("স্টার্ট")) {
       return language === "bn"
         ? "🚀 ইনভেস্ট শুরু করতে প্রথমে আপনার ওয়ালেট পেজে যান এবং 'Add Cash' বাটনে ক্লিক করুন। সেখানে দেওয়া অ্যাড্রেসে টাকা পাঠিয়ে ট্রানজেকশন আইডি এবং স্ক্রিনশট সাবমিট করুন। অ্যাডমিন অ্যাপ্রুভ করার পর আপনার ব্যালেন্স অ্যাড হলে আপনি সহজেই ইনভেস্টমেন্ট শুরু করতে পারবেন।"
         : "🚀 To start investing, go to your Wallet page and click 'Add Cash'. Send the deposit amount to the given address, then submit the Transaction ID and screenshot. Once approved by the admin, your balance will be active for investment.";
     }
 
-    // ৬. কত টাকা ইনভেস্ট করলে ভালো হয়?
     if (cleanText.includes("কত টাকা") || cleanText.includes("কত ইনভেস্ট") || cleanText.includes("how much")) {
       return language === "bn"
         ? "📉 ইনভেস্টমেন্ট সবসময় আপনার সঞ্চয়ের উপর নির্ভর করে। তবে নতুনদের জন্য প্রতি মাসে ১,০০০ বা ২,০০০ টাকা দিয়ে SIP শুরু করা সবচেয়ে ভালো সিদ্ধান্ত। আপনার বাজেট বেশি হলে আপনি ওয়ান-টাইম বড় অ্যামাউন্টও ইনভেস্ট করতে পারেন, যেখানে সর্বোচ্চ ২০% পর্যন্ত রিটার্ন মিলবে।"
         : "📉 It depends on your savings. However, starting a monthly SIP with ₹1,000 or ₹2,000 is ideal for beginners. If you have extra savings, a One-Time investment is highly recommended to unlock profit rates up to 20%.";
     }
 
-    // ৭. ইন্টারেস্ট রেট / লাভ কত?
     if (cleanText.includes("rate") || cleanText.includes("ইন্টারেস্ট") || cleanText.includes("লাভ") || cleanText.includes("profit")) {
       return language === "bn" 
         ? "📈 আমাদের এখানে বিনিয়োগের মেয়াদ অনুযায়ী দুর্দান্ত প্রফিট রেট রয়েছে: \n• ১ বছর মেয়াদে: ১১% লাভ \n• ৩ বছর মেয়াদে: ১৪% লাভ \n• ৫ বছর বা তার বেশি মেয়াদে: ২০% পর্যন্ত বার্ষিক প্রফিট।" 
         : "📈 Our interest/profit rates depend on the tenure: \n• 1 Year: 11% Profit \n• 3 Years: 14% Profit \n• 5 Years or more: Up to 20% Profit annually.";
     }
 
-    // ৮. সাধারণ সম্ভাষণ
     if (cleanText.includes("hello") || cleanText.includes("hi") || cleanText.includes("হ্যালো") || cleanText.includes("হাই")) {
       return language === "bn" ? "হ্যালো! বলুন, ইনভেস্টমেন্ট বা আর্নিং সংক্রান্ত কীভাবে সাহায্য করতে পারি?" : "Hello! How can I assist you with your investment or earning queries today?";
     }
@@ -139,15 +131,16 @@ export default function InvestmentAssistant() {
   if (!language) {
     return (
       <div style={styles.container}>
-        <div style={styles.langCard}>
+        <div style={styles.popupCard}>
+          <div style={styles.iconCircle}>🤖</div>
           <h2 style={styles.title}>AI Investment Assistant</h2>
-          <p style={{ textAlign: "center", color: "#cbd5e1", marginBottom: "20px", fontSize: "14px" }}>
-            Choose your preferred language / চ্যাট শুরু করতে ভাষা বেছে নিন
+          <p style={{ textAlign: "center", color: "#e2e8f0", marginBottom: "25px", fontSize: "14px", lineHeight: "20px" }}>
+            Unlock smart wealth insights. Choose your language to start / চ্যাট শুরু করতে ভাষা বেছে নিন
           </p>
-          <button style={{ ...styles.btn, background: "#22c55e", marginBottom: "12px" }} onClick={() => setLanguage("bn")}>
+          <button style={{ ...styles.btn, background: "linear-gradient(135deg, #22c55e, #15803d)", marginBottom: "14px" }} onClick={() => setLanguage("bn")}>
             🇧🇩 বাংলা (Bengali)
           </button>
-          <button style={styles.btn} onClick={() => setLanguage("en")}>
+          <button style={{ ...styles.btn, background: "linear-gradient(135deg, #3b82f6, #1d4ed8)" }} onClick={() => setLanguage("en")}>
             🇺🇸 English
           </button>
         </div>
@@ -157,12 +150,15 @@ export default function InvestmentAssistant() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.chatWrapper}>
+      <div style={styles.chatPopupWrapper}>
         <header style={styles.chatHeader}>
           <button style={styles.backBtn} onClick={() => { setLanguage(null); setMessages([]); }}>
             ◀ Language
           </button>
-          <h4 style={{ margin: 0, color: "#22c55e" }}>AI Assistant ({language === "bn" ? "বাংলা" : "English"})</h4>
+          <div style={{ textAlign: "right" }}>
+            <h4 style={{ margin: 0, color: "#22c55e", fontSize: "15px" }}>AI Assistant</h4>
+            <span style={{ fontSize: "11px", color: "#94a3b8" }}>{language === "bn" ? "অনলাইন" : "Online"}</span>
+          </div>
         </header>
 
         <div style={styles.chatBox}>
@@ -177,8 +173,10 @@ export default function InvestmentAssistant() {
               <div
                 style={{
                   ...styles.messageBubble,
-                  background: msg.sender === "user" ? "#3b82f6" : "#334155",
-                  borderRadius: msg.sender === "user" ? "14px 14px 0px 14px" : "14px 14px 14px 0px",
+                  background: msg.sender === "user" ? "linear-gradient(135deg, #3b82f6, #2563eb)" : "rgba(255, 255, 255, 0.15)",
+                  backdropFilter: msg.sender === "user" ? "none" : "blur(10px)",
+                  border: msg.sender === "user" ? "none" : "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: msg.sender === "user" ? "16px 16px 0px 16px" : "16px 16px 16px 0px",
                 }}
               >
                 {msg.text}
@@ -187,7 +185,7 @@ export default function InvestmentAssistant() {
           ))}
           {loading && (
             <div style={{ ...styles.messageRow, justifyContent: "flex-start" }}>
-              <div style={{ ...styles.messageBubble, background: "#334155", color: "#94a3b8" }}>
+              <div style={{ ...styles.messageBubble, background: "rgba(255, 255, 255, 0.1)", color: "#cbd5e1" }}>
                 Typing...
               </div>
             </div>
@@ -202,7 +200,7 @@ export default function InvestmentAssistant() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder={language === "bn" ? "SIP কি, কীভাবে ইনভেস্ট করব ইত্যাদি জিজ্ঞাসা করুন..." : "Ask about SIP, how to invest, etc..."}
+            placeholder={language === "bn" ? "এখানে আপনার প্রশ্ন লিখুন..." : "Type your query here..."}
           />
           <button style={styles.sendBtn} onClick={handleSend}>
             ➔
@@ -219,64 +217,85 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     minHeight: "100vh",
-    background: "linear-gradient(135deg,#020617,#0f172a)",
+    // ইনভেস্টমেন্ট ব্যাকগ্রাউন্ড ইমেজ (গ্রাফ এবং গ্রোথ থিম)
+    backgroundImage: "linear-gradient(rgba(2, 6, 23, 0.75), rgba(15, 23, 42, 0.85)), url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=1470&auto=format&fit=crop')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
     color: "white",
-    fontFamily: "Arial, sans-serif",
-    padding: "15px",
+    fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    padding: "20px",
   },
   title: {
     textAlign: "center",
     color: "#22c55e",
     fontSize: "22px",
-    margin: "0 0 10px 0"
+    margin: "15px 0 10px 0",
+    fontWeight: "700"
   },
-  langCard: {
-    background: "#1e293b",
-    padding: "30px",
-    borderRadius: "20px",
+  iconCircle: {
+    width: "60px",
+    height: "60px",
+    background: "rgba(34, 197, 94, 0.2)",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "30px",
+    margin: "0 auto",
+    border: "1px solid #22c55e"
+  },
+  popupCard: {
+    background: "rgba(30, 41, 59, 0.65)",
+    backdropFilter: "blur(16px)",
+    padding: "35px 25px",
+    borderRadius: "28px",
     width: "100%",
     maxWidth: "380px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
-    border: "1px solid #334155"
+    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.4)",
+    border: "1px solid rgba(255, 255, 255, 0.15)",
+    textAlign: "center"
   },
   btn: {
     width: "100%",
-    padding: "13px",
+    padding: "14px",
     border: "none",
-    borderRadius: "12px",
-    background: "#3b82f6",
+    borderRadius: "14px",
     color: "white",
     fontWeight: "bold",
     cursor: "pointer",
-    fontSize: "15px"
+    fontSize: "15px",
+    boxShadow: "0 4px 15px rgba(0,0,0,0.25)"
   },
-  chatWrapper: {
+  chatPopupWrapper: {
     width: "100%",
-    maxWidth: "500px", // স্ক্রিন চওড়া বাড়িয়ে ৪০০ থেকে ৫০০ করা হয়েছে
-    height: "85vh",    // স্ক্রিন লম্বা বাড়িয়ে ৮০ থেকে ৮৫ করা হয়েছে
-    maxHeight: "750px", // ম্যাক্সিমাম সাইজ বাড়ানো হয়েছে
-    background: "#111827",
-    borderRadius: "24px",
+    maxWidth: "440px", // একটি পারফেক্ট পপআপ উইন্ডো সাইজ
+    height: "80vh",
+    maxHeight: "680px",
+    background: "rgba(17, 24, 39, 0.75)",
+    backdropFilter: "blur(20px)",
+    borderRadius: "28px",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
-    boxShadow: "0 15px 35px rgba(0,0,0,0.6)",
-    border: "1px solid #334155"
+    boxShadow: "0 25px 60px rgba(0, 0, 0, 0.45)",
+    border: "1px solid rgba(255, 255, 255, 0.12)"
   },
   chatHeader: {
     padding: "15px 20px",
-    background: "#1e293b",
+    background: "rgba(30, 41, 59, 0.5)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottom: "1px solid #334155"
+    borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
   },
   backBtn: {
-    background: "none",
+    background: "rgba(255, 255, 255, 0.1)",
     border: "none",
-    color: "#94a3b8",
+    color: "#cbd5e1",
+    padding: "6px 12px",
+    borderRadius: "8px",
     cursor: "pointer",
-    fontSize: "14px"
+    fontSize: "13px"
   },
   chatBox: {
     flex: 1,
@@ -284,7 +303,7 @@ const styles = {
     overflowY: "auto",
     display: "flex",
     flexDirection: "column",
-    gap: "12px"
+    gap: "14px"
   },
   messageRow: {
     display: "flex",
@@ -293,34 +312,36 @@ const styles = {
   messageBubble: {
     maxWidth: "85%",
     padding: "12px 16px",
-    fontSize: "15px",
+    fontSize: "14.5px",
     lineHeight: "22px",
     color: "white",
-    whiteSpace: "pre-line" // রেসপন্সের লাইন ব্রেকগুলো সুন্দর দেখানোর জন্য
+    whiteSpace: "pre-line",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
   },
   inputArea: {
     padding: "15px",
-    background: "#1e293b",
+    background: "rgba(30, 41, 59, 0.5)",
     display: "flex",
     gap: "10px",
-    alignItems: "center"
+    alignItems: "center",
+    borderTop: "1px solid rgba(255, 255, 255, 0.08)"
   },
   chatInput: {
     flex: 1,
     padding: "14px",
-    borderRadius: "12px",
-    border: "1px solid #475569",
-    background: "#0f172a",
+    borderRadius: "14px",
+    border: "1px solid rgba(255, 255, 255, 0.15)",
+    background: "rgba(15, 23, 42, 0.6)",
     color: "white",
-    fontSize: "15px",
+    fontSize: "14.5px",
     outline: "none"
   },
   sendBtn: {
-    width: "45px",
-    height: "45px",
-    borderRadius: "12px",
+    width: "46px",
+    height: "46px",
+    borderRadius: "14px",
     border: "none",
-    background: "#22c55e",
+    background: "linear-gradient(135deg, #22c55e, #16a34a)",
     color: "white",
     fontSize: "18px",
     cursor: "pointer",
