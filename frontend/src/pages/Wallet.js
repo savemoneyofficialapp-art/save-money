@@ -182,54 +182,64 @@ err
     setAddOpen(true);
   };
 
- const DEPOSIT_ADDRESS = "0x53D944eDA838748A92F2c361d2F71cD7EcFc8643";
-
-const submitDepositRequest = async () => {
-  if (!addAmount || Number(addAmount) <= 0) {
-    return toast.info("Enter valid amount");
-  }
-
-  if (!depositTxnId.trim()) {
-    return toast.info("Enter transaction ID");
-  }
-
-  if (!depositScreenshot) {
-    return toast.info("Upload payment screenshot");
-  }
-
-  const formData = new FormData();
-  formData.append("email", email);
-  formData.append("amount", Number(addAmount));
-  formData.append("txnId", depositTxnId);
-  formData.append("screenshot", depositScreenshot);
-
-  try {
-    const res = await fetch(`${API}/deposit-request`, {
-      method: "POST",
-      headers: {
-        authorization: token || ""
-      },
-      body: formData
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      return toast.error(data.msg || "Deposit request failed");
+   // ১. ইউজারকে সরাসরি পেমেন্ট অ্যাপে নিয়ে যাওয়ার রেডিমেড ফাংশন
+  const payViaUPI = () => {
+    if (!addAmount || Number(addAmount) <= 0) {
+      return toast.info("Please enter a valid amount");
     }
 
-    toast.info("Deposit request submitted. Admin approval pending.");
+    const MY_UPI_ID = "investwell@ybl"; // <--- আপনার নিজের UPI ID এখানে বসাতে পারেন
+    const MERCHANT_NAME = "InvestWell Wallet"; // <--- আপনার অ্যাপের নাম
+    const txnRef = "TXN" + Date.now(); 
 
-    setAddOpen(false);
-    setAddAmount("");
-    setDepositTxnId("");
-    setDepositScreenshot(null);
-    loadWallet();
-  } catch (err) {
-    console.log("DEPOSIT ERROR:", err);
-    toast.warning("Server error");
-  }
-};
+    const upiUrl = `upi://pay?pa=${MY_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${addAmount}&cu=INR&tr=${txnRef}`;
+
+    window.location.href = upiUrl;
+    toast.success("Opening UPI Apps (PhonePe/Paytm/GPay)... Please complete payment.");
+  };
+
+  // ২. পেমেন্ট শেষে ট্রানজেকশন আইডি ডাটাবেজে পাঠানোর ফাংশন
+  const submitDepositRequest = async () => {
+    if (!addAmount || Number(addAmount) <= 0) {
+      return toast.info("Please enter a valid amount");
+    }
+
+    if (!depositTxnId || !depositTxnId.trim()) {
+      return toast.info("Please enter the 12-digit UPI Ref No / Transaction ID");
+    }
+
+    try {
+      const res = await fetch(`${API}/deposit-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({
+          email: email,
+          amount: Number(addAmount),
+          txnId: depositTxnId.trim()
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        return toast.error(data.msg || "Deposit request failed");
+      }
+
+      toast.info(data.msg || "Submitted successfully! Waiting for admin approval.");
+
+      setAddOpen(false);
+      setAddAmount("");
+      setDepositTxnId("");
+      loadWallet();
+    } catch (err) {
+      console.log("DEPOSIT ERROR:", err);
+      toast.warning("Server connectivity error");
+    }
+  };
+
 
     const checkReceiver = async () => {
     if (!receiverWalletId.trim()) {
@@ -761,66 +771,56 @@ const visibleHistory = showAllHistory
 
         </section>
 
-        {/* Add Cash Modal */}
-
+        {/* Add Cash Modal - Direct UPI Payment */}
 {addOpen && (
   <div style={styles.depositOverlay}>
     <div style={styles.depositModal}>
       <button style={styles.depositCloseX} onClick={() => setAddOpen(false)}>×</button>
 
-      <div style={styles.depositIcon}>💳</div>
-      <h2 style={styles.depositTitle}>Add Cash</h2>
-      <p style={styles.depositSub}>Send payment, upload proof & wait for admin approval.</p>
+      <div style={styles.depositIcon}>⚡</div>
+      <h2 style={styles.depositTitle}>Direct UPI Add Cash</h2>
+      <p style={styles.depositSub}>Enter amount, click Pay Now to use PhonePe/Paytm, and then submit the Transaction ID.</p>
 
-      <label style={styles.depositLabel}>Wallet Address</label>
-      <div style={styles.depositAddressBox}>
-        <span style={styles.depositAddress}>{DEPOSIT_ADDRESS}</span>
-        <button
-          style={styles.copyBtn}
-          onClick={() => {
-            navigator.clipboard.writeText(DEPOSIT_ADDRESS);
-            toast.success("Wallet address copied");
-          }}
-        >
-          Copy
-        </button>
-      </div>
-
-      <label style={styles.depositLabel}>Amount</label>
+      {/* ১. অ্যামাউন্ট ইনপুট */}
+      <label style={styles.depositLabel}>Amount (₹)</label>
       <input
         style={styles.depositInput}
         type="number"
-        placeholder="Enter amount"
+        placeholder="Enter amount (e.g. 500)"
         value={addAmount}
         onChange={(e) => setAddAmount(e.target.value)}
       />
 
-      <label style={styles.depositLabel}>Transaction ID</label>
+      {/* ২. ডিরেক্ট পে বাটন */}
+      <button 
+        style={{ ...styles.submitDepositBtn, background: "linear-gradient(135deg, #a855f7, #7c3aed)", marginBottom: "20px" }} 
+        onClick={payViaUPI}
+      >
+        📱 Pay Via PhonePe / Paytm / GPay
+      </button>
+
+      <div style={{ borderTop: "1px dashed #334155", margin: "15px 0", paddingTop: "10px" }}>
+        <p style={{ fontSize: "12px", color: "#94a3b8", textAlign: "center" }}>💡 After paying, copy the 12-digit UTR/Txn ID from your UPI app and paste below.</p>
+      </div>
+
+      {/* ৩. ট্রানজেকশন আইডি ইনপুট */}
+      <label style={styles.depositLabel}>Transaction ID / UTR No</label>
       <input
         style={styles.depositInput}
         type="text"
-        placeholder="Enter transaction ID"
+        placeholder="Enter 12-digit Transaction ID"
         value={depositTxnId}
         onChange={(e) => setDepositTxnId(e.target.value)}
       />
 
-      <label style={styles.depositLabel}>Payment Screenshot</label>
-      <label style={styles.fileBox}>
-        <span>{depositScreenshot ? depositScreenshot.name : "📤 Upload Screenshot"}</span>
-        <input
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(e) => setDepositScreenshot(e.target.files[0])}
-        />
-      </label>
-
+      {/* ৪. ফাইনাল সাবমিট বাটন */}
       <button style={styles.submitDepositBtn} onClick={submitDepositRequest}>
-        Submit Deposit Request
+        Verify & Request Approval
       </button>
     </div>
   </div>
 )}
+
         
         {/* Withdraw Popup */}
 
