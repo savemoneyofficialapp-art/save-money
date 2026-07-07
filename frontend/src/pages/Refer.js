@@ -1340,8 +1340,6 @@ style={styles.filterSelect}
 value={referBonus.selectedMonth || "thisMonth"}
 onChange={(e)=>{
 
-onChange={(e)=>{
-
 const value = e.target.value;
 
 if(value==="thisMonth"){
