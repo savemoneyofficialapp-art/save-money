@@ -1720,6 +1720,16 @@ app.post("/start-invest", async (req, res) => {
       });
     }
 
+    // KYC Approved Required
+if (
+  String(user.kycStatus || "").toLowerCase() !== "approved"
+) {
+  return res.status(403).json({
+    success: false,
+    msg: "Your KYC is not approved. Please Complete KYC First."
+  });
+}
+
     const walletBalance = Number(
       user.balance ??
       user.wallet ??
