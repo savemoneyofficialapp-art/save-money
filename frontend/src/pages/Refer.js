@@ -1378,8 +1378,6 @@ selectedYear
 );
 
 }}
-
-}}
 >
 
 <option value="thisMonth">
