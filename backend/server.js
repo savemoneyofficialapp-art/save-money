@@ -2627,26 +2627,30 @@ app.post("/wallet-data", auth, async (req, res) => {
 
 });
 
-app.post("/deposit-request", upload.single("screenshot"), async (req, res) => {
+// নতুন ডিপোজিট এপিআই (স্ক্রিনশট ছাড়া, শুধু ট্রানজেকশন আইডি দিয়ে)
+app.post("/deposit-request", async (req, res) => {
   try {
     const { email, amount, txnId } = req.body;
 
-    if (!email || !amount || !txnId || !req.file) {
+    // চেক করা হচ্ছে সব ডাটা ঠিকঠাক এসেছে কি না (এখানে আর req.file চেক হবে না)
+    if (!email || !amount || !txnId || !txnId.trim()) {
       return res.status(400).json({
         success: false,
-        msg: "All fields required"
+        msg: "All fields required (Email, Amount, and Transaction ID)"
       });
     }
 
+    // ডাটাবেজে ডিপোজিট রিকোয়েস্ট তৈরি (screenshot ফিল্ডটি বাদ দেওয়া হয়েছে বা ফাঁকা রাখা হয়েছে)
     await DepositRequest.create({
       email: String(email).toLowerCase(),
       amount: Number(amount),
-      txnId,
-      screenshot: req.file.path,
+      txnId: txnId.trim(),
+      screenshot: "", // আপনার স্কিমাতে যদি স্ক্রিনশট ফিল্ডটি রিকোয়ার্ড থাকে, তবে ফাঁকা স্ট্রিং জমা থাকবে
       status: "pending",
       date: new Date()
     });
 
+    // ইউজারকে নোটিফিকেশন পাঠানো
     await Notification.create({
       email: String(email).toLowerCase(),
       title: "Deposit Request Submitted",
@@ -2657,7 +2661,7 @@ app.post("/deposit-request", upload.single("screenshot"), async (req, res) => {
 
     res.json({
       success: true,
-      msg: "Deposit request submitted"
+      msg: "Deposit request submitted successfully"
     });
   } catch (err) {
     console.log("DEPOSIT REQUEST ERROR:", err);
@@ -2667,6 +2671,7 @@ app.post("/deposit-request", upload.single("screenshot"), async (req, res) => {
     });
   }
 });
+
 
 app.post("/refresh-token", async (req, res) => {
 
@@ -4736,6 +4741,7 @@ app.post("/close-ticket", auth, async (req, res) => {
 
 app.get("/cash-requests", auth, adminAuth, async (req, res) => {
   try {
+    // ডাটাবেজ থেকে পেন্ডিং ডিপোজিট রিকোয়েস্টগুলো ট্রানজেকশন আইডি সহ নিয়ে আসা হচ্ছে
     const requests = await DepositRequest.find({
       status: "pending"
     }).sort({ date: -1 });
@@ -4746,6 +4752,7 @@ app.get("/cash-requests", auth, adminAuth, async (req, res) => {
     res.status(500).json([]);
   }
 });
+
 
 app.post("/approve-cash",
 auth,
@@ -5060,75 +5067,114 @@ app.post("/admin/reset-performance-auto", async (req, res) => {
 
 });
 
+
 app.post("/admin/deposit-approve", auth, async (req, res) => {
   try {
     const { id } = req.body;
 
-    const request = await DepositRequest.findById(id);
-    if (!request) {
-      return res.json({ success: false, msg: "Request not found" });
-    }
+    const request = await DepositRequest.findById(id);  
+    if (!request) {  
+      return res.json({ success: false, msg: "Request not found" });  
+    }  
 
-    if (request.status === "approved") {
-      return res.json({ success: false, msg: "Already approved" });
-    }
+    if (request.status === "approved") {  
+      return res.json({ success: false, msg: "Already approved" });  
+    }  
 
-    const user = await User.findOne({
-      email: String(request.email).toLowerCase()
+    const user = await User.findOne({  
+      email: String(request.email).toLowerCase()  
+    });  
+
+    if (!user) {  
+      return res.json({ success: false, msg: "User not found" });  
+    }  
+
+    // ইউজারের ব্যালেন্স সেফলি আপডেট করা (আপনার বিদ্যমান লজিক ঠিক রাখা হয়েছে)
+    const oldBalance = Number(user.balance ?? user.wallet ?? user.walletBalance ?? 0);  
+    const addAmount = Number(request.amount || 0);  
+    const newBalance = oldBalance + addAmount;  
+
+    user.balance = newBalance;  
+    user.wallet = newBalance;  
+    user.walletBalance = newBalance;  
+    await user.save();  
+
+    // ডিপোজিট রিকোয়েস্টের স্ট্যাটাস পরিবর্তন
+    request.status = "approved";  
+    request.approvedAt = new Date();  
+    await request.save();  
+
+    // ইউজারের ওয়ালেট হিস্ট্রিতে রেকর্ড যোগ করা
+    await WalletHistory.create({  
+      email: String(request.email).toLowerCase(),  
+      amount: addAmount,  
+      type: "Admin Credit",  
+      note: `Deposit approved (Txn ID: ${request.txnId || "N/A"})`,  
+      status: "success",  
+      date: new Date()  
     });
 
-    if (!user) {
-      return res.json({ success: false, msg: "User not found" });
+    // ইউজারকে ব্যালেন্স অ্যাডের একটি সাকসেস নোটিফিকেশন পাঠানো
+    try {
+      await Notification.create({
+        email: String(request.email).toLowerCase(),
+        title: "Deposit Approved 💰",
+        message: `Your deposit of ₹${addAmount} has been approved. Txn ID: ${request.txnId || "N/A"}`,
+        read: false,
+        date: new Date()
+      });
+    } catch (notifErr) {
+      console.log("Notification create error, but payment approved.");
     }
 
-    const oldBalance = Number(user.balance ?? user.wallet ?? user.walletBalance ?? 0);
-    const addAmount = Number(request.amount || 0);
-    const newBalance = oldBalance + addAmount;
+    res.json({ success: true, msg: "Deposit approved successfully" });
 
-    user.balance = newBalance;
-    user.wallet = newBalance;
-    user.walletBalance = newBalance;
-    await user.save();
-
-    request.status = "approved";
-    request.approvedAt = new Date();
-    await request.save();
-
-    await WalletHistory.create({
-      email: String(request.email).toLowerCase(),
-      amount: addAmount,
-      type: "Admin Credit",
-      note: "Deposit request approved by admin",
-      status: "success",
-      date: new Date()
-    });
-
-    res.json({ success: true, msg: "Deposit approved" });
   } catch (err) {
     console.log("DEPOSIT APPROVE ERROR:", err);
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
 
+
 app.post("/admin/deposit-reject", auth, async (req, res) => {
   try {
     const { id } = req.body;
 
-    const request = await DepositRequest.findById(id);
-    if (!request) {
-      return res.json({ success: false, msg: "Request not found" });
+    const request = await DepositRequest.findById(id);  
+    if (!request) {  
+      return res.json({ success: false, msg: "Request not found" });  
+    }  
+
+    if (request.status === "rejected" || request.status === "approved") {  
+      return res.json({ success: false, msg: "Request already processed" });  
+    }  
+
+    // স্ট্যাটাস রিজেক্ট করা
+    request.status = "rejected";  
+    request.rejectedAt = new Date();  
+    await request.save();  
+
+    // ইউজারকে রিজেকশনের নোটিফিকেশন পাঠানো
+    try {
+      await Notification.create({
+        email: String(request.email).toLowerCase(),
+        title: "Deposit Request Rejected ❌",
+        message: `Your deposit request of ₹${request.amount} was rejected. Invalid Transaction ID.`,
+        read: false,
+        date: new Date()
+      });
+    } catch (notifErr) {
+      console.log("Notification error on reject");
     }
 
-    request.status = "rejected";
-    request.rejectedAt = new Date();
-    await request.save();
+    res.json({ success: true, msg: "Deposit request rejected" });
 
-    res.json({ success: true, msg: "Deposit rejected" });
   } catch (err) {
     console.log("DEPOSIT REJECT ERROR:", err);
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+
 
 
 
