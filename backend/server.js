@@ -2902,7 +2902,6 @@ app.post("/user-dashboard-chart", auth, async (req, res) => {
 app.post("/wallet-transfer", async (req, res) => {
   try {
     const { senderEmail, receiverWalletId, amount } = req.body;
-
     const transferAmount = Number(amount);
 
     if (!senderEmail || !receiverWalletId || transferAmount <= 0) {
@@ -2951,38 +2950,51 @@ app.post("/wallet-transfer", async (req, res) => {
 
     const senderBalance = Number(sender.balance || sender.wallet || 0);
 
-    if (senderBalance < transferAmount) {
+    // ১. চেক করা হচ্ছে ব্যালেন্স ২০০০ টাকার কম কিনা
+    if (senderBalance <= 2000) {
       return res.json({
         success: false,
-        msg: "Insufficient wallet balance"
+        msg: "You must keep a minimum balance of ₹2,000 in your wallet"
       });
     }
 
+    // ২. সর্বোচ্চ কত টাকা ট্রান্সফার করা সম্ভব তা নির্ধারণ করা হচ্ছে
+    const maxTransferableAmount = senderBalance - 2000;
+
+    if (transferAmount > maxTransferableAmount) {
+      return res.json({
+        success: false,
+        msg: `You can transfer a maximum of ₹${maxTransferableAmount.toLocaleString("en-IN")} (Keeping ₹2,000 main balance)`
+      });
+    }
+
+    // ব্যালেন্স আপডেট
     sender.balance = senderBalance - transferAmount;
     receiver.balance = Number(receiver.balance || receiver.wallet || 0) + transferAmount;
 
     await sender.save();
     await receiver.save();
 
-   await WalletHistory.create({
-  email: sender.email,
-  type: "Debit",
-  amount: Number(amount),
-  title: "Wallet Transfer Sent",
-  description: `Transfer sent to ${receiver.walletId}`,
-  status: "Success",
-  date: new Date()
-});
+    // ওয়ালেট হিস্টরি তৈরি
+    await WalletHistory.create({
+      email: sender.email,
+      type: "Debit",
+      amount: transferAmount,
+      title: "Wallet Transfer Sent",
+      description: `Transfer sent to ${receiver.walletId}`,
+      status: "Success",
+      date: new Date()
+    });
 
-await WalletHistory.create({
-  email: receiver.email,
-  type: "Credit",
-  amount: Number(amount),
-  title: "Wallet Transfer Received",
-  description: `Transfer received from ${sender.walletId}`,
-  status: "Success",
-  date: new Date()
-});
+    await WalletHistory.create({
+      email: receiver.email,
+      type: "Credit",
+      amount: transferAmount,
+      title: "Wallet Transfer Received",
+      description: `Transfer received from ${sender.walletId}`,
+      status: "Success",
+      date: new Date()
+    });
 
     res.json({
       success: true,
@@ -2997,6 +3009,7 @@ await WalletHistory.create({
     });
   }
 });
+
 
 app.post("/my-plan", auth, async (req, res) => {
   
