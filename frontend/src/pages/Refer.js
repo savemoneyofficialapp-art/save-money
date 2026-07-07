@@ -25,6 +25,8 @@ export default function Refer() {
   const [teamMonthFilter, setTeamMonthFilter] = useState("thisMonth");
   const [bonusFilter, setBonusFilter] = useState("All");
   const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
 const filteredPerformanceHistory = (
   performance.history || []
@@ -61,37 +63,51 @@ const filteredPerformanceHistory = (
     loadReferData();
   }, []);
 
-  const loadReferData = async () => {
-    try {
-      setLoading(true);
+  const loadReferData = async (
+  month = selectedMonth,
+  year = selectedYear
+) => {
+  try {
+    setLoading(true);
 
-      const res = await fetch(`${API}/refer-data`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token || ""
-        },
-        body: JSON.stringify({ email })
-      });
+    const res = await fetch(`${API}/refer-data`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: token || ""
+      },
+      body: JSON.stringify({
+        email,
+        month,
+        year
+      })
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (data.success) {
-        setUser(data.user || {});
-        setHistory(Array.isArray(data.history) ? data.history : []);
-        setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
-        setPerformance(data.performance || {});
-        setTeam(data.team || {});
-        setRoyalty(data.royalty || {});
-        setTreeData(data.treeData || {});
-        setReferBonus(data.referBonus || {});
-                   }
-    } catch (err) {
-      console.log("REFER DATA ERROR:", err);
-    } finally {
-      setLoading(false);
+    if (data.success) {
+
+      setUser(data.user || {});
+      setHistory(Array.isArray(data.history) ? data.history : []);
+      setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
+      setPerformance(data.performance || {});
+      setTeam(data.team || {});
+      setRoyalty(data.royalty || {});
+      setTreeData(data.treeData || {});
+      setReferBonus(data.referBonus || {});
+
     }
-  };
+
+  } catch (err) {
+
+    console.log("REFER DATA ERROR:", err);
+
+  } finally {
+
+    setLoading(false);
+
+  }
+};
 
   const getTeamHistory = () => {
 
@@ -1241,246 +1257,175 @@ Close
       )}
 
       {
-bonusModal==="refer" && (
 
-<Modal
-onClose={()=>
-setBonusModal(null)
-}
->
+        {bonusModal === "refer" && (
 
-<h2>
+<Modal onClose={() => setBonusModal(null)}>
 
-🎁 Refer Bonus
+<h2>🎁 Refer Bonus</h2>
 
-</h2>
-
-
-<h1>
-
-{
-money(
-referBonus.balance
-)
-}
-
-</h1>
-
-
-
-<p>
-
-Status :
-
-<b>
-
-{
-user.activeStatus==="Active"
-
-?
-
-"Active"
-
-:
-
-"Inactive"
-
-}
-
-</b>
-
+<p style={styles.successText}>
+Congratulations! Every direct user's first investment gives you Refer Bonus.
 </p>
 
-
+<h1>{money(referBonus.balance || 0)}</h1>
 
 <p>
-
-Total Bonus :
-
-<b>
-
-{
-money(
-
-referBonus.totalBonus
-
-)
-
-}
-
-</b>
-
+Today's Bonus :
+<b> {money(referBonus.todayBonus || 0)}</b>
 </p>
 
-
+<p>
+This Month Bonus :
+<b> {money(referBonus.thisMonthBonus || 0)}</b>
+</p>
 
 <p>
+Last Month Bonus :
+<b> {money(referBonus.lastMonthBonus || 0)}</b>
+</p>
 
+<p>
+Total Refer Bonus :
+<b> {money(referBonus.totalBonus || 0)}</b>
+</p>
+
+<p>
 Eligible Refers :
-
-<b>
-
-{
-referBonus.count||0
-}
-
-</b>
-
+<b> {referBonus.count || 0}</b>
 </p>
 
+<div style={styles.levelGrid}>
 
+<div>
 
-<div
-style={styles.infoBox}
->
+Total Direct Refers
 
-<p>
+<br/>
 
-1 Year Investment = ₹499
-
-</p>
-
-
-<p>
-
-3 Year Investment = ₹599
-
-</p>
-
-
-<p>
-
-5 Year Investment = ₹699
-
-</p>
-
-
-<p>
-
-10 Year Investment = ₹799
-
-</p>
+<b>{history.length}</b>
 
 </div>
 
+<div>
 
+Active Refers
 
-<h3>
+<br/>
 
-Refer List
+<b>
+{history.filter(x=>x.status==="Active").length}
+</b>
 
-</h3>
+</div>
 
+<div>
 
+Inactive Refers
 
-<table
-style={styles.table}
+<br/>
+
+<b>
+{history.filter(x=>x.status==="Inactive").length}
+</b>
+
+</div>
+
+</div>
+
+<div style={{marginTop:20}}>
+
+<select
+style={styles.filterSelect}
+value={referBonus.selectedMonth || "thisMonth"}
+onChange={(e)=>{
+
+onChange={(e)=>{
+
+const value = e.target.value;
+
+if(value==="thisMonth"){
+
+setSelectedMonth("");
+
+loadReferData(
+"",
+selectedYear
+);
+
+return;
+
+}
+
+if(value==="lastMonth"){
+
+const d=new Date();
+
+d.setMonth(d.getMonth()-1);
+
+loadReferData(
+d.getMonth()+1,
+d.getFullYear()
+);
+
+return;
+
+}
+
+setSelectedMonth(value);
+
+loadReferData(
+Number(value),
+selectedYear
+);
+
+}}
+
+}}
 >
 
-<thead>
+<option value="thisMonth">
 
-<tr>
+This Month
 
-<th>Name</th>
+</option>
 
-<th>Status</th>
+<option value="lastMonth">
 
-<th>First Invest</th>
+Last Month
 
-<th>Bonus</th>
+</option>
 
-</tr>
+<option value="1">January</option>
+<option value="2">February</option>
+<option value="3">March</option>
+<option value="4">April</option>
+<option value="5">May</option>
+<option value="6">June</option>
+<option value="7">July</option>
+<option value="8">August</option>
+<option value="9">September</option>
+<option value="10">October</option>
+<option value="11">November</option>
+<option value="12">December</option>
 
-</thead>
+</select>
 
+</div>
 
+<BonusHistory
 
-<tbody>
+type="Referral Bonus"
 
-{
+data={referBonus.history||[]}
 
-(referBonus.list||[])
-
-.map(
-
-(item,i)=>(
-
-
-<tr key={i}>
-
-
-<td>
-
-{item.name}
-
-</td>
-
-
-
-<td>
-
-{item.status}
-
-</td>
-
-
-
-<td>
-
-{
-
-item.firstInvestment
-
-?
-
-"✅ Yes"
-
-:
-
-"❌ No"
-
-}
-
-</td>
-
-
-
-<td>
-
-₹{
-
-item.bonus||0
-
-}
-
-</td>
-
-
-</tr>
-
-
-)
-
-)
-
-}
-
-
-</tbody>
-
-</table>
-
-
+/>
 
 <button
 
 style={styles.closeBtn}
 
-onClick={()=>
-
-setBonusModal(null)
-
-}
+onClick={()=>setBonusModal(null)}
 
 >
 
@@ -1490,7 +1435,8 @@ Close
 
 </Modal>
 
-)
+)}
+
 
 }
     </div>
@@ -1511,21 +1457,61 @@ function BonusHistory({ type, data }) {
           <table style={styles.table}>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Date</th>
-                <th>Level</th>
-                <th>Amount</th>
-              </tr>
+
+<th>User</th>
+
+<th>Date</th>
+
+<th>Level</th>
+
+<th>Bonus</th>
+
+<th>Type</th>
+
+</tr>
             </thead>
 
             <tbody>
               {rows.map((x, i) => (
                 <tr key={i}>
-                  <td>{x.fromName || x.fromEmail || "User"}</td>
-                  <td>{x.date ? new Date(x.date).toLocaleString("en-IN") : "N/A"}</td>
-                  <td>{x.level || "-"}</td>
-                  <td>₹ {Number(x.amount || 0).toLocaleString("en-IN")}</td>
-                </tr>
+
+<td>
+
+<b>{x.fromName}</b>
+
+<br/>
+
+<small>{x.fromEmail}</small>
+
+</td>
+
+<td>
+
+{x.date
+? new Date(x.date).toLocaleDateString("en-IN")
+: "-"}
+
+</td>
+
+<td>
+
+L{x.level||1}
+
+</td>
+
+<td>
+
+₹{Number(x.amount||0).toLocaleString("en-IN")}
+
+</td>
+
+<td>
+
+{x.note||type}
+
+</td>
+
+</tr>
               ))}
             </tbody>
           </table>
