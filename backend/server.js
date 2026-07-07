@@ -6641,6 +6641,39 @@ app.post("/daily-reward", async (req, res) => {
   }
 });
 
+// ১. হিস্টরি গেট করার জন্য নতুন এপিআই (GET Route)
+app.get("/daily-reward/:email", async (req, res) => {
+  try {
+    const email = String(req.params.email || "").trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ success: false, msg: "Email required" });
+    }
+
+    const reward = await DailyReward.findOne({ email });
+
+    if (!reward) {
+      return res.json({
+        success: true,
+        reward: { history: [] }
+      });
+    }
+
+    return res.json({
+      success: true,
+      reward
+    });
+  } catch (err) {
+    console.log("GET DAILY REWARD HISTORY ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      msg: "Server error",
+      error: err.message
+    });
+  }
+});
+
+
 app.post("/withdraw-info", async (req, res) => {
   try {
     const email = String(req.body.email || "").toLowerCase();
