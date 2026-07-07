@@ -668,54 +668,70 @@ Reject
           <p>No cash requests</p>
         ) : (
           <div style={styles.tableWrap}>
-            <table style={styles.table}>
+             <table style={styles.table}>
               <thead>
                 <tr>
                   <th>Email</th>
                   <th>Amount</th>
-                  <th>Transaction ID</th>
-                  <th>Screenshot</th>
-                  <th>Date</th>
+                  <th>Transaction ID / UTR</th>
+                  <th>Date & Time</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
 
-              <tbody>
-                {cash.map((r) => (
+
+                    <tbody>
+                    {cash.map((r) => (
                   <tr key={r._id}>
                     <td>{r.email}</td>
                     <td>{money(r.amount)}</td>
-                    <td>{r.txnId || r.transactionId || "N/A"}</td>
+                    {/* ট্রানজেকশন আইডিটিকে হাইলাইট করে এবং সহজে কপি করার মতো টেক্সট আকারে দেখানো হয়েছে */}
                     <td>
-                      <button
-                        style={styles.smallBlue}
-                        onClick={() =>
-                          window.open(
-                            r.screenshot || r.screenshotUrl || r.image || r.photo,
-                            "_blank"
-                          )
-                        }
-                      >
-                        View
-                      </button>
+                      <span style={{ 
+                        background: "#020617", 
+                        padding: "6px 12px", 
+                        borderRadius: "6px", 
+                        border: "1px solid #334155",
+                        color: "#fbbf24",
+                        fontFamily: "monospace",
+                        fontWeight: "bold",
+                        fontSize: "14px"
+                      }}>
+                        {r.txnId || r.transactionId || "N/A"}
+                      </span>
                     </td>
                     <td>
-                      {r.createdAt
-                        ? new Date(r.createdAt).toLocaleString("en-IN")
+                      {r.createdAt || r.date
+                        ? new Date(r.createdAt || r.date).toLocaleString("en-IN")
                         : "N/A"}
                     </td>
-                    <td>{r.status || "pending"}</td>
                     <td>
-                      <button style={styles.smallGreen} onClick={() => approveCash(r._id)}>
-                        Approve
-                      </button>
-                      <button style={styles.smallRed} onClick={() => rejectCash(r._id)}>
-                        Reject
-                      </button>
+                      <span style={{
+                        color: r.status === "approved" ? "#22c55e" : r.status === "rejected" ? "#ef4444" : "#eab308",
+                        fontWeight: "bold",
+                        textTransform: "capitalize"
+                      }}>
+                        {r.status || "pending"}
+                      </span>
+                    </td>
+                    <td>
+                      {r.status === "pending" || !r.status ? (
+                        <>
+                          <button style={styles.smallGreen} onClick={() => approveCash(r._id)}>
+                            Approve
+                          </button>
+                          <button style={styles.smallRed} onClick={() => rejectCash(r._id)}>
+                            Reject
+                          </button>
+                        </>
+                      ) : (
+                        <span style={{ color: "#94a3b8", fontSize: "13px" }}>Processed</span>
+                      )}
                     </td>
                   </tr>
                 ))}
+
               </tbody>
             </table>
           </div>
