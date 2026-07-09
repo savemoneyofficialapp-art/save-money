@@ -5423,8 +5423,9 @@ app.post("/my-referrals", auth, async (req, res) => {
 });
 
 
-// 🕸️ প্রিমিয়াম ৭-লেভেল স্পাইডার ওয়েব নেটওয়ার্ক এবং অ্যানালিটিক্স এপিআই
-app.post("/api/referral-tree", async (req, res) => {
+// 🕸️ এপিআই-এর প্রথম লাইনটি এইভাবে পরিবর্তন করুন:
+app.post("/referral-tree", async (req, res) => {
+
   try {
     const { email } = req.body;
 
