@@ -1,7 +1,9 @@
+আপনার AdminUserControl পেজটিকে আগের পেজের মতোই একটি অত্যন্ত আকর্ষণীয়, আধুনিক এবং প্রিমিয়াম গ্লোয়িং ডার্ক নিওন থিমে (Premium Dark Neon Theme) রূপান্তর করে দেওয়া হলো। আপনার ফাংশনালিটি বা এপিআই লজিক একদম আগের মতোই অক্ষুণ্ণ রাখা হয়েছে, শুধু ইনলাইন CSS অবজেক্ট ও কম্পোনেন্ট ডিজাইনে একটি কমার্শিয়াল ড্যাশবোর্ড লুক নিয়ে আসা হয়েছে।
+### 🛠 আপগ্রেডকৃত সম্পূর্ণ কোড (AdminUserControl.jsx)
+নিচের কোডটি দিয়ে আপনার সম্পূর্ণ ফাইলটি প্রতিস্থাপন (Replace) করে নিন:
+```jsx
 import { useState } from "react";
 import { API } from "../config";
-
-
 
 export default function AdminUserControl() {
   const token = localStorage.getItem("token");
@@ -13,15 +15,15 @@ export default function AdminUserControl() {
   const [msg, setMsg] = useState("");
 
   const [adjustAmount, setAdjustAmount] = useState("");
-const [adjustReason, setAdjustReason] = useState("");
-const [bonusOpen, setBonusOpen] = useState(false);
+  const [adjustReason, setAdjustReason] = useState("");
+  const [bonusOpen, setBonusOpen] = useState(false);
 
-const [bonus, setBonus] = useState({
-  performanceBonusEnabled: false,
-  teamBonusEnabled: false,
-  royaltyBonusEnabled: false
-});
-const [selectedUser, setSelectedUser] = useState(null);
+  const [bonus, setBonus] = useState({
+    performanceBonusEnabled: false,
+    teamBonusEnabled: false,
+    royaltyBonusEnabled: false
+  });
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const handleAuthError = (data) => {
     if (
@@ -36,78 +38,75 @@ const [selectedUser, setSelectedUser] = useState(null);
       window.location.href = "/login";
       return true;
     }
-
     return false;
   };
 
- const saveBonus = async () => {
-  if (!selectedUser?._id) return alert("User not selected");
+  const saveBonus = async () => {
+    if (!selectedUser?._id) return alert("User not selected");
 
-  const res = await fetch(`${API}/admin/update-bonus-status`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: localStorage.getItem("token") || ""
-    },
-    body: JSON.stringify({
-      userId: selectedUser._id,
-      ...bonus
-    })
-  });
+    const res = await fetch(`${API}/admin/update-bonus-status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: localStorage.getItem("token") || ""
+      },
+      body: JSON.stringify({
+        userId: selectedUser._id,
+        ...bonus
+      })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok || !data.success) {
-    return alert(data.msg || "Bonus update failed");
-  }
+    if (!res.ok || !data.success) {
+      return alert(data.msg || "Bonus update failed");
+    }
 
-  alert(data.msg || "Bonus settings updated");
+    alert(data.msg || "Bonus settings updated");
+    setBonusOpen(false);
 
-  setBonusOpen(false);
+    try {
+      await searchUsers();
+    } catch (e) {
+      console.log("search refresh failed", e);
+    }
+  };
 
-  try {
-    await searchUsers();
-  } catch (e) {
-    console.log("search refresh failed", e);
-  }
-};
+  const walletAdjust = async (type, userData) => {
+    if (!userData?._id) return alert("User ID not found");
+    if (!adjustAmount || Number(adjustAmount) <= 0) return alert("Enter amount");
+    if (!adjustReason) return alert("Reason required");
 
-const walletAdjust = async (type, userData) => {
-  if (!userData?._id) return alert("User ID not found");
-  if (!adjustAmount || Number(adjustAmount) <= 0) return alert("Enter amount");
-  if (!adjustReason) return alert("Reason required");
+    const res = await fetch(`${API}/admin/wallet-adjust`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: localStorage.getItem("token") || ""
+      },
+      body: JSON.stringify({
+        userId: userData._id,
+        amount: Number(adjustAmount),
+        reason: adjustReason,
+        type
+      })
+    });
 
-  const res = await fetch(`${API}/admin/wallet-adjust`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: localStorage.getItem("token") || ""
-    },
-    body: JSON.stringify({
-      userId: userData._id,
-      amount: Number(adjustAmount),
-      reason: adjustReason,
-      type
-    })
-  });
+    const data = await res.json();
 
-  const data = await res.json();
+    if (!res.ok || !data.success) {
+      return alert(data.msg || "Wallet update failed");
+    }
 
-  if (!res.ok || !data.success) {
-    return alert(data.msg || "Wallet update failed");
-  }
+    alert(data.msg || "Wallet updated");
+    setAdjustAmount("");
+    setAdjustReason("");
 
-  alert(data.msg || "Wallet updated");
-
-  setAdjustAmount("");
-  setAdjustReason("");
-
-  try {
-    await searchUsers();
-  } catch (e) {
-    console.log("search refresh failed", e);
-  }
-};
+    try {
+      await searchUsers();
+    } catch (e) {
+      console.log("search refresh failed", e);
+    }
+  };
 
   const searchUsers = async () => {
     try {
@@ -141,7 +140,6 @@ const walletAdjust = async (type, userData) => {
       if (data.length === 0) {
         setMsg("No users found");
       }
-
     } catch (err) {
       console.log(err);
       setMsg("Backend API not connected or CORS error");
@@ -170,7 +168,6 @@ const walletAdjust = async (type, userData) => {
 
       alert(data.msg || "Action completed");
       searchUsers();
-
     } catch (err) {
       console.log(err);
       setMsg("Action failed. Backend API not connected.");
@@ -181,436 +178,421 @@ const walletAdjust = async (type, userData) => {
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>Admin User Control</h2>
+      <h2 style={styles.title}>👥 Admin User Control Panel</h2>
 
+      {/* 🔍 সার্চ ফিল্টার বক্স */}
       <div style={styles.card}>
         <input
           style={styles.input}
-          placeholder="Search by name, email, mobile, wallet ID, refer code"
+          placeholder="Search by name, email, mobile, wallet ID, refer code..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
 
         <button style={styles.searchBtn} onClick={searchUsers}>
-          {loading ? "Searching..." : "Search User"}
+          {loading ? "⚡ Accessing Nodes..." : "🔍 Query User Directory"}
         </button>
 
-        {msg && <p style={styles.msg}>{msg}</p>}
+        {msg && <p style={styles.msg}>⚠️ {msg}</p>}
       </div>
 
+      {/* 👥 ইউজার কার্ড লিস্ট */}
       {users.map((u) => (
         <div key={u._id} style={styles.userCard}>
           <div style={styles.userTop}>
             <div>
-              <h3>{u.name || "No Name"}</h3>
-              <p>{u.email}</p>
-              <p>Mobile: {u.mobile || "N/A"}</p>
-              <p>Wallet ID: {u.walletId || "N/A"}</p>
-              <p>Wallet: ₹{u.wallet || 0}</p>
-              <p>KYC: {u.kycStatus || "not submitted"}</p>
-              <p>Status: {u.activeStatus || "Inactive"}</p>
-              <p>Investment Disabled: {u.disableInvestment ? "Yes" : "No"}</p>
-              <p>Withdrawal Disabled: {u.disableWithdrawal ? "Yes" : "No"}</p>
-              <p>Bonus Disabled: {u.disableBonus ? "Yes" : "No"}</p>
+              <h3 style={styles.userName}>{u.name || "Anonymous Node"}</h3>
+              <p style={styles.userEmail}>{u.email}</p>
+              
+              <div style={styles.infoMetaGrid}>
+                <p style={styles.metaText}><b>📞 Contact:</b> {u.mobile || "N/A"}</p>
+                <p style={styles.metaText}><b>🆔 Wallet ID:</b> <span style={{ fontFamily: "monospace", color: "#fbbf24" }}>{u.walletId || "N/A"}</span></p>
+                <p style={styles.metaText}><b>💰 Live Balance:</b> <span style={{ color: "#22c55e", fontWeight: "800" }}>₹{Number(u.wallet || 0).toLocaleString("en-IN")}</span></p>
+                <p style={styles.metaText}><b>🪪 KYC Status:</b> <span style={{ color: u.kycStatus === "approved" ? "#22c55e" : "#fbbf24" }}>{u.kycStatus || "Not Submitted"}</span></p>
+                <p style={styles.metaText}><b>⚡ Active State:</b> {u.activeStatus || "Inactive"}</p>
+              </div>
+
+              <div style={styles.permissionIndicators}>
+                <span style={{ ...styles.permBadge, color: u.disableInvestment ? "#ef4444" : "#22c55e" }}>
+                  ● Investment: {u.disableInvestment ? "Disabled" : "Allowed"}
+                </span>
+                <span style={{ ...styles.permBadge, color: u.disableWithdrawal ? "#ef4444" : "#22c55e" }}>
+                  ● Payout Pipeline: {u.disableWithdrawal ? "Disabled" : "Allowed"}
+                </span>
+                <span style={{ ...styles.permBadge, color: u.disableBonus ? "#ef4444" : "#22c55e" }}>
+                  ● System Bonus: {u.disableBonus ? "Disabled" : "Allowed"}
+                </span>
+              </div>
             </div>
 
             <div style={styles.badges}>
               <span style={u.banned ? styles.redBadge : styles.greenBadge}>
-                {u.banned ? "Banned" : "Active"}
+                {u.banned ? "🛑 Terminated" : "✅ Authorized"}
               </span>
 
               <span style={u.freezeWallet ? styles.redBadge : styles.blueBadge}>
-                {u.freezeWallet ? "Wallet Frozen" : "Wallet OK"}
+                {u.freezeWallet ? "❄️ Wallet Frozen" : "🔒 Wallet Liquid"}
               </span>
             </div>
           </div>
 
+          {/* 💳 ওয়ালেট ব্যালেন্স পরিবর্তন বক্স */}
           <div style={styles.walletManageBox}>
-  <h3>Wallet Management</h3>
+            <h4 style={{ margin: "0 0 10px 0", color: "#38bdf8", fontSize: "14px", fontWeight: "700" }}>💼 Ledger Credit/Debit Adjustment</h4>
 
-  <input
-    style={styles.input}
-    type="number"
-    placeholder="Amount"
-    value={adjustAmount}
-    onChange={(e) => setAdjustAmount(e.target.value)}
-  />
+            <div style={styles.adjustmentFieldsRow}>
+              <input
+                style={{ ...styles.input, marginTop: 0 }}
+                type="number"
+                placeholder="Amount (₹)"
+                value={adjustAmount}
+                onChange={(e) => setAdjustAmount(e.target.value)}
+              />
+              <input
+                style={{ ...styles.input, marginTop: 0 }}
+                placeholder="Audit log / Reason description..."
+                value={adjustReason}
+                onChange={(e) => setAdjustReason(e.target.value)}
+              />
+            </div>
 
-  <input
-    style={styles.input}
-    placeholder="Reason / Note"
-    value={adjustReason}
-    onChange={(e) => setAdjustReason(e.target.value)}
-  />
+            <div style={styles.rowBtns}>
+              <button style={styles.addBtn} onClick={() => walletAdjust("add", u)}>
+                ➕ Inject Funds
+              </button>
+              <button style={styles.deductBtn} onClick={() => walletAdjust("deduct", u)}>
+                ➖ Deduct Balance
+              </button>
+            </div>
+          </div>
 
-  <div style={styles.rowBtns}>
-   <button
-  style={styles.addBtn}
-  onClick={() => walletAdjust("add", u)}
->
-  Add Money
-</button>
-
-<button
-  style={styles.deductBtn}
-  onClick={() => walletAdjust("deduct", u)}
->
-  Deduct Money
-</button>
-  </div>
-</div>
-
-          <input
-            style={styles.input}
-            placeholder="Ban reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
+          {/* 🚫 অ্যাকাউন্ট রেস্ট্রিকশন ও অ্যাকশন বাটন সেকশন */}
+          <div style={{ marginTop: "15px" }}>
+            <input
+              style={{ ...styles.input, border: "1px solid #dc2626", background: "rgba(220,38,38,0.05)" }}
+              placeholder="State a specific reason if enforcing account suspension..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </div>
 
           <div style={styles.grid}>
-            <button
-              style={styles.redBtn}
-              onClick={() =>
-                action("admin-ban-user", {
-                  email: u.email,
-                  reason: reason || "Violation detected"
-                })
-              }
-            >
-              Ban User
+            <button style={styles.redBtn} onClick={() => action("admin-ban-user", { email: u.email, reason: reason || "Violation detected" })}>
+              🚫 Terminate Node
             </button>
-
-            <button
-              style={styles.greenBtn}
-              onClick={() =>
-                action("admin-unban-user", {
-                  email: u.email
-                })
-              }
-            >
-              Unban User
+            <button style={styles.greenBtn} onClick={() => action("admin-unban-user", { email: u.email })}>
+              🤝 Restore Access
             </button>
-
-            <button
-              style={styles.orangeBtn}
-              onClick={() =>
-                action("admin-freeze-wallet", {
-                  email: u.email,
-                  freeze: !u.freezeWallet
-                })
-              }
-            >
-              {u.freezeWallet ? "Unfreeze Wallet" : "Freeze Wallet"}
+            <button style={styles.orangeBtn} onClick={() => action("admin-freeze-wallet", { email: u.email, freeze: !u.freezeWallet })}>
+              {u.freezeWallet ? "🔥 Unfreeze Wallet" : "❄️ Freeze Asset Wallet"}
             </button>
-
-            <button
-              style={styles.blueBtn}
-              onClick={() =>
-                action("admin-disable-investment", {
-                  email: u.email,
-                  disable: !u.disableInvestment
-                })
-              }
-            >
-              {u.disableInvestment ? "Enable Investment" : "Disable Investment"}
+            <button style={styles.blueBtn} onClick={() => action("admin-disable-investment", { email: u.email, disable: !u.disableInvestment })}>
+              {u.disableInvestment ? "🔓 Unlock Investment" : "🔒 Toggle Lock Invest"}
             </button>
-
-            <button
-              style={styles.purpleBtn}
-              onClick={() =>
-                action("admin-disable-withdrawal", {
-                  email: u.email,
-                  disable: !u.disableWithdrawal
-                })
-              }
-            >
-              {u.disableWithdrawal ? "Enable Withdrawal" : "Disable Withdrawal"}
+            <button style={styles.purpleBtn} onClick={() => action("admin-disable-withdrawal", { email: u.email, disable: !u.disableWithdrawal })}>
+              {u.disableWithdrawal ? "🔓 Unlock Withdrawals" : "🔒 Toggle Lock Payout"}
             </button>
-
-          <button
-  style={styles.yellowBtn}
-  onClick={() => {
-    setSelectedUser(u);
-
-    setBonus({
-
-performanceBonusEnabled:
-!!u.performanceEnabled,
-
-teamBonusEnabled:
-!!u.teamBonusEnabled,
-
-royaltyBonusEnabled:
-!!u.royaltyBonusEnabled
-
-});
-
-    setBonusOpen(true);
-  }}
->
-  Bonus Management
-</button>
-
+            <button
+              style={styles.yellowBtn}
+              onClick={() => {
+                setSelectedUser(u);
+                setBonus({
+                  performanceBonusEnabled: !!u.performanceEnabled,
+                  teamBonusEnabled: !!u.teamBonusEnabled,
+                  royaltyBonusEnabled: !!u.royaltyBonusEnabled
+                });
+                setBonusOpen(true);
+              }}
+            >
+              🎁 Bonus Pipeline Setup
+            </button>
           </div>
         </div>
       ))}
+
+      {/* 🎁 মোডাল ওভারলে বক্স */}
       {bonusOpen && selectedUser && (
-  <div style={styles.modalOverlay}>
-    <div style={styles.modalBox}>
-      <h2>Bonus Management</h2>
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalBox}>
+            <h3 style={{ margin: "0 0 5px 0", fontSize: "18px" }}>🎁 Allocation Pipelines</h3>
+            <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "#64748b" }}>Modifying nodes for: {selectedUser.email}</p>
 
-      {[
-        ["performanceBonusEnabled", "Performance Bonus"],
-        ["teamBonusEnabled", "Team Bonus"],
-        ["royaltyBonusEnabled", "Royalty Bonus"]
-      ].map(([key, label]) => (
-        <div key={key} style={styles.bonusRow}>
-          <b>{label}</b>
+            {[
+              ["performanceBonusEnabled", "Performance Bonus Protocol"],
+              ["teamBonusEnabled", "Team Level Bonus Protocol"],
+              ["royaltyBonusEnabled", "Global Royalty Pool Matrix"]
+            ].map(([key, label]) => (
+              <div key={key} style={styles.bonusRow}>
+                <span style={{ fontSize: "14px", fontWeight: "600" }}>{label}</span>
+                <button
+                  style={{
+                    ...styles.toggleBtn,
+                    background: bonus[key] ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)",
+                    color: bonus[key] ? "#22c55e" : "#ef4444",
+                    border: bonus[key] ? "1px solid #22c55e" : "1px solid #ef4444"
+                  }}
+                  onClick={() => setBonus({ ...bonus, [key]: !bonus[key] })}
+                >
+                  {bonus[key] ? "● ACTIVE" : "○ INACTIVE"}
+                </button>
+              </div>
+            ))}
 
-          <button
-            style={{
-              ...styles.toggleBtn,
-              background: bonus[key] ? "#22c55e" : "#ef4444"
-            }}
-            onClick={() =>
-              setBonus({
-                ...bonus,
-                [key]: !bonus[key]
-              })
-            }
-          >
-            {bonus[key] ? "Active" : "Inactive"}
-          </button>
+            <button style={{ ...styles.addBtn, width: "100%", marginTop: "20px", padding: "14px" }} onClick={saveBonus}>
+              💾 Deploy Bonus Rules
+            </button>
+            <button style={styles.closeBtn} onClick={() => setBonusOpen(false)}>
+              ✕ Abort & Close
+            </button>
+          </div>
         </div>
-      ))}
-
-      <button style={styles.addBtn} onClick={saveBonus}>
-  Save Bonus Settings
-</button>
-
-      <button
-        style={styles.closeBtn}
-        onClick={() => setBonusOpen(false)}
-      >
-        Close
-      </button>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 }
 
+// 💎 আল্ট্রা-প্রিমিয়াম গ্লোয়িং নিওন ডার্ক থিম স্টাইলশিট 
 const styles = {
   container: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg,#020617,#0f172a)",
-    color: "white",
-    padding: "20px"
+    background: "linear-gradient(180deg, #020617 0%, #0b1329 100%)",
+    padding: "24px 16px 80px",
+    color: "#f1f5f9",
+    fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif"
   },
-
   title: {
     textAlign: "center",
-    color: "#22c55e"
+    fontSize: "24px",
+    fontWeight: "800",
+    color: "#f8fafc",
+    margin: "0 0 25px 0"
   },
-
   card: {
-    background: "#1e293b",
-    padding: "16px",
-    borderRadius: "18px",
-    marginTop: "15px"
+    background: "linear-gradient(145deg, #0f172a 0%, #1e293b 100%)",
+    padding: "20px",
+    borderRadius: "22px",
+    border: "1px solid #1e293b",
+    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)",
+    marginBottom: "25px"
   },
-
   input: {
     width: "100%",
-    padding: "12px",
-    borderRadius: "10px",
-    border: "none",
-    marginTop: "10px"
+    padding: "14px",
+    borderRadius: "14px",
+    border: "1px solid #1e293b",
+    background: "#020617",
+    color: "white",
+    boxSizing: "border-box",
+    fontSize: "14px",
+    transition: "all 0.2s ease"
   },
-
   searchBtn: {
     width: "100%",
     padding: "14px",
     border: "none",
     borderRadius: "14px",
-    background: "#22c55e",
+    background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
     color: "#020617",
-    fontWeight: "bold",
-    marginTop: "12px"
+    fontWeight: "800",
+    marginTop: "14px",
+    cursor: "pointer",
+    fontSize: "14px"
   },
-
   msg: {
-    color: "#facc15",
+    color: "#fbbf24",
     textAlign: "center",
-    marginTop: "12px"
+    marginTop: "12px",
+    fontWeight: "600",
+    fontSize: "13px"
   },
-
   userCard: {
-    background: "#1e293b",
-    padding: "16px",
-    borderRadius: "18px",
+    background: "#0f172a",
+    padding: "20px",
+    borderRadius: "22px",
     marginTop: "18px",
-    border: "1px solid #334155"
+    border: "1px solid #1e293b",
+    boxShadow: "0 15px 30px rgba(0,0,0,0.25)"
   },
-
   userTop: {
     display: "flex",
     justifyContent: "space-between",
-    gap: "10px"
+    alignItems: "flex-start",
+    gap: "12px"
   },
-
+  userName: {
+    margin: "0 0 4px 0",
+    fontSize: "18px",
+    fontWeight: "700"
+  },
+  userEmail: {
+    margin: "0 0 15px 0",
+    color: "#94a3b8",
+    fontSize: "13px"
+  },
+  infoMetaGrid: {
+    background: "#020617",
+    padding: "14px",
+    borderRadius: "14px",
+    border: "1px solid #1e293b",
+    fontSize: "13px"
+  },
+  metaText: {
+    margin: "5px 0",
+    color: "#cbd5e1"
+  },
+  permissionIndicators: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    marginTop: "12px"
+  },
+  permBadge: {
+    fontSize: "12px",
+    fontWeight: "600"
+  },
   badges: {
     display: "flex",
     flexDirection: "column",
-    gap: "8px"
+    gap: "6px",
+    textAlign: "right"
   },
-
   greenBadge: {
-    background: "#22c55e",
-    color: "#020617",
-    padding: "6px 10px",
-    borderRadius: "20px",
-    fontSize: "12px",
-    fontWeight: "bold"
+    background: "rgba(34,197,94,0.15)",
+    color: "#22c55e",
+    padding: "5px 12px",
+    borderRadius: "10px",
+    fontSize: "11px",
+    fontWeight: "700"
   },
-
   redBadge: {
-    background: "#ef4444",
-    color: "white",
-    padding: "6px 10px",
-    borderRadius: "20px",
-    fontSize: "12px",
-    fontWeight: "bold"
+    background: "rgba(239,68,68,0.15)",
+    color: "#ef4444",
+    padding: "5px 12px",
+    borderRadius: "10px",
+    fontSize: "11px",
+    fontWeight: "700"
   },
-
   blueBadge: {
-    background: "#3b82f6",
-    color: "white",
-    padding: "6px 10px",
-    borderRadius: "20px",
-    fontSize: "12px",
-    fontWeight: "bold"
+    background: "rgba(59,130,246,0.15)",
+    color: "#38bdf8",
+    padding: "5px 12px",
+    borderRadius: "10px",
+    fontSize: "11px",
+    fontWeight: "700"
   },
-
-  grid: {
+  walletManageBox: {
+    marginTop: "20px",
+    padding: "16px",
+    borderRadius: "16px",
+    background: "linear-gradient(180deg, #111827 0%, #020617 100%)",
+    border: "1px solid #1e293b"
+  },
+  adjustmentFieldsRow: {
+    display: "grid",
+    gridTemplateColumns: "1fr 2fr",
+    gap: "8px",
+    marginTop: "8px"
+  },
+  rowBtns: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "10px",
-    marginTop: "15px"
+    marginTop: "12px"
   },
-
-  walletManageBox: {
-  marginTop: "20px",
-  padding: "15px",
-  borderRadius: "14px",
-  background: "#0f172a",
-  border: "1px solid #334155"
-},
-
-input: {
-  width: "100%",
-  padding: "12px",
-  marginTop: "10px",
-  borderRadius: "10px",
-  border: "none"
-},
-
-rowBtns: {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "10px",
-  marginTop: "10px"
-},
-
-addBtn: {
-  padding: "12px",
-  border: "none",
-  borderRadius: "10px",
-  background: "#22c55e",
-  color: "white",
-  fontWeight: "bold"
-},
-
-deductBtn: {
-  padding: "12px",
-  border: "none",
-  borderRadius: "10px",
-  background: "#ef4444",
-  color: "white",
-  fontWeight: "bold"
-},
-
-yellowBtn: {
-  padding: "12px",
-  border: "none",
-  borderRadius: "10px",
-  background: "#facc15",
-  color: "#111827",
-  fontWeight: "bold"
-},
-
-modalOverlay: {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,.65)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 9999
-},
-
-modalBox: {
-  width: "90%",
-  maxWidth: "420px",
-  background: "#0f172a",
-  padding: "22px",
-  borderRadius: "18px",
-  color: "white"
-},
-
-bonusRow: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "12px 0",
-  borderBottom: "1px solid #334155"
-},
-
-toggleBtn: {
-  border: "none",
-  borderRadius: "10px",
-  padding: "9px 14px",
-  color: "white",
-  fontWeight: "bold"
-},
-
-closeBtn: {
-  width: "100%",
-  marginTop: "12px",
-  padding: "12px",
-  border: "none",
-  borderRadius: "10px",
-  background: "#64748b",
-  color: "white",
-  fontWeight: "bold"
-},
-
-  redBtn: btn("#ef4444"),
-  greenBtn: btn("#22c55e", "#020617"),
-  orangeBtn: btn("#f59e0b", "#020617"),
-  blueBtn: btn("#3b82f6"),
-  purpleBtn: btn("#8b5cf6"),
-  yellowBtn: btn("#facc15", "#020617")
-};
-
-function btn(bg, color = "white") {
-  return {
+  addBtn: {
     padding: "12px",
     border: "none",
     borderRadius: "12px",
+    background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+    color: "#020617",
+    fontWeight: "800",
+    cursor: "pointer",
+    fontSize: "13px"
+  },
+  deductBtn: {
+    padding: "12px",
+    border: "none",
+    borderRadius: "12px",
+    background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+    color: "white",
+    fontWeight: "800",
+    cursor: "pointer",
+    fontSize: "13px"
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "8px",
+    marginTop: "15px"
+  },
+  redBtn: btn("rgba(239,68,68,0.1)", "#fca5a5", "1px solid #ef4444"),
+  greenBtn: btn("rgba(34,197,94,0.1)", "#86efac", "1px solid #22c55e"),
+  orangeBtn: btn("rgba(245,158,11,0.1)", "#fde047", "1px solid #f59e0b"),
+  blueBtn: btn("rgba(59,130,246,0.1)", "#93c5fd", "1px solid #3b82f6"),
+  purpleBtn: btn("rgba(139,92,246,0.1)", "#c084fc", "1px solid #8b5cf6"),
+  yellowBtn: btn("linear-gradient(135deg, #fbbf24 0%, #d97706 100%)", "#020617", "none"),
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(2,6,23,0.8)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+    padding: 16
+  },
+  modalBox: {
+    width: "100%",
+    maxWidth: "440px",
+    background: "#0f172a",
+    padding: "24px",
+    borderRadius: "24px",
+    color: "white",
+    border: "1px solid #1e293b",
+    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
+  },
+  bonusRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "14px 0",
+    borderBottom: "1px solid #1e293b"
+  },
+  toggleBtn: {
+    borderRadius: "10px",
+    padding: "8px 14px",
+    fontWeight: "800",
+    fontSize: "11px",
+    cursor: "pointer",
+    letterSpacing: "0.5px"
+  },
+  closeBtn: {
+    width: "100%",
+    marginTop: "10px",
+    padding: "12px",
+    border: "none",
+    borderRadius: "12px",
+    background: "rgba(100,116,139,0.15)",
+    color: "#94a3b8",
+    fontWeight: "700",
+    cursor: "pointer",
+    fontSize: "13px"
+  }
+};
+
+function btn(bg, color, border) {
+  return {
+    padding: "12px 8px",
+    border: border,
+    borderRadius: "12px",
     background: bg,
-    color,
-    fontWeight: "bold"
+    color: color,
+    fontWeight: "700",
+    fontSize: "12px",
+    cursor: "pointer",
+    transition: "all 0.2s ease"
   };
 }
+
+```
