@@ -501,8 +501,8 @@ export default function Home() {
         <BottomNavItem
           icon="🌲"
           title="tree"
-          active={location.pathname === "/profile"}
-          onClick={() => go("/setTreeOpen")}
+          active={location.pathname === "/treeview"}
+          onClick={() => go("/referral-tree")}
         />
       </nav>
 
