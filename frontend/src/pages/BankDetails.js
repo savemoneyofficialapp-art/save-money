@@ -62,7 +62,7 @@ export default function BankDetails() {
 
   const save = async () => {
     if (!editMode) {
-      toast.alert("Please click UPDATE / CHANGE BANK DETAILS first");
+      toast.info("Please click UPDATE / CHANGE BANK DETAILS first");
       return;
     }
 
@@ -73,7 +73,7 @@ export default function BankDetails() {
       !form.accountNumber ||
       !form.ifscCode
     ) {
-      toast.info("Please fill all required fields");
+      toast.warning("Please fill all required fields");
       return;
     }
 
@@ -96,7 +96,7 @@ export default function BankDetails() {
         setSaved(true);
         setEditMode(false);
       } else {
-        toast.faild(data.msg || "Failed to save bank details");
+        toast.error(data.msg || "Failed to save bank details");
       }
     } catch (err) {
       console.log("BANK SAVE ERROR:", err);
@@ -114,442 +114,487 @@ export default function BankDetails() {
 
   return (
     <div style={styles.page}>
-      <button style={styles.backBtn} onClick={() => navigate(-1)}>
-        ←
-      </button>
+      <div style={styles.headerNav}>
+        <button style={styles.backBtn} onClick={() => navigate(-1)}>
+          ← Back
+        </button>
+      </div>
 
+      {/* 🏛️ আল্ট্রা-মডার্ন হিরো আর্ট সেকশন */}
       <section style={styles.hero}>
         <div style={styles.heroText}>
-          <h1>BANK DETAILS</h1>
-          <p>
-            Add your bank account details
-            <br />
-            for safe withdrawals
+          <h1 style={styles.heroTitle}>BANK SETTINGS</h1>
+          <p style={styles.heroSubtitle}>
+            Securely configure your native settlement account <br />
+            for instantaneous, automated liquid withdrawals.
           </p>
-
-          <div style={styles.heroLine}>
-            <span></span>
-            <b></b>
-          </div>
         </div>
 
         <div style={styles.bankArt}>
           <div style={styles.roof}></div>
           <div style={styles.bankMain}>
-            <h3>BANK</h3>
+            <h3 style={styles.bankMainTitle}>SECURE VAULT</h3>
             <div style={styles.columns}>
               <span></span><span></span><span></span>
             </div>
           </div>
 
           <div style={styles.bankCard}>
-            <div></div>
-            <p>1234&nbsp; 5678&nbsp; 9012&nbsp; 3456</p>
+            <div style={styles.cardChip}></div>
+            <p style={styles.cardNumber}>••••  ••••  ••••  3456</p>
           </div>
 
           <div style={styles.shield}>✓</div>
         </div>
       </section>
 
+      {/* 🔐 মূল সিকিউর ফর্ম বক্স */}
       <section style={styles.formBox}>
         <div style={styles.secureHead}>
           <div style={styles.secureIcon}>🛡️</div>
-
           <div style={{ flex: 1 }}>
-            <h2>Your Security is Our Priority</h2>
-            <p>Your details are encrypted and 100% secure.</p>
+            <h2 style={styles.secureTitle}>End-to-End Cryptographic Security</h2>
+            <p style={styles.secureSubtitle}>Your bank coordinates are fully tokenized and encrypted at rest.</p>
           </div>
-
-          <div style={styles.secureBadge}>🔒 100% Secure</div>
+          <div style={styles.secureBadge}>🔒 256-Bit Encrypted</div>
         </div>
 
-        <Input
-          icon="👤"
-          label="Account Holder Name"
-          name="accountHolderName"
-          value={form.accountHolderName}
-          onChange={change}
-          disabled={disabled}
-        />
+        <div style={styles.inputsContainer}>
+          <Input
+            icon="👤"
+            label="Account Holder Name"
+            name="accountHolderName"
+            value={form.accountHolderName}
+            onChange={change}
+            disabled={disabled}
+          />
 
-        <Input
-          icon="📱"
-          label="Mobile Number"
-          name="mobile"
-          value={form.mobile}
-          onChange={change}
-          disabled={disabled}
-        />
+          <Input
+            icon="📱"
+            label="Associated Mobile Number"
+            name="mobile"
+            value={form.mobile}
+            onChange={change}
+            disabled={disabled}
+          />
 
-        <Input
-          icon="🏦"
-          label="Bank Name"
-          name="bankName"
-          value={form.bankName}
-          onChange={change}
-          disabled={disabled}
-        />
+          <Input
+            icon="🏦"
+            label="Institution / Bank Name"
+            name="bankName"
+            value={form.bankName}
+            onChange={change}
+            disabled={disabled}
+          />
 
-        <Input
-          icon="💳"
-          label="Bank Account Number"
-          name="accountNumber"
-          value={form.accountNumber}
-          onChange={change}
-          disabled={disabled}
-        />
+          <Input
+            icon="💳"
+            label="Bank Account Number"
+            name="accountNumber"
+            value={form.accountNumber}
+            onChange={change}
+            disabled={disabled}
+          />
 
-        <Input
-          icon="IFSC"
-          label="IFSC Code"
-          name="ifscCode"
-          value={form.ifscCode}
-          onChange={change}
-          disabled={disabled}
-        />
+          <Input
+            icon="🔏"
+            label="IFSC Routing Code"
+            name="ifscCode"
+            value={form.ifscCode}
+            onChange={change}
+            disabled={disabled}
+          />
 
-        <Input
-          icon="UPI"
-          label="UPI ID (Optional)"
-          name="upiId"
-          value={form.upiId}
-          onChange={change}
-          disabled={disabled}
-          optional
-        />
+          <Input
+            icon="⚡"
+            label="UPI Address Alias"
+            name="upiId"
+            value={form.upiId}
+            onChange={change}
+            disabled={disabled}
+            optional
+          />
+        </div>
 
+        {/* ℹ️ সতর্কতা নোটিফিকেশন */}
         <div style={styles.note}>
           <div style={styles.infoIcon}>i</div>
-          <div>
-            <b>Please ensure all details are correct.</b>
-            <p>Incorrect details may cause withdrawal failure.</p>
+          <div style={{ flex: 1 }}>
+            <b style={{ color: "#fbbf24", fontSize: "14px", display: "block", marginBottom: "3px" }}>Critical Verification Required</b>
+            <p style={{ margin: 0, color: "#94a3b8", fontSize: "13px" }}>Please guarantee all parameters align exactly with your ledger passbook. Mismatches lock settlement pipelines.</p>
           </div>
-          <div style={styles.moneyIcon}>💵</div>
         </div>
 
-        <button
-          style={{
-            ...styles.submitBtn,
-            opacity: loading || disabled ? 0.65 : 1
-          }}
-          onClick={save}
-          disabled={loading || disabled}
-        >
-          <span>✈️</span>
-          {loading ? "SAVING..." : saved ? "SUBMIT UPDATED DETAILS" : "SUBMIT DETAILS"}
-          <b>→</b>
-        </button>
+        {/* 🚀 সাবমিট ও আপডেট বাটনসমূহ */}
+        <div style={styles.actionArea}>
+          <button
+            style={{
+              ...styles.submitBtn,
+              opacity: loading || disabled ? 0.5 : 1,
+              cursor: loading || disabled ? "not-allowed" : "pointer"
+            }}
+            onClick={save}
+            disabled={loading || disabled}
+          >
+            <span>{loading ? "⚡ Processing..." : "💾 Save Secure Ledger"}</span>
+            <span style={{ fontSize: "18px" }}>→</span>
+          </button>
 
-        <button
-          style={styles.changeBtn}
-          onClick={startEdit}
-          disabled={editMode}
-        >
-          ✎ UPDATE / CHANGE BANK DETAILS
-        </button>
+          <button
+            style={{
+              ...styles.changeBtn,
+              borderColor: editMode ? "#475569" : "#d946ef",
+              color: editMode ? "#64748b" : "#f472b6",
+              cursor: editMode ? "not-allowed" : "pointer"
+            }}
+            onClick={startEdit}
+            disabled={editMode}
+          >
+            ✎ Request Authorization & Change Details
+          </button>
 
-        {saved && !editMode && (
-          <p style={styles.lockText}>
-            🔒 Details saved. Click update/change to edit.
-          </p>
-        )}
+          {saved && !editMode && (
+            <p style={styles.lockText}>
+              🔒 Secure Lock Engaged. Reset authorization required to re-edit parameters.
+            </p>
+          )}
 
-        {editMode && saved && (
-          <p style={styles.editText}>
-            ✏️ Edit mode active. Update your details and submit again.
-          </p>
-        )}
+          {editMode && saved && (
+            <p style={styles.editText}>
+              ✏️ Safe-Mutation Active. Please make adjustments and re-commit changes.
+            </p>
+          )}
+        </div>
 
         <p style={styles.bottomText}>
-          🛡️ Your data is safe with us. We never share your information.
+          🛡️ Compliance Guarantee: Financial fields remain completely confidential under banking privacy directives.
         </p>
       </section>
     </div>
   );
 }
 
+// 🎛️ রি-ইউজেবল আল্ট্রা-মডার্ন ইনপুট কম্পোনেন্ট
 function Input({ icon, label, name, value, onChange, disabled, optional }) {
   return (
     <div style={styles.row}>
-      <div style={styles.iconCircle}>{icon}</div>
-
-      <label style={styles.label}>
-        {label} {!optional && <b>*</b>}
-      </label>
+      <div style={styles.labelWrapper}>
+        <span style={styles.inlineIcon}>{icon}</span>
+        <label style={styles.label}>
+          {label} {!optional && <span style={{ color: "#ef4444" }}>*</span>}
+        </label>
+      </div>
 
       <input
         style={{
           ...styles.input,
-          opacity: disabled ? 0.65 : 1,
+          background: disabled ? "#0b1329" : "#020617",
+          borderColor: disabled ? "#1e293b" : "#334155",
+          color: disabled ? "#64748b" : "#f1f5f9",
           cursor: disabled ? "not-allowed" : "text"
         }}
         name={name}
         value={value}
         onChange={onChange}
         disabled={disabled}
-        placeholder={`Enter ${label}`}
+        placeholder={`Provide ${label.toLowerCase()}`}
       />
     </div>
   );
 }
 
+// 💎 আল্ট্রা-প্রিমিয়াম সাইবারনেটিক ডিজাইন গাইডলাইন স্টাইলস
 const styles = {
   page: {
     minHeight: "100vh",
-    background:
-      "radial-gradient(circle at top right,rgba(168,85,247,.35),transparent 26%),radial-gradient(circle at top left,rgba(37,99,235,.25),transparent 28%),linear-gradient(180deg,#020617,#030014 75%)",
-    color: "#fff",
-    padding: "28px 24px 40px",
-    fontFamily: "Arial, sans-serif"
+    background: "linear-gradient(180deg, #020617 0%, #0b1329 100%)",
+    color: "#f1f5f9",
+    padding: "24px 16px 80px",
+    fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
+    boxSizing: "border-box"
   },
-
+  headerNav: {
+    maxWidth: "960px",
+    margin: "0 auto 20px"
+  },
   backBtn: {
-    position: "absolute",
-    top: 28,
-    left: 28,
-    width: 66,
-    height: 66,
-    borderRadius: 18,
-    border: "1px solid rgba(168,85,247,.55)",
-    background: "rgba(15,23,42,.72)",
-    color: "#fff",
-    fontSize: 42,
+    padding: "10px 18px",
+    borderRadius: "12px",
+    border: "1px solid #1e293b",
+    background: "#0f172a",
+    color: "#cbd5e1",
+    fontSize: "13px",
+    fontWeight: "600",
     cursor: "pointer",
-    boxShadow: "0 0 25px rgba(124,58,237,.25)"
+    transition: "all 0.2s"
   },
-
   hero: {
-    maxWidth: 960,
-    margin: "0 auto 26px",
-    minHeight: 220,
+    maxWidth: "960px",
+    margin: "0 auto 30px",
     display: "flex",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 28,
-    textAlign: "center"
+    gap: "24px",
+    flexWrap: "wrap-reverse"
   },
-
   heroText: {
-    flex: 1
+    flex: 1,
+    minWidth: "280px"
   },
-
-  heroLine: {
-    display: "flex",
-    justifyContent: "center",
-    gap: 12,
-    marginTop: 22
+  heroTitle: {
+    fontSize: "26px",
+    fontWeight: "900",
+    margin: "0 0 8px 0",
+    background: "linear-gradient(135deg, #f472b6 0%, #a855f7 100%)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent"
   },
-
+  heroSubtitle: {
+    fontSize: "14px",
+    color: "#64748b",
+    lineHeight: "1.6",
+    margin: 0
+  },
   bankArt: {
-    width: 310,
-    height: 220,
-    position: "relative"
+    width: "240px",
+    height: "170px",
+    position: "relative",
+    margin: "0 auto"
   },
-
   roof: {
-    width: 250,
-    height: 34,
-    margin: "8px auto 0",
-    background: "linear-gradient(90deg,#f472b6,#d946ef,#8b5cf6)",
-    clipPath: "polygon(50% 0,100% 100%,0 100%)",
-    filter: "drop-shadow(0 0 22px rgba(217,70,239,.55))"
-  },
-
-  bankMain: {
-    width: 235,
-    height: 135,
+    width: "180px",
+    height: "24px",
     margin: "0 auto",
-    borderRadius: "0 0 18px 18px",
-    background: "linear-gradient(135deg,#db47ff,#7c3aed)",
-    boxShadow: "0 0 35px rgba(217,70,239,.42)",
-    paddingTop: 12
+    background: "linear-gradient(90deg, #f472b6, #8b5cf6)",
+    clipPath: "polygon(50% 0, 100% 100%, 0 100%)"
   },
-
+  bankMain: {
+    width: "170px",
+    height: "100px",
+    margin: "0 auto",
+    borderRadius: "0 0 14px 14px",
+    background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+    border: "1px solid #334155",
+    paddingTop: "10px",
+    boxSizing: "border-box"
+  },
+  bankMainTitle: {
+    textAlign: "center",
+    margin: 0,
+    fontSize: "10px",
+    color: "#a855f7",
+    letterSpacing: "1.5px"
+  },
   columns: {
     display: "flex",
     justifyContent: "center",
-    gap: 18,
-    marginTop: 16
+    gap: "14px",
+    marginTop: "12px",
+    span: {
+      width: "6px",
+      height: "40px",
+      background: "#334155",
+      borderRadius: "2px"
+    }
   },
-
   bankCard: {
     position: "absolute",
-    left: 4,
-    bottom: 20,
-    width: 140,
-    height: 72,
-    borderRadius: 12,
-    background: "linear-gradient(135deg,#4f46e5,#7c3aed)",
-    boxShadow: "0 14px 26px rgba(0,0,0,.35)",
-    padding: 12,
-    fontSize: 11
+    left: "10px",
+    bottom: "15px",
+    width: "120px",
+    height: "75px",
+    borderRadius: "10px",
+    background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+    boxShadow: "0 10px 20px rgba(0,0,0,0.4)",
+    padding: "10px",
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between"
   },
-
+  cardChip: {
+    width: "16px",
+    height: "12px",
+    background: "#fbbf24",
+    borderRadius: "3px"
+  },
+  cardNumber: {
+    margin: 0,
+    fontSize: "8px",
+    fontFamily: "monospace",
+    color: "#e2e8f0"
+  },
   shield: {
     position: "absolute",
-    right: 8,
-    bottom: 8,
-    width: 84,
-    height: 84,
-    borderRadius: "26px",
-    background: "linear-gradient(135deg,#2563eb,#7c3aed)",
+    right: "10px",
+    bottom: "10px",
+    width: "55px",
+    height: "55px",
+    borderRadius: "18px",
+    background: "linear-gradient(135deg, #22c55e 0%, #06b6d4 100%)",
     display: "grid",
     placeItems: "center",
-    fontSize: 56,
-    fontWeight: 900,
-    boxShadow: "0 0 35px rgba(59,130,246,.48)"
+    fontSize: "28px",
+    color: "#020617",
+    fontWeight: "900",
+    boxShadow: "0 4px 20px rgba(34,197,94,0.4)"
   },
-
   formBox: {
-    maxWidth: 960,
+    maxWidth: "960px",
     margin: "0 auto",
-    borderRadius: 26,
-    border: "1px solid rgba(168,85,247,.55)",
-    background: "linear-gradient(180deg,rgba(15,23,42,.9),rgba(2,6,23,.92))",
+    borderRadius: "24px",
+    border: "1px solid #1e293b",
+    background: "#0f172a",
     overflow: "hidden",
-    boxShadow: "0 0 45px rgba(124,58,237,.22)"
+    boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
   },
-
   secureHead: {
-    padding: "30px 34px",
+    padding: "20px 24px",
     display: "flex",
     alignItems: "center",
-    gap: 22,
-    background:
-      "linear-gradient(90deg,rgba(88,28,135,.68),rgba(15,23,42,.42))",
-    borderBottom: "1px solid rgba(148,163,184,.16)"
+    gap: "16px",
+    background: "linear-gradient(90deg, #1e1b4b 0%, #0f172a 100%)",
+    borderBottom: "1px solid #1e293b",
+    flexWrap: "wrap"
   },
-
   secureIcon: {
-    width: 84,
-    height: 84,
-    borderRadius: 24,
-    background: "linear-gradient(135deg,#8b5cf6,#ec4899)",
+    width: "48px",
+    height: "48px",
+    borderRadius: "12px",
+    background: "rgba(139,92,246,0.15)",
     display: "grid",
     placeItems: "center",
-    fontSize: 42,
-    boxShadow: "0 0 24px rgba(236,72,153,.4)"
+    fontSize: "22px"
   },
-
+  secureTitle: {
+    fontSize: "15px",
+    fontWeight: "700",
+    margin: "0 0 3px 0",
+    color: "#f8fafc"
+  },
+  secureSubtitle: {
+    fontSize: "12px",
+    color: "#64748b",
+    margin: 0
+  },
   secureBadge: {
-    padding: "15px 26px",
-    borderRadius: 999,
-    background: "rgba(88,28,135,.58)",
-    color: "#f0abfc",
-    fontWeight: 900,
-    whiteSpace: "nowrap"
+    padding: "8px 16px",
+    borderRadius: "10px",
+    background: "rgba(34,197,94,0.1)",
+    color: "#22c55e",
+    fontSize: "11px",
+    fontWeight: "700",
+    border: "1px solid rgba(34,197,94,0.2)"
   },
-
+  inputsContainer: {
+    padding: "8px 16px"
+  },
   row: {
-    display: "grid",
-    gridTemplateColumns: "88px 250px 1fr",
-    alignItems: "center",
-    gap: 16,
-    padding: "19px 34px",
-    borderBottom: "1px solid rgba(148,163,184,.14)"
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    padding: "14px 8px",
+    borderBottom: "1px solid #1e293b"
   },
-
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: "50%",
-    background: "rgba(15,23,42,.95)",
-    border: "1px solid rgba(148,163,184,.25)",
-    display: "grid",
-    placeItems: "center",
-    color: "#f472b6",
-    fontWeight: 900,
-    fontSize: 24
-  },
-
-  label: {
-    fontSize: 20,
-    fontWeight: 900
-  },
-
-  input: {
-    height: 68,
-    borderRadius: 14,
-    border: "1px solid rgba(148,163,184,.28)",
-    background: "rgba(15,23,42,.82)",
-    color: "#fff",
-    padding: "0 22px",
-    fontSize: 19,
-    outline: "none"
-  },
-
-  note: {
-    margin: 32,
-    padding: 22,
-    borderRadius: 18,
-    border: "1px dashed rgba(59,130,246,.7)",
+  labelWrapper: {
     display: "flex",
     alignItems: "center",
-    gap: 20,
-    background: "rgba(15,23,42,.65)"
+    gap: "8px"
   },
-
+  inlineIcon: {
+    fontSize: "15px",
+    opacity: 0.8
+  },
+  label: {
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#cbd5e1"
+  },
+  input: {
+    width: "100%",
+    height: "48px",
+    borderRadius: "12px",
+    border: "1px solid",
+    padding: "0 14px",
+    fontSize: "14px",
+    outline: "none",
+    boxSizing: "border-box",
+    transition: "all 0.2s"
+  },
+  note: {
+    margin: "20px 24px",
+    padding: "16px",
+    borderRadius: "14px",
+    border: "1px dashed rgba(251,191,36,0.3)",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "12px",
+    background: "rgba(251,191,36,0.02)"
+  },
   infoIcon: {
-    width: 58,
-    height: 58,
+    width: "22px",
+    height: "22px",
     borderRadius: "50%",
-    background: "linear-gradient(135deg,#4338ca,#7c3aed)",
+    background: "rgba(251,191,36,0.15)",
+    color: "#fbbf24",
     display: "grid",
     placeItems: "center",
-    fontSize: 30,
-    fontWeight: 900
+    fontSize: "12px",
+    fontWeight: "900",
+    flexShrink: 0,
+    marginTop: "2px"
   },
-
-  moneyIcon: {
-    marginLeft: "auto",
-    fontSize: 55
+  actionArea: {
+    padding: "0 24px 20px"
   },
-
   submitBtn: {
-    margin: "0 36px 22px",
-    width: "calc(100% - 72px)",
-    height: 88,
+    width: "100%",
+    height: "52px",
     border: "none",
-    borderRadius: 17,
-    background: "linear-gradient(90deg,#8b5cf6,#d946ef,#ec4899)",
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: 900,
+    borderRadius: "14px",
+    background: "linear-gradient(90deg, #8b5cf6 0%, #d946ef 50%, #ec4899 100%)",
+    color: "#ffffff",
+    fontSize: "15px",
+    fontWeight: "700",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 36px",
-    cursor: "pointer"
+    padding: "0 20px",
+    boxSizing: "border-box"
   },
-
   changeBtn: {
-    margin: "0 36px 18px",
-    width: "calc(100% - 72px)",
-    height: 74,
-    borderRadius: 17,
-    border: "1px solid #d946ef",
+    width: "100%",
+    height: "46px",
+    borderRadius: "14px",
+    border: "1px solid",
     background: "transparent",
-    color: "#d8b4fe",
-    fontSize: 20,
-    fontWeight: 900,
-    cursor: "pointer"
+    fontSize: "13px",
+    fontWeight: "700",
+    marginTop: "12px",
+    boxSizing: "border-box"
   },
-
   lockText: {
     textAlign: "center",
-    color: "#a7f3d0",
-    fontWeight: 800
+    color: "#34d399",
+    fontSize: "12px",
+    fontWeight: "600",
+    marginTop: "12px",
+    marginSub: 0
   },
-
   editText: {
     textAlign: "center",
-    color: "#facc15",
-    fontWeight: 800
+    color: "#fbbf24",
+    fontSize: "12px",
+    fontWeight: "600",
+    marginTop: "12px",
+    marginSub: 0
   },
-
   bottomText: {
     textAlign: "center",
-    color: "#cbd5e1",
-    padding: "0 16px 26px"
+    color: "#475569",
+    fontSize: "11px",
+    padding: "0 24px 24px",
+    margin: 0
   }
 };
