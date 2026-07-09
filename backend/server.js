@@ -5422,6 +5422,114 @@ app.post("/my-referrals", auth, async (req, res) => {
   }
 });
 
+
+// 🕸️ প্রিমিয়াম ৭-লেভেল স্পাইডার ওয়েব নেটওয়ার্ক এবং অ্যানালিটিক্স এপিআই
+app.post("/api/referral-tree", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ msg: "Email is required" });
+    }
+
+    // ১. মেইন রুট ইউজারকে ডাটাবেজ থেকে খুঁজে বের করা
+    const rootUser = await User.findOne({ email });
+    if (!rootUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // ২. গ্লোবাল কাউন্টার এবং অ্যানালিটিক্স ডাটা অবজেক্ট
+    let totalUsers = 0;
+    let activeUsers = 0;
+    let totalBusiness = 0;
+    
+    // লেভেল ১ থেকে ৭ পর্যন্ত ডেটা ট্র্যাক করার জন্য অবজেক্ট রেডি করা
+    const levelsData = {};
+    for (let i = 1; i <= 7; i++) {
+      levelsData[i] = { users: 0, active: 0, income: 0 };
+    }
+
+    // ৩. রিকার্সিভ ফাংশন: যা মাকড়সার জালের মতো ৭ লেভেল পর্যন্ত ডিপ স্ক্যান করবে
+    const buildTree = async (currentUser, currentLevel) => {
+      // ৭ লেভেলের বেশি নিচে স্ক্র্যাপ করবে না
+      if (currentLevel > 7) return null;
+
+      // বর্তমান ইউজারের referCode ব্যবহার করে কারা জয়েন করেছে তাদের বের করা
+      const childrenUsers = await User.find({ referBy: currentUser.referCode });
+
+      const childrenNodes = [];
+
+      for (const child of childrenUsers) {
+        // টোটাল নেটওয়ার্ক কাউন্ট বৃদ্ধি
+        totalUsers++;
+        
+        // কেওয়াইসি (KYC) স্ট্যাটাস চেক করা (আপনার মডেল অনুযায়ী)
+        const isApproved = child.kycStatus === "approved" || child.kycStatus === "Approved";
+        if (isApproved) activeUsers++;
+        
+        // বিজনেস হিসাব (ইউজারের ওয়ালেট ব্যালেন্সকে বিজনেস হিসেবে ধরা হচ্ছে)
+        const childBiz = Number(child.wallet || 0);
+        totalBusiness += childBiz;
+
+        // নির্দিষ্ট লেভেল অ্যানালিটিক্স আপডেট
+        levelsData[currentLevel].users += 1;
+        if (isApproved) levelsData[currentLevel].active += 1;
+        levelsData[currentLevel].income += childBiz;
+
+        // এই চাইল্ডের নিচে পরবর্তী লেভেলের চিলড্রেন খোঁজার জন্য আবার কল করা (Deep Level Scan)
+        const subTree = await buildTree(child, currentLevel + 1);
+
+        childrenNodes.push({
+          name: child.name || "Unknown User",
+          email: child.email,
+          mobile: child.phone || "N/A", // আপনার মডেলের 'phone' ফিল্ড ব্যবহার করা হয়েছে
+          referCode: child.referCode || "N/A",
+          kycStatus: child.kycStatus ? child.kycStatus.toLowerCase() : "pending",
+          level: currentLevel,
+          business: childBiz,
+          children: subTree ? subTree.children : []
+        });
+      }
+
+      return {
+        children: childrenNodes
+      };
+    };
+
+    // ৪. মেইন ইউজারের আন্ডারে লেভেল ১ থেকে স্ক্যান শুরু করা
+    const treeData = await buildTree(rootUser, 1);
+
+    // ৫. ফ্রন্টএন্ড মাকড়সার জালের ফরম্যাট অনুযায়ী মেইন রুট নোড সাজানো
+    const finalTree = {
+      name: rootUser.name || "You",
+      email: rootUser.email,
+      mobile: rootUser.phone || "N/A",
+      referCode: rootUser.referCode || "N/A",
+      kycStatus: rootUser.kycStatus ? rootUser.kycStatus.toLowerCase() : "pending",
+      level: 0,
+      business: Number(rootUser.wallet || 0),
+      children: treeData ? treeData.children : []
+    };
+
+    // ৬. ফ্রন্টএন্ডে সাকসেসফুল রেসপন্স পাঠানো
+    return res.status(200).json({
+      success: true,
+      tree: finalTree,
+      analytics: {
+        totalUsers,
+        activeUsers,
+        totalBusiness,
+        levels: levelsData
+      }
+    });
+
+  } catch (err) {
+    console.error("SERVER REFERRAL TREE ERROR:", err);
+    return res.status(500).json({ msg: "Internal Server Error in Tree Builder" });
+  }
+});
+
+
 app.post("/my-rank", auth, async (req, res) => {
   const { email } = req.body;
 
