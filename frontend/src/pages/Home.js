@@ -24,7 +24,6 @@ export default function Home() {
   const loadHome = async () => {
     try {
       setLoading(true);
-
       const res = await fetch(`${API}/dashboard`, {
         method: "POST",
         headers: {
@@ -62,7 +61,6 @@ export default function Home() {
       });
 
       const data = await res.json();
-
       if (Array.isArray(data)) {
         const unread = data.filter((n) => !n.read).length;
         setNotificationCount(unread);
@@ -106,11 +104,9 @@ export default function Home() {
   if (loading) {
     return (
       <div style={styles.loadingPage}>
-        <div style={styles.loadingCard}>
-          <div style={styles.spinner}></div>
-          <h2 style={{ color: "#22c55e", margin: "15px 0 5px" }}>Save Money</h2>
-          <p style={{ color: "#64748b", fontSize: "13px" }}>Loading secure wallet node...</p>
-        </div>
+        <div style={styles.loaderRing}></div>
+        <h2 style={{ marginTop: "20px", color: "#22c55e", letterSpacing: "1px" }}>SAVE MONEY</h2>
+        <p style={{ color: "#64748b", fontSize: "14px" }}>Securing your financial dashboard...</p>
       </div>
     );
   }
@@ -118,22 +114,18 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
-      {/* TOP HEADER */}
-      <div style={styles.topHeader}>
-        <button style={styles.menuButton}>☰</button>
+      {/* TOP NAVBAR */}
+      <header style={styles.topHeader}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button style={styles.menuButton}>☰</button>
+          <span style={styles.brandLogo}>Save Money</span>
+        </div>
 
-        <h2 style={styles.headerTitle}>Dashboard Engine</h2>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <button
-            style={styles.notificationButton}
-            onClick={() => go("/notifications")}
-          >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button style={styles.notificationButton} onClick={() => go("/notifications")}>
             <span>🔔</span>
             {notificationCount > 0 && (
-              <small style={styles.notificationBadge}>
-                {notificationCount}
-              </small>
+              <span style={styles.notificationBadge}>{notificationCount}</span>
             )}
           </button>
 
@@ -147,172 +139,147 @@ export default function Home() {
             Logout
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* HERO PROFILE & CAPITAL OVERVIEW */}
+      {/* PREMIUM HERO BANNER */}
       <section style={styles.heroWrapper}>
-        <div style={styles.heroMainRow}>
-          <div style={styles.profilePhotoCircle}>
-            {profilePhoto ? (
-              <img src={profilePhoto} alt="User" style={styles.profilePhoto} />
-            ) : (
-              <span style={styles.defaultProfileIcon}>👤</span>
-            )}
-          </div>
-
-          <div style={styles.heroUserInfo}>
-            <p style={styles.heroWelcome}>Welcome Back 👋</p>
-            <div style={styles.heroNameRow}>
-              <h1 style={styles.heroName}>{name}</h1>
-              {kycApproved && <span style={styles.verifiedBadge}>✔ Verified</span>}
+        <div style={styles.heroFlex}>
+          <div style={styles.profileSection}>
+            <div style={styles.profilePhotoCircle}>
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="User" style={styles.profilePhoto} />
+              ) : (
+                <span style={styles.defaultProfileIcon}>👤</span>
+              )}
             </div>
-            <p style={styles.heroSubtitle}>Save Money, Secure Future 💚</p>
+            <div>
+              <div style={styles.heroNameRow}>
+                <h1 style={styles.heroName}>{name}</h1>
+                {kycApproved && <span style={styles.verifiedBadge}>Verified ✓</span>}
+              </div>
+              <p style={styles.heroSubtitle}>Welcome Back • Premium Tier Node</p>
+            </div>
           </div>
-        </div>
 
-        {/* Core Balance Card inside Hero */}
-        <div style={styles.heroWalletCard}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <p style={{ margin: 0, fontSize: "13px", fontWeight: "600", color: "#020617" }}>⚡ TOTAL LIQUID WALLET</p>
-            <span style={{ fontSize: "20px" }}>👛</span>
+          {/* Wallet Inside Hero */}
+          <div style={styles.heroWalletCard}>
+            <p style={styles.walletLabel}>TOTAL BALANCE</p>
+            <h2 style={styles.walletValue}>₹{wallet.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
           </div>
-          <h2 style={styles.walletValueText}>₹{wallet.toFixed(2)}</h2>
         </div>
       </section>
 
-      {/* LATEST UPDATE STRIP */}
+      {/* LIVE ANNOUNCEMENT TICKER */}
       <section style={styles.latestCard} onClick={() => go("/notifications")}>
         <div style={styles.latestLeft}>
-          <div style={styles.latestIcon}>📢</div>
-          <div>
-            <h4 style={{ margin: 0, fontSize: "13px", color: "#ffd166" }}>System Announcement</h4>
-            <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#f1f5f9" }}>{latestUpdate}</p>
+          <span style={styles.latestIcon}>📢</span>
+          <div style={{ overflow: "hidden" }}>
+            <h4 style={styles.latestTitle}>Latest Update</h4>
+            <p style={styles.latestText}>{latestUpdate}</p>
           </div>
         </div>
-        <button style={styles.latestArrow}>›</button>
+        <span style={styles.latestArrow}>→</span>
       </section>
 
-      {/* FINANCIAL LEDGER MATRIX GRID */}
+      {/* STATS MATRIX CARDS */}
       <section style={styles.statsGrid}>
-        <DashboardStatCard
-          icon="📈"
-          title="Total Investment"
-          value={`₹${totalInvestment.toFixed(2)}`}
-          gradient="blue"
-        />
-        <DashboardStatCard
-          icon="📊"
-          title="Total Return"
-          value={`₹${totalReturn.toFixed(2)}`}
-          gradient="green"
-        />
-        <DashboardStatCard
-          icon="👥"
-          title="Total Referral"
-          value={totalReferral}
-          gradient="purple"
-        />
-        <DashboardStatCard
-          icon="⬇️"
-          title="Total Withdraw"
-          value={`₹${totalWithdraw.toFixed(2)}`}
-          gradient="orange"
-        />
+        <DashboardStatCard icon="📈" title="Total Investment" value={`₹${totalInvestment.toFixed(2)}`} type="blue" />
+        <DashboardStatCard icon="📊" title="Total Return" value={`₹${totalReturn.toFixed(2)}`} type="green" />
+        <DashboardStatCard icon="👥" title="Total Referral" value={totalReferral} type="purple" />
+        <DashboardStatCard icon="⬇️" title="Total Withdraw" value={`₹${totalWithdraw.toFixed(2)}`} type="orange" />
       </section>
 
       {/* MAIN ACTIONS */}
-      <PremiumSectionTitle title="CORE ACCELERATORS" color="#38bdf8" />
+      <PremiumSectionTitle title="⚡ CORE OPERATIONS" color="#0ea5e9" />
       <section style={styles.actionPanel}>
-        <PremiumActionButton icon="💰" title="INVEST NOW" subtitle="Capital Allocation" gradient="invest" onClick={() => go("/invest-now")} />
-        <PremiumActionButton icon="📈" title="My Asset Ledger" subtitle="Portfolio Analytics" gradient="myInvestment" onClick={() => go("/my-investment")} />
-        <PremiumActionButton icon="👛" title="Funding Vault" subtitle="Deposit Protocol" gradient="wallet" onClick={() => go("/wallet")} />
-        <PremiumActionButton icon="💸" title="Secure Payout" subtitle="Instant Withdraw" gradient="withdraw" onClick={() => navigate("/withdraw")} />
-        <PremiumActionButton icon="👥" title="Affiliate Matrix" subtitle="Invite Node & Earn" gradient="refer" onClick={() => go("/refer")} />
-        <PremiumActionButton icon="🧾" title="Leaderboard" subtitle="Top Networkers" gradient="transaction" onClick={() => go("/Leaderboard")} />
+        <PremiumActionButton icon="💰" title="INVEST NOW" subtitle="Maximize APY Growth" onClick={() => go("/invest-now")} />
+        <PremiumActionButton icon="📈" title="My Investment" subtitle="Track Active Pools" onClick={() => go("/my-investment")} />
+        <PremiumActionButton icon="👛" title="Wallet Hub" subtitle="Deposit & Balance" onClick={() => go("/wallet")} />
+        <PremiumActionButton icon="💸" title="Withdraw Funds" subtitle="Instant Payout Mode" onClick={() => navigate("/withdraw")} />
+        <PremiumActionButton icon="👥" title="Refer & Earn" subtitle="Grow Network Node" onClick={() => go("/refer")} />
+        <PremiumActionButton icon="🧾" title="Leaderboard" subtitle="Top Direct Earners" onClick={() => go("/Leaderboard")} />
       </section>
 
       {/* MORE FEATURES */}
-      <PremiumSectionTitle title="NODE SERVICES" color="#fbbf24" />
+      <PremiumSectionTitle title="🛠️ ECOSYSTEM ADVANCED SERVICES" color="#f59e0b" />
       <section style={styles.actionPanel}>
-        <PremiumActionButton icon="✅" title="KYC Verification" subtitle="Identity Pipeline" gradient="kyc" onClick={() => go("/kyc")} />
-        <PremiumActionButton icon="🎁" title="Daily Matrix Reward" subtitle="Claim Dividends" gradient="reward" onClick={() => go("/daily-reward")} />
-        <PremiumActionButton icon="🏦" title="Bank Linkage" subtitle="Settlement Details" gradient="bank" onClick={() => navigate("/bank-details")} />
-        <PremiumActionButton icon="📊" title="AI Assistant" subtitle="Smart Helper" gradient="plan" onClick={() => go("/investment-assistant")} />
-        <PremiumActionButton icon="🕸️" title="Network Analytics" subtitle="Data Deep-dive" gradient="notification" onClick={() => go("/user-analytics")} />
-        <PremiumActionButton icon="🎧" title="Core Support Core" subtitle="24/7 Encryption Tech" gradient="support" onClick={() => go("/support")} />
+        <PremiumActionButton icon="✅" title="KYC Verification" subtitle="Account Compliance" onClick={() => go("/kyc")} />
+        <PremiumActionButton icon="🎁" title="Daily Reward" subtitle="Claim Active Bonus" onClick={() => go("/daily-reward")} />
+        <PremiumActionButton icon="🏦" title="Bank Details" subtitle="Manage Wire Settles" onClick={() => navigate("/bank-details")} />
+        <PremiumActionButton icon="📊" title="AI Assistant" subtitle="Smart Safe Advisor" onClick={() => go("/investment-assistant")} />
+        <PremiumActionButton icon="🕸️" title="Analytics Portal" subtitle="Advanced Logs" onClick={() => go("/user-analytics")} />
+        <PremiumActionButton icon="🎧" title="VIP Support" subtitle="Direct Admin Pipeline" onClick={() => go("/support")} />
       </section>
 
-      {/* CRYPTO-STYLE PROMO BANNER */}
+      {/* ELEVATED LUXURY PROMO BANNER */}
       <section style={styles.promoBanner}>
         <div style={styles.promoContent}>
-          <h2 style={{ margin: "0 0 6px", fontSize: "18px", fontWeight: "800", color: "#f8fafc" }}>
-            Grow Your Idle Capital.<br />Build Generational Wealth.
-          </h2>
-          <p style={{ margin: "0 0 14px", fontSize: "12px", color: "#cbd5e1" }}>Invest Smart via Automated Execution Networks.</p>
-          <button style={styles.promoButton} onClick={() => go("/save-money")}>
-            Initialize Protocol →
-          </button>
+          <h2 style={styles.promoHeading}>Multiply Capital.<br />Automate Future.</h2>
+          <p style={styles.promoSub}>Secure your dynamic earnings with premium compounding pools.</p>
+          <button style={styles.promoButton} onClick={() => go("/save-money")}>Explore Smart Portfolios →</button>
         </div>
-        <div style={styles.promoIcon}>⚡💰</div>
+        <div style={styles.promoGraphic}>💎</div>
       </section>
 
-      {/* ECOSYSTEM TRUST SIGNALS */}
+      {/* METRIC TRUST STREAKS */}
       <section style={styles.trustPanel}>
-        <TrustMiniCard icon="🔒" title="End-to-End Vault Security" subtitle="Military-Grade Safeguards" />
-        <TrustMiniCard icon="⚡" title="Automated Liquid Settlement" subtitle="Rapid Disbursal Channels" />
-        <TrustMiniCard icon="🛡️" title="Fully Regulated Node Audits" subtitle="Verified By Decentralized Pools" />
-        <TrustMiniCard icon="💬" title="Human-in-the-loop Help" subtitle="Real-time Admin Uplink" />
+        <TrustMiniCard icon="🔒" title="Escrow Safeguards" subtitle="100% Cryptographic protection" />
+        <TrustMiniCard icon="⚡" title="Rapid Settlement" subtitle="Auto-payout routing systems" />
+        <TrustMiniCard icon="🛡️" title="Licensed Enterprise" subtitle="Regulated capital transparency" />
+        <TrustMiniCard icon="💬" title="Human Live Support" subtitle="Direct ticketing chat access" />
       </section>
 
-      {/* ABOUT SYSTEM SHORTCUT */}
+      {/* ABOUT SUB-STRIP */}
       <button style={styles.aboutStrip} onClick={() => go("/about")}>
-        🏢 Corporate Structure & Transparency Reports
+        🏢 About Save Money Platform & Governance Report
       </button>
 
-      {/* HELP INSPIRATION TEXT */}
-      <h2 style={styles.helpText}>HELP OTHERS EXPAND THE NETWORK FOR HIGHER APY 💸</h2>
+      {/* INSPIRATIONAL BANNER */}
+      <h3 style={styles.helpText}>EMPOWER USERS • EXPAND NETWORKS • EARN COMMISSIONS 💸</h3>
 
-      {/* ENTERPRISE FOOTER */}
+      {/* CLEAN COMPLIANCE FOOTER */}
       <footer style={styles.footer}>
-        <h2 style={{ margin: "0 0 10px 0", color: "#22c55e", fontSize: "20px", fontWeight: "800" }}>Save Money</h2>
         <div style={styles.footerLinks}>
-          {["privacy", "terms", "refund", "risk", "aml", "disclaimer"].map((type) => (
-            <button key={type} style={styles.footerLinkBtn} onClick={() => go(`/legal/${type}`)}>
-              {type.toUpperCase()} Policy
+          {["privacy", "terms", "refund", "risk", "aml", "disclaimer"].map((link) => (
+            <button key={link} style={styles.footerLinkBtn} onClick={() => go(`/legal/${link}`)}>
+              {link.replace("-", " ").toUpperCase()}
             </button>
           ))}
         </div>
-        <p style={{ margin: "20px 0 0", color: "#475569", fontSize: "11px" }}>
-          © 2026 Save Money Autonomous Systems. All Capital Matrix Systems Protected.
+        <p style={styles.footerCopyright}>
+          © 2026 Save Money Inc. Autonomous Financial Networks. All Rights Reserved.
         </p>
       </footer>
 
-      {/* TACTICAL BOTTOM DOCK NAVIGATION */}
+      {/* FLOATING GLASS BOTTOM NAVIGATION DOCK */}
       <nav style={styles.bottomNav}>
-        <BottomNavItem icon="🏠" title="Core" active={location.pathname === "/home" || location.pathname === "/"} onClick={() => go("/home")} />
+        <BottomNavItem icon="🏠" title="Home" active={location.pathname === "/home" || location.pathname === "/"} onClick={() => go("/home")} />
         <BottomNavItem icon="👛" title="Vault" active={location.pathname === "/wallet"} onClick={() => go("/wallet")} />
-        <BottomNavItem icon="👥" title="Affiliate" active={location.pathname === "/refer"} onClick={() => go("/refer")} />
-        <BottomNavItem icon="🌲" title="Network Tree" active={location.pathname === "/referral-tree"} onClick={() => go("/referral-tree")} />
+        <BottomNavItem icon="👥" title="Network" active={location.pathname === "/refer"} onClick={() => go("/refer")} />
+        <BottomNavItem icon="🌲" title="Tree" active={location.pathname === "/referral-tree"} onClick={() => go("/referral-tree")} />
       </nav>
 
     </div>
   );
 }
 
-// Subcomponents with Styled System Props
-function DashboardStatCard({ icon, title, value, gradient }) {
-  const themes = {
-    blue: { bg: "linear-gradient(135deg, #1e40af 0%, #0f172a 100%)", border: "#3b82f6" },
-    green: { bg: "linear-gradient(135deg, #065f46 0%, #0f172a 100%)", border: "#22c55e" },
-    purple: { bg: "linear-gradient(135deg, #6b21a8 0%, #0f172a 100%)", border: "#a855f7" },
-    orange: { bg: "linear-gradient(135deg, #9a3412 0%, #0f172a 100%)", border: "#f97316" }
+// 📌 SUB-COMPONENTS
+function DashboardStatCard({ icon, title, value, type }) {
+  const colors = {
+    blue: { bg: "rgba(14, 165, 233, 0.04)", border: "rgba(14, 165, 233, 0.2)", glow: "#0ea5e9" },
+    green: { bg: "rgba(34, 197, 94, 0.04)", border: "rgba(34, 197, 94, 0.2)", glow: "#22c55e" },
+    purple: { bg: "rgba(168, 85, 247, 0.04)", border: "rgba(168, 85, 247, 0.2)", glow: "#a855f7" },
+    orange: { bg: "rgba(249, 115, 22, 0.04)", border: "rgba(249, 115, 22, 0.2)", glow: "#f97316" }
   };
 
   return (
-    <div style={{ ...styles.statCard, background: themes[gradient].bg, border: `1px solid ${themes[gradient].border}` }}>
-      <div style={styles.statIcon}>{icon}</div>
+    <div style={{ ...styles.statCard, background: colors[type].bg, borderColor: colors[type].border }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={styles.statIcon}>{icon}</span>
+        <div style={{ ...styles.statDot, background: colors[type].glow, boxShadow: `0 0 8px ${colors[type].glow}` }}></div>
+      </div>
       <p style={styles.statTitle}>{title}</p>
-      <h2 style={styles.statValue}>{value}</h2>
+      <h3 style={styles.statValue}>{value}</h3>
     </div>
   );
 }
@@ -320,9 +287,9 @@ function DashboardStatCard({ icon, title, value, gradient }) {
 function PremiumActionButton({ icon, title, subtitle, onClick }) {
   return (
     <button style={styles.actionButton} onClick={onClick}>
-      <div style={styles.actionIconCircle}>{icon}</div>
-      <div style={styles.actionTextBox}>
-        <h3 style={styles.actionTitle}>{title}</h3>
+      <div style={styles.actionIcon}>{icon}</div>
+      <div style={{ overflow: "hidden" }}>
+        <h4 style={styles.actionTitle}>{title}</h4>
         <p style={styles.actionSubtitle}>{subtitle}</p>
       </div>
     </button>
@@ -332,20 +299,19 @@ function PremiumActionButton({ icon, title, subtitle, onClick }) {
 function PremiumSectionTitle({ title, color }) {
   return (
     <div style={styles.sectionTitleWrap}>
-      <div style={{ ...styles.sectionLine, background: `linear-gradient(90deg, transparent, ${color})` }}></div>
-      <h2 style={{ ...styles.sectionTitleText, color }}>{title}</h2>
-      <div style={{ ...styles.sectionLine, background: `linear-gradient(90deg, ${color}, transparent)` }}></div>
+      <div style={{ ...styles.sectionTitleDot, background: color }}></div>
+      <h4 style={{ ...styles.sectionTitleText, color }}>{title}</h4>
     </div>
   );
 }
 
 function TrustMiniCard({ icon, title, subtitle }) {
   return (
-    <div style={styles.trustMiniCard}>
+    <div style={styles.trustCard}>
       <span style={{ fontSize: "20px" }}>{icon}</span>
       <div>
-        <h4 style={{ margin: 0, fontSize: "13px", color: "#f1f5f9" }}>{title}</h4>
-        <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#64748b" }}>{subtitle}</p>
+        <h5 style={styles.trustTitle}>{title}</h5>
+        <p style={styles.trustSubtitle}>{subtitle}</p>
       </div>
     </div>
   );
@@ -353,128 +319,122 @@ function TrustMiniCard({ icon, title, subtitle }) {
 
 function BottomNavItem({ icon, title, active, onClick }) {
   return (
-    <button style={{ ...styles.bottomNavItem, opacity: active ? 1 : 0.45 }} onClick={onClick}>
-      <span style={{ fontSize: "22px", filter: active ? "drop-shadow(0 0 8px #22c55e)" : "none" }}>{icon}</span>
-      <small style={{ fontSize: "11px", color: active ? "#22c55e" : "#94a3b8", fontWeight: active ? "800" : "500", marginTop: "3px" }}>{title}</small>
+    <button style={{ ...styles.bottomNavItem, opacity: active ? 1 : 0.5 }} onClick={onClick}>
+      <span style={{ fontSize: "22px", color: active ? "#22c55e" : "#94a3b8" }}>{icon}</span>
+      <span style={{ fontSize: "11px", color: active ? "#22c55e" : "#94a3b8", fontWeight: active ? "700" : "500" }}>{title}</span>
     </button>
   );
 }
 
-// 💎 PREMIUM STYLESHEET
+// 👑 ULTRA PREMIUM UI STYLESHEET
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(180deg, #020617 0%, #070f24 50%, #020617 100%)",
-    color: "#f1f5f9",
-    padding: "0 16px 120px",
-    fontFamily: "'Segoe UI', system-ui, sans-serif"
+    background: "#030712", // গভীর চমৎকার ব্ল্যাকশ-ডার্ক ব্যাকগ্রাউন্ড
+    color: "#f3f4f6",
+    padding: "0 16px 120px 16px",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif",
+    boxSizing: "border-box"
   },
   loadingPage: {
     minHeight: "100vh",
-    background: "#020617",
+    background: "#030712",
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center"
   },
-  loadingCard: {
-    background: "#0f172a",
-    padding: "32px",
-    borderRadius: "24px",
-    textAlign: "center",
-    border: "1px solid #1e293b",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.5)"
-  },
-  spinner: {
-    width: "40px",
-    height: "40px",
-    border: "4px solid #1e293b",
-    borderTop: "4px solid #22c55e",
+  loaderRing: {
+    width: "45px",
+    height: "45px",
+    border: "3px solid #1f2937",
+    borderTop: "3px solid #22c55e",
     borderRadius: "50%",
-    margin: "0 auto",
-    animation: "spin 1s linear infinite"
+    animation: "spin 0.8s linear infinite"
   },
   topHeader: {
     height: "70px",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottom: "1px solid #1e293b",
-    marginBottom: "16px"
+    borderBottom: "1px solid rgba(255,255,255,0.03)"
   },
   menuButton: {
     background: "transparent",
     border: "none",
-    color: "white",
-    fontSize: "26px",
+    color: "#94a3b8",
+    fontSize: "24px",
     cursor: "pointer"
   },
-  headerTitle: {
-    margin: 0,
-    fontSize: "16px",
+  brandLogo: {
+    fontSize: "18px",
     fontWeight: "800",
-    letterSpacing: "0.5px",
-    color: "#94a3b8"
+    background: "linear-gradient(to right, #ffffff, #94a3b8)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent"
   },
   logoutBtn: {
     padding: "8px 14px",
-    border: "none",
-    borderRadius: "10px",
-    background: "rgba(239,68,68,0.15)",
-    color: "#ef4444",
-    fontWeight: "700",
+    background: "rgba(239, 68, 68, 0.08)",
+    border: "1px solid rgba(239, 68, 68, 0.2)",
+    borderRadius: "12px",
+    color: "#f87171",
     fontSize: "12px",
-    cursor: "pointer",
-    border: "1px solid rgba(239,68,68,0.3)"
+    fontWeight: "700",
+    cursor: "pointer"
   },
   notificationButton: {
     position: "relative",
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid #1e293b",
-    color: "white",
-    fontSize: "20px",
     width: "40px",
     height: "40px",
-    borderRadius: "10px",
+    background: "rgba(255,255,255,0.02)",
+    border: "1px solid rgba(255,255,255,0.05)",
+    borderRadius: "12px",
     cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "18px"
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: "2px",
+    right: "2px",
+    background: "#ef4444",
+    color: "white",
+    fontSize: "10px",
+    fontWeight: "700",
+    minWidth: "16px",
+    height: "16px",
+    borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center"
   },
-  notificationBadge: {
-    position: "absolute",
-    top: "-4px",
-    right: "-4px",
-    background: "#ef4444",
-    color: "white",
-    minWidth: "18px",
-    height: "18px",
-    borderRadius: "50%",
-    fontSize: "10px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "bold",
-    padding: "0 2px"
-  },
   heroWrapper: {
-    background: "linear-gradient(145deg, #0f172a 0%, #1e293b 100%)",
-    border: "1px solid #334155",
+    background: "linear-gradient(135deg, #0b1528 0%, #030712 100%)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
     borderRadius: "24px",
     padding: "20px",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.35)"
+    marginTop: "10px",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.4)"
   },
-  heroMainRow: {
+  heroFlex: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px"
+  },
+  profileSection: {
     display: "flex",
     alignItems: "center",
-    gap: "16px"
+    gap: "14px"
   },
   profilePhotoCircle: {
-    width: "64px",
-    height: "64px",
+    width: "56px",
+    height: "56px",
     borderRadius: "50%",
-    border: "2px solid #22c55e",
-    overflow: "hidden",
-    boxShadow: "0 0 15px rgba(34,197,94,0.2)"
+    border: "2px solid rgba(255,255,255,0.1)",
+    overflow: "hidden"
   },
   profilePhoto: {
     width: "100%",
@@ -482,20 +442,11 @@ const styles = {
     objectFit: "cover"
   },
   defaultProfileIcon: {
-    fontSize: "36px",
-    lineHeight: "64px",
+    fontSize: "32px",
+    lineHeight: "56px",
     textAlign: "center",
     display: "block",
-    background: "#1e293b"
-  },
-  heroUserInfo: {
-    flex: 1
-  },
-  heroWelcome: {
-    margin: 0,
-    fontSize: "12px",
-    color: "#64748b",
-    fontWeight: "600"
+    background: "#1f2937"
   },
   heroNameRow: {
     display: "flex",
@@ -503,44 +454,50 @@ const styles = {
     gap: "8px"
   },
   heroName: {
-    margin: "2px 0",
+    margin: 0,
     fontSize: "20px",
     fontWeight: "800",
-    color: "#f8fafc"
+    color: "#ffffff"
   },
   verifiedBadge: {
-    background: "rgba(34,197,94,0.15)",
-    color: "#22c55e",
+    background: "rgba(34, 197, 94, 0.12)",
+    color: "#4ade80",
     fontSize: "11px",
     padding: "2px 8px",
     borderRadius: "20px",
-    fontWeight: "700"
+    fontWeight: "600"
   },
   heroSubtitle: {
-    margin: 0,
+    margin: "2px 0 0 0",
     fontSize: "12px",
-    color: "#94a3b8"
+    color: "#64748b"
   },
   heroWalletCard: {
-    marginTop: "20px",
-    borderRadius: "16px",
+    background: "linear-gradient(135deg, #111827 0%, #1f2937 100%)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: "18px",
     padding: "16px",
-    background: "linear-gradient(135deg, #22c55e 0%, #4dd4ac 100%)",
-    boxShadow: "0 10px 25px rgba(34,197,94,0.25)"
+    boxShadow: "0 8px 16px rgba(0,0,0,0.2)"
   },
-  walletValueText: {
-    margin: "8px 0 0 0",
-    fontSize: "28px",
+  walletLabel: {
+    margin: 0,
+    fontSize: "11px",
+    color: "#94a3b8",
+    fontWeight: "700",
+    letterSpacing: "1px"
+  },
+  walletValue: {
+    margin: "6px 0 0 0",
+    fontSize: "26px",
     fontWeight: "900",
-    color: "#020617",
-    letterSpacing: "-0.5px"
+    color: "#22c55e"
   },
   latestCard: {
-    marginTop: "12px",
+    marginTop: "14px",
+    background: "rgba(255,255,255,0.02)",
+    border: "1px solid rgba(255,255,255,0.05)",
+    padding: "12px 16px",
     borderRadius: "16px",
-    padding: "14px",
-    background: "#1e293b",
-    border: "1px solid #334155",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -549,16 +506,29 @@ const styles = {
   latestLeft: {
     display: "flex",
     alignItems: "center",
-    gap: "12px"
+    gap: "12px",
+    maxWidth: "85%"
   },
   latestIcon: {
-    fontSize: "22px"
+    fontSize: "18px"
+  },
+  latestTitle: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#94a3b8",
+    fontWeight: "600"
+  },
+  latestText: {
+    margin: 0,
+    fontSize: "13px",
+    color: "#e5e7eb",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis"
   },
   latestArrow: {
-    background: "transparent",
-    border: "none",
     color: "#64748b",
-    fontSize: "24px"
+    fontSize: "16px"
   },
   statsGrid: {
     display: "grid",
@@ -567,41 +537,47 @@ const styles = {
     marginTop: "16px"
   },
   statCard: {
-    borderRadius: "16px",
+    border: "1px solid",
+    borderRadius: "18px",
     padding: "16px",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-    position: "relative"
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
   },
   statIcon: {
-    fontSize: "24px"
+    fontSize: "20px"
+  },
+  statDot: {
+    width: "6px",
+    height: "6px",
+    borderRadius: "50%"
   },
   statTitle: {
-    margin: "12px 0 4px",
-    color: "#94a3b8",
+    margin: "12px 0 2px 0",
     fontSize: "12px",
+    color: "#64748b",
     fontWeight: "600"
   },
   statValue: {
     margin: 0,
     fontSize: "18px",
     fontWeight: "800",
-    color: "#f8fafc"
+    color: "#ffffff"
   },
   sectionTitleWrap: {
     display: "flex",
     alignItems: "center",
-    margin: "24px 0 14px",
-    gap: "10px"
+    gap: "8px",
+    margin: "24px 0 12px 0"
   },
-  sectionLine: {
-    flex: 1,
-    height: "1px"
+  sectionTitleDot: {
+    width: "4px",
+    height: "14px",
+    borderRadius: "4px"
   },
   sectionTitleText: {
     margin: 0,
     fontSize: "12px",
     fontWeight: "800",
-    letterSpacing: "1px"
+    letterSpacing: "0.5px"
   },
   actionPanel: {
     display: "grid",
@@ -609,8 +585,8 @@ const styles = {
     gap: "10px"
   },
   actionButton: {
-    background: "#0f172a",
-    border: "1px solid #1e293b",
+    background: "rgba(255,255,255,0.01)",
+    border: "1px solid rgba(255,255,255,0.04)",
     borderRadius: "16px",
     padding: "14px",
     display: "flex",
@@ -618,26 +594,23 @@ const styles = {
     gap: "12px",
     textAlign: "left",
     cursor: "pointer",
-    transition: "transform 0.2s"
+    outline: "none"
   },
-  actionIconCircle: {
-    width: "38px",
-    height: "38px",
-    borderRadius: "10px",
-    background: "#1e293b",
+  actionIcon: {
+    fontSize: "20px",
+    width: "36px",
+    height: "36px",
+    background: "rgba(255,255,255,0.03)",
+    borderRadius: "12px",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    fontSize: "18px"
-  },
-  actionTextBox: {
-    flex: 1
+    justifyContent: "center"
   },
   actionTitle: {
     margin: 0,
     fontSize: "13px",
     fontWeight: "700",
-    color: "#f1f5f9"
+    color: "#f3f4f6"
   },
   actionSubtitle: {
     margin: "2px 0 0 0",
@@ -646,96 +619,136 @@ const styles = {
   },
   promoBanner: {
     marginTop: "24px",
-    borderRadius: "20px",
+    background: "linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)",
+    border: "1px solid rgba(59, 130, 246, 0.2)",
+    borderRadius: "24px",
     padding: "20px",
-    background: "linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)",
     display: "flex",
-    justifyContent: "space-between",
     alignItems: "center",
-    border: "1px solid #818cf8"
+    justifyContent: "space-between",
+    position: "relative",
+    overflow: "hidden"
+  },
+  promoContent: {
+    maxWidth: "75%",
+    zIndex: 2
+  },
+  promoHeading: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "800",
+    color: "#ffffff",
+    lineHeight: "1.3"
+  },
+  promoSub: {
+    margin: "6px 0 14px 0",
+    fontSize: "12px",
+    color: "#94a3b8"
   },
   promoButton: {
     padding: "8px 16px",
-    background: "white",
-    color: "#2563eb",
+    background: "#22c55e",
+    color: "#030712",
     border: "none",
     borderRadius: "10px",
     fontWeight: "700",
     fontSize: "12px",
-    cursor: "pointer"
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(34, 197, 94, 0.2)"
   },
-  promoIcon: {
-    fontSize: "36px",
-    opacity: 0.3
+  promoGraphic: {
+    fontSize: "40px",
+    opacity: 0.15,
+    position: "absolute",
+    right: "15px"
   },
   trustPanel: {
     display: "grid",
-    gridTemplateColumns: "1fr",
+    gridTemplateColumns: "1fr 1fr",
     gap: "10px",
     marginTop: "20px"
   },
-  trustMiniCard: {
-    background: "#0f172a",
-    border: "1px solid #1e293b",
-    borderRadius: "12px",
+  trustCard: {
+    background: "rgba(255,255,255,0.01)",
+    border: "1px solid rgba(255,255,255,0.03)",
+    borderRadius: "14px",
     padding: "12px",
     display: "flex",
     alignItems: "center",
-    gap: "12px"
+    gap: "10px"
+  },
+  trustTitle: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#e5e7eb",
+    fontWeight: "600"
+  },
+  trustSubtitle: {
+    margin: "2px 0 0 0",
+    fontSize: "10px",
+    color: "#64748b"
   },
   aboutStrip: {
     width: "100%",
     marginTop: "16px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid #1e293b",
-    color: "#94a3b8",
+    background: "transparent",
+    border: "1px solid rgba(255,255,255,0.05)",
+    color: "#64748b",
     padding: "12px",
-    borderRadius: "12px",
+    borderRadius: "14px",
     fontSize: "12px",
     fontWeight: "600",
     cursor: "pointer"
   },
   helpText: {
     textAlign: "center",
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#22c55e",
+    margin: "35px 0 15px 0",
     letterSpacing: "0.5px",
-    margin: "30px 0 10px"
+    opacity: 0.8
   },
   footer: {
-    marginTop: "40px",
-    borderTop: "1px solid #1e293b",
-    paddingTop: "24px",
+    marginTop: "30px",
+    borderTop: "1px solid rgba(255,255,255,0.03)",
+    paddingTop: "20px",
     textAlign: "center"
   },
   footerLinks: {
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: "12px",
-    marginTop: "10px"
+    gap: "14px"
   },
   footerLinkBtn: {
     background: "transparent",
     border: "none",
-    color: "#64748b",
+    color: "#475569",
     fontSize: "11px",
-    cursor: "pointer",
-    fontWeight: "600"
+    fontWeight: "700",
+    cursor: "pointer"
+  },
+  footerCopyright: {
+    margin: "14px 0 0 0",
+    fontSize: "11px",
+    color: "#334155"
   },
   bottomNav: {
     position: "fixed",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "68px",
-    background: "rgba(15, 23, 42, 0.85)",
-    backdropFilter: "blur(12px)",
-    borderTop: "1px solid #1e293b",
+    bottom: "16px",
+    left: "16px",
+    right: "16px",
+    height: "64px",
+    background: "rgba(17, 24, 39, 0.7)",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: "20px",
     display: "flex",
     justifyContent: "space-around",
     alignItems: "center",
-    zIndex: 999
+    boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+    zIndex: 9999
   },
   bottomNavItem: {
     background: "transparent",
@@ -743,6 +756,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    gap: "3px",
     cursor: "pointer"
   }
 };
