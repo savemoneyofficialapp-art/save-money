@@ -24,45 +24,46 @@ export default function ReferralTree() {
   }, [filter]);
 
   const load = async () => {
-    try {
-      setLoading(true);
-      const res = await fetchWithAuth(`${API}/referral-tree`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, filter })
-      });
+  try {
+    setLoading(true);
+    const res = await fetchWithAuth(`${API}/referral-tree`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email }) // 👈 এখান থেকে filter বাদ দিয়ে শুধু email রাখুন
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (data.msg === "Token expired or invalid") {
-        localStorage.clear();
-        window.location.href = "/login";
-        return;
-      }
-
-      if (!res.ok) {
-        alert(data.msg || "Referral tree load failed");
-        setTree([]);
-        return;
-      }
-
-      setTree(data.tree || null);
-      setAnalytics(data.analytics || {
-        totalUsers: 0,
-        activeUsers: 0,
-        totalBusiness: 0,
-        levels: {}
-      });
-    } catch (err) {
-      console.log("TREE ERROR:", err);
-      alert("Backend error while loading referral tree");
-      setTree([]);
-    } finally {
-      setLoading(false);
+    if (data.msg === "Token expired or invalid") {
+      localStorage.clear();
+      window.location.href = "/login";
+      return;
     }
-  };
+
+    if (!res.ok) {
+      alert(data.msg || "Referral tree load failed");
+      setTree(null); // ফেইল করলে null বা অবজেক্ট রাখুন
+      return;
+    }
+
+    setTree(data.tree || null);
+    setAnalytics(data.analytics || {
+      totalUsers: 0,
+      activeUsers: 0,
+      totalBusiness: 0,
+      levels: {}
+    });
+  } catch (err) {
+    console.log("TREE ERROR:", err);
+    alert("Backend error while loading referral tree");
+    setTree(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const toggleNode = (key, e) => {
     e.stopPropagation(); // কার্ড ক্লিকের সাথে যেন পপআপ বা চিলড্রেন ওপেনিং জ্যাম না হয়
