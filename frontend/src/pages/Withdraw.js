@@ -180,7 +180,8 @@ export default function Withdraw() {
               </div>
               <div style={styles.bankMeta}>
                 <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
-                <span style={styles.metaValue}>•••• •••• {bank.accountNumber?.slice(-4) || "0000"}</span>
+                <span style={styles.metaValue}>{bank.accountNumber}</span>
+
               </div>
               <div style={styles.bankMeta}>
                 <span style={styles.metaLabel}>IFSC CODE</span>
