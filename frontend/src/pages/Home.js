@@ -107,7 +107,7 @@ export default function Home() {
     return (
       <div style={styles.loadingPage}>
         <div style={styles.loadingCard}>
-          <div style={styles.loadingLogo}>ðŸ’š</div>
+          <div style={styles.loadingLogo}>💚</div>
           <h2>Save Money</h2>
           <p>Loading your dashboard...</p>
         </div>
@@ -121,18 +121,18 @@ export default function Home() {
       {/* TOP HEADER */}
       <div style={styles.topHeader}>
         <button style={styles.menuButton}>
-          â˜°
+          ☰
         </button>
 
         <h2 style={styles.headerTitle}>
           Welcome, {name}
         </h2>
 
-           <button
+        <button
           style={styles.notificationButton}
           onClick={() => go("/notifications")}
         >
-          <span>ðŸ””</span>
+          <span>🔔</span>
 
           {notificationCount > 0 && (
             <small style={styles.notificationBadge}>
@@ -141,18 +141,15 @@ export default function Home() {
           )}
         </button>
 
- <button
-    style={styles.logoutBtn}
-    onClick={() => {
-
-      localStorage.clear();
-
-      navigate("/login");
-
-    }}
-  >
-    Logout
-  </button>
+        <button
+          style={styles.logoutBtn}
+          onClick={() => {
+            localStorage.clear();
+            navigate("/login");
+          }}
+        >
+          Logout
+        </button>
 
       </div>
 
@@ -168,13 +165,13 @@ export default function Home() {
               style={styles.profilePhoto}
             />
           ) : (
-            <span style={styles.defaultProfileIcon}>ðŸ‘¤</span>
+            <span style={styles.defaultProfileIcon}>👤</span>
           )}
         </div>
 
         <div style={styles.heroUserInfo}>
           <p style={styles.heroWelcome}>
-            Welcome Back ðŸ‘‹
+            Welcome Back 👋
           </p>
 
           <div style={styles.heroNameRow}>
@@ -184,13 +181,13 @@ export default function Home() {
 
             {kycApproved && (
               <span style={styles.verifiedBadge}>
-                âœ”
+                ✔
               </span>
             )}
           </div>
 
           <p style={styles.heroSubtitle}>
-            Save Money, Secure Future ðŸ’š
+            Save Money, Secure Future 💚
           </p>
         </div>
 
@@ -198,11 +195,11 @@ export default function Home() {
           <p>Total Wallet</p>
 
           <h2>
-            â‚¹{wallet.toFixed(2)}
+            Scale: ₹{wallet.toFixed(2)}
           </h2>
 
           <span>
-            ðŸ‘›
+            👛
           </span>
         </div>
       </section>
@@ -211,7 +208,7 @@ export default function Home() {
       <section style={styles.latestCard}>
         <div style={styles.latestLeft}>
           <div style={styles.latestIcon}>
-            ðŸ“¢
+            📢
           </div>
 
           <div>
@@ -221,37 +218,37 @@ export default function Home() {
         </div>
 
         <button style={styles.latestArrow}>
-          â€º
+          ›
         </button>
       </section>
 
       {/* STATS CARDS */}
       <section style={styles.statsGrid}>
         <DashboardStatCard
-          icon="ðŸ“ˆ"
+          icon="📈"
           title="Total Investment"
-          value={`â‚¹${totalInvestment.toFixed(2)}`}
+          value={`₹${totalInvestment.toFixed(2)}`}
           gradient="blue"
         />
 
         <DashboardStatCard
-          icon="ðŸ“Š"
+          icon="📊"
           title="Total Return"
-          value={`â‚¹${totalReturn.toFixed(2)}`}
+          value={`₹${totalReturn.toFixed(2)}`}
           gradient="green"
         />
 
         <DashboardStatCard
-          icon="ðŸ‘¥"
+          icon="👥"
           title="Total Referral"
           value={totalReferral}
           gradient="purple"
         />
 
         <DashboardStatCard
-          icon="â¬‡ï¸"
+          icon="⬇️"
           title="Total Withdraw"
-          value={`â‚¹${totalWithdraw.toFixed(2)}`}
+          value={`₹${totalWithdraw.toFixed(2)}`}
           gradient="orange"
         />
       </section>
@@ -264,7 +261,7 @@ export default function Home() {
 
       <section style={styles.actionPanel}>
         <PremiumActionButton
-          icon="ðŸ’°"
+          icon="💰"
           title="INVEST NOW"
           subtitle="Start Investing"
           gradient="invest"
@@ -272,7 +269,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸ“ˆ"
+          icon="📈"
           title="My Investment"
           subtitle="View Details"
           gradient="myInvestment"
@@ -280,7 +277,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸ‘›"
+          icon="👛"
           title="Wallet"
           subtitle="Add & Manage"
           gradient="wallet"
@@ -288,7 +285,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸ’¸"
+          icon="💸"
           title="Withdraw"
           subtitle="Request Payout"
           gradient="withdraw"
@@ -296,7 +293,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸ‘¥"
+          icon="👥"
           title="Refer & Earn"
           subtitle="Invite & Earn"
           gradient="refer"
@@ -304,7 +301,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸ§¾"
+          icon="🧾"
           title="Leaderboard"
           subtitle="Top Referer"
           gradient="transaction"
@@ -320,7 +317,7 @@ export default function Home() {
 
       <section style={styles.actionPanel}>
         <PremiumActionButton
-          icon="âœ…"
+          icon="✅"
           title="KYC Verification"
           subtitle="Verify Your Account"
           gradient="kyc"
@@ -328,7 +325,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸŽ"
+          icon="🎁"
           title="Daily Reward"
           subtitle="Claim Reward"
           gradient="reward"
@@ -336,7 +333,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸ¦"
+          icon="🏦"
           title="Bank Details"
           subtitle="Manage Bank Info"
           gradient="bank"
@@ -344,7 +341,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸ“Š"
+          icon="📊"
           title="Investment Assistant"
           subtitle="Need You Help"
           gradient="plan"
@@ -352,7 +349,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸ•¸ï¸"
+          icon="🕸️"
           title="Analytics"
           subtitle="User Analytics"
           gradient="notification"
@@ -360,7 +357,7 @@ export default function Home() {
         />
 
         <PremiumActionButton
-          icon="ðŸŽ§"
+          icon="🎧"
           title="Support"
           subtitle="Need Help?"
           gradient="support"
@@ -385,37 +382,37 @@ export default function Home() {
             style={styles.promoButton}
             onClick={() => go("/save-money")}
           >
-            Invest Now â†’
+            Invest Now →
           </button>
         </div>
 
         <div style={styles.promoIcon}>
-          ðŸ’°ðŸ“ˆ
+          💰📈
         </div>
       </section>
 
       {/* TRUST CARDS */}
       <section style={styles.trustPanel}>
         <TrustMiniCard
-          icon="ðŸ”’"
+          icon="🔒"
           title="100% Secure"
           subtitle="Your money is safe"
         />
 
         <TrustMiniCard
-          icon="âš¡"
+          icon="⚡"
           title="Fast Payout"
           subtitle="Quick withdrawals"
         />
 
         <TrustMiniCard
-          icon="ðŸ›¡ï¸"
+          icon="🛡️"
           title="Trusted Platform"
           subtitle="Trusted by users"
         />
 
         <TrustMiniCard
-          icon="ðŸ’¬"
+          icon="💬"
           title="24/7 Support"
           subtitle="We are here"
         />
@@ -426,12 +423,12 @@ export default function Home() {
         style={styles.aboutStrip}
         onClick={() => go("/about")}
       >
-        ðŸ¢ About Save Money
+        🏢 About Save Money
       </button>
 
       {/* HELP TEXT */}
       <h1 style={styles.helpText}>
-        HELP OTHER FOR EARN MORE ðŸ’¸
+        HELP OTHER FOR EARN MORE 💸
       </h1>
 
       {/* FOOTER */}
@@ -467,39 +464,35 @@ export default function Home() {
         </div>
 
         <p>
-          Â© 2026 Save Money. All Rights Reserved.
+          © 2026 Save Money. All Rights Reserved.
         </p>
       </footer>
-
-    
 
       {/* BOTTOM NAVIGATION */}
       <nav style={styles.bottomNav}>
         <BottomNavItem
-          icon="ðŸ "
+          icon="🏠"
           title="Home"
           active={location.pathname === "/home"}
           onClick={() => go("/home")}
         />
 
-       
-
         <BottomNavItem
-          icon="ðŸ‘›"
+          icon="👛"
           title="Wallet"
           active={location.pathname === "/wallet"}
           onClick={() => go("/wallet")}
         />
 
         <BottomNavItem
-          icon="ðŸ‘¥"
+          icon="👥"
           title="Refer"
           active={location.pathname === "/refer"}
           onClick={() => go("/refer")}
         />
 
         <BottomNavItem
-          icon="ðŸŒ²"
+          icon="🌲"
           title="tree"
           active={location.pathname === "/profile"}
           onClick={() => go("/referral-tree")}
@@ -699,17 +692,17 @@ const styles = {
   },
 
   logoutBtn: {
-  height: "42px",
-  padding: "0 18px",
-  border: "none",
-  borderRadius: "14px",
-  background: "linear-gradient(135deg,#ef4444,#dc2626)",
-  color: "white",
-  fontWeight: "800",
-  fontSize: "14px",
-  boxShadow: "0 4px 14px rgba(239,68,68,0.35)",
-  cursor: "pointer"
-},
+    height: "42px",
+    padding: "0 18px",
+    border: "none",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg,#ef4444,#dc2626)",
+    color: "white",
+    fontWeight: "800",
+    fontSize: "14px",
+    boxShadow: "0 4px 14px rgba(239,68,68,0.35)",
+    cursor: "pointer"
+  },
 
   notificationButton: {
     position: "relative",
@@ -835,17 +828,16 @@ const styles = {
   },
 
   latestCard: {
-  marginTop: "14px",
-  borderRadius: "20px",
-  padding: "16px",
-  background: "linear-gradient(135deg,#ffb703,#fb8500,#ff006e)",
-  border: "2px solid #ffd166",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  boxShadow: "0 0 25px rgba(255,183,3,0.45)"
-},
-
+    marginTop: "14px",
+    borderRadius: "20px",
+    padding: "16px",
+    background: "linear-gradient(135deg,#ffb703,#fb8500,#ff006e)",
+    border: "2px solid #ffd166",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: "0 0 25px rgba(255,183,3,0.45)"
+  },
 
   latestLeft: {
     display: "flex",
@@ -865,20 +857,20 @@ const styles = {
   },
 
   statsGrid: {
-  display: "grid",
-  gridTemplateColumns: "repeat(4,1fr)",
-  gap: "12px",
-  marginTop: "16px"
-},
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
+    gap: "12px",
+    marginTop: "16px"
+  },
 
   statCard: {
-  position: "relative",
-  minHeight: "120px",
-  borderRadius: "20px",
-  padding: "14px",
-  overflow: "hidden",
-  boxShadow: "0 10px 25px rgba(0,0,0,0.45)"
-},
+    position: "relative",
+    minHeight: "120px",
+    borderRadius: "20px",
+    padding: "14px",
+    overflow: "hidden",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.45)"
+  },
 
   statBlue: {
     background: "linear-gradient(135deg,#2f63ff,#061b91)"
@@ -935,12 +927,12 @@ const styles = {
     gap: "10px"
   },
 
- sectionLine: {
-  width: "70px",
-  height: "3px",
-  borderRadius: "10px",
-  background: "linear-gradient(90deg,transparent,#38bdf8,#facc15,transparent)"
-},
+  sectionLine: {
+    width: "70px",
+    height: "3px",
+    borderRadius: "10px",
+    background: "linear-gradient(90deg,transparent,#38bdf8,#facc15,transparent)"
+  },
 
   sectionTitleText: {
     margin: 0,
@@ -950,62 +942,62 @@ const styles = {
   },
 
   actionPanel: {
-  background: "linear-gradient(180deg,#061936,#07101e)",
-  border: "2px solid #1d4ed8",
-  borderRadius: "26px",
-  padding: "14px",
-  display: "grid",
-  gridTemplateColumns: "repeat(3,1fr)",
-  gap: "14px",
-  boxShadow: "inset 0 0 35px rgba(59,130,246,0.25)"
-},
+    background: "linear-gradient(180deg,#061936,#07101e)",
+    border: "2px solid #1d4ed8",
+    borderRadius: "26px",
+    padding: "14px",
+    display: "grid",
+    gridTemplateColumns: "repeat(3,1fr)",
+    gap: "14px",
+    boxShadow: "inset 0 0 35px rgba(59,130,246,0.25)"
+  },
 
   actionButton: {
-  position: "relative",
-  border: "none",
-  borderRadius: "20px",
-  minHeight: "120px",
-  color: "white",
-  padding: "14px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "8px",
-  overflow: "hidden",
-  boxShadow: "0 10px 26px rgba(0,0,0,0.45)",
-  cursor: "pointer"
-},
+    position: "relative",
+    border: "none",
+    borderRadius: "20px",
+    minHeight: "120px",
+    color: "white",
+    padding: "14px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    overflow: "hidden",
+    boxShadow: "0 10px 26px rgba(0,0,0,0.45)",
+    cursor: "pointer"
+  },
 
-actionIconCircle: {
-  width: "46px",
-  height: "46px",
-  borderRadius: "16px",
-  background: "rgba(255,255,255,0.28)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "28px",
-  boxShadow: "inset 0 0 12px rgba(255,255,255,0.25)"
-},
+  actionIconCircle: {
+    width: "46px",
+    height: "46px",
+    borderRadius: "16px",
+    background: "rgba(255,255,255,0.28)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "28px",
+    boxShadow: "inset 0 0 12px rgba(255,255,255,0.25)"
+  },
 
-actionTextBox: {
-  textAlign: "center",
-  zIndex: 2
-},
+  actionTextBox: {
+    textAlign: "center",
+    zIndex: 2
+  },
 
-actionTitle: {
-  margin: 0,
-  fontSize: "14px",
-  fontWeight: "900"
-},
+  actionTitle: {
+    margin: 0,
+    fontSize: "14px",
+    fontWeight: "900"
+  },
 
-actionSubtitle: {
-  margin: "4px 0 0",
-  fontSize: "11px",
-  color: "rgba(255,255,255,0.92)",
-  fontWeight: "700"
-},
+  actionSubtitle: {
+    margin: "4px 0 0",
+    fontSize: "11px",
+    color: "rgba(255,255,255,0.92)",
+    fontWeight: "700"
+  },
 
   actionShine: {
     position: "absolute",
@@ -1017,43 +1009,42 @@ actionSubtitle: {
     background: "rgba(255,255,255,0.17)"
   },
 
- actionInvest: {
-  background: "linear-gradient(135deg,#00ff75,#00c853,#008f45)"
-},
-actionMyInvestment: {
-  background: "linear-gradient(135deg,#00b4ff,#2563eb,#003cff)"
-},
-actionWallet: {
-  background: "linear-gradient(135deg,#a855f7,#d946ef,#ff00d4)"
-},
-actionWithdraw: {
-  background: "linear-gradient(135deg,#ff6b00,#ff9f00,#ffd000)"
-},
-actionRefer: {
-  background: "linear-gradient(135deg,#ff007a,#ff2bd6,#b000ff)"
-},
-actionTransaction: {
-  background: "linear-gradient(135deg,#00e5ff,#00c8ff,#00ffd5)"
-},
-actionKyc: {
-  background: "linear-gradient(135deg,#00f5ff,#0284c7,#005eff)"
-},
-actionReward: {
-  background: "linear-gradient(135deg,#7c3aed,#a855f7,#e879f9)"
-},
-actionBank: {
-  background: "linear-gradient(135deg,#ff8c00,#ffb703,#ffdd00)"
-},
-actionPlan: {
-  background: "linear-gradient(135deg,#2979ff,#00b0ff,#00e5ff)"
-},
-actionNotification: {
-  background: "linear-gradient(135deg,#ff1744,#ff006e,#ff5c8d)"
-},
-actionSupport: {
-  background: "linear-gradient(135deg,#00ff75,#00e676,#00c853)"
-},
-
+  actionInvest: {
+    background: "linear-gradient(135deg,#00ff75,#00c853,#008f45)"
+  },
+  actionMyInvestment: {
+    background: "linear-gradient(135deg,#00b4ff,#2563eb,#003cff)"
+  },
+  actionWallet: {
+    background: "linear-gradient(135deg,#a855f7,#d946ef,#ff00d4)"
+  },
+  actionWithdraw: {
+    background: "linear-gradient(135deg,#ff6b00,#ff9f00,#ffd000)"
+  },
+  actionRefer: {
+    background: "linear-gradient(135deg,#ff007a,#ff2bd6,#b000ff)"
+  },
+  actionTransaction: {
+    background: "linear-gradient(135deg,#00e5ff,#00c8ff,#00ffd5)"
+  },
+  actionKyc: {
+    background: "linear-gradient(135deg,#00f5ff,#0284c7,#005eff)"
+  },
+  actionReward: {
+    background: "linear-gradient(135deg,#7c3aed,#a855f7,#e879f9)"
+  },
+  actionBank: {
+    background: "linear-gradient(135deg,#ff8c00,#ffb703,#ffdd00)"
+  },
+  actionPlan: {
+    background: "linear-gradient(135deg,#2979ff,#00b0ff,#00e5ff)"
+  },
+  actionNotification: {
+    background: "linear-gradient(135deg,#ff1744,#ff006e,#ff5c8d)"
+  },
+  actionSupport: {
+    background: "linear-gradient(135deg,#00ff75,#00e676,#00c853)"
+  },
 
   promoBanner: {
     marginTop: "18px",
@@ -1085,16 +1076,16 @@ actionSupport: {
     fontSize: "55px"
   },
 
- trustPanel: {
-  display: "grid",
-  gridTemplateColumns: "repeat(4,1fr)",
-  gap: "10px",
-  marginTop: "14px",
-  background: "#071831",
-  borderRadius: "22px",
-  padding: "12px",
-  border: "2px solid #1e40af"
-},
+  trustPanel: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
+    gap: "10px",
+    marginTop: "14px",
+    background: "#071831",
+    borderRadius: "22px",
+    padding: "12px",
+    border: "2px solid #1e40af"
+  },
 
   trustMiniCard: {
     display: "flex",
@@ -1144,25 +1135,25 @@ actionSupport: {
   footer: {
     textAlign: "center",
     padding: "24px 4px",
-     color: " #87CEEB"
+    color: " #87CEEB"
   },
 
   footerLinks: {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "10px",
-  justifyContent: "center",
-  marginBottom: "12px"
-},
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "10px",
+    justifyContent: "center",
+    marginBottom: "12px"
+  },
 
-footerLinkBtn: {
-  background: "transparent",
-  border: "none",
-  color: "#38bdf8",
-  fontSize: "12px",
-  fontWeight: "700",
-  cursor: "pointer"
-},
+  footerLinkBtn: {
+    background: "transparent",
+    border: "none",
+    color: "#38bdf8",
+    fontSize: "12px",
+    fontWeight: "700",
+    cursor: "pointer"
+  },
 
   quickBar: {
     position: "fixed",
