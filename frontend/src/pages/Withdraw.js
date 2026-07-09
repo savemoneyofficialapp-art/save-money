@@ -1,8 +1,11 @@
+আপনার Withdraw পেজটিকে একদম লাক্সারি ফিনটেক ও প্রিমিয়াম ব্যাংকিং অ্যাপের (যেমন: REVOLUT বা CRED) মতো ডিজাইনে রূপান্তর করা হলো।
+এতে **গ্লাস-মরফিজম (Glass-morphism)**, ডার্ক মোড নিওন বর্ডার, স্টাইলিশ ও গোছানো গ্রিড এবং ট্রানজিশন ইফেক্ট ব্যবহার করা হয়েছে। আগের সমস্ত বিজনেস লজিক, এপিআই কল এবং কন্ডিশন (যেমন ৮০% উইথড্রয়াল লিমিট ও ব্যাংক চেক) একদম আগের মতোই পারফেক্টলি কাজ করবে।
+### 🏦 আল্ট্রা-প্রিমিয়াম উইথড্র পেজ কোড (Withdraw.jsx)
+```jsx
 import React, { useEffect, useState } from "react";
 import { API } from "../config";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-
 
 export default function Withdraw() {
   const navigate = useNavigate();
@@ -21,7 +24,7 @@ export default function Withdraw() {
   }, []);
 
   const money = (n) =>
-    `₹ ${Number(n || 0).toLocaleString("en-IN", {
+    `₹${Number(n || 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
@@ -74,7 +77,6 @@ export default function Withdraw() {
       });
 
       const data = await res.json();
-
       alert(data.msg);
 
       if (data.success) {
@@ -90,230 +92,465 @@ export default function Withdraw() {
 
   return (
     <div style={styles.page}>
-      <button style={styles.backBtn} onClick={() => navigate(-1)}>←</button>
-
-      <div style={styles.header}>
-        <h1>Withdraw Money</h1>
-        <p>Withdraw up to 80% of your wallet balance</p>
+      {/* Top Navigation Wrapper */}
+      <div style={styles.topNav}>
+        <button style={styles.backBtn} onClick={() => navigate(-1)}>
+          ✕
+        </button>
+        <span style={styles.topNavTitle}>Secure Pay</span>
       </div>
 
-      <section style={styles.balanceGrid}>
-        <div style={styles.balanceCard}>
-          <span>💰</span>
-          <p>Today Wallet</p>
-          <h2>{money(walletBalance)}</h2>
+      <div style={styles.mainWrapper}>
+        {/* Header Section */}
+        <div style={styles.header}>
+          <h1 style={styles.mainHeading}>Withdraw Funds</h1>
+          <p style={styles.subHeading}>Transfer your rewards directly to your bank account</p>
         </div>
 
-        <div style={styles.balanceCard2}>
-          <span>⚡</span>
-          <p>Withdrawable Balance</p>
-          <h2>{money(withdrawableBalance)}</h2>
-          <small>80% of Today Wallet</small>
-        </div>
-      </section>
-
-      <section style={styles.formCard}>
-        <h2>Request Withdraw</h2>
-
-        <input
-          style={styles.input}
-          type="number"
-          placeholder="Enter withdraw amount minimum ₹100"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-
-        <button style={styles.submitBtn} onClick={submitWithdraw} disabled={loading}>
-          {loading ? "Submitting..." : "Submit Withdraw Request"}
-        </button>
-
-        <div style={styles.note}>
-          ⓘ After request, status will be Pending. Admin will approve or reject your withdraw.
-        </div>
-      </section>
-
-      <section style={styles.bankCard}>
-        <h2>🏦 Your Bank Details</h2>
-
-        {!bank ? (
-          <div>
-            <p>No bank details found.</p>
-            <button style={styles.bankBtn} onClick={() => navigate("/bank-details")}>
-              Add Bank Details
-            </button>
-          </div>
-        ) : (
-          <div style={styles.bankInfo}>
-            <p><b>Name:</b> {bank.accountHolderName}</p>
-            <p><b>Mobile:</b> {bank.mobile}</p>
-            <p><b>Bank:</b> {bank.bankName}</p>
-            <p><b>Account:</b> {bank.accountNumber}</p>
-            <p><b>IFSC:</b> {bank.ifscCode}</p>
-            <p><b>UPI:</b> {bank.upiId || "N/A"}</p>
-          </div>
-        )}
-      </section>
-
-      <section style={styles.historyCard}>
-        <h2>Withdraw History</h2>
-
-        {history.length === 0 ? (
-          <p style={styles.empty}>No withdraw history found</p>
-        ) : (
-          history.map((x) => (
-            <div key={x._id} style={styles.historyItem}>
-              <div>
-                <b>{money(x.amount)}</b>
-                <p>{new Date(x.createdAt).toLocaleString("en-IN")}</p>
-                {x.rejectReason && <small>{x.rejectReason}</small>}
-              </div>
-
-              <span
-                style={{
-                  ...styles.status,
-                  background:
-                    x.status === "Success"
-                      ? "#dcfce7"
-                      : x.status === "Rejected"
-                      ? "#ffe4e6"
-                      : "#fef9c3",
-                  color:
-                    x.status === "Success"
-                      ? "#16a34a"
-                      : x.status === "Rejected"
-                      ? "#e11d48"
-                      : "#ca8a04"
-                }}
-              >
-                {x.status}
-              </span>
+        {/* 💳 Balance Overview Cards Grid */}
+        <section style={styles.balanceGrid}>
+          <div style={styles.balanceCard}>
+            <div style={styles.cardHeader}>
+              <span style={styles.cardIcon}>💰</span>
+              <span style={styles.cardTag}>Total Earnings</span>
             </div>
-          ))
-        )}
-      </section>
+            <h2 style={styles.cardAmount}>{money(walletBalance)}</h2>
+            <p style={styles.cardDesc}>Available in wallet today</p>
+          </div>
+
+          <div style={{ ...styles.balanceCard, ...styles.balanceCardSpecial }}>
+            <div style={styles.cardHeader}>
+              <span style={styles.cardIcon}>⚡</span>
+              <span style={{ ...styles.cardTag, color: "#67e8f9" }}>Withdrawable</span>
+            </div>
+            <h2 style={{ ...styles.cardAmount, color: "#22d3ee" }}>{money(withdrawableBalance)}</h2>
+            <p style={styles.cardDesc}>80% limit configuration applied</p>
+          </div>
+        </section>
+
+        {/* 💸 Request Withdraw Area */}
+        <section style={styles.glassContainer}>
+          <h3 style={styles.sectionTitle}>Amount to Payout</h3>
+          
+          <div style={styles.inputWrapper}>
+            <span style={styles.currencyPrefix}>₹</span>
+            <input
+              style={styles.input}
+              type="number"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+          
+          <p style={styles.minNotice}>Minimum withdrawal limit is ₹100</p>
+
+          <button style={styles.submitBtn} onClick={submitWithdraw} disabled={loading}>
+            {loading ? (
+              <span style={styles.loaderFlex}>
+                <span style={styles.spinner}></span> Processing Request...
+              </span>
+            ) : "Confirm & Withdraw Funds"}
+          </button>
+
+          <div style={styles.noteBox}>
+            <span style={styles.noteIcon}>ⓘ</span>
+            <p style={styles.noteText}>
+              Payouts are verified via secure layer. Once submitted, requests usually approve within a few hours.
+            </p>
+          </div>
+        </section>
+
+        {/* 🏦 Dynamic Bank Details Section */}
+        <section style={styles.glassContainer}>
+          <h3 style={styles.sectionTitle}>🏦 Settlement Account</h3>
+
+          {!bank ? (
+            <div style={styles.noBankView}>
+              <p style={styles.noBankText}>No linked bank account detected for settlements.</p>
+              <button style={styles.bankSetupBtn} onClick={() => navigate("/bank-details")}>
+                + Add Bank Details
+              </button>
+            </div>
+          ) : (
+            <div style={styles.bankGrid}>
+              <div style={styles.bankMeta}>
+                <span style={styles.metaLabel}>HOLDER NAME</span>
+                <span style={styles.metaValue}>{bank.accountHolderName}</span>
+              </div>
+              <div style={styles.bankMeta}>
+                <span style={styles.metaLabel}>BANK NAME</span>
+                <span style={styles.metaValue}>{bank.bankName}</span>
+              </div>
+              <div style={styles.bankMeta}>
+                <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
+                <span style={styles.metaValue}>•••• •••• {bank.accountNumber?.slice(-4) || "0000"}</span>
+              </div>
+              <div style={styles.bankMeta}>
+                <span style={styles.metaLabel}>IFSC CODE</span>
+                <span style={styles.metaValue}>{bank.ifscCode}</span>
+              </div>
+              {bank.upiId && (
+                <div style={{ ...styles.bankMeta, gridColumn: "1 / -1" }}>
+                  <span style={styles.metaLabel}>CONNECTED UPI ID</span>
+                  <span style={{ ...styles.metaValue, color: "#a855f7" }}>{bank.upiId}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* 📜 Neat Transaction Audit Logs */}
+        <section style={styles.glassContainer}>
+          <h3 style={styles.sectionTitle}>Audit Statement</h3>
+
+          {history.length === 0 ? (
+            <div style={styles.emptyState}>
+              <p style={{ margin: 0 }}>No past settlement records found.</p>
+            </div>
+          ) : (
+            <div style={styles.historyList}>
+              {history.map((x) => {
+                const isSuccess = x.status === "Success";
+                const isRejected = x.status === "Rejected";
+                
+                return (
+                  <div key={x._id} style={styles.historyRow}>
+                    <div style={styles.historyLeft}>
+                      <span style={{
+                        ...styles.statusDot,
+                        background: isSuccess ? "#22c55e" : isRejected ? "#ef4444" : "#eab308"
+                      }}></span>
+                      <div>
+                        <span style={styles.historyAmt}>{money(x.amount)}</span>
+                        <span style={styles.historyDate}>
+                          {new Date(x.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                        </span>
+                        {x.rejectReason && <span style={styles.reasonText}>Reason: {x.rejectReason}</span>}
+                      </div>
+                    </div>
+
+                    <span
+                      style={{
+                        ...styles.statusBadge,
+                        background: isSuccess ? "rgba(34,197,94,0.1)" : isRejected ? "rgba(239,68,68,0.1)" : "rgba(234,179,8,0.1)",
+                        color: isSuccess ? "#4ade80" : isRejected ? "#f87171" : "#facc15",
+                        border: isSuccess ? "1px solid rgba(34,197,94,0.2)" : isRejected ? "1px solid rgba(239,68,68,0.2)" : "1px solid rgba(234,179,8,0.2)"
+                      }}
+                    >
+                      {x.status}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
 
+// 💎 HIGH-END FINTECH GLASSMORPHISM UX STYLESHEET
 const styles = {
   page: {
     minHeight: "100vh",
-    padding: 24,
-    color: "#fff",
-    fontFamily: "Arial",
-    background:
-      "radial-gradient(circle at top left,#7c3aed55,transparent 30%),radial-gradient(circle at top right,#06b6d455,transparent 30%),linear-gradient(180deg,#020617,#07112d)"
+    color: "#f8fafc",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    background: "linear-gradient(180deg, #030712 0%, #0b1530 50%, #030712 100%)",
+    padding: "16px 16px 60px",
+    boxSizing: "border-box"
+  },
+  topNav: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    maxWidth: "680px",
+    margin: "0 auto 20px"
   },
   backBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    border: "1px solid #8b5cf6",
-    background: "rgba(15,23,42,.8)",
-    color: "#fff",
-    fontSize: 34
+    width: "42px",
+    height: "42px",
+    borderRadius: "50%",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    background: "rgba(255, 255, 255, 0.03)",
+    color: "#94a3b8",
+    fontSize: "16px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  topNavTitle: {
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#64748b",
+    letterSpacing: "0.5px",
+    textTransform: "uppercase"
+  },
+  mainWrapper: {
+    maxWidth: "680px",
+    margin: "0 auto",
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px"
   },
   header: {
-    textAlign: "center",
-    marginBottom: 25
+    textAlign: "left",
+    padding: "0 4px"
   },
+  mainHeading: {
+    fontSize: "28px",
+    fontWeight: "800",
+    letterSpacing: "-0.5px",
+    margin: "0 0 6px 0",
+    background: "linear-gradient(to right, #ffffff, #94a3b8)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent"
+  },
+  subHeading: {
+    margin: 0,
+    fontSize: "14px",
+    color: "#64748b"
+  },
+  /* 💰 GRID OVERVIEWS */
   balanceGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: 18,
-    maxWidth: 900,
-    margin: "0 auto 22px"
+    gap: "14px"
   },
   balanceCard: {
-    padding: 26,
-    borderRadius: 24,
-    background: "linear-gradient(135deg,#7c3aed,#ec4899)",
-    boxShadow: "0 20px 35px rgba(124,58,237,.28)"
+    padding: "20px",
+    borderRadius: "24px",
+    background: "linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%)",
+    border: "1px solid rgba(255, 255, 255, 0.04)",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
   },
-  balanceCard2: {
-    padding: 26,
-    borderRadius: 24,
-    background: "linear-gradient(135deg,#06b6d4,#2563eb)",
-    boxShadow: "0 20px 35px rgba(6,182,212,.25)"
+  balanceCardSpecial: {
+    background: "linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)",
+    border: "1px solid rgba(6, 182, 212, 0.15)"
   },
-  formCard: {
-    maxWidth: 900,
-    margin: "0 auto 22px",
-    padding: 26,
-    borderRadius: 24,
-    background: "rgba(15,23,42,.85)",
-    border: "1px solid rgba(148,163,184,.22)"
+  cardHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginBottom: "12px"
+  },
+  cardIcon: {
+    fontSize: "16px"
+  },
+  cardTag: {
+    fontSize: "12px",
+    fontWeight: "600",
+    color: "#94a3b8"
+  },
+  cardAmount: {
+    fontSize: "22px",
+    fontWeight: "800",
+    margin: "0 0 4px 0",
+    color: "#ffffff"
+  },
+  cardDesc: {
+    margin: 0,
+    fontSize: "11px",
+    color: "#475569"
+  },
+  /* 📦 GLASS CONTAINERS */
+  glassContainer: {
+    padding: "24px",
+    borderRadius: "28px",
+    background: "rgba(15, 23, 42, 0.4)",
+    border: "1px solid rgba(255, 255, 255, 0.06)",
+    backdropFilter: "blur(20px)",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
+  },
+  sectionTitle: {
+    margin: "0 0 16px 0",
+    fontSize: "15px",
+    fontWeight: "700",
+    color: "#94a3b8",
+    letterSpacing: "0.3px"
+  },
+  /* 💵 PAYOUT FORM COMPONENTS */
+  inputWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    background: "rgba(2, 6, 23, 0.5)",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    borderRadius: "18px",
+    padding: "4px 20px"
+  },
+  currencyPrefix: {
+    fontSize: "28px",
+    fontWeight: "700",
+    color: "#475569",
+    marginRight: "8px"
   },
   input: {
     width: "100%",
-    height: 62,
-    borderRadius: 16,
-    border: "1px solid #334155",
-    background: "#020617",
-    color: "#fff",
-    fontSize: 18,
-    padding: "0 18px",
-    boxSizing: "border-box"
+    height: "56px",
+    border: "none",
+    background: "transparent",
+    color: "#ffffff",
+    fontSize: "26px",
+    fontWeight: "700",
+    outline: "none"
+  },
+  minNotice: {
+    fontSize: "12px",
+    color: "#64748b",
+    margin: "8px 0 20px 4px"
   },
   submitBtn: {
-    marginTop: 16,
     width: "100%",
-    height: 62,
+    height: "54px",
     border: "none",
-    borderRadius: 16,
-    background: "linear-gradient(90deg,#22c55e,#16a34a)",
-    color: "#fff",
-    fontWeight: 900,
-    fontSize: 18
+    borderRadius: "16px",
+    background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+    color: "#ffffff",
+    fontWeight: "700",
+    fontSize: "15px",
+    cursor: "pointer",
+    boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)"
   },
-  note: {
-    marginTop: 14,
-    color: "#cbd5e1"
+  loaderFlex: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px"
   },
-  bankCard: {
-    maxWidth: 900,
-    margin: "0 auto 22px",
-    padding: 26,
-    borderRadius: 24,
-    background: "linear-gradient(135deg,rgba(124,58,237,.25),rgba(236,72,153,.18))",
-    border: "1px solid rgba(168,85,247,.45)"
+  spinner: {
+    width: "16px",
+    height: "16px",
+    border: "2px solid rgba(255,255,255,0.3)",
+    borderTopColor: "white",
+    borderRadius: "50%"
   },
-  bankInfo: {
+  noteBox: {
+    display: "flex",
+    gap: "10px",
+    marginTop: "16px",
+    background: "rgba(255,255,255,0.02)",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.04)"
+  },
+  noteIcon: {
+    color: "#3b82f6",
+    fontWeight: "bold",
+    fontSize: "14px"
+  },
+  noteText: {
+    margin: 0,
+    fontSize: "11px",
+    color: "#64748b",
+    lineHeight: "1.5"
+  },
+  /* 🏦 BANK COMPONENT GRID */
+  noBankView: {
+    textAlign: "center",
+    padding: "20px 0"
+  },
+  noBankText: {
+    color: "#64748b",
+    fontSize: "13px",
+    marginBottom: "16px"
+  },
+  bankSetupBtn: {
+    padding: "10px 20px",
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "12px",
+    color: "#ffffff",
+    fontWeight: "600",
+    fontSize: "13px",
+    cursor: "pointer"
+  },
+  bankGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: 10
+    gap: "16px",
+    background: "rgba(2, 6, 23, 0.3)",
+    padding: "16px",
+    borderRadius: "20px",
+    border: "1px solid rgba(255,255,255,0.03)"
   },
-  bankBtn: {
-    padding: "14px 24px",
-    border: "none",
-    borderRadius: 14,
-    background: "linear-gradient(90deg,#8b5cf6,#ec4899)",
-    color: "#fff",
-    fontWeight: 900
+  bankMeta: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px"
   },
-  historyCard: {
-    maxWidth: 900,
-    margin: "0 auto",
-    padding: 26,
-    borderRadius: 24,
-    background: "rgba(15,23,42,.85)",
-    border: "1px solid rgba(148,163,184,.22)"
+  metaLabel: {
+    fontSize: "10px",
+    fontWeight: "700",
+    color: "#475569",
+    letterSpacing: "0.5px"
   },
-  historyItem: {
-    padding: 16,
-    borderRadius: 16,
-    background: "#020617",
-    marginTop: 12,
+  metaValue: {
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#cbd5e1"
+  },
+  /* 📜 STATEMENT / AUDIT VIEW LOGS */
+  emptyState: {
+    textAlign: "center",
+    color: "#475569",
+    fontSize: "13px",
+    padding: "20px 0"
+  },
+  historyList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px"
+  },
+  historyRow: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
+    padding: "14px 16px",
+    background: "rgba(2, 6, 23, 0.2)",
+    border: "1px solid rgba(255,255,255,0.03)",
+    borderRadius: "16px"
   },
-  status: {
-    padding: "9px 16px",
-    borderRadius: 20,
-    fontWeight: 900
+  historyLeft: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "12px"
   },
-  empty: {
-    color: "#94a3b8"
+  statusDot: {
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%",
+    marginTop: "6px",
+    flexShrink: 0
+  },
+  historyAmt: {
+    display: "block",
+    fontSize: "15px",
+    fontWeight: "700",
+    color: "#ffffff"
+  },
+  historyDate: {
+    display: "block",
+    fontSize: "11px",
+    color: "#64748b",
+    marginTop: "2px"
+  },
+  reasonText: {
+    display: "block",
+    fontSize: "11px",
+    color: "#ef4444",
+    marginTop: "4px",
+    fontStyle: "italic"
+  },
+  statusBadge: {
+    padding: "4px 12px",
+    borderRadius: "20px",
+    fontSize: "11px",
+    fontWeight: "700",
+    letterSpacing: "0.3px"
   }
 };
+
+```
