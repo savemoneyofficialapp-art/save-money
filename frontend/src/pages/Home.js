@@ -1,7 +1,3 @@
-হোম পেজে আসার পর পেজটি ওপরের দিকে উঠে থাকার মূল কারণ হলো রি-অ্যাক্ট রাউটারের ডিফল্ট স্ক্রোল বিহেভিয়ার বা প্রিভিয়াস পেজের স্ক্রোল পজিশন মেমোরিতে থেকে যাওয়া। এটি ফিক্স করতে একটি useEffect ব্যবহার করে পেজ মাউন্ট হওয়ামাত্র স্ক্রোল পজিশন একদম টপে (window.scrollTo(0, 0)) সেট করে দেওয়া হয়েছে।
-একই সাথে আপনার চাহিদা অনুযায়ী স্ক্রিনের মাঝখানে দেখানোর জন্য একটি দৃষ্টিনন্দন ও প্রিমিয়াম **Status Overlay (Info Message Box)** যুক্ত করে দেওয়া হয়েছে।
-নিচে সম্পূর্ণ ফিক্সড কোডটি দেওয়া হলো:
-```jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -1279,5 +1275,3 @@ const styles = {
     marginTop: "3px"
   }
 };
-
-```
