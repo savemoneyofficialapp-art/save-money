@@ -10,28 +10,17 @@ export default function Wallet() {
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
 
-  
   const [wallet, setWallet] = useState({
-
-  walletId:"",
-
-  name:"",
-
-  avatar:"",
-
-  balance:0,      // Main Wallet
-
-  todayBalance:0,
-
-  referral:0,
-
-  performance:0,
-
-  team:0,
-
-  royalty:0
-
-});
+    walletId: "",
+    name: "",
+    avatar: "",
+    balance: 0, // Main Wallet
+    todayBalance: 0,
+    referral: 0,
+    performance: 0,
+    team: 0,
+    royalty: 0
+  });
   const [history, setHistory] = useState([]);
 
   const [addOpen, setAddOpen] = useState(false);
@@ -49,18 +38,28 @@ export default function Wallet() {
   const [shareOpen, setShareOpen] = useState(false);
   const [withdrawStatus, setWithdrawStatus] = useState(null);
 
-
   const [historyFilter, setHistoryFilter] = useState("all");
   const [showAllHistory, setShowAllHistory] = useState(false);
 
+  // --- স্ক্রিনের মাঝখানে বড় মেসেজ দেখানোর জন্য নতুন স্টেট ---
+  const [statusOverlay, setStatusOverlay] = useState({
+    show: false,
+    type: "info", // 'success' | 'warning' | 'error'
+    message: ""
+  });
 
   useEffect(() => {
+    loadWallet();
+    loadWithdrawStatus();
+  }, []);
 
-loadWallet();
-
-loadWithdrawStatus();
-
-}, []);
+  // মাঝখানে মেসেজ ট্রিপ করার হেল্পার ফাংশন (২ সেকেন্ড পর ভ্যানিশ হয়ে যাবে)
+  const triggerStatusOverlay = (type, message) => {
+    setStatusOverlay({ show: true, type, message });
+    setTimeout(() => {
+      setStatusOverlay({ show: false, type: "info", message: "" });
+    }, 2200);
+  };
 
   const loadWallet = async () => {
     try {
@@ -81,17 +80,15 @@ loadWithdrawStatus();
         setWallet({
           walletId: data.walletId || data.user?.walletId || "N/A",
           name: data.name || data.user?.name || "User",
-avatar:
-  data.avatar ||
-  data.user?.photo ||
-  data.user?.photoImage ||
-  "",
-photo: data.user?.photo || "",
-photoImage: data.user?.photoImage || "",         
+          avatar:
+            data.avatar ||
+            data.user?.photo ||
+            data.user?.photoImage ||
+            "",
+          photo: data.user?.photo || "",
+          photoImage: data.user?.photoImage || "",
           balance: Number(data.balance || 0),
-          todayBalance:Number(
-             data.todayBalance || 0
-                          ),
+          todayBalance: Number(data.todayBalance || 0),
           referral: Number(data.referral || 0),
           performance: Number(data.performance || 0),
           team: Number(data.team || 0),
@@ -108,55 +105,27 @@ photoImage: data.user?.photoImage || "",
   };
 
   const loadWithdrawStatus = async () => {
+    try {
+      const res = await fetch(`${API}/auto-withdraw-status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({
+          email
+        })
+      });
 
-try{
+      const data = await res.json();
 
-const res = await fetch(
-
-`${API}/auto-withdraw-status`,
-
-{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json",
-authorization:token || ""
-},
-
-body:JSON.stringify({
-email
-})
-
-}
-
-);
-
-
-const data = await res.json();
-
-
-if(data.success){
-
-setWithdrawStatus(data);
-
-}
-
-
-}catch(err){
-
-console.log(
-
-"WITHDRAW STATUS ERROR",
-
-err
-
-);
-
-}
-
-
-};
+      if (data.success) {
+        setWithdrawStatus(data);
+      }
+    } catch (err) {
+      console.log("WITHDRAW STATUS ERROR", err);
+    }
+  };
 
   const money = (n) => {
     return `₹ ${Number(n || 0).toLocaleString("en-IN")}.00`;
@@ -182,30 +151,28 @@ err
     setAddOpen(true);
   };
 
-   // ১. ইউজারকে সরাসরি পেমেন্ট অ্যাপে নিয়ে যাওয়ার রেডিমেড ফাংশন
   const payViaUPI = () => {
     if (!addAmount || Number(addAmount) <= 0) {
-      return toast.info("Please enter a valid amount");
+      return triggerStatusOverlay("warning", "Please enter a valid amount");
     }
 
-    const MY_UPI_ID = "investwell@ybl"; // <--- আপনার নিজের UPI ID এখানে বসাতে পারেন
-    const MERCHANT_NAME = "InvestWell Wallet"; // <--- আপনার অ্যাপের নাম
-    const txnRef = "TXN" + Date.now(); 
+    const MY_UPI_ID = "investwell@ybl";
+    const MERCHANT_NAME = "InvestWell Wallet";
+    const txnRef = "TXN" + Date.now();
 
     const upiUrl = `upi://pay?pa=${MY_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${addAmount}&cu=INR&tr=${txnRef}`;
 
     window.location.href = upiUrl;
-    toast.success("Opening UPI Apps (PhonePe/Paytm/GPay)... Please complete payment.");
+    triggerStatusOverlay("success", "Opening UPI Apps... Please complete payment.");
   };
 
-  // ২. পেমেন্ট শেষে ট্রানজেকশন আইডি ডাটাবেজে পাঠানোর ফাংশন
   const submitDepositRequest = async () => {
     if (!addAmount || Number(addAmount) <= 0) {
-      return toast.info("Please enter a valid amount");
+      return triggerStatusOverlay("warning", "Please enter a valid amount");
     }
 
     if (!depositTxnId || !depositTxnId.trim()) {
-      return toast.info("Please enter the 12-digit UPI Ref No / Transaction ID");
+      return triggerStatusOverlay("warning", "Please enter the 12-digit UPI Ref No");
     }
 
     try {
@@ -225,10 +192,10 @@ err
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        return toast.error(data.msg || "Deposit request failed");
+        return triggerStatusOverlay("error", data.msg || "Deposit request failed");
       }
 
-      toast.info(data.msg || "Submitted successfully! Waiting for admin approval.");
+      triggerStatusOverlay("success", data.msg || "Submitted successfully! Waiting for admin approval.");
 
       setAddOpen(false);
       setAddAmount("");
@@ -236,32 +203,30 @@ err
       loadWallet();
     } catch (err) {
       console.log("DEPOSIT ERROR:", err);
-      toast.warning("Server connectivity error");
+      triggerStatusOverlay("error", "Server connectivity error");
     }
   };
 
-
-    const checkReceiver = async () => {
+  const checkReceiver = async () => {
     if (!receiverWalletId.trim()) {
-      return toast.info("Enter receiver wallet ID");
+      return triggerStatusOverlay("warning", "Enter receiver wallet ID");
     }
 
     if (!transferAmount || Number(transferAmount) <= 0) {
-      return toast.info("Enter valid amount");
+      return triggerStatusOverlay("warning", "Enter valid amount");
     }
 
-    // --- নতুন ২০০০ টাকা লক লজিক শুরু ---
+    // --- ২০০০ টাকা লক লজিক অ্যালার্ট মডিফাই ---
     const currentBalance = Number(wallet.balance || 0);
-    
+
     if (currentBalance <= 2000) {
-      return toast.warning("You cannot transfer money. Minimum ₹2,000 must remain in your wallet.");
+      return triggerStatusOverlay("warning", "Insufficient Balance! Minimum ₹2,000 must remain in your wallet.");
     }
 
     const maxAllowed = currentBalance - 2000;
     if (Number(transferAmount) > maxAllowed) {
-      return toast.warning(`You can only transfer up to ₹${maxAllowed.toLocaleString("en-IN")}`);
+      return triggerStatusOverlay("warning", `Limit Exceeded! You can only transfer up to ₹${maxAllowed.toLocaleString("en-IN")}`);
     }
-    // --- নতুন ২০০০ টাকা লক লজিক শেষ ---
 
     try {
       const res = await fetch(`${API}/wallet-user`, {
@@ -278,18 +243,17 @@ err
       const data = await res.json();
 
       if (!data.success) {
-        return toast.error(data.msg || "Receiver not found");
+        return triggerStatusOverlay("error", data.msg || "Receiver not found");
       }
 
       setReceiverInfo(data.user);
       setConfirmTransferOpen(true);
     } catch (err) {
       console.log("RECEIVER CHECK ERROR:", err);
-      toast.error("Receiver check failed");
+      triggerStatusOverlay("error", "Receiver check failed");
     }
   };
 
-  
   const sendTransfer = async () => {
     try {
       const res = await fetch(`${API}/wallet-transfer`, {
@@ -307,18 +271,19 @@ err
 
       const data = await res.json();
 
-      toast.success(data.msg || "Transfer completed");
-
       if (data.success) {
+        triggerStatusOverlay("success", data.msg || "Transfer Completed Successfully! 🎉");
         setReceiverWalletId("");
         setTransferAmount("");
         setReceiverInfo(null);
         setConfirmTransferOpen(false);
         loadWallet();
+      } else {
+        triggerStatusOverlay("error", data.msg || "Transfer failed");
       }
     } catch (err) {
       console.log("TRANSFER ERROR:", err);
-      toast.error("Transfer failed");
+      triggerStatusOverlay("error", "Transfer failed due to server error");
     }
   };
 
@@ -366,17 +331,36 @@ err
   }
 
   const filteredHistory = history.filter((item) => {
-  if (historyFilter === "all") return true;
-  return String(item.type).toLowerCase() === historyFilter;
-});
+    if (historyFilter === "all") return true;
+    return String(item.type).toLowerCase() === historyFilter;
+  });
 
-const visibleHistory = showAllHistory
-  ? filteredHistory
-  : filteredHistory.slice(0, 5);
+  const visibleHistory = showAllHistory
+    ? filteredHistory
+    : filteredHistory.slice(0, 5);
 
   return (
     <div style={styles.page}>
       <div style={styles.app}>
+
+        {/* --- স্ক্রিনের মাঝখানে বড় করে ইনফো মেসেজ দেখানোর কাস্টম ওভারলে UI --- */}
+        {statusOverlay.show && (
+          <div style={styles.statusOverlayBg}>
+            <div style={{
+              ...styles.statusOverlayCard,
+              borderTop: statusOverlay.type === "success" ? "6px solid #10b981" : statusOverlay.type === "warning" ? "6px solid #f59e0b" : "6px solid #ef4444"
+            }}>
+              <div style={{
+                ...styles.statusOverlayIcon,
+                background: statusOverlay.type === "success" ? "#dcfce7" : statusOverlay.type === "warning" ? "#fef3c7" : "#fee2e2",
+                color: statusOverlay.type === "success" ? "#10b981" : statusOverlay.type === "warning" ? "#d97706" : "#ef4444"
+              }}>
+                {statusOverlay.type === "success" ? "✓" : statusOverlay.type === "warning" ? "⚠" : "✕"}
+              </div>
+              <h3 style={styles.statusOverlayText}>{statusOverlay.message}</h3>
+            </div>
+          </div>
+        )}
 
         <header style={styles.header}>
           <div>
@@ -387,29 +371,29 @@ const visibleHistory = showAllHistory
             </p>
           </div>
 
-         <button
-  style={styles.notifyBtn}
-  onClick={() => window.location.href = "/notifications"}
->
-  🔔
-  <span style={styles.notifyCount}></span>
-</button>
+          <button
+            style={styles.notifyBtn}
+            onClick={() => window.location.href = "/notifications"}
+          >
+            🔔
+            <span style={styles.notifyCount}></span>
+          </button>
 
-<div style={styles.avatar}>
-  {wallet.avatar || wallet.photo || wallet.photoImage ? (
-    <img
-      src={
-        wallet.avatar ||
-        wallet.photo ||
-        `${API}/${wallet.photoImage}`
-      }
-      alt="user"
-      style={styles.avatarImg}
-    />
-  ) : (
-    "👨‍💼"
-  )}
-</div>
+          <div style={styles.avatar}>
+            {wallet.avatar || wallet.photo || wallet.photoImage ? (
+              <img
+                src={
+                  wallet.avatar ||
+                  wallet.photo ||
+                  `${API}/${wallet.photoImage}`
+                }
+                alt="user"
+                style={styles.avatarImg}
+              />
+            ) : (
+              "👨‍💼"
+            )}
+          </div>
         </header>
 
         <section style={styles.walletHero}>
@@ -483,18 +467,15 @@ const visibleHistory = showAllHistory
           />
 
           <IncomeCard
- icon="👛"
- title="TODAY WALLET"
- amount={wallet.todayBalance}
- color="#14b8a6"
-/>
+            icon="👛"
+            title="TODAY WALLET"
+            amount={wallet.todayBalance}
+            color="#14b8a6"
+          />
         </section>
-{/* Wallet Transfer + Invite */}
 
         <section style={styles.middleGrid}>
-
           <div style={styles.transferCard}>
-
             <div style={styles.transferIcon}>
               ✈️
             </div>
@@ -515,7 +496,7 @@ const visibleHistory = showAllHistory
               <input
                 style={styles.transferInput}
                 value={receiverWalletId}
-                onChange={(e)=>
+                onChange={(e) =>
                   setReceiverWalletId(e.target.value)
                 }
                 placeholder="Enter Receiver Wallet ID"
@@ -535,7 +516,7 @@ const visibleHistory = showAllHistory
                 type="number"
                 style={styles.transferInput}
                 value={transferAmount}
-                onChange={(e)=>
+                onChange={(e) =>
                   setTransferAmount(e.target.value)
                 }
                 placeholder="Enter Amount"
@@ -552,11 +533,9 @@ const visibleHistory = showAllHistory
             >
               ✈️ Transfer Now
             </button>
-
           </div>
 
           <div style={styles.inviteCard}>
-
             <div style={styles.inviteTop}>
               Grow More
             </div>
@@ -579,19 +558,12 @@ const visibleHistory = showAllHistory
             >
               Invite Now
             </button>
-
           </div>
-
         </section>
 
-        {/* Wallet History */}
-
         <section style={styles.historyCard}>
-
           <div style={styles.historyHeader}>
-
             <div>
-
               <h2 style={styles.historyTitle}>
                 🛡 Wallet History
               </h2>
@@ -599,152 +571,125 @@ const visibleHistory = showAllHistory
               <p style={styles.historySub}>
                 Your recent wallet transactions
               </p>
-
             </div>
 
-           <select
-  style={styles.filterSelect}
-  value={historyFilter}
-  onChange={(e) => {
-    setHistoryFilter(e.target.value);
-    setShowAllHistory(false);
-  }}
->
-  <option value="all">All Transactions</option>
-  <option value="credit">Credit</option>
-  <option value="debit">Debit</option>
-</select>
-
+            <select
+              style={styles.filterSelect}
+              value={historyFilter}
+              onChange={(e) => {
+                setHistoryFilter(e.target.value);
+                setShowAllHistory(false);
+              }}
+            >
+              <option value="all">All Transactions</option>
+              <option value="credit">Credit</option>
+              <option value="debit">Debit</option>
+            </select>
           </div>
 
           <div style={styles.tableHead}>
-
             <div>TYPE</div>
             <div>DESCRIPTION</div>
             <div>AMOUNT</div>
             <div>STATUS</div>
             <div>DATE & TIME</div>
-
           </div>
 
           {history.length === 0 && (
-
             <div style={styles.emptyHistory}>
               No Wallet History Found
             </div>
-
           )}
 
-{visibleHistory.map((item,index)=>{
+          {visibleHistory.map((item, index) => {
+            const rawType = String(item.type || "").toLowerCase();
 
-  const rawType = String(item.type || "").toLowerCase();
+            const isCredit =
+              rawType.includes("credit") ||
+              rawType.includes("add") ||
+              rawType.includes("deposit") ||
+              rawType.includes("bonus");
 
-  const isCredit =
-    rawType.includes("credit") ||
-    rawType.includes("add") ||
-    rawType.includes("deposit") ||
-    rawType.includes("bonus");
+            const desc =
+              item.description ||
+              item.note ||
+              item.message ||
+              item.remark ||
+              item.type ||
+              "Wallet Transaction";
 
-  const desc =
-    item.description ||
-    item.note ||
-    item.message ||
-    item.remark ||
-    item.type ||
-    "Wallet Transaction";
+            return (
+              <div
+                key={index}
+                style={styles.historyRow}
+              >
+                <div>
+                  <div
+                    style={{
+                      ...styles.typeCircle,
+                      background:
+                        item.type === "credit"
+                          ? "#dcfce7"
+                          : "#fee2e2"
+                    }}
+                  >
+                    {isCredit ? "↓" : "↑"}
+                  </div>
+                </div>
 
-  return (
-            <div
-              key={index}
-              style={styles.historyRow}
+                <div>
+                  <div style={styles.rowTitle}>
+                    {desc}
+                  </div>
+
+                  <div style={styles.rowSub}>
+                    {item.note || ""}
+                  </div>
+                </div>
+
+                <div>
+                  <span
+                    style={{
+                      color:
+                        isCredit
+                          ? "#16a34a"
+                          : "#dc2626",
+                      fontWeight: "700"
+                    }}
+                  >
+                    {isCredit
+                      ? "+"
+                      : "-"}{" "}
+                    ₹{Number(item.amount).toLocaleString()}
+                  </span>
+                </div>
+
+                <div>
+                  <span style={styles.successBadge}>
+                    Success
+                  </span>
+                </div>
+
+                <div>
+                  {item.createdAt || item.date
+                    ? new Date(item.createdAt || item.date).toLocaleString("en-IN")
+                    : "N/A"}
+                </div>
+              </div>
+            );
+          })}
+
+          {filteredHistory.length > 5 && (
+            <button
+              style={styles.viewMore}
+              onClick={() => setShowAllHistory(!showAllHistory)}
             >
-
-              <div>
-
-                <div
-                  style={{
-                    ...styles.typeCircle,
-
-                    background:
-                      item.type === "credit"
-                        ? "#dcfce7"
-                        : "#fee2e2"
-                  }}
-                >
-                 {isCredit ? "↓" : "↑"}
-                </div>
-
-              </div>
-
-              <div>
-
-                <div style={styles.rowTitle}>
-                  {desc}
-                </div>
-
-                <div style={styles.rowSub}>
-                  {item.note || ""}
-                </div>
-
-              </div>
-
-              <div>
-
-                <span
-                  style={{
-                    color:
-                      isCredit
-                        ? "#16a34a"
-                        : "#dc2626",
-
-                    fontWeight:"700"
-                  }}
-                >
-                  {isCredit
-                    ? "+"
-                    : "-"}{" "}
-
-                  ₹{Number(item.amount).toLocaleString()}
-                </span>
-
-              </div>
-
-              <div>
-
-                <span style={styles.successBadge}>
-                  Success
-                </span>
-
-              </div>
-
-              <div>
-
-               {item.createdAt || item.date
-  ? new Date(item.createdAt || item.date).toLocaleString("en-IN")
-  : "N/A"}
-
-              </div>
-
-            </div>
-
-               );
-              })}
-
-         {filteredHistory.length > 5 && (
-  <button
-    style={styles.viewMore}
-    onClick={() => setShowAllHistory(!showAllHistory)}
-  >
-    {showAllHistory ? "Show Less ▲" : "View More ▼"}
-  </button>
-)}
-
+              {showAllHistory ? "Show Less ▲" : "View More ▼"}
+            </button>
+          )}
         </section>
 
-        {/* Bottom */}
-
         <section style={styles.bottomFeatures}>
-
           <div style={styles.featureItem}>
             🛡
             <div>
@@ -768,414 +713,207 @@ const visibleHistory = showAllHistory
               <p>Used by thousands of users</p>
             </div>
           </div>
-
         </section>
 
-        {/* Add Cash Modal - Direct UPI Payment */}
-{addOpen && (
-  <div style={styles.depositOverlay}>
-    <div style={styles.depositModal}>
-      <button style={styles.depositCloseX} onClick={() => setAddOpen(false)}>×</button>
+        {/* Add Cash Modal */}
+        {addOpen && (
+          <div style={styles.depositOverlay}>
+            <div style={styles.depositModal}>
+              <button style={styles.depositCloseX} onClick={() => setAddOpen(false)}>×</button>
 
-      <div style={styles.depositIcon}>⚡</div>
-      <h2 style={styles.depositTitle}>Direct UPI Add Cash</h2>
-      <p style={styles.depositSub}>Enter amount, click Pay Now to use PhonePe/Paytm, and then submit the Transaction ID.</p>
+              <div style={styles.depositIcon}>⚡</div>
+              <h2 style={styles.depositTitle}>Direct UPI Add Cash</h2>
+              <p style={styles.depositSub}>Enter amount, click Pay Now to use PhonePe/Paytm, and then submit the Transaction ID.</p>
 
-      {/* ১. অ্যামাউন্ট ইনপুট */}
-      <label style={styles.depositLabel}>Amount (₹)</label>
-      <input
-        style={styles.depositInput}
-        type="number"
-        placeholder="Enter amount (e.g. 500)"
-        value={addAmount}
-        onChange={(e) => setAddAmount(e.target.value)}
-      />
+              <label style={styles.depositLabel}>Amount (₹)</label>
+              <input
+                style={styles.depositInput}
+                type="number"
+                placeholder="Enter amount (e.g. 500)"
+                value={addAmount}
+                onChange={(e) => setAddAmount(e.target.value)}
+              />
 
-      {/* ২. ডিরেক্ট পে বাটন */}
-      <button 
-        style={{ ...styles.submitDepositBtn, background: "linear-gradient(135deg, #a855f7, #7c3aed)", marginBottom: "20px" }} 
-        onClick={payViaUPI}
-      >
-        📱 Pay Via PhonePe / Paytm / GPay
-      </button>
+              <button
+                style={{ ...styles.submitDepositBtn, background: "linear-gradient(135deg, #a855f7, #7c3aed)", marginBottom: "20px" }}
+                onClick={payViaUPI}
+              >
+                📱 Pay Via PhonePe / Paytm / GPay
+              </button>
 
-      <div style={{ borderTop: "1px dashed #334155", margin: "15px 0", paddingTop: "10px" }}>
-        <p style={{ fontSize: "12px", color: "#94a3b8", textAlign: "center" }}>💡 After paying, copy the 12-digit UTR/Txn ID from your UPI app and paste below.</p>
-      </div>
+              <div style={{ borderTop: "1px dashed #334155", margin: "15px 0", paddingTop: "10px" }}>
+                <p style={{ fontSize: "12px", color: "#94a3b8", textAlign: "center" }}>💡 After paying, copy the 12-digit UTR/Txn ID from your UPI app and paste below.</p>
+              </div>
 
-      {/* ৩. ট্রানজেকশন আইডি ইনপুট */}
-      <label style={styles.depositLabel}>Transaction ID / UTR No</label>
-      <input
-        style={styles.depositInput}
-        type="text"
-        placeholder="Enter 12-digit Transaction ID"
-        value={depositTxnId}
-        onChange={(e) => setDepositTxnId(e.target.value)}
-      />
+              <label style={styles.depositLabel}>Transaction ID / UTR No</label>
+              <input
+                style={styles.depositInput}
+                type="text"
+                placeholder="Enter 12-digit Transaction ID"
+                value={depositTxnId}
+                onChange={(e) => setDepositTxnId(e.target.value)}
+              />
 
-      {/* ৪. ফাইনাল সাবমিট বাটন */}
-      <button style={styles.submitDepositBtn} onClick={submitDepositRequest}>
-        Verify & Request Approval
-      </button>
-    </div>
-  </div>
-)}
+              <button style={styles.submitDepositBtn} onClick={submitDepositRequest}>
+                Verify & Request Approval
+              </button>
+            </div>
+          </div>
+        )}
 
-        
         {/* Withdraw Popup */}
-
         {withdrawOpen && (
-
-<div style={styles.modalOverlay}>
-
-<div style={styles.modal}>
-
-<h2>
-💳 Auto Withdrawal
-</h2>
-
-
-{
-
-withdrawStatus && (
-
-<div
-style={{
-
-marginTop:"15px",
-
-padding:"15px",
-
-borderRadius:"12px",
-
-background:"#f8fafc"
-
-}}
->
-
-<p>
-
-Status :
-
-<b>
-
-{
-
-withdrawStatus.enabled
-
-?
-
-" ✅ Active"
-
-:
-
-" ❌ Paused"
-
-}
-
-</b>
-
-</p>
-
-
-
-{
-
-withdrawStatus.nextWithdrawal && (
-
-<p>
-
-Next Withdrawal :
-
-<b>
-
-{
-
-new Date(
-
-withdrawStatus.nextWithdrawal
-
-)
-
-.toLocaleDateString(
-
-"en-IN"
-
-)
-
-}
-
-</b>
-
-</p>
-
-)
-
-}
-
-
-
-
-{
-
-withdrawStatus.note?.length > 0 && (
-
-<>
-
-<h4
-style={{
-
-marginTop:"20px",
-marginBottom:"10px",
-color:"#0f172a"
-
-}}
->
-
-NOTE :
-
-</h4>
-
-
-<ul
-style={{
-
-paddingLeft:"18px",
-lineHeight:"28px",
-fontSize:"14px",
-color:"#475569"
-
-}}
->
-
-{
-
-withdrawStatus.note.map(
-
-(item,index)=>(
-
-<li key={index}>
-
-{item}
-
-</li>
-
-)
-
-)
-
-}
-
-</ul>
-
-</>
-
-)
-
-  }
-
-
-
-</div>
-
-)
-
-}
-
-
-<button
-style={styles.closeBtn}
-onClick={() => setWithdrawOpen(false)}
->
-
-Okay, I Understand
-
-</button>
-
-
-</div>
-
-</div>
-
-)}
-
+          <div style={styles.modalOverlay}>
+            <div style={styles.modal}>
+              <h2>💳 Auto Withdrawal</h2>
+              {withdrawStatus && (
+                <div style={{ marginTop: "15px", padding: "15px", borderRadius: "12px", background: "#f8fafc" }}>
+                  <p>Status : <b>{withdrawStatus.enabled ? " ✅ Active" : " ❌ Paused"}</b></p>
+                  {withdrawStatus.nextWithdrawal && (
+                    <p>Next Withdrawal : <b>{new Date(withdrawStatus.nextWithdrawal).toLocaleDateString("en-IN")}</b></p>
+                  )}
+                  {withdrawStatus.note?.length > 0 && (
+                    <>
+                      <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#0f172a" }}>NOTE :</h4>
+                      <ul style={{ paddingLeft: "18px", lineHeight: "28px", fontSize: "14px", color: "#475569" }}>
+                        {withdrawStatus.note.map((item, index) => (
+                          <li key={index}>{item}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              )}
+              <button style={styles.closeBtn} onClick={() => setWithdrawOpen(false)}>
+                Okay, I Understand
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Transfer Confirm Modal */}
+        {confirmTransferOpen && receiverInfo && (
+          <div style={styles.modalOverlay}>
+            <div style={styles.modal}>
+              <div style={styles.confirmTop}>
+                <div style={styles.confirmAvatar}>👤</div>
+                <h2>Confirm Transfer</h2>
+                <p>Verify receiver details before sending money</p>
+              </div>
 
-{confirmTransferOpen && receiverInfo && (
-  <div style={styles.modalOverlay}>
-    <div style={styles.modal}>
+              <div style={styles.receiverCard}>
+                <div>
+                  <span>Receiver Name</span>
+                  <h3>{receiverInfo.name}</h3>
+                </div>
+                <div>
+                  <span>Wallet ID</span>
+                  <h4>{receiverWalletId}</h4>
+                </div>
+                <div>
+                  <span>Amount</span>
+                  <h2 style={{ color: "#16a34a" }}>₹{Number(transferAmount).toLocaleString()}</h2>
+                </div>
+              </div>
 
-      <div style={styles.confirmTop}>
-        <div style={styles.confirmAvatar}>
-          👤
-        </div>
+              <button style={styles.sendMoneyBtn} onClick={sendTransfer}>Send Money</button>
+              <button style={styles.cancelBtn} onClick={() => setConfirmTransferOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
 
-        <h2>Confirm Transfer</h2>
-
-        <p>
-          Verify receiver details before sending money
-        </p>
-      </div>
-
-      <div style={styles.receiverCard}>
-        <div>
-          <span>Receiver Name</span>
-          <h3>{receiverInfo.name}</h3>
-        </div>
-
-        <div>
-          <span>Wallet ID</span>
-          <h4>{receiverWalletId}</h4>
-        </div>
-
-        <div>
-          <span>Amount</span>
-          <h2 style={{ color:"#16a34a" }}>
-            ₹{Number(transferAmount).toLocaleString()}
-          </h2>
-        </div>
-      </div>
-
-      <button
-        style={styles.sendMoneyBtn}
-        onClick={sendTransfer}
-      >
-        Send Money
-      </button>
-
-      <button
-        style={styles.cancelBtn}
-        onClick={() =>
-          setConfirmTransferOpen(false)
-        }
-      >
-        Cancel
-      </button>
-
-    </div>
-  </div>
-)}
-
-{/* Share Modal */}
-
-{shareOpen && (
-
-  <div style={styles.modalOverlay}>
-
-    <div style={styles.modal}>
-
-      <h2>Invite Friends</h2>
-
-      <p>
-        Share your referral link
-      </p>
-
-      <div style={styles.shareGrid}>
-
-        <a
-          href={`https://wa.me/?text=${encodeURIComponent(inviteLink)}`}
-          target="_blank"
-          rel="noreferrer"
-          style={styles.shareBtn}
-        >
-          WhatsApp
-        </a>
-
-        <a
-          href={`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}`}
-          target="_blank"
-          rel="noreferrer"
-          style={styles.shareBtn}
-        >
-          Telegram
-        </a>
-
-        <button
-          style={styles.shareBtn}
-          onClick={copyInviteLink}
-        >
-          Copy Link
-        </button>
+        {/* Share Modal */}
+        {shareOpen && (
+          <div style={styles.modalOverlay}>
+            <div style={styles.modal}>
+              <h2>Invite Friends</h2>
+              <p>Share your referral link</p>
+              <div style={styles.shareGrid}>
+                <a href={`https://wa.me/?text=${encodeURIComponent(inviteLink)}`} target="_blank" rel="noreferrer" style={styles.shareBtn}>WhatsApp</a>
+                <a href={`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}`} target="_blank" rel="noreferrer" style={styles.shareBtn}>Telegram</a>
+                <button style={styles.shareBtn} onClick={copyInviteLink}>Copy Link</button>
+              </div>
+              <button style={styles.closeBtn} onClick={() => setShareOpen(false)}>Close</button>
+            </div>
+          </div>
+        )}
 
       </div>
-
-      <button
-        style={styles.closeBtn}
-        onClick={() => setShareOpen(false)}
-      >
-        Close
-      </button>
-
-    </div>
-
-  </div>
-
-)}
-
-</div>
-</div>
-);
-}
-
-/* ---------- Components ---------- */
-
-function WalletIllustration() {
-  return (
-    <div style={styles.walletArt}>
-
-      <div style={styles.moneyNote1}></div>
-      <div style={styles.moneyNote2}></div>
-
-      <div style={styles.walletBag}>
-        ₹
-      </div>
-
-      <div style={styles.coin1}>₹</div>
-      <div style={styles.coin2}>₹</div>
-
     </div>
   );
 }
 
-function IncomeCard({
-  icon,
-  title,
-  amount,
-  color
-}) {
+/* ---------- Components ---------- */
+function WalletIllustration() {
+  return (
+    <div style={styles.walletArt}>
+      <div style={styles.moneyNote1}></div>
+      <div style={styles.moneyNote2}></div>
+      <div style={styles.walletBag}>₹</div>
+      <div style={styles.coin1}>₹</div>
+      <div style={styles.coin2}>₹</div>
+    </div>
+  );
+}
+
+function IncomeCard({ icon, title, amount, color }) {
   return (
     <div style={styles.incomeCard}>
-
-      <div
-        style={{
-          ...styles.incomeIcon,
-          background: color
-        }}
-      >
-        {icon}
-      </div>
-
+      <div style={{ ...styles.incomeIcon, background: color }}>{icon}</div>
       <h4>{title}</h4>
-
-      <h2>
-        ₹{Number(amount).toLocaleString()}
-      </h2>
-
-      <div
-        style={{
-          ...styles.incomeWave,
-          color
-        }}
-      >
-        ~~~
-      </div>
-
+      <h2>₹{Number(amount).toLocaleString()}</h2>
+      <div style={{ ...styles.incomeWave, color }}>~~~</div>
     </div>
   );
 }
 
 const styles = {
+  // --- নতুন মিডল ওভারলে নোটিফিকেশনের স্টাইলস সমূহ ---
+  statusOverlayBg: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15, 23, 42, 0.4)",
+    backdropFilter: "blur(6px)",
+    zIndex: 100000,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    animation: "fadeIn 0.2s ease-out"
+  },
+
+  statusOverlayCard: {
+    background: "#ffffff",
+    padding: "30px 40px",
+    borderRadius: "24px",
+    textAlign: "center",
+    boxShadow: "0 30px 70px rgba(0,0,0,0.25)",
+    maxWidth: "400px",
+    width: "85%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "16px"
+  },
+
+  statusOverlayIcon: {
+    width: "64px",
+    height: "64px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "32px",
+    fontWeight: "bold"
+  },
+
+  statusOverlayText: {
+    fontSize: "20px",
+    color: "#0f172a",
+    margin: 0,
+    fontWeight: "800",
+    lineHeight: "1.4"
+  },
+
   loadingPage: {
     minHeight: "100vh",
     background: "#f4f7ff",
@@ -1528,7 +1266,8 @@ const styles = {
     flex: 1,
     border: "none",
     outline: "none",
-    fontSize: "16px"
+    fontSize: "16px",
+    color: "#000"
   },
 
   inputIcon: {
@@ -1684,7 +1423,10 @@ const styles = {
     textAlign: "center",
     color: "#6d28d9",
     fontWeight: "900",
-    marginTop: "18px"
+    marginTop: "18px",
+    background: "none",
+    border: "none",
+    cursor: "pointer"
   },
 
   bottomFeatures: {
@@ -1825,166 +1567,165 @@ const styles = {
     textDecoration: "none"
   },
 
-notifyCount: {
-  position: "absolute",
-  top: "-5px",
-  right: "-5px",
-  background: "#ef4444",
-  color: "white",
-  width: "20px",
-  height: "20px",
-  borderRadius: "50%",
-  fontSize: "12px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontWeight: "900"
-},
+  notifyCount: {
+    position: "absolute",
+    top: "-5px",
+    right: "-5px",
+    background: "#ef4444",
+    color: "white",
+    width: "20px",
+    height: "20px",
+    borderRadius: "50%",
+    fontSize: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "900"
+  },
 
-avatarImg: {
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  borderRadius: "50%"
-},
+  avatarImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    borderRadius: "50%"
+  },
 
-depositOverlay: {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(5, 10, 30, 0.65)",
-  backdropFilter: "blur(10px)",
-  zIndex: 9999,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: 18
-},
+  depositOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(5, 10, 30, 0.65)",
+    backdropFilter: "blur(10px)",
+    zIndex: 9999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 18
+  },
 
-depositModal: {
-  width: "100%",
-  maxWidth: 390,
-  background: "linear-gradient(145deg, #ffffff, #f7f2ff)",
-  borderRadius: 28,
-  padding: 22,
-  boxShadow: "0 30px 80px rgba(70, 30, 180, 0.35)",
-  position: "relative",
-  border: "1px solid rgba(255,255,255,0.8)"
-},
+  depositModal: {
+    width: "100%",
+    maxWidth: 390,
+    background: "linear-gradient(145deg, #ffffff, #f7f2ff)",
+    borderRadius: 28,
+    padding: 22,
+    boxShadow: "0 30px 80px rgba(70, 30, 180, 0.35)",
+    position: "relative",
+    border: "1px solid rgba(255,255,255,0.8)"
+  },
 
-depositCloseX: {
-  position: "absolute",
-  top: 14,
-  right: 16,
-  width: 34,
-  height: 34,
-  borderRadius: "50%",
-  border: "none",
-  background: "#f1eaff",
-  color: "#6d28d9",
-  fontSize: 22,
-  fontWeight: 900
-},
+  depositCloseX: {
+    position: "absolute",
+    top: 14,
+    right: 16,
+    width: 34,
+    height: 34,
+    borderRadius: "50%",
+    border: "none",
+    background: "#f1eaff",
+    color: "#6d28d9",
+    fontSize: 22,
+    fontWeight: 900
+  },
 
-depositIcon: {
-  width: 62,
-  height: 62,
-  borderRadius: 20,
-  background: "linear-gradient(135deg,#2563eb,#9333ea,#ec4899)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 30,
-  color: "#fff",
-  marginBottom: 12
-},
+  depositIcon: {
+    width: 62,
+    height: 62,
+    borderRadius: 20,
+    background: "linear-gradient(135deg,#2563eb,#9333ea,#ec4899)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 30,
+    color: "#fff",
+    marginBottom: 12
+  },
 
-depositTitle: {
-  margin: 0,
-  fontSize: 26,
-  fontWeight: 900,
-  color: "#101a44"
-},
+  depositTitle: {
+    margin: 0,
+    fontSize: 26,
+    fontWeight: 900,
+    color: "#101a44"
+  },
 
-depositSub: {
-  margin: "6px 0 18px",
-  color: "#6b7280",
-  fontSize: 13,
-  lineHeight: 1.4
-},
+  depositSub: {
+    margin: "6px 0 18px",
+    color: "#6b7280",
+    fontSize: 13,
+    lineHeight: 1.4
+  },
 
-depositLabel: {
-  display: "block",
-  fontSize: 13,
-  fontWeight: 800,
-  color: "#18204a",
-  margin: "12px 0 7px"
-},
+  depositLabel: {
+    display: "block",
+    fontSize: 13,
+    fontWeight: 800,
+    color: "#18204a",
+    margin: "12px 0 7px"
+  },
 
-depositAddressBox: {
-  display: "flex",
-  gap: 8,
-  alignItems: "center",
-  background: "#f4f0ff",
-  border: "1px dashed #8b5cf6",
-  borderRadius: 15,
-  padding: "12px 10px"
-},
+  depositAddressBox: {
+    display: "flex",
+    gap: 8,
+    alignItems: "center",
+    background: "#f4f0ff",
+    border: "1px dashed #8b5cf6",
+    borderRadius: 15,
+    padding: "12px 10px"
+  },
 
-depositAddress: {
-  flex: 1,
-  fontSize: 12,
-  fontWeight: 800,
-  color: "#4c1d95",
-  wordBreak: "break-all"
-},
+  depositAddress: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: 800,
+    color: "#4c1d95",
+    wordBreak: "break-all"
+  },
 
-copyBtn: {
-  border: "none",
-  borderRadius: 12,
-  padding: "9px 12px",
-  background: "linear-gradient(135deg,#6d28d9,#ec4899)",
-  color: "#fff",
-  fontWeight: 900
-},
+  copyBtn: {
+    border: "none",
+    borderRadius: 12,
+    padding: "9px 12px",
+    background: "linear-gradient(135deg,#6d28d9,#ec4899)",
+    color: "#fff",
+    fontWeight: 900
+  },
 
-depositInput: {
-  width: "100%",
-  height: 50,
-  borderRadius: 15,
-  border: "1px solid #e5e7eb",
-  outline: "none",
-  padding: "0 14px",
-  fontSize: 15,
-  fontWeight: 700,
-  background: "#fff",
-  boxSizing: "border-box"
-},
+  depositInput: {
+    width: "100%",
+    height: 50,
+    borderRadius: 15,
+    border: "1px solid #e5e7eb",
+    outline: "none",
+    padding: "0 14px",
+    fontSize: 15,
+    fontWeight: 700,
+    background: "#fff",
+    boxSizing: "border-box"
+  },
 
-fileBox: {
-  height: 54,
-  borderRadius: 16,
-  border: "2px dashed #60a5fa",
-  background: "#eff6ff",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "#2563eb",
-  fontWeight: 900,
-  fontSize: 14,
-  cursor: "pointer"
-},
+  fileBox: {
+    height: 54,
+    borderRadius: 16,
+    border: "2px dashed #60a5fa",
+    background: "#eff6ff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#2563eb",
+    fontWeight: 900,
+    fontSize: 14,
+    cursor: "pointer"
+  },
 
-submitDepositBtn: {
-  width: "100%",
-  height: 54,
-  border: "none",
-  borderRadius: 17,
-  marginTop: 18,
-  background: "linear-gradient(135deg,#2563eb,#7c3aed,#ec4899)",
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: 900,
-  boxShadow: "0 16px 35px rgba(124,58,237,.35)"
-}
-
+  submitDepositBtn: {
+    width: "100%",
+    height: 54,
+    border: "none",
+    borderRadius: 17,
+    marginTop: 18,
+    background: "linear-gradient(135deg,#2563eb,#7c3aed,#ec4899)",
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: 900,
+    boxShadow: "0 16px 35px rgba(124,58,237,.35)"
+  }
 };
