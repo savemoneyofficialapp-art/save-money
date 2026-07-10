@@ -4,6 +4,9 @@ import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function SaveMoney() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
 
@@ -14,6 +17,25 @@ export default function SaveMoney() {
   const [termsOpen, setTermsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // কাস্টম প্রিমিয়াম স্ট্যাটাস বক্স স্টেট
+  const [statusOverlay, setStatusOverlay] = useState({
+    show: false,
+    type: "info",
+    message: ""
+  });
+
+  const showStatusMsg = (type, message) => {
+    setStatusOverlay({ show: true, type, message });
+    setTimeout(() => {
+      setStatusOverlay({ show: false, type: "info", message: "" });
+    }, 3000);
+  };
+
+  // ১. পেজ লোড হলে একদম ওপর থেকে শুরু হওয়ার ফিক্স (Scroll Fix)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
 
   useEffect(() => {
     loadBalance();
@@ -31,14 +53,7 @@ export default function SaveMoney() {
       });
 
       const data = await res.json();
-
-      setBalance(
-        Number(
-          data.balance ||
-          data.wallet ||
-          0
-        )
-      );
+      setBalance(Number(data.balance || data.wallet || 0));
     } catch (err) {
       console.log("BALANCE LOAD ERROR:", err);
     }
@@ -55,133 +70,57 @@ export default function SaveMoney() {
 
   const rate = getRate(years);
 
-  const calc = useMemo(()=>{
+  const calc = useMemo(() => {
+    const monthly = Number(amount || 0);
+    const annualRate = Number(rate || 0);
+    const totalYears = Number(years || 1);
+    const r = annualRate / 100 / 12;
+    const n = totalYears * 12;
 
-const monthly =
-Number(amount||0);
+    let maturityAmount = 0;
+    let totalInterest = 0;
 
-const annualRate =
-Number(rate||0);
+    if (r > 0) {
+      maturityAmount = monthly * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
+      totalInterest = maturityAmount - (monthly * n);
+    } else {
+      maturityAmount = monthly * n;
+      totalInterest = 0;
+    }
 
-const totalYears =
-Number(years||1);
+    return {
+      monthly,
+      totalInvestment: monthly * n,
+      estimatedReturn: totalInterest,
+      totalInterest,
+      totalReturn: maturityAmount
+    };
+  }, [amount, years, rate]);
 
-const r =
-annualRate/100/12;
-
-const n =
-totalYears*12;
-
-
-let maturityAmount=0;
-let totalInterest=0;
-
-
-if(r>0){
-
-maturityAmount=
-
-monthly*
-
-(
-
-(
-
-Math.pow(
-
-1+r,
-
-n
-
-)
-
--1
-
-)
-
-/
-
-r
-
-)
-
-*
-
-(
-
-1+r
-
-);
-
-
-
-totalInterest=
-
-maturityAmount-
-
-(
-
-monthly*n
-
-);
-
-}else{
-
-maturityAmount=
-monthly*n;
-
-totalInterest=0;
-
-}
-
-
-
-return{
-
-monthly,
-
-totalInvestment:
-monthly*n,
-
-estimatedReturn:
-totalInterest,
-
-totalInterest,
-
-totalReturn:
-maturityAmount
-
-};
-
-
-},[
-amount,
-years,
-rate
-]);
   const money = (n) => {
-  return `₹ ${Number(n || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })}`;
-};
+    return `₹ ${Number(n || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  };
 
   const openTerms = () => {
     if (accepted) {
       setAccepted(false);
       return;
     }
-
     setTermsOpen(true);
   };
 
   const acceptTerms = () => {
     setAccepted(true);
     setTermsOpen(false);
+    showStatusMsg("success", "Terms & Conditions Accepted!");
   };
 
   const confirmSip = async () => {
     if (Number(amount) < 2000) {
+      showStatusMsg("error", "Minimum SIP amount ₹2000 required");
       return toast.info("Minimum SIP amount ₹2000 required");
     }
 
@@ -191,12 +130,12 @@ rate
     }
 
     if (Number(balance) < Number(amount)) {
+      showStatusMsg("error", "Insufficient wallet balance");
       return toast.error("Insufficient wallet balance");
     }
 
     try {
       setLoading(true);
-
       const res = await fetch(`${API}/start-invest`, {
         method: "POST",
         headers: {
@@ -204,35 +143,36 @@ rate
           authorization: token || ""
         },
         body: JSON.stringify({
-  email,
-  amount: Number(amount),
-  years: Number(years),
-  rate: Number(rate),
-  totalPlanAmount: Number(calc.totalInvestment),
-  totalInterest: Number(calc.totalInterest),
-  maturityAmount: Number(calc.totalReturn)
-})
+          email,
+          amount: Number(amount),
+          years: Number(years),
+          rate: Number(rate),
+          totalPlanAmount: Number(calc.totalInvestment),
+          totalInterest: Number(calc.totalInterest),
+          maturityAmount: Number(calc.totalReturn)
+        })
       });
 
       const data = await res.json();
 
       if (data.msg === "Token expired or invalid") {
         localStorage.clear();
-        toast.error("Session expired. Please login again.");
-        window.location.href = "/login";
+        showStatusMsg("error", "Session expired. Logging out.");
+        setTimeout(() => { window.location.href = "/login"; }, 2000);
         return;
       }
 
-      toast.success(data.msg || "SIP started successfully");
-
       if (data.success) {
+        showStatusMsg("success", data.msg || "SIP Plan Started Successfully! 🌱");
         setAmount("");
         setAccepted(false);
         loadBalance();
+      } else {
+        showStatusMsg("info", data.msg || "Could not complete transaction");
       }
     } catch (err) {
       console.log("START SIP ERROR:", err);
-      toast.info("Something went wrong");
+      showStatusMsg("error", "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -242,82 +182,80 @@ rate
     <div style={styles.page}>
       <div style={styles.mobileFrame}>
 
-        <div style={styles.leftBgArt}>
-          <div style={styles.leftArrow}>↗</div>
-          <div style={styles.leftCoins}>🪙</div>
-        </div>
+        {/* BACKGROUND GLOWS FOR PREMIUM FEEL */}
+        <div style={styles.glowTopLeft}></div>
+        <div style={styles.glowBottomRight}></div>
 
-        <div style={styles.rightBgArt}>
-          <div style={styles.rupeeCircle}>₹</div>
-          <div style={styles.plantStem}>🌱</div>
-        </div>
+        {/* ২. সেন্টারড সুন্দর ইনফো মেসেজ ওভারলে UI */}
+        {statusOverlay.show && (
+          <div style={styles.statusOverlayBg}>
+            <div style={{
+              ...styles.statusOverlayCard,
+              borderTop: statusOverlay.type === "success" ? "5px solid #10b981" : statusOverlay.type === "error" ? "5px solid #ef4444" : "5px solid #3b82f6"
+            }}>
+              <div style={{
+                ...styles.statusOverlayIcon,
+                background: statusOverlay.type === "success" ? "rgba(16,185,129,0.15)" : statusOverlay.type === "error" ? "rgba(239,68,68,0.15)" : "rgba(59,130,246,0.15)",
+                color: statusOverlay.type === "success" ? "#10b981" : statusOverlay.type === "error" ? "#ef4444" : "#3b82f6"
+              }}>
+                {statusOverlay.type === "success" ? "✓" : statusOverlay.type === "error" ? "✕" : "ℹ"}
+              </div>
+              <h3 style={styles.statusOverlayText}>{statusOverlay.message}</h3>
+            </div>
+          </div>
+        )}
 
+        {/* TOP BAR */}
         <div style={styles.topBar}>
-          <button
-            style={styles.backBtn}
-            onClick={() => window.history.back()}
-          >
+          <button style={styles.backBtn} onClick={() => window.history.back()}>
             ←
           </button>
-
-         <button
-  style={styles.helpBtn}
-  onClick={() => setHelpOpen(true)}
->
-  ?
-</button>
+          <span style={styles.headerTitleMain}>Investment Plan</span>
+          <button style={styles.helpBtn} onClick={() => setHelpOpen(true)}>
+            ?
+          </button>
         </div>
 
+        {/* BRAND HEADER */}
         <header style={styles.brandHeader}>
           <div style={styles.walletLogo}>
             <div style={styles.logoMoneyOne}></div>
             <div style={styles.logoMoneyTwo}></div>
             <div style={styles.logoCoin}>₹</div>
           </div>
-
           <h1 style={styles.brandTitle}>
-            SAVE <span>MONEY</span>
+            SAVE <span style={styles.brandSpan}>MONEY</span>
           </h1>
-
           <div style={styles.brandSub}>
-            <span></span>
-            <b>START SIP INVESTMENT</b>
-            <span></span>
+            <b>PREMIUM SIP PLATFORM</b>
           </div>
         </header>
 
+        {/* WALLET BALANCE CARD */}
         <section style={styles.balanceCard}>
           <div style={styles.walletIconBox}>
             <span>👛</span>
           </div>
-
           <div style={styles.balanceInfo}>
-            <p>WALLET BALANCE</p>
-            <h2>{money(balance)}</h2>
-            <small>Available Balance</small>
+            <p style={styles.balanceLabel}>WALLET BALANCE</p>
+            <h2 style={styles.balanceAmount}>{money(balance)}</h2>
+            <small style={styles.balanceSubtext}>Available for Investment</small>
           </div>
-
-          <div style={styles.balanceDivider}></div>
-
-          <button
-            style={styles.addMoneyBtn}
-            onClick={() => (window.location.href = "/wallet")}
-          >
-            <span>＋</span>
-            Add Money
+          <button style={styles.addMoneyBtn} onClick={() => (window.location.href = "/wallet")}>
+            <span>＋</span> Add Funds
           </button>
         </section>
+
+        {/* SIP DETAILS MAIN CARD */}
         <section style={styles.mainCard}>
           <div style={styles.sectionHead}>
             <div style={styles.sectionIcon}>🌱</div>
-            <h2>SIP DETAILS</h2>
+            <h2 style={styles.sectionTitle}>Configure SIP Plan</h2>
           </div>
 
           <label style={styles.inputLabel}>Monthly SIP Amount</label>
-
           <div style={styles.amountInputBox}>
             <span style={styles.rupeeSymbol}>₹</span>
-
             <input
               style={styles.amountInput}
               type="number"
@@ -325,16 +263,14 @@ rate
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter Amount"
             />
-
-            <b style={styles.minBadge}>Min ₹2000</b>
+            <b style={styles.minBadge}>Min ₹2,000</b>
           </div>
 
           {Number(amount || 0) > 0 && Number(amount) < 2000 && (
-            <p style={styles.errorText}>Minimum investment amount is ₹2000</p>
+            <p style={styles.errorText}>⚠️ Minimum investment amount is ₹2000</p>
           )}
 
           <label style={styles.inputLabel}>SIP Duration</label>
-
           <div style={styles.durationGrid}>
             {[1, 3, 5, 10, 15, 20].map((y) => (
               <button
@@ -346,192 +282,85 @@ rate
                 onClick={() => setYears(y)}
               >
                 {y} {y === 1 ? "Year" : "Years"}
-
-                {years === y && (
-                  <span style={styles.tickMark}>✓</span>
-                )}
+                {years === y && <span style={styles.tickMark}>✓</span>}
               </button>
             ))}
           </div>
 
           <div style={styles.recommendBox}>
             <div style={styles.starIcon}>⭐</div>
-
-            <p>
-              <b>Recommended:</b> 5 Years is ideal for better returns & wealth growth.
+            <p style={styles.recommendText}>
+              <b>Expert Advice:</b> 5 Years or higher is recommended for maximum compounding returns.
             </p>
           </div>
         </section>
 
+        {/* ESTIMATED RETURNS */}
         <section style={styles.returnCard}>
-          <h3 style={styles.returnTitle}>ESTIMATED RETURNS</h3>
-
+          <h3 style={styles.returnTitle}>Estimated Compounding Projection</h3>
           <div style={styles.returnGrid}>
-            <ReturnItem
-              icon="📈"
-              title="Estimated Return"
-              value={money(calc.estimatedReturn)}
-              color="#14b86f"
-              bg="#dcfce7"
-            />
-
-            <ReturnItem
-              icon="👛"
-              title="Total Investment"
-              value={money(calc.totalInvestment)}
-              color="#2563eb"
-              bg="#dbeafe"
-            />
-
-            <ReturnItem
-              icon="🪙"
-              title="Total Interest"
-              value={money(calc.totalInterest)}
-              color="#f59e0b"
-              bg="#fff1c2"
-            />
-
-            <ReturnItem
-              icon="📊"
-              title="Total Return"
-              value={money(calc.totalReturn)}
-              color="#7c3aed"
-              bg="#ede9fe"
-            />
+            <ReturnItem icon="📈" title="Estimated Return" value={money(calc.estimatedReturn)} color="#10b981" bg="rgba(16,185,129,0.1)" />
+            <ReturnItem icon="👛" title="Total Investment" value={money(calc.totalInvestment)} color="#3b82f6" bg="rgba(59,130,246,0.1)" />
+            <ReturnItem icon="🪙" title="Total Interest" value={money(calc.totalInterest)} color="#f59e0b" bg="rgba(245,158,11,0.1)" />
+            <ReturnItem icon="📊" title="Maturity Value" value={money(calc.totalReturn)} color="#a855f7" bg="rgba(168,85,247,0.1)" />
           </div>
-
           <div style={styles.infoNote}>
-            <span>ℹ</span>
-            The above values are estimated and may vary based on market performance.
+            <span>ℹ</span> Market calculations are compounding estimations.
           </div>
         </section>
 
+        {/* TERMS AGREEMENT */}
         <section style={styles.termsBox} onClick={openTerms}>
-          <div
-            style={{
-              ...styles.checkbox,
-              ...(accepted ? styles.checkboxActive : {})
-            }}
-          >
+          <div style={{ ...styles.checkbox, ...(accepted ? styles.checkboxActive : {}) }}>
             {accepted ? "✓" : ""}
           </div>
-
-          <p>
-            I have read and agree to the <b>Terms & Conditions</b>
+          <p style={styles.termsText}>
+            I have read and agree to the <b style={styles.termsBold}>Terms & Conditions</b>
           </p>
-
           <div style={styles.termsDoc}>📄</div>
         </section>
 
-        <button
-          style={styles.confirmBtn}
-          onClick={confirmSip}
-          disabled={loading}
-        >
-          <span>🛡</span>
-          {loading ? "Starting SIP..." : "Confirm & Start SIP"}
+        {/* MAIN PRO CONFIRM BUTTON */}
+        <button style={styles.confirmBtn} onClick={confirmSip} disabled={loading}>
+          <span>🛡️</span> {loading ? "Locking Deal..." : "Confirm & Launch SIP"}
         </button>
 
+        {/* FOOTER FEATURES */}
         <section style={styles.bottomFeatures}>
-          <FeatureItem
-            icon="🛡"
-            title="Secure & Trusted"
-            sub="100% Safe Investment"
-            color="#7c3aed"
-          />
-
-          <FeatureItem
-            icon="🌱"
-            title="Grow Your Wealth"
-            sub="Start Small, Grow Big"
-            color="#6d28d9"
-          />
-
-          <FeatureItem
-            icon="⏱"
-            title="Flexible & Easy"
-            sub="Choose & Invest Easily"
-            color="#7c3aed"
-          />
+          <FeatureItem icon="🔒" title="Secure Core" sub="End-to-End Vaulted" color="#3b82f6" />
+          <FeatureItem icon="📈" title="High Yield" sub="Compounding Growth" color="#10b981" />
+          <FeatureItem icon="⚡" title="Fluid Asset" sub="Easy Auto-Payouts" color="#a855f7" />
         </section>
 
+        {/* TERMS MODAL */}
         {termsOpen && (
           <div style={styles.overlay}>
             <div style={styles.termsModal}>
-              <h2>Terms & Conditions</h2>
-
+              <h2 style={styles.modalTitle}>Terms & Conditions</h2>
               <div style={styles.termsScroll}>
-                <p>
-                  Save Money SIP is a disciplined monthly saving and investment plan.
-                  The minimum monthly SIP investment amount is ₹2000.
-                </p>
-
-                <p>
-                  User must select SIP duration and understand all estimated return
-                  values before confirming the investment from wallet balance.
-                </p>
-
-                <p>
-                  This SIP plan requires timely monthly renewal. If renewal is missed,
-                  investment benefits, bonuses, rewards or auto-withdrawal eligibility
-                  may be affected.
-                </p>
-
-                <p>
-                  Returns shown inside the application are estimated values only.
-                  Actual return may increase or decrease depending on company
-                  performance, market condition, operational cost and policy updates.
-                </p>
-
-                <p>
-                  Investment always involves financial risk. User confirms that they
-                  are investing voluntarily after understanding risk, reward and
-                  possible variation in ROI.
-                </p>
-
-                <p>
-                  If any investor wants to close the investment before completing the
-                  selected tenure, early closing charge may apply and interest or bonus
-                  may not be paid.
-                </p>
-
-                <p>
-                  KYC verification is mandatory for investment, referral bonus, wallet
-                  transfer, reward claim, withdrawal and account security features.
-                </p>
-
-                <p>
-                  Fake account creation, wrong KYC, payment fraud, referral misuse,
-                  suspicious activity or policy violation may lead to account
-                  suspension, wallet freeze or permanent termination.
-                </p>
-
-                <p>
-                  Wallet balance, SIP records, renewal records, bonus income, transfer
-                  history and withdrawal records shown inside the app will be treated
-                  as official Save Money records.
-                </p>
-
-                <p>
-                  Auto withdrawal will be processed every month on the 5th date only
-                  if your Save Money investment is renewed on time.
-                </p>
-
-                <p>
-                  The company may update SIP rules, ROI structure, renewal policy,
-                  bonus policy, KYC policy or wallet rules when required for security,
-                  business, technical or legal reasons.
-                </p>
-
-                <p>
-                  By clicking Accept & Continue, user confirms that they have read,
-                  understood and accepted all current terms, risks, policies and future
-                  updates of Save Money platform.
-                </p>
+                <p>Save Money SIP is a disciplined monthly saving and investment plan. The minimum monthly SIP investment amount is ₹2000.</p>
+                <p>User must select SIP duration and understand all estimated return values before confirming the investment from wallet balance.</p>
+                <p>This SIP plan requires timely monthly renewal. If renewal is missed, investment benefits, bonuses, rewards or auto-withdrawal eligibility may be affected.</p>
+                <p>Returns shown inside the application are estimated values only. Actual return may increase or decrease depending on company performance.</p>
+                <p>Investment always involves financial risk. User confirms that they are investing voluntarily after understanding risk, reward and possible variation in ROI.</p>
               </div>
-
               <button style={styles.acceptBtn} onClick={acceptTerms}>
                 Accept & Continue
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* HELP ASSISTANT MODAL */}
+        {helpOpen && (
+          <div style={styles.overlay}>
+            <div style={styles.helpModal}>
+              <h2 style={styles.modalTitleDark}>Investment Assistant</h2>
+              <p style={styles.helpContentText}>Save Money SIP plan আপনাকে প্রতি মাসে নিয়মিত saving করতে সাহায্য করবে।</p>
+              <p style={styles.helpContentText}>Minimum monthly SIP amount হলো ₹2000। Amount লিখে duration select করলে নিচে estimated return দেখতে পাবেন।</p>
+              <p style={styles.helpContentText}>1 Year = 11%, 3 Years = 14%, 5+ Years = 20% থেকে 30% পর্যন্ত estimated return দেখানো হবে।</p>
+              <button style={styles.acceptBtnDark} onClick={() => setHelpOpen(false)}>
+                Okay, I Understand
               </button>
             </div>
           </div>
@@ -540,60 +369,17 @@ rate
       </div>
     </div>
   );
-
-{helpOpen && (
-  <div style={styles.overlay}>
-    <div style={styles.helpModal}>
-      <h2>Investment Assistant</h2>
-
-      <p>
-        Save Money SIP plan আপনাকে প্রতি মাসে নিয়মিত saving করতে সাহায্য করবে।
-      </p>
-
-      <p>
-        Minimum monthly SIP amount হলো ₹2000। Amount লিখে duration select করলে নিচে estimated return দেখতে পাবেন।
-      </p>
-
-      <p>
-        1 Year = 11%, 3 Years = 14%, 5+ Years = 20% থেকে 30% পর্যন্ত estimated return দেখানো হবে।
-      </p>
-
-      <p>
-        SIP start করার আগে wallet balance থাকতে হবে এবং Terms & Conditions accept করতে হবে।
-      </p>
-
-      <button
-        style={styles.acceptBtn}
-        onClick={() => setHelpOpen(false)}
-      >
-        Okay, I Understand
-      </button>
-    </div>
-  </div>
-)}
-
 }
 
-
-
+// SUB COMPONENTS
 function ReturnItem({ icon, title, value, color, bg }) {
   return (
     <div style={styles.returnItem}>
-      <div
-        style={{
-          ...styles.returnIcon,
-          background: bg,
-          color
-        }}
-      >
+      <div style={{ ...styles.returnIcon, background: bg, color }}>
         {icon}
       </div>
-
-      <p>{title}</p>
-
-      <h2 style={{ color }}>
-        {value}
-      </h2>
+      <p style={styles.returnItemTitle}>{title}</p>
+      <h2 style={{ ...styles.returnItemValue, color }}>{value}</h2>
     </div>
   );
 }
@@ -601,637 +387,604 @@ function ReturnItem({ icon, title, value, color, bg }) {
 function FeatureItem({ icon, title, sub, color }) {
   return (
     <div style={styles.featureItem}>
-      <div style={{ ...styles.featureIcon, color }}>
+      <div style={{ ...styles.featureIcon, color, background: `${color}15` }}>
         {icon}
       </div>
-
-      <div>
-        <b>{title}</b>
-        <p>{sub}</p>
-      </div>
+      <b style={styles.featureTitle}>{title}</b>
+      <p style={styles.featureSub}>{sub}</p>
     </div>
   );
 }
 
+// ALL HIGH QUALITY STYLES
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "#eef3f8",
+    background: "#020617",
     display: "flex",
     justifyContent: "center",
-    fontFamily: "Arial, sans-serif",
-    color: "#071747"
+    fontFamily: "'Segoe UI', Roboto, Helvetica, sans-serif",
+    color: "#f8fafc",
+    overflowX: "hidden"
   },
-
- mobileFrame: {
-  width: "100%",
-  maxWidth: "100%",
-  minHeight: "100vh",
-  background:
-    "linear-gradient(180deg,#ffffff 0%,#faf5ff 100%)",
-  position: "relative",
-  overflow: "hidden",
-  padding: "16px",
-  boxSizing: "border-box"
-},
-
-  leftBgArt: {
+  mobileFrame: {
+    width: "100%",
+    maxWidth: "460px",
+    minHeight: "100vh",
+    background: "linear-gradient(180deg, #090f24 0%, #030712 100%)",
+    position: "relative",
+    padding: "20px 16px 40px",
+    boxSizing: "border-box",
+    borderLeft: "1px solid #1e293b",
+    borderRight: "1px solid #1e293b"
+  },
+  glowTopLeft: {
     position: "absolute",
-    left: "-28px",
-    top: "172px",
-    fontSize: "46px",
-    opacity: 0.13,
-    color: "#7c3aed",
-    transform: "rotate(-12deg)"
-  },
-
-  leftArrow: {
-    fontSize: "64px",
-    fontWeight: "900"
-  },
-
-  leftCoins: {
-    fontSize: "44px",
-    marginTop: "-10px"
-  },
-
-  rightBgArt: {
-    position: "absolute",
-    right: "-14px",
-    top: "172px",
-    fontSize: "56px",
-    opacity: 0.17,
-    color: "#7c3aed",
-    textAlign: "center"
-  },
-
-  rupeeCircle: {
-    width: "78px",
-    height: "78px",
+    top: "-100px",
+    left: "-100px",
+    width: "300px",
+    height: "300px",
+    background: "rgba(99, 102, 241, 0.15)",
+    filter: "blur(80px)",
     borderRadius: "50%",
-    background: "rgba(124,58,237,.12)",
+    pointerEvents: "none"
+  },
+  glowBottomRight: {
+    position: "absolute",
+    bottom: "100px",
+    right: "-100px",
+    width: "250px",
+    height: "250px",
+    background: "rgba(236, 72, 153, 0.12)",
+    filter: "blur(70px)",
+    borderRadius: "50%",
+    pointerEvents: "none"
+  },
+  statusOverlayBg: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(2, 6, 23, 0.75)",
+    backdropFilter: "blur(8px)",
+    zIndex: 100000,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  statusOverlayCard: {
+    background: "#0f172a",
+    padding: "24px 30px",
+    borderRadius: "24px",
+    textAlign: "center",
+    boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+    border: "1px solid #1e293b",
+    maxWidth: "350px",
+    width: "85%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "14px"
+  },
+  statusOverlayIcon: {
+    width: "56px",
+    height: "56px",
+    borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "900"
+    fontSize: "26px",
+    fontWeight: "bold"
   },
-
-  plantStem: {
-    marginTop: "-8px"
+  statusOverlayText: {
+    fontSize: "16px",
+    color: "#ffffff",
+    margin: 0,
+    fontWeight: "700",
+    lineHeight: "1.4"
   },
-
   topBar: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     position: "relative",
-    zIndex: 5
+    zIndex: 5,
+    marginBottom: "20px"
   },
-
+  headerTitleMain: {
+    fontSize: "17px",
+    fontWeight: "700",
+    color: "#94a3b8"
+  },
   backBtn: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "16px",
-    border: "none",
-    background: "white",
-    color: "#071747",
-    fontSize: "28px",
-    fontWeight: "900",
-    boxShadow: "0 10px 22px rgba(15,23,42,.08)",
-    cursor: "pointer"
+    width: "42px",
+    height: "42px",
+    borderRadius: "14px",
+    border: "1px solid #1e293b",
+    background: "#0f172a",
+    color: "#fff",
+    fontSize: "20px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
   },
-
   helpBtn: {
-    width: "48px",
-    height: "48px",
+    width: "42px",
+    height: "42px",
     borderRadius: "50%",
-    border: "none",
-    background: "white",
-    color: "#071747",
-    fontSize: "24px",
-    fontWeight: "900",
-    boxShadow: "0 10px 22px rgba(15,23,42,.08)",
+    border: "1px solid #1e293b",
+    background: "#0f172a",
+    color: "#3b82f6",
+    fontSize: "18px",
+    fontWeight: "700",
     cursor: "pointer"
   },
-
   brandHeader: {
     textAlign: "center",
-    marginTop: "-2px",
-    marginBottom: "22px",
-    position: "relative",
-    zIndex: 4
+    marginBottom: "24px"
   },
-
   walletLogo: {
-    width: "78px",
-    height: "64px",
+    width: "70px",
+    height: "56px",
     borderRadius: "16px",
-    margin: "0 auto 7px",
-    background: "linear-gradient(145deg,#5b21ff,#a21caf)",
+    margin: "0 auto 10px",
+    background: "linear-gradient(135deg, #6366f1, #a855f7)",
     position: "relative",
-    boxShadow: "0 14px 25px rgba(124,58,237,.27)"
+    boxShadow: "0 12px 24px rgba(99,102,241,0.3)"
   },
-
   logoMoneyOne: {
     position: "absolute",
-    top: "-12px",
-    left: "18px",
-    width: "40px",
-    height: "28px",
-    borderRadius: "7px",
-    background: "linear-gradient(135deg,#35e07a,#11b866)",
-    transform: "rotate(-10deg)",
-    boxShadow: "0 6px 10px rgba(0,0,0,.12)"
+    top: "-10px",
+    left: "14px",
+    width: "36px",
+    height: "24px",
+    borderRadius: "6px",
+    background: "linear-gradient(135deg, #10b981, #059669)",
+    transform: "rotate(-12deg)"
   },
-
   logoMoneyTwo: {
     position: "absolute",
-    top: "-5px",
-    left: "28px",
-    width: "40px",
-    height: "28px",
-    borderRadius: "7px",
-    background: "linear-gradient(135deg,#35e4c5,#0ca59e)",
-    transform: "rotate(12deg)"
+    top: "-4px",
+    left: "22px",
+    width: "36px",
+    height: "24px",
+    borderRadius: "6px",
+    background: "linear-gradient(135deg, #06b6d4, #0891b2)",
+    transform: "rotate(10deg)"
   },
-
   logoCoin: {
     position: "absolute",
-    right: "-9px",
-    bottom: "6px",
-    width: "31px",
-    height: "31px",
+    right: "-6px",
+    bottom: "4px",
+    width: "26px",
+    height: "26px",
     borderRadius: "50%",
-    background: "linear-gradient(135deg,#facc15,#f59e0b)",
+    background: "linear-gradient(135deg, #eab308, #ca8a04)",
     color: "white",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "900",
-    boxShadow: "0 7px 12px rgba(245,158,11,.28)"
+    fontWeight: "bold",
+    fontSize: "14px"
   },
-
   brandTitle: {
-    margin: "4px 0 4px",
-    fontSize: "31px",
+    margin: "0px",
+    fontSize: "28px",
     fontWeight: "900",
-    letterSpacing: "1px"
+    letterSpacing: "1px",
+    color: "#fff"
   },
-
+  brandSpan: {
+    color: "#10b981"
+  },
   brandSub: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "9px",
-    letterSpacing: "3.2px",
-    fontSize: "12px",
-    fontWeight: "900",
-    color: "#111827"
+    fontSize: "11px",
+    letterSpacing: "2px",
+    color: "#64748b",
+    marginTop: "4px"
   },
-
   balanceCard: {
-    position: "relative",
-    zIndex: 4,
-    minHeight: "118px",
-    background: "linear-gradient(135deg,#1422c9,#6827e9,#bf1fda)",
-    borderRadius: "19px",
-    color: "white",
-    display: "grid",
-    gridTemplateColumns: "58px 1fr",
-    gap: "12px",
+    background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)",
+    borderRadius: "24px",
+    border: "1px solid #312e81",
+    padding: "20px",
+    display: "flex",
     alignItems: "center",
-    padding: "16px",
-    boxShadow: "0 16px 30px rgba(82,45,220,.25)",
-    marginBottom: "16px",
-    overflow: "hidden"
+    gap: "16px",
+    marginBottom: "20px",
+    boxShadow: "0 15px 35px rgba(0,0,0,0.4)"
   },
-
   walletIconBox: {
-    width: "58px",
-    height: "58px",
-    borderRadius: "18px",
-    background: "rgba(255,255,255,.14)",
+    width: "54px",
+    height: "54px",
+    borderRadius: "16px",
+    background: "rgba(99, 102, 241, 0.15)",
+    border: "1px solid rgba(99, 102, 241, 0.3)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "31px",
-    boxShadow: "inset 0 0 15px rgba(255,255,255,.1)"
+    fontSize: "26px"
   },
-
   balanceInfo: {
-    textAlign: "left"
+    flex: 1
   },
-
-  balanceDivider: {
-    display: "none"
+  balanceLabel: {
+    margin: 0,
+    fontSize: "11px",
+    color: "#64748b",
+    fontWeight: "700",
+    letterSpacing: "0.5px"
   },
-
+  balanceAmount: {
+    margin: "2px 0",
+    fontSize: "24px",
+    fontWeight: "800",
+    color: "#fff"
+  },
+  balanceSubtext: {
+    fontSize: "11px",
+    color: "#10b981"
+  },
   addMoneyBtn: {
-    gridColumn: "1 / 3",
-    height: "50px",
-    borderRadius: "15px",
+    padding: "10px 14px",
+    borderRadius: "12px",
     border: "none",
-    background: "white",
-    color: "#6d28d9",
-    fontSize: "16px",
-    fontWeight: "900",
-    boxShadow: "0 12px 22px rgba(0,0,0,.12)",
-    cursor: "pointer"
+    background: "#6366f1",
+    color: "white",
+    fontSize: "13px",
+    fontWeight: "700",
+    cursor: "pointer",
+    boxShadow: "0 8px 16px rgba(99,102,241,0.25)"
   },
-
   mainCard: {
-    background: "rgba(255,255,255,.95)",
-    borderRadius: "22px",
-    padding: "18px",
-    marginBottom: "16px",
-    boxShadow: "0 14px 28px rgba(15,23,42,.08)",
-    position: "relative",
-    zIndex: 4
+    background: "#0f172a",
+    borderRadius: "24px",
+    border: "1px solid #1e293b",
+    padding: "20px",
+    marginBottom: "20px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
   },
-
   sectionHead: {
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    marginBottom: "18px"
+    marginBottom: "20px"
   },
-
   sectionIcon: {
-    width: "50px",
-    height: "50px",
-    borderRadius: "50%",
-    background: "#ffe4f3",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "24px"
+    fontSize: "22px"
   },
-
+  sectionTitle: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#fff"
+  },
   inputLabel: {
     display: "block",
-    fontWeight: "900",
-    fontSize: "16px",
-    margin: "15px 0 10px"
+    fontWeight: "600",
+    fontSize: "14px",
+    color: "#94a3b8",
+    marginBottom: "8px"
   },
-
   amountInputBox: {
-    minHeight: "58px",
-    borderRadius: "15px",
-    border: "1px solid #d9ddea",
+    height: "56px",
+    borderRadius: "16px",
+    border: "1px solid #1e293b",
+    background: "#020617",
     display: "flex",
     alignItems: "center",
-    padding: "0 12px",
-    gap: "8px",
-    background: "#fff"
+    padding: "0 16px",
+    gap: "10px",
+    marginBottom: "8px"
   },
-
   rupeeSymbol: {
-    fontSize: "22px",
-    fontWeight: "900",
-    color: "#071747"
+    fontSize: "20px",
+    fontWeight: "700",
+    color: "#10b981"
   },
-
   amountInput: {
     flex: 1,
     border: "none",
     outline: "none",
-    fontSize: "16px",
-    fontWeight: "800",
-    color: "#071747",
-    background: "transparent",
-    minWidth: 0
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#fff",
+    background: "transparent"
   },
-
   minBadge: {
-    background: "#f3f4f6",
-    padding: "7px 8px",
+    background: "rgba(245,158,11,0.1)",
+    color: "#f59e0b",
+    padding: "6px 10px",
     borderRadius: "10px",
-    fontSize: "11px",
-    whiteSpace: "nowrap",
-    color: "#6b7280"
+    fontSize: "11px"
   },
-
   errorText: {
     color: "#ef4444",
-    fontWeight: "800",
     fontSize: "12px",
-    marginTop: "8px"
+    margin: "0 0 14px",
+    fontWeight: "500"
   },
-
   durationGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2,1fr)",
-    gap: "12px"
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "10px",
+    marginTop: "12px"
   },
-
   durationBtn: {
-    height: "52px",
-    borderRadius: "15px",
-    border: "1px solid #d9ddea",
-    background: "white",
-    fontSize: "15px",
-    fontWeight: "900",
-    color: "#071747",
+    height: "46px",
+    borderRadius: "12px",
+    border: "1px solid #1e293b",
+    background: "#020617",
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#94a3b8",
     position: "relative",
     cursor: "pointer"
   },
-
   durationActive: {
-    background: "linear-gradient(135deg,#5b21ff,#a21caf)",
+    background: "linear-gradient(135deg, #6366f1, #4f46e5)",
     color: "white",
     border: "none",
-    boxShadow: "0 10px 22px rgba(124,58,237,.25)"
+    boxShadow: "0 8px 20px rgba(99,102,241,0.3)"
   },
-
   tickMark: {
     position: "absolute",
-    top: "6px",
-    right: "8px",
-    fontSize: "12px",
-    background: "rgba(255,255,255,.22)",
+    top: "4px",
+    right: "6px",
+    fontSize: "10px",
+    color: "#10b981",
+    background: "#fff",
+    width: "14px",
+    height: "14px",
     borderRadius: "50%",
-    width: "18px",
-    height: "18px"
-  },
-
-  recommendBox: {
-    marginTop: "16px",
-    background: "#fff0f8",
-    borderRadius: "15px",
-    padding: "13px",
     display: "flex",
     alignItems: "center",
-    gap: "12px",
-    color: "#5b21ff",
-    fontSize: "13px"
+    justifyContent: "center",
+    fontWeight: "bold"
   },
-
+  recommendBox: {
+    marginTop: "20px",
+    background: "rgba(99,102,241,0.06)",
+    border: "1px dashed rgba(99,102,241,0.3)",
+    borderRadius: "16px",
+    padding: "12px 16px",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px"
+  },
   starIcon: {
-    fontSize: "34px",
-    filter: "drop-shadow(0 8px 10px rgba(245,158,11,.25))"
+    fontSize: "20px"
   },
-
+  recommendText: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#cbd5e1",
+    lineHeight: "1.5"
+  },
   returnCard: {
-    background: "rgba(255,255,255,.95)",
-    borderRadius: "22px",
-    padding: "18px",
-    marginBottom: "16px",
-    boxShadow: "0 14px 28px rgba(15,23,42,.08)",
-    position: "relative",
-    zIndex: 4
+    background: "#0f172a",
+    borderRadius: "24px",
+    border: "1px solid #1e293b",
+    padding: "20px",
+    marginBottom: "20px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
   },
-
   returnTitle: {
-    margin: "0 0 14px",
-    color: "#6d28d9",
-    letterSpacing: "1px",
-    fontSize: "16px",
-    fontWeight: "900"
+    margin: "0 0 16px",
+    color: "#fff",
+    fontSize: "15px",
+    fontWeight: "700",
+    letterSpacing: "0.5px"
   },
-
   returnGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2,1fr)",
-    gap: "10px"
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "12px"
   },
-
   returnItem: {
-    textAlign: "center",
-    border: "1px solid #eef2ff",
+    border: "1px solid #1e293b",
     borderRadius: "16px",
-    padding: "12px 7px",
-    background: "#fff",
-    minHeight: "135px",
-    boxShadow: "0 7px 14px rgba(15,23,42,.035)"
+    padding: "16px 12px",
+    background: "#020617",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start"
   },
-
   returnIcon: {
-    width: "54px",
-    height: "54px",
-    borderRadius: "50%",
-    margin: "0 auto 9px",
+    width: "36px",
+    height: "36px",
+    borderRadius: "10px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "25px"
+    fontSize: "18px",
+    marginBottom: "12px"
   },
-
+  returnItemTitle: {
+    margin: 0,
+    color: "#64748b",
+    fontSize: "12px",
+    fontWeight: "600"
+  },
+  returnItemValue: {
+    margin: "6px 0 0",
+    fontSize: "16px",
+    fontWeight: "800"
+  },
   infoNote: {
     marginTop: "16px",
-    background: "#eee8ff",
-    color: "#6d28d9",
-    padding: "11px",
-    borderRadius: "11px",
-    textAlign: "center",
-    fontSize: "13px",
-    lineHeight: "19px"
+    color: "#64748b",
+    fontSize: "11px",
+    textAlign: "center"
   },
-
   termsBox: {
-    background: "white",
-    borderRadius: "17px",
-    padding: "16px",
-    border: "1px dashed #f0b6d4",
+    background: "#0f172a",
+    borderRadius: "16px",
+    padding: "14px 16px",
+    border: "1px solid #1e293b",
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    marginBottom: "16px",
-    boxShadow: "0 12px 24px rgba(15,23,42,.06)",
-    position: "relative",
-    zIndex: 4,
+    marginBottom: "20px",
     cursor: "pointer"
   },
-
   checkbox: {
-    minWidth: "30px",
-    height: "30px",
-    borderRadius: "8px",
-    border: "2px solid #7c3aed",
+    width: "20px",
+    height: "20px",
+    borderRadius: "6px",
+    border: "2px solid #6366f1",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     color: "white",
-    fontWeight: "900"
+    fontSize: "12px",
+    fontWeight: "bold"
   },
-
   checkboxActive: {
-    background: "#7c3aed"
+    background: "#6366f1"
   },
-
+  termsText: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#94a3b8"
+  },
+  termsBold: {
+    color: "#6366f1"
+  },
   termsDoc: {
     marginLeft: "auto",
-    fontSize: "28px"
+    fontSize: "18px",
+    color: "#64748b"
   },
-
   confirmBtn: {
     width: "100%",
-    height: "62px",
+    height: "56px",
     borderRadius: "16px",
     border: "none",
-    background: "linear-gradient(90deg,#5b21ff,#ec168e)",
+    background: "linear-gradient(90deg, #6366f1, #e11d48)",
     color: "white",
-    fontSize: "19px",
-    fontWeight: "900",
-    boxShadow: "0 16px 30px rgba(236,22,142,.22)",
-    position: "relative",
-    zIndex: 4,
-    cursor: "pointer"
-  },
-
- bottomFeatures: {
-  display: "grid",
-  gridTemplateColumns: "repeat(3,1fr)",
-  gap: "8px",
-  marginTop: "15px"
-},
-
- featureItem: {
-  background: "#fff",
-  borderRadius: "18px",
-  padding: "10px",
-  textAlign: "center",
-  boxShadow: "0 8px 20px rgba(0,0,0,.05)"
-},
-
-  featureIcon: {
-    width: "42px",
-    height: "42px",
-    borderRadius: "14px",
-    background: "#ede9fe",
+    fontSize: "16px",
+    fontWeight: "700",
+    boxShadow: "0 10px 25px rgba(99,102,241,0.35)",
+    cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "23px"
+    gap: "8px"
   },
-
+  bottomFeatures: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "10px",
+    marginTop: "24px"
+  },
+  featureItem: {
+    background: "#0f172a",
+    border: "1px solid #1e293b",
+    borderRadius: "16px",
+    padding: "14px 10px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center"
+  },
+  featureIcon: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "18px",
+    marginBottom: "8px"
+  },
+  featureTitle: {
+    fontSize: "11px",
+    color: "#fff",
+    display: "block"
+  },
+  featureSub: {
+    margin: "2px 0 0",
+    color: "#64748b",
+    fontSize: "9px"
+  },
   overlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(0,0,0,.55)",
+    background: "rgba(2,6,23,0.8)",
+    backdropFilter: "blur(6px)",
     zIndex: 9999,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "18px"
+    padding: "20px"
   },
-
   termsModal: {
     width: "100%",
-    maxWidth: "390px",
-    background: "linear-gradient(145deg,#111827,#020617)",
-    color: "white",
-    border: "2px solid #22c55e",
-    borderRadius: "22px",
-    padding: "20px",
-    boxShadow: "0 0 30px rgba(34,197,94,.35)"
+    maxWidth: "380px",
+    background: "#0f172a",
+    border: "1px solid #1e293b",
+    borderRadius: "24px",
+    padding: "24px",
+    boxShadow: "0 20px 50px rgba(0,0,0,0.5)"
   },
-
+  modalTitle: {
+    margin: "0 0 16px",
+    fontSize: "20px",
+    color: "#fff",
+    fontWeight: "700"
+  },
   termsScroll: {
-    maxHeight: "360px",
+    maxHeight: "280px",
     overflowY: "auto",
-    lineHeight: "24px",
-    fontSize: "14px",
-    paddingRight: "8px",
-    color: "#e5e7eb"
+    lineHeight: "1.6",
+    fontSize: "13px",
+    color: "#94a3b8",
+    paddingRight: "6px"
   },
-
   acceptBtn: {
     width: "100%",
-    height: "52px",
-    marginTop: "14px",
+    height: "48px",
+    marginTop: "20px",
     border: "none",
-    borderRadius: "14px",
-    background: "#22c55e",
-    color: "#020617",
-    fontWeight: "900",
-    fontSize: "16px",
-    cursor: "pointer"
+    borderRadius: "12px",
+    background: "#10b981",
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: "15px",
+    cursor: "pointer",
+    boxShadow: "0 6px 20px rgba(16,185,129,0.25)"
   },
-
-bottomFeatures: {
-  marginTop: "14px",
-  display: "grid",
-  gridTemplateColumns: "repeat(3,1fr)",
-  gap: "8px",
-  position: "relative",
-  zIndex: 4
-},
-
-featureItem: {
-  background: "linear-gradient(135deg,#ffffff,#f7f2ff)",
-  borderRadius: "14px",
-  padding: "10px 6px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  textAlign: "center",
-  gap: "6px",
-  boxShadow: "0 8px 16px rgba(15,23,42,.05)",
-  border: "1px solid rgba(124,58,237,.08)",
-  fontSize: "11px"
-},
-
-featureIcon: {
-  width: "34px",
-  height: "34px",
-  borderRadius: "12px",
-  background: "#ede9fe",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "20px"
-},
-
-helpModal: {
-  width: "100%",
-  maxWidth: "390px",
-  background: "linear-gradient(145deg,#ffffff,#f7f2ff)",
-  color: "#071747",
-  borderRadius: "22px",
-  padding: "22px",
-  boxShadow: "0 25px 50px rgba(0,0,0,.25)",
-  lineHeight: "25px"
-},
-
-returnsGrid: {
-  display: "grid",
-  gridTemplateColumns: "repeat(4,1fr)",
-  gap: "10px",
-  marginTop: "15px"
-},
-
-sipCard: {
-  width: "100%",
-  background: "#fff",
-  borderRadius: "24px",
-  padding: "18px",
-  boxSizing: "border-box",
-  boxShadow: "0 10px 30px rgba(0,0,0,.05)"
-},
-
-walletCard: {
-  width: "100%",
-  borderRadius: "22px",
-  padding: "18px",
-  boxSizing: "border-box",
-  background:
-    "linear-gradient(135deg,#2156ff,#8b2cf5,#ff2fa8)",
-  color: "#fff",
-  marginBottom: "16px"
-},
-
-container: {
-  width: "100%",
-  minHeight: "100vh",
-  background: "#f7f8fc",
-  display: "flex",
-  justifyContent: "center"
-},
-
-'@media (max-width: 480px)': {
-  returnsGrid: {
-    gridTemplateColumns: "repeat(4,1fr)"
+  helpModal: {
+    width: "100%",
+    maxWidth: "360px",
+    background: "#0f172a",
+    border: "1px solid #1e293b",
+    borderRadius: "24px",
+    padding: "24px",
+    boxShadow: "0 20px 50px rgba(0,0,0,0.5)"
+  },
+  modalTitleDark: {
+    margin: "0 0 16px",
+    fontSize: "18px",
+    color: "#3b82f6",
+    fontWeight: "700"
+  },
+  helpContentText: {
+    fontSize: "13px",
+    color: "#cbd5e1",
+    lineHeight: "1.6",
+    margin: "0 0 12px"
+  },
+  acceptBtnDark: {
+    width: "100%",
+    height: "46px",
+    border: "none",
+    borderRadius: "12px",
+    background: "#3b82f6",
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: "14px",
+    cursor: "pointer",
+    marginTop: "8px"
   }
-}
-
 };
