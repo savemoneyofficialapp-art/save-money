@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { API } from "../config";
@@ -26,49 +26,37 @@ export default function Refer() {
   const [bonusFilter, setBonusFilter] = useState("All");
   const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
   
-  // ফিল্টার ফিক্স করার জন্য স্টেট
+  // ফিল্টারিং স্টেট
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  // --- স্ক্রিনের মাঝখানে বড় মেসেজ দেখানোর জন্য নতুন স্টেট ---
+  // স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ দেখানোর জন্য স্টেট
   const [statusOverlay, setStatusOverlay] = useState({
     show: false,
-    type: "info", // 'success' | 'info' | 'error'
+    type: "info",
     message: ""
   });
 
-  // মাঝখানে মেসেজ শো করানোর হেল্পার ফাংশন
+  // মিডল মেসেজ ট্রিগার করার ফাংশন
   const triggerStatusOverlay = (type, message) => {
     setStatusOverlay({ show: true, type, message });
     setTimeout(() => {
       setStatusOverlay({ show: false, type: "info", message: "" });
-    }, 2200);
+    }, 2000);
   };
 
-  const filteredPerformanceHistory = (performance.history || []).filter((item) => {
-    const d = new Date(item.date);
-    const now = new Date();
-
-    if (performanceFilter === "thisMonth") {
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }
-
-    if (performanceFilter === "lastMonth") {
-      const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
-    }
-
-    return true;
-  });
+  // স্ক্রোল পজিশন ফিক্স করার জন্য useEffect
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }, [bonusModal]); // কোনো মডাল খুললে বা পেজে ঢুকলে স্ক্রোল পজিশন ঠিক থাকবে
 
   useEffect(() => {
     loadReferData(selectedMonth, selectedYear);
   }, []);
 
-  const loadReferData = async (month = selectedMonth, year = selectedYear) => {
+  const loadReferData = async (month = "", year = new Date().getFullYear()) => {
     try {
       setLoading(true);
-
       const res = await fetch(`${API}/refer-data`, {
         method: "POST",
         headers: {
@@ -89,7 +77,7 @@ export default function Refer() {
         setHistory(Array.isArray(data.history) ? data.history : []);
         setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
         setPerformance(data.performance || {});
-        setTeam(data.team || {});
+        setTeam(data.team || {}); // টিম ডাটা সঠিকভাবে সেট করা হচ্ছে
         setRoyalty(data.royalty || {});
         setTreeData(data.treeData || {});
         setReferBonus(data.referBonus || {});
@@ -101,23 +89,31 @@ export default function Refer() {
     }
   };
 
+  const filteredPerformanceHistory = (performance.history || []).filter((item) => {
+    const d = new Date(item.date);
+    const now = new Date();
+    if (performanceFilter === "thisMonth") {
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }
+    if (performanceFilter === "lastMonth") {
+      const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
+    }
+    return true;
+  });
+
   const getTeamHistory = () => {
     if (!team.history) return [];
-
     const now = new Date();
-
     return team.history.filter((item) => {
       const d = new Date(item.date);
-
       if (teamMonthFilter === "thisMonth") {
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
       }
-
       if (teamMonthFilter === "lastMonth") {
         const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
       }
-
       return d.getMonth() === Number(teamMonthFilter);
     });
   };
@@ -143,7 +139,7 @@ export default function Refer() {
       await navigator.clipboard.writeText(text);
       triggerStatusOverlay("success", "Copied Successfully! 🎉");
     } catch {
-      triggerStatusOverlay("error", "Copy failed. Please try manually.");
+      triggerStatusOverlay("error", "Copy failed!");
     }
   };
 
@@ -173,11 +169,6 @@ export default function Refer() {
   const visibleBonusHistory = showAllBonusHistory
     ? filteredBonusHistory
     : filteredBonusHistory.slice(0, 5);
-
-  const visibleHistory =
-    statusFilter === "All" ? safeHistory : safeHistory.filter((x) => x.status === statusFilter);
-
-  const finalHistory = showAllHistory ? visibleHistory : visibleHistory.slice(0, 3);
 
   const bonusCards = [
     {
@@ -228,7 +219,7 @@ export default function Refer() {
   return (
     <div style={styles.page}>
       
-      {/* --- স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ দেখানোর কাস্টম ওভারলে UI --- */}
+      {/* স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ ওভারলে UI */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
@@ -270,7 +261,6 @@ export default function Refer() {
 
           <div>
             <h2>{user.name || "Save Money User"}</h2>
-
             <span style={styles.activeMember}>
               <span
                 style={{
@@ -283,9 +273,7 @@ export default function Refer() {
               />
               {user.activeStatus || "Inactive"} Member
             </span>
-
             <p style={styles.smallText}>Refer ID</p>
-
             <div style={styles.referIdBox}>
               <span>{referCode}</span>
               <button onClick={() => copyText(referCode)}>Copy</button>
@@ -302,10 +290,8 @@ export default function Refer() {
 
       <section style={styles.linkCard}>
         <div style={styles.linkIcon}>🔗</div>
-
         <div style={styles.linkMiddle}>
           <h3>Your Refer Link</h3>
-
           <div style={styles.copyBox}>
             <span>{referLink}</span>
             <button style={styles.copyLinkBtn} onClick={() => copyText(referLink)}>
@@ -313,7 +299,6 @@ export default function Refer() {
             </button>
           </div>
         </div>
-
         <div style={styles.shareBox}>
           <h3>Share via</h3>
           <button style={styles.whatsapp} onClick={shareWhatsapp}>🟢</button>
@@ -327,10 +312,8 @@ export default function Refer() {
             <div style={{ ...styles.bonusIcon, background: b.color }}>
               {b.icon}
             </div>
-
             <h3>{b.title}</h3>
             <h2>{money(b.amount)}</h2>
-
             <button
               style={{ ...styles.detailBtn, color: b.color }}
               onClick={() => setBonusModal(b.key)}
@@ -343,10 +326,7 @@ export default function Refer() {
 
       <section style={styles.historyCard}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div>
-            <h2>💰 All Bonus History</h2>
-          </div>
-
+          <div><h2>💰 All Bonus History</h2></div>
           <select
             value={bonusFilter}
             onChange={(e) => setBonusFilter(e.target.value)}
@@ -374,17 +354,13 @@ export default function Refer() {
             </thead>
             <tbody>
               {safeBonusHistory.length === 0 ? (
-                <tr>
-                  <td colSpan="6">No Bonus History</td>
-                </tr>
+                <tr><td colSpan="6">No Bonus History</td></tr>
               ) : (
                 visibleBonusHistory.map((item, index) => (
                   <tr key={index}>
                     <td>{item.bonusType}</td>
                     <td>
-                      <b>{item.fromName || "-"}</b>
-                      <br />
-                      <small>{item.fromEmail}</small>
+                      <b>{item.fromName || "-"}</b><br /><small>{item.fromEmail}</small>
                     </td>
                     <td>{item.level || "-"}</td>
                     <td>{money(item.amount)}</td>
@@ -417,9 +393,7 @@ export default function Refer() {
           <h2>Keep Referring & Earning</h2>
           <p>Your network is your net worth.</p>
         </div>
-        <button style={styles.referNowBtn} onClick={shareWhatsapp}>
-          🔗 Refer Now
-        </button>
+        <button style={styles.referNowBtn} onClick={shareWhatsapp}>🔗 Refer Now</button>
       </section>
 
       {/* --- Performance Modal --- */}
@@ -427,9 +401,7 @@ export default function Refer() {
         <Modal onClose={() => setBonusModal(null)}>
           <h2>📈 Performance Bonus</h2>
           <h1>{money(performance.balance)}</h1>
-          <p>
-            Status : <b style={{ color: performance.enabled ? "#16a34a" : "#ef4444" }}>{performance.enabled ? "Active" : "Inactive"}</b>
-          </p>
+          <p>Status : <b style={{ color: performance.enabled ? "#16a34a" : "#ef4444" }}>{performance.enabled ? "Active" : "Inactive"}</b></p>
 
           {!performance.enabled && !performance.adminOverride && !performance.expired && (
             <div style={styles.infoBox}>
@@ -486,9 +458,7 @@ export default function Refer() {
         <Modal onClose={() => setBonusModal(null)}>
           <h2>👥 Team Bonus</h2>
           <h1>{money(team.balance || 0)}</h1>
-          <p>
-            Status : <b style={{ color: team.enabled ? "#16a34a" : "#ef4444" }}>{team.enabled ? "Active" : "Inactive"}</b>
-          </p>
+          <p>Status : <b style={{ color: team.enabled ? "#16a34a" : "#ef4444" }}>{team.enabled ? "Active" : "Inactive"}</b></p>
           <hr />
           <h3>Today's Report</h3>
           <p>Today's Income : <b>{money(team.todayBonus)}</b></p>
@@ -584,7 +554,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- Refer Modal (ফিল্টার ফিক্স সহ) --- */}
+      {/* --- Refer Modal (স্থায়ীভাবে ফিক্সড ফিল্টারিং লজিক) --- */}
       {bonusModal === "refer" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>🎁 Refer Bonus</h2>
@@ -604,12 +574,13 @@ export default function Refer() {
           </div>
 
           <div style={{ marginTop: 20 }}>
-            {/* ফিল্টার হ্যান্ডেলার যা পেজ রিলোড না করে ড্রপডাউন ভ্যালু ধরে রাখবে */}
             <select
               style={styles.filterSelect}
               value={selectedMonth}
               onChange={(e) => {
                 const value = e.target.value;
+                setSelectedMonth(value); // সিলেক্টেড ভ্যালু স্টেটে থাকবে, তাই মাস চেঞ্জ হবে না বা হারাবে না
+
                 let targetMonth = "";
                 let targetYear = new Date().getFullYear();
 
@@ -623,9 +594,8 @@ export default function Refer() {
                 } else {
                   targetMonth = value;
                 }
-
-                setSelectedMonth(value);
-                setSelectedYear(targetYear);
+                
+                // এখানে API কল করা হচ্ছে কোনো উইন্ডো রিলোড ছাড়াই ডাটা রি-ফেচ করার জন্য
                 loadReferData(targetMonth, targetYear);
               }}
             >
@@ -656,7 +626,6 @@ export default function Refer() {
 
 function BonusHistory({ type, data }) {
   const rows = (data || []).filter((x) => x.bonusType === type);
-
   return (
     <div style={{ marginTop: 20 }}>
       <h3>Bonus History</h3>
@@ -677,9 +646,7 @@ function BonusHistory({ type, data }) {
             <tbody>
               {rows.map((x, i) => (
                 <tr key={i}>
-                  <td>
-                    <b>{x.fromName}</b><br /><small>{x.fromEmail}</small>
-                  </td>
+                  <td><b>{x.fromName}</b><br /><small>{x.fromEmail}</small></td>
                   <td>{x.date ? new Date(x.date).toLocaleDateString("en-IN") : "-"}</td>
                   <td>L{x.level || 1}</td>
                   <td>₹{Number(x.amount || 0).toLocaleString("en-IN")}</td>
@@ -705,7 +672,6 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
-  // --- নতুন মিডল ওভারলে নোটিফিকেশনের স্টাইলস সমূহ ---
   statusOverlayBg: {
     position: "fixed",
     inset: 0,
@@ -974,7 +940,6 @@ const styles = {
     fontWeight: 900,
     cursor: "pointer"
   },
-  treeText: { minHeight: 58, color: "#5d6280" },
   historyCard: {
     width: "min(1120px, 94vw)",
     margin: "26px auto",
@@ -982,11 +947,6 @@ const styles = {
     borderRadius: 26,
     padding: 28,
     boxShadow: "0 16px 36px rgba(156,105,255,.16)"
-  },
-  historyTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
   },
   filterSelect: {
     padding: "12px 18px",
@@ -999,12 +959,6 @@ const styles = {
     borderCollapse: "collapse",
     minWidth: 700
   },
-  statusPill: {
-    padding: "8px 16px",
-    borderRadius: 20,
-    fontWeight: 900
-  },
-  emptyTd: { textAlign: "center", padding: 25 },
   viewMoreBtn: {
     display: "block",
     margin: "22px auto 0",
@@ -1055,15 +1009,6 @@ const styles = {
     borderRadius: 28,
     padding: 28,
     boxShadow: "0 30px 90px rgba(0,0,0,.25)"
-  },
-  greenBtn: {
-    border: "none",
-    borderRadius: 14,
-    padding: "13px 20px",
-    background: "linear-gradient(90deg,#16a34a,#22c55e)",
-    color: "#fff",
-    fontWeight: 900,
-    cursor: "pointer"
   },
   closeBtn: {
     marginTop: 20,
