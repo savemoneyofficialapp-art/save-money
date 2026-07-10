@@ -5,19 +5,19 @@ import { API } from "../config";
 
 export default function SaveMoney() {
   // =========================================================================
-  // CORE HOOKS & ROUTING INFRASTRUCTURE
+  // ROUTING & NAVIGATION FRAMEWORK INTERFACES
   // =========================================================================
   const navigate = useNavigate();
   const location = useLocation();
 
   // =========================================================================
-  // LOCAL STORAGE & AUTHENTICATION STATE EXTROLLERS
+  // PERSISTENT MEMORY EXTRADITION SECURITY STORAGE KEYS
   // =========================================================================
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
 
   // =========================================================================
-  // SYSTEM STATE MANAGEMENT UNITS
+  // REACTOR CORE STATE CONFIGURATOR INDICES
   // =========================================================================
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState("");
@@ -28,7 +28,7 @@ export default function SaveMoney() {
   const [loading, setLoading] = useState(false);
 
   // =========================================================================
-  // PREMIUM OVERLAY INTERFACE STATES
+  // VISUAL OVERLAY SHEATH NOTIFIER STATES
   // =========================================================================
   const [statusOverlay, setStatusOverlay] = useState({
     show: false,
@@ -37,13 +37,14 @@ export default function SaveMoney() {
   });
 
   // =========================================================================
-  // ANIMATION & INTERACTIVE STATE LOGIC
+  // HOVER INTERACTIVE SELECTION MAP UNITS
   // =========================================================================
   const [hoveredCard, setHoveredCard] = useState(null);
   const [activeInputFocus, setActiveInputFocus] = useState(false);
+  const [hoveredTenureNode, setHoveredTenureNode] = useState(null);
 
   // =========================================================================
-  // NOTIFICATION & TOAST ALTERNATIVE OVERLAY DISPATCHER
+  // TRANSACTION FEEDBACK HUD EMITTER MODULE
   // =========================================================================
   const showStatusMsg = (type, message) => {
     setStatusOverlay({ show: true, type, message });
@@ -53,14 +54,14 @@ export default function SaveMoney() {
   };
 
   // =========================================================================
-  // SCROLL ANCHOR CORRECTION MECHANISM (SCROLL FIX)
+  // SCROLL TIMING CORRECTION RUNNER
   // =========================================================================
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
 
   // =========================================================================
-  // ASYNC WALLET BALANCE SYNCER
+  // CORE WALLET BALANCE API SYNCHRONIZER
   // =========================================================================
   useEffect(() => {
     loadBalance();
@@ -80,12 +81,12 @@ export default function SaveMoney() {
       const data = await res.json();
       setBalance(Number(data.balance || data.wallet || 0));
     } catch (err) {
-      console.log("BALANCE LOAD ERROR:", err);
+      console.log("CRITICAL WALLET BALANCE SYNC ERROR:", err);
     }
   };
 
   // =========================================================================
-  // ROI INTEREST RATE DICTIONARY MATRIX
+  // MATRIX RETRIEVAL DICTIONARY FOR YIELD PERCENTAGE INTEREST
   // =========================================================================
   const getRate = (y) => {
     if (Number(y) === 1) return 11;
@@ -99,7 +100,7 @@ export default function SaveMoney() {
   const rate = getRate(years);
 
   // =========================================================================
-  // ADVANCED MATHEMATICAL COMPOUNDING ENGINE (MEMOIZED)
+  // MATHEMATICAL ACCELERATED COMPOUNDING CALCULATOR VECTOR ENGINE
   // =========================================================================
   const calc = useMemo(() => {
     const monthly = Number(amount || 0);
@@ -129,7 +130,7 @@ export default function SaveMoney() {
   }, [amount, years, rate]);
 
   // =========================================================================
-  // CURRENCY STRING FORMATTING UTILITY (INR)
+  // HIGH DEFINITION LOCAL CURRENCY CONVERTER FORMATTER (INR)
   // =========================================================================
   const money = (n) => {
     return `₹ ${Number(n || 0).toLocaleString("en-IN", {
@@ -139,7 +140,7 @@ export default function SaveMoney() {
   };
 
   // =========================================================================
-  // MODAL CONTROLLERS & INTERACTION HANDLERS
+  // MODAL TRIGGER HANDLERS AND DISPATCH CONTROLLERS
   // =========================================================================
   const openTerms = () => {
     if (accepted) {
@@ -156,7 +157,7 @@ export default function SaveMoney() {
   };
 
   // =========================================================================
-  // TRANSACTION SUBMISSION DISPATCHER (API COMMIT)
+  // TRANSACTION TRANSMISSION ARCHITECTURE COMMIT (API HANDLER)
   // =========================================================================
   const confirmSip = async () => {
     if (Number(amount) < 2000) {
@@ -211,7 +212,7 @@ export default function SaveMoney() {
         showStatusMsg("info", data.msg || "Could not complete transaction");
       }
     } catch (err) {
-      console.log("START SIP ERROR:", err);
+      console.log("START SIP SYSTEM REJECTION DISPATCH ERROR:", err);
       showStatusMsg("error", "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
@@ -220,13 +221,13 @@ export default function SaveMoney() {
 
   return (
     <div style={styles.cyberPageWrapper}>
-      {/* BACKGROUND GLOBAL LAYER MATRIX */}
+      {/* VIRTUALIZED LAYER INFRASTRUCTURE CORES */}
       <div style={styles.neonMatrixGrid}></div>
       <div style={styles.dynamicAuraSphere1}></div>
       <div style={styles.dynamicAuraSphere2}></div>
       <div style={styles.dynamicAuraSphere3}></div>
 
-      {/* SYSTEM VIP METRIC FLOATING BANNER */}
+      {/* TOP DEPLOYMENT LEDGER BAR MONITOR */}
       <div style={styles.vipStatusBar}>
         <div style={styles.vipStatusIndicator}>
           <span style={styles.pulseNode}></span> LIVE CONNECTION SECURE
@@ -234,7 +235,7 @@ export default function SaveMoney() {
         <div style={styles.vipTimestamp}>HIGH SPEED AUTO-COMPOUND ENGINE ACTIVE</div>
       </div>
 
-      {/* ULTRA PRECISE ABSOLUTE OVERLAY POPUP */}
+      {/* SECURE POPUP SHIELD RADAR INTERFACE */}
       {statusOverlay.show && (
         <div style={styles.glassOverlayShield}>
           <div style={{
@@ -253,10 +254,10 @@ export default function SaveMoney() {
         </div>
       )}
 
-      {/* MAIN LAYOUT CANVAS CONTAINER (STRETCHED SCREEN WINDOW) */}
+      {/* EXPANDED SYSTEM VIEW SCREEN ELEMENT CANVAS */}
       <div style={styles.ultimateMainCanvas}>
         
-        {/* TOP INTERACTIVE CONTROL HELM */}
+        {/* HELM HEAD ROW ACTION PACK CONTROLLERS */}
         <div style={styles.controlHelmRow}>
           <button 
             style={{...styles.helmActionBtn, ...(hoveredCard === 'back' ? styles.helmActionBtnHover : {})}}
@@ -281,7 +282,7 @@ export default function SaveMoney() {
           </button>
         </div>
 
-        {/* HIGH-END METROPOLIS CORE BRAND HEADER */}
+        {/* MAXIMUM HIGH CONTRAST EXHILARATING HERO TITLE BRAND */}
         <header style={styles.cyberBrandHeaderSection}>
           <div style={styles.cyberLogoHexagonWrap}>
             <div style={styles.cyberLogoCoreElement}>
@@ -299,10 +300,10 @@ export default function SaveMoney() {
           <p style={styles.cyberBrandSubtextPara}>INTELLIGENT WEALTH GENERATION SYSTEM</p>
         </header>
 
-        {/* UPPER DOUBLE EXECUTIVE MODULE PANELS */}
+        {/* SIDE-BY-SIDE EQUAL PARALLEL TOP CORE TRACK HOUSING MODULES */}
         <div style={styles.executiveTwinControlLayout}>
           
-          {/* LEFT INTERACTION ZONE: WALLET ASSETS */}
+          {/* ZONE BLOCK 1: WALLET ASSET CONSOLE */}
           <div style={styles.executivePanelZone}>
             <section 
               style={{...styles.cyberLuxuryCardUnit, ...(hoveredCard === 'wallet' ? styles.cyberLuxuryCardUnitHover : {})}}
@@ -344,7 +345,7 @@ export default function SaveMoney() {
             </section>
           </div>
 
-          {/* RIGHT INTERACTION ZONE: SIP TELEMETRY CONFIGURATION */}
+          {/* ZONE BLOCK 2: SIP CONGREGATION INPUT METRICS CONFIGS */}
           <div style={styles.executivePanelZone}>
             <section 
               style={{...styles.cyberLuxuryCardUnit, ...(hoveredCard === 'config' ? styles.cyberLuxuryCardUnitHover : {})}}
@@ -360,7 +361,7 @@ export default function SaveMoney() {
                 <span style={styles.onlinePulseStatusTextAccent}>CONFIG READY</span>
               </div>
 
-              {/* INPUT MATRIX FIELD */}
+              {/* MONETARY MAGNITUDE CONTROLLER ENTRY */}
               <div style={styles.inputFieldComplexContainer}>
                 <div style={styles.inputFieldLabelFlexHeader}>
                   <span style={styles.inputFieldMainTitleLabel}>CHOOSE MONTHLY COMMITMENT AMOUNT</span>
@@ -368,7 +369,7 @@ export default function SaveMoney() {
                 </div>
                 <div style={{
                   ...styles.cyberInputWrapperGlassBox,
-                  borderColor: activeInputFocus ? "#00ffa3" : "#1e293b",
+                  borderColor: activeInputFocus ? "#00ffa3" : "#334155",
                   boxShadow: activeInputFocus ? "0 0 20px rgba(0,255,163,0.15)" : "none"
                 }}>
                   <div style={styles.cyberInputPrependCurrencySymbol}>₹</div>
@@ -394,7 +395,7 @@ export default function SaveMoney() {
                 )}
               </div>
 
-              {/* GRID SELECTION INTERFACE MATRIX FOR YEARS */}
+              {/* FIX DEPLOYED: TENURE SELECTION LAYOUT WITH EXTRA MAXIMUM READABILITY CONTRAST SHIELDS */}
               <div style={styles.tenureSelectionStructureBox}>
                 <div style={styles.inputFieldLabelFlexHeader}>
                   <span style={styles.inputFieldMainTitleLabel}>SELECT ASSET ACCUMULATION TIMEFRAME</span>
@@ -404,21 +405,40 @@ export default function SaveMoney() {
                 <div style={styles.tenureGridSelectorLayoutMatrix}>
                   {[1, 3, 5, 10, 15, 20].map((y) => {
                     const isSelected = years === y;
+                    const isNodeHovered = hoveredTenureNode === y;
+                    
                     return (
                       <button
                         key={y}
                         style={{
                           ...styles.tenureSelectorNodeItemButton,
-                          ...(isSelected ? styles.tenureSelectorNodeItemButtonActive : {})
+                          backgroundColor: isSelected 
+                            ? "#00ffa3" 
+                            : isNodeHovered 
+                              ? "rgba(255, 255, 255, 0.15)" 
+                              : "#1e293b",
+                          borderColor: isSelected 
+                            ? "#ffffff" 
+                            : isNodeHovered 
+                              ? "#00ffa3" 
+                              : "#475569",
+                          boxShadow: isSelected 
+                            ? "0 0 20px rgba(0, 255, 163, 0.4)" 
+                            : "none"
                         }}
+                        onMouseEnter={() => setHoveredTenureNode(y)}
+                        onMouseLeave={() => setHoveredTenureNode(null)}
                         onClick={() => setYears(y)}
                       >
-                        <div style={styles.tenureNodeYearLabelText}>
+                        <div style={{
+                          ...styles.tenureNodeYearLabelText,
+                          color: isSelected ? "#020617" : "#ffffff"
+                        }}>
                           {y} {y === 1 ? "YEAR PLAN" : "YEARS PLAN"}
                         </div>
                         <div style={{
                           ...styles.tenureNodePercentageSubBadge,
-                          color: isSelected ? "#020617" : "#00ffa3"
+                          color: isSelected ? "#090d16" : "#00ffa3"
                         }}>
                           Yield Rate: {getRate(y)}%
                         </div>
@@ -429,7 +449,7 @@ export default function SaveMoney() {
                 </div>
               </div>
 
-              {/* ADVICE SYSTEM INSIGHT BAR */}
+              {/* SYSTEM INFORMATIONAL BAR COMPLIANCE ADVICE */}
               <div style={styles.adviceSystemBarWrapperBox}>
                 <div style={styles.adviceSystemLightBulbIcon}>💡</div>
                 <div style={styles.adviceSystemTextBodyBlock}>
@@ -442,22 +462,20 @@ export default function SaveMoney() {
 
         </div>
 
-        {/* ========================================================================= */}
-        {/* LOWER GEOMETRIC SECTION: COMPOUNDING CALCULATION GRAPHIC TRACKS (RE-POSITIONED TO BOTTOM) */}
-        {/* ========================================================================= */}
+        {/* BOTTOM SECTION SEPARATOR: PROJECTIONS HEADER ROW STRIP */}
         <div style={styles.compoundingHeaderSeparatorBlock}>
           <div style={styles.separatorLineDecorativeLeft}></div>
           <span style={styles.separatorCentralHeadlineTitleText}>LIVE ASSET PROJECTION DATA SHEETS</span>
           <div style={styles.separatorLineDecorativeRight}></div>
         </div>
 
-        {/* ROW LINE 1 OF COMPOUNDING PROJECTION VALUES (PASAJ-PASI DUAL LINE 1) */}
+        {/* PARALLEL GRAPH ROW TRACK 1 (BOTTOM PLACEMENT AS REQUESTED) */}
         <div style={styles.compoundingDataDisplayRowLineOneGrid}>
           
-          {/* CARD PROJECTION NODE: ESTIMATED RETURNS */}
-          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "4px solid #00ffa3"}}>
+          {/* CALC CELL MODULE 1: ESTIMATED RETURNS */}
+          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "5px solid #00ffa3"}}>
             <div style={styles.projectionCellTopMetaLine}>
-              <div style={{...styles.projectionCellIconCircleBox, color: "#00ffa3", backgroundColor: "rgba(0,255,163,0.06)"}}>📈</div>
+              <div style={{...styles.projectionCellIconCircleBox, color: "#00ffa3", backgroundColor: "rgba(0,255,163,0.1)"}}>📈</div>
               <span style={styles.projectionCellMetaTitleLabelText}>ESTIMATED COMPOUNDING RETURNS</span>
             </div>
             <div style={{...styles.projectionCellBigMetricValueText, color: "#00ffa3"}}>
@@ -469,10 +487,10 @@ export default function SaveMoney() {
             <p style={styles.projectionCellFooterNarrativeText}>Estimated return accrual across selected timeline framework matrix.</p>
           </div>
 
-          {/* CARD PROJECTION NODE: TOTAL PRINCIPAL INVESTMENT */}
-          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "4px solid #00d2ff"}}>
+          {/* CALC CELL MODULE 2: TOTAL DEPLOYED PRINCIPAL */}
+          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "5px solid #00d2ff"}}>
             <div style={styles.projectionCellTopMetaLine}>
-              <div style={{...styles.projectionCellIconCircleBox, color: "#00d2ff", backgroundColor: "rgba(0,210,255,0.06)"}}>👛</div>
+              <div style={{...styles.projectionCellIconCircleBox, color: "#00d2ff", backgroundColor: "rgba(0,210,255,0.1)"}}>👛</div>
               <span style={styles.projectionCellMetaTitleLabelText}>TOTAL DEPLOYED PRINCIPAL CAPITAL</span>
             </div>
             <div style={{...styles.projectionCellBigMetricValueText, color: "#00d2ff"}}>
@@ -486,13 +504,13 @@ export default function SaveMoney() {
 
         </div>
 
-        {/* ROW LINE 2 OF COMPOUNDING PROJECTION VALUES (PASAJ-PASI DUAL LINE 2) */}
+        {/* PARALLEL GRAPH ROW TRACK 2 (BOTTOM PLACEMENT AS REQUESTED) */}
         <div style={styles.compoundingDataDisplayRowLineTwoGrid}>
           
-          {/* CARD PROJECTION NODE: ACCUMULATED INTEREST YIELD */}
-          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "4px solid #ffb800"}}>
+          {/* CALC CELL MODULE 3: NET COMPREHENSIVE INTEREST YIELD */}
+          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "5px solid #ffb800"}}>
             <div style={styles.projectionCellTopMetaLine}>
-              <div style={{...styles.projectionCellIconCircleBox, color: "#ffb800", backgroundColor: "rgba(255,184,0,0.06)"}}>🪙</div>
+              <div style={{...styles.projectionCellIconCircleBox, color: "#ffb800", backgroundColor: "rgba(255,184,0,0.1)"}}>🪙</div>
               <span style={styles.projectionCellMetaTitleLabelText}>NET COMPREHENSIVE INTEREST EARNED</span>
             </div>
             <div style={{...styles.projectionCellBigMetricValueText, color: "#ffb800"}}>
@@ -504,10 +522,10 @@ export default function SaveMoney() {
             <p style={styles.projectionCellFooterNarrativeText}>Pure asset yield generation extracted via algorithmic standard interest modules.</p>
           </div>
 
-          {/* CARD PROJECTION NODE: EXPECTED MATURITY TOTAL ASSET */}
-          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "4px solid #cc00ff"}}>
+          {/* CALC CELL MODULE 4: EXPECTED MATURITY LIQUIDITY TOTAL */}
+          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "5px solid #cc00ff"}}>
             <div style={styles.projectionCellTopMetaLine}>
-              <div style={{...styles.projectionCellIconCircleBox, color: "#cc00ff", backgroundColor: "rgba(204,0,255,0.06)"}}>📊</div>
+              <div style={{...styles.projectionCellIconCircleBox, color: "#cc00ff", backgroundColor: "rgba(204,0,255,0.1)"}}>📊</div>
               <span style={styles.projectionCellMetaTitleLabelText}>ESTIMATED MATURITY ASSET VALUE</span>
             </div>
             <div style={{...styles.projectionCellBigMetricValueText, color: "#cc00ff"}}>
@@ -521,7 +539,7 @@ export default function SaveMoney() {
 
         </div>
 
-        {/* SYSTEM ANALYTICAL STATEMENT NOTICE BAR */}
+        {/* HIGH RECONCILED CLEAR TEXT DISCLAIMER PANEL STRIP */}
         <div style={styles.systemAnalyticalDisclaimerBox}>
           <span style={styles.disclaimerIconInfoBadge}>i</span>
           <span style={styles.disclaimerTextMessagePara}>
@@ -529,7 +547,7 @@ export default function SaveMoney() {
           </span>
         </div>
 
-        {/* FINAL CLOSURE LEGAL COMPLIANCE BOX SECTION */}
+        {/* STATUTORY LEGAL DECLARATION MUTUAL ACKNOWLEDGEMENT ROW CONTAINER */}
         <div style={styles.legalComplianceActionShieldContainerBox}>
           <div 
             style={{...styles.legalInteractiveClickableRowBox, ...(accepted ? styles.legalInteractiveClickableRowBoxActive : {})}}
@@ -537,8 +555,8 @@ export default function SaveMoney() {
           >
             <div style={{
               ...styles.legalCustomCheckboxSquareBox,
-              backgroundColor: accepted ? "#00ffa3" : "#020617",
-              borderColor: accepted ? "#00ffa3" : "#334155"
+              backgroundColor: accepted ? "#00ffa3" : "#1e293b",
+              borderColor: accepted ? "#00ffa3" : "#94a3b8"
             }}>
               {accepted && <span style={styles.legalCheckboxCheckMarkCheck}>✓</span>}
             </div>
@@ -547,11 +565,11 @@ export default function SaveMoney() {
                 I hereby declare, authorize and confirm that I have meticulously read, verified and mutually consented to be legally bound by the comprehensive system-wide <b style={styles.legalHighLightHyperlinkText}>Terms, Conditions, Asset Allocation Disclosures & Risk Protocols</b>.
               </p>
             </div>
-            <div style={{...styles.legalPaperDocumentIconBadgeUnit, color: accepted ? "#00ffa3" : "#64748b"}}>📄</div>
+            <div style={{...styles.legalPaperDocumentIconBadgeUnit, color: accepted ? "#00ffa3" : "#cbd5e1"}}>📄</div>
           </div>
         </div>
 
-        {/* ABSOLUTE MAIN FIREPOWER INITIALIZATION LAUNCH BUTTON */}
+        {/* MAXIMUM APEX COMMAND INITIALIZATION LAUNCH SWITCH ACTION BUTTON */}
         <div style={styles.ultimateLaunchButtonCentralContainerFlex}>
           <button 
             style={{
@@ -570,10 +588,10 @@ export default function SaveMoney() {
           </button>
         </div>
 
-        {/* GRID FOOTER MATRIX SYSTEM CORE CAPABILITIES */}
+        {/* METABOLIC TRIPLE DECK SUPPORT NETWORKING MATRIX LISTS */}
         <section style={styles.systemCapabilitiesTripleFooterGridColumnLayout}>
           <div style={styles.capabilityCellBlockNodeCard}>
-            <div style={{...styles.capabilityIconCircleWrapContainer, color: "#3b82f6", backgroundColor: "rgba(59,130,246,0.1)"}}>🔒</div>
+            <div style={{...styles.capabilityIconCircleWrapContainer, color: "#3b82f6", backgroundColor: "rgba(59,130,246,0.15)"}}>🔒</div>
             <div style={styles.capabilityTextInformationBlockWrap}>
               <h4 style={styles.capabilityHeadingMainTextTitle}>VAULT-GRADE CYBER SECURITY</h4>
               <p style={styles.capabilitySubtextBodyParagraph}>End-to-End encrypted cryptographic ledger vault safeguards absolute transactional safety limits.</p>
@@ -581,7 +599,7 @@ export default function SaveMoney() {
           </div>
 
           <div style={styles.capabilityCellBlockNodeCard}>
-            <div style={{...styles.capabilityIconCircleWrapContainer, color: "#10b981", backgroundColor: "rgba(16,185,129,0.1)"}}>📈</div>
+            <div style={{...styles.capabilityIconCircleWrapContainer, color: "#10b981", backgroundColor: "rgba(16,185,129,0.15)"}}>📈</div>
             <div style={styles.capabilityTextInformationBlockWrap}>
               <h4 style={styles.capabilityHeadingMainTextTitle}>MAXIMIZED TIMELINE YIELD CURVE</h4>
               <p style={styles.capabilitySubtextBodyParagraph}>Algorithmic compounding interest indexing structures optimized to generate enhanced fiscal performance assets.</p>
@@ -589,7 +607,7 @@ export default function SaveMoney() {
           </div>
 
           <div style={styles.capabilityCellBlockNodeCard}>
-            <div style={{...styles.capabilityIconCircleWrapContainer, color: "#a855f7", backgroundColor: "rgba(168,85,247,0.1)"}}>⚡</div>
+            <div style={{...styles.capabilityIconCircleWrapContainer, color: "#a855f7", backgroundColor: "rgba(168,85,247,0.15)"}}>⚡</div>
             <div style={styles.capabilityTextInformationBlockWrap}>
               <h4 style={styles.capabilityHeadingMainTextTitle}>FLUID AUTO-PAYOUT INTERFACING</h4>
               <p style={styles.capabilitySubtextBodyParagraph}>Seamless architectural design allows automated liquidity conversion options upon reaching target timelines.</p>
@@ -600,10 +618,10 @@ export default function SaveMoney() {
       </div>
 
       {/* ========================================================================= */}
-      {/* COMPLETELY PRESERVED HIGHLY SECURE MODAL LAYER WINDOWS */}
+      {/* COMPLETELY UNTOUCHED CORE TRANSACTIONAL OVERLAY MODAL HUD SHIELDS */}
       {/* ========================================================================= */}
       
-      {/* MODAL UNIT 1: TERMS AND CONDITIONS SYSTEM MODAL OVERLAY */}
+      {/* MODAL 1: PRESERVED COMPREHENSIVE TERMS AND CONDITIONS LEDGER SYSTEM */}
       {termsOpen && (
         <div style={styles.modalSystemFallbackOverlayBlurScreen}>
           <div style={styles.modalSystemOuterBoxArchitecture}>
@@ -627,7 +645,7 @@ export default function SaveMoney() {
         </div>
       )}
 
-      {/* MODAL UNIT 2: HELP DESK INTELLIGENT ASSISTANT OVERLAY SCREEN */}
+      {/* MODAL 2: ASSISTANT HELPDESK ENGINE MODULE DISPLAY */}
       {helpOpen && (
         <div style={styles.modalSystemFallbackOverlayBlurScreen}>
           <div style={{...styles.modalSystemOuterBoxArchitecture, borderColor: "#3b82f6"}}>
@@ -657,7 +675,7 @@ export default function SaveMoney() {
 }
 
 // =========================================================================
-// WIDE EXECUTIVE STYLE GRID MATRIX CORES (THE MASSIVE STYLE SHEET)
+// EXPANDED MATRIX PRESETS STYLE ENGINE (ULTRA CONTRAST MOBILE EDITION)
 // =========================================================================
 const styles = {
   cyberPageWrapper: {
@@ -669,7 +687,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "flex-start",
     fontFamily: "'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    color: "#f1f5f9",
+    color: "#ffffff",
     overflowX: "hidden",
     position: "relative",
     boxSizing: "border-box"
@@ -727,7 +745,7 @@ const styles = {
     width: "100%",
     height: "36px",
     backgroundColor: "#090d16",
-    borderBottom: "1px solid #111827",
+    borderBottom: "1px solid #1e293b",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -755,7 +773,7 @@ const styles = {
   },
   vipTimestamp: {
     fontSize: "11px",
-    color: "#4b5563",
+    color: "#94a3b8",
     fontWeight: "600",
     letterSpacing: "1px"
   },
@@ -776,7 +794,7 @@ const styles = {
     borderRadius: "24px",
     textAlign: "center",
     boxShadow: "0 30px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)",
-    border: "1px solid #1e293b",
+    border: "1px solid #334155",
     maxWidth: "460px",
     width: "85%",
     display: "flex",
@@ -805,7 +823,7 @@ const styles = {
   },
   ultimateMainCanvas: {
     width: "100%",
-    maxWidth: "100%", // FULL SCREEN WIDTH SPECIFICATION
+    maxWidth: "100%",
     padding: "40px",
     boxSizing: "border-box",
     zIndex: 5,
@@ -823,10 +841,10 @@ const styles = {
   helmActionBtn: {
     padding: "14px 28px",
     borderRadius: "16px",
-    border: "1px solid #1e293b",
-    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    border: "1px solid #334155",
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
     backdropFilter: "blur(10px)",
-    color: "#94a3b8",
+    color: "#cbd5e1",
     fontSize: "13px",
     fontWeight: "700",
     letterSpacing: "1px",
@@ -838,17 +856,17 @@ const styles = {
   },
   helmActionBtnHover: {
     borderColor: "#00ffa3",
-    color: "#fff",
-    backgroundColor: "rgba(0, 255, 163, 0.05)",
-    boxShadow: "0 0 25px rgba(0, 255, 163, 0.1)"
+    color: "#ffffff",
+    backgroundColor: "rgba(0, 255, 163, 0.15)",
+    boxShadow: "0 0 25px rgba(0, 255, 163, 0.2)"
   },
   helmBtnIcon: {
     fontSize: "11px",
-    color: "#475569"
+    color: "#94a3b8"
   },
   helmCenterBadge: {
-    backgroundColor: "rgba(30, 41, 59, 0.4)",
-    border: "1px solid rgba(255, 215, 0, 0.15)",
+    backgroundColor: "rgba(30, 41, 59, 0.6)",
+    border: "1px solid rgba(255, 215, 0, 0.3)",
     padding: "8px 20px",
     borderRadius: "30px",
     backdropFilter: "blur(5px)"
@@ -862,10 +880,10 @@ const styles = {
   helmHelpBtn: {
     padding: "14px 28px",
     borderRadius: "16px",
-    border: "1px solid #1e293b",
-    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    border: "1px solid #334155",
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
     backdropFilter: "blur(10px)",
-    color: "#3b82f6",
+    color: "#60a5fa",
     fontSize: "13px",
     fontWeight: "700",
     letterSpacing: "1px",
@@ -876,20 +894,21 @@ const styles = {
     transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   helmHelpBtnHover: {
-    borderColor: "#3b82f6",
-    color: "#fff",
-    backgroundColor: "rgba(59, 130, 246, 0.05)",
-    boxShadow: "0 0 25px rgba(59, 130, 246, 0.1)"
+    borderColor: "#60a5fa",
+    color: "#ffffff",
+    backgroundColor: "rgba(59, 130, 246, 0.15)",
+    boxShadow: "0 0 25px rgba(59, 130, 246, 0.2)"
   },
   helpQuestionMark: {
     width: "18px",
     height: "18px",
     borderRadius: "50%",
-    backgroundColor: "rgba(59, 130, 246, 0.15)",
+    backgroundColor: "rgba(59, 130, 246, 0.25)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "11px"
+    fontSize: "11px",
+    color: "#ffffff"
   },
   cyberBrandHeaderSection: {
     textAlign: "center",
@@ -916,21 +935,21 @@ const styles = {
     fontSize: "28px",
     fontWeight: "900",
     color: "#020617",
-    boxShadow: "0 15px 35px rgba(0,255,163,0.3)",
+    boxShadow: "0 15px 35px rgba(0,255,163,0.4)",
     zIndex: 5
   },
   cyberLogoOrbitLine1: {
     position: "absolute",
     inset: "-5px",
     borderRadius: "28px",
-    border: "2px dashed rgba(0, 255, 163, 0.3)",
+    border: "2px dashed rgba(0, 255, 163, 0.4)",
     animation: "spin 20s linear infinite"
   },
   cyberLogoOrbitLine2: {
     position: "absolute",
     inset: "5px",
     borderRadius: "22px",
-    border: "1px solid rgba(0, 210, 255, 0.2)"
+    border: "1px solid rgba(0, 210, 255, 0.3)"
   },
   cyberMainTitleText: {
     margin: 0,
@@ -947,7 +966,7 @@ const styles = {
   cyberBrandDividerLine: {
     width: "160px",
     height: "2px",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: "rgba(255,255,255,0.1)",
     margin: "18px auto",
     position: "relative"
   },
@@ -959,14 +978,14 @@ const styles = {
   cyberBrandSubtextPara: {
     fontSize: "13px",
     letterSpacing: "4px",
-    color: "#475569",
+    color: "#cbd5e1",
     fontWeight: "700",
     textTransform: "uppercase",
     margin: 0
   },
   executiveTwinControlLayout: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr", // SIDE-BY-SIDE EQUAL HALF DIVISION
+    gridTemplateColumns: "1fr 1fr",
     gap: "30px",
     width: "100%",
     marginBottom: "40px"
@@ -977,15 +996,15 @@ const styles = {
   },
   cyberLuxuryCardUnit: {
     width: "100%",
-    backgroundColor: "rgba(13, 20, 35, 0.45)",
+    backgroundColor: "rgba(13, 20, 35, 0.65)",
     backdropFilter: "blur(16px)",
     WebkitBackdropFilter: "blur(16px)",
     borderRadius: "28px",
-    border: "1px solid rgba(255, 255, 255, 0.04)",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
     padding: "35px",
     boxSizing: "border-box",
     position: "relative",
-    boxShadow: "0 20px 50px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.02)",
+    boxShadow: "0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
@@ -993,8 +1012,8 @@ const styles = {
   },
   cyberLuxuryCardUnitHover: {
     transform: "translateY(-4px)",
-    border: "1px solid rgba(255, 255, 255, 0.08)",
-    boxShadow: "0 30px 60px rgba(0,0,0,0.5)"
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    boxShadow: "0 30px 60px rgba(0,0,0,0.7)"
   },
   cardGlowCornerTop: {
     position: "absolute",
@@ -1028,8 +1047,8 @@ const styles = {
     width: "44px",
     height: "44px",
     borderRadius: "14px",
-    backgroundColor: "rgba(0, 210, 255, 0.08)",
-    border: "1px solid rgba(0, 210, 255, 0.2)",
+    backgroundColor: "rgba(0, 210, 255, 0.15)",
+    border: "1px solid rgba(0, 210, 255, 0.3)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1039,8 +1058,8 @@ const styles = {
     width: "44px",
     height: "44px",
     borderRadius: "14px",
-    backgroundColor: "rgba(0, 255, 163, 0.08)",
-    border: "1px solid rgba(0, 255, 163, 0.2)",
+    backgroundColor: "rgba(0, 255, 163, 0.15)",
+    border: "1px solid rgba(0, 255, 163, 0.3)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1057,7 +1076,7 @@ const styles = {
     fontSize: "10px",
     fontWeight: "700",
     color: "#00d2ff",
-    backgroundColor: "rgba(0, 210, 255, 0.08)",
+    backgroundColor: "rgba(0, 210, 255, 0.15)",
     padding: "6px 14px",
     borderRadius: "10px",
     letterSpacing: "1px"
@@ -1066,14 +1085,14 @@ const styles = {
     fontSize: "10px",
     fontWeight: "700",
     color: "#00ffa3",
-    backgroundColor: "rgba(0, 255, 163, 0.08)",
+    backgroundColor: "rgba(0, 255, 163, 0.15)",
     padding: "6px 14px",
     borderRadius: "10px",
     letterSpacing: "1px"
   },
   walletBalanceDisplayBlock: {
-    backgroundColor: "rgba(2, 6, 12, 0.5)",
-    border: "1px solid rgba(255,255,255,0.02)",
+    backgroundColor: "rgba(2, 6, 12, 0.6)",
+    border: "1px solid rgba(255,255,255,0.06)",
     borderRadius: "20px",
     padding: "26px",
     width: "100%",
@@ -1090,13 +1109,13 @@ const styles = {
   walletMetaLabel: {
     fontSize: "11px",
     fontWeight: "700",
-    color: "#64748b",
+    color: "#cbd5e1",
     letterSpacing: "1px"
   },
   walletSecureShieldTag: {
     fontSize: "10px",
     fontWeight: "600",
-    color: "#475569"
+    color: "#94a3b8"
   },
   walletLargeNumericalSum: {
     fontSize: "42px",
@@ -1108,7 +1127,7 @@ const styles = {
   walletProgressIndicatorTrack: {
     width: "100%",
     height: "6px",
-    backgroundColor: "#1e293b",
+    backgroundColor: "#334155",
     borderRadius: "10px",
     overflow: "hidden",
     marginBottom: "12px"
@@ -1126,7 +1145,7 @@ const styles = {
   },
   walletCapSubtextText: {
     fontSize: "11px",
-    color: "#475569"
+    color: "#cbd5e1"
   },
   walletCapPercentageText: {
     fontSize: "11px",
@@ -1137,10 +1156,9 @@ const styles = {
     width: "100%",
     height: "54px",
     borderRadius: "16px",
-    border: "none",
-    background: "linear-gradient(90deg, rgba(30,41,59,1) 0%, rgba(15,23,42,1) 100%)",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.03)",
+    background: "linear-gradient(90deg, #1e293b 0%, #0f172a 100%)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255,255,255,0.08)",
     color: "#ffffff",
     fontSize: "14px",
     fontWeight: "700",
@@ -1170,31 +1188,31 @@ const styles = {
   inputFieldMainTitleLabel: {
     fontSize: "11px",
     fontWeight: "700",
-    color: "#64748b",
+    color: "#cbd5e1",
     letterSpacing: "1px"
   },
   inputFieldRightHandBadge: {
     fontSize: "10px",
     fontWeight: "700",
     color: "#ff9c00",
-    backgroundColor: "rgba(255,156,0,0.08)",
-    padding: "3px 8px",
+    backgroundColor: "rgba(255,156,0,0.15)",
+    padding: "4px 10px",
     borderRadius: "6px"
   },
   inputFieldRightHandBadgeAccent: {
     fontSize: "10px",
     fontWeight: "700",
     color: "#00ffa3",
-    backgroundColor: "rgba(0,255,163,0.08)",
-    padding: "3px 8px",
+    backgroundColor: "rgba(0,255,163,0.15)",
+    padding: "4px 10px",
     borderRadius: "6px"
   },
   cyberInputWrapperGlassBox: {
     height: "60px",
     width: "100%",
     borderRadius: "18px",
-    border: "1px solid #1e293b",
-    backgroundColor: "rgba(2, 6, 12, 0.5)",
+    border: "1px solid #475569",
+    backgroundColor: "rgba(2, 6, 12, 0.7)",
     display: "flex",
     alignItems: "center",
     padding: "0 20px",
@@ -1217,15 +1235,15 @@ const styles = {
     color: "#ffffff"
   },
   cyberInputAppendBadgeUnit: {
-    backgroundColor: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.05)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.1)",
     padding: "6px 12px",
     borderRadius: "10px"
   },
   cyberInputAppendBadgeText: {
     fontSize: "10px",
     fontWeight: "700",
-    color: "#475569",
+    color: "#cbd5e1",
     letterSpacing: "0.5px"
   },
   cyberValidationWarningAlertBox: {
@@ -1233,8 +1251,8 @@ const styles = {
     alignItems: "center",
     gap: "10px",
     marginTop: "10px",
-    backgroundColor: "rgba(239, 68, 68, 0.06)",
-    border: "1px solid rgba(239, 68, 68, 0.15)",
+    backgroundColor: "rgba(239, 68, 68, 0.12)",
+    border: "1px solid rgba(239, 68, 68, 0.3)",
     padding: "10px 14px",
     borderRadius: "12px"
   },
@@ -1250,6 +1268,7 @@ const styles = {
     width: "100%",
     marginBottom: "24px"
   },
+  // HIGH DEFINITION RE-CALIBRATION MATRIX GRID FOR MAXIMUM TEXT CLARITY
   tenureGridSelectorLayoutMatrix: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
@@ -1257,10 +1276,9 @@ const styles = {
     width: "100%"
   },
   tenureSelectorNodeItemButton: {
-    height: "64px",
+    height: "68px",
     borderRadius: "16px",
-    border: "1px solid #1e293b",
-    backgroundColor: "rgba(2, 6, 12, 0.3)",
+    border: "1px solid",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -1268,12 +1286,9 @@ const styles = {
     cursor: "pointer",
     position: "relative",
     gap: "4px",
+    padding: "4px 8px",
+    boxSizing: "border-box",
     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-  },
-  tenureSelectorNodeItemButtonActive: {
-    backgroundColor: "#00ffa3",
-    borderColor: "#00ffa3",
-    boxShadow: "0 10px 25px rgba(0, 255, 163, 0.25)"
   },
   tenureNodeYearLabelText: {
     fontSize: "12px",
@@ -1281,28 +1296,28 @@ const styles = {
     letterSpacing: "0.5px"
   },
   tenureNodePercentageSubBadge: {
-    fontSize: "10px",
+    fontSize: "11px",
     fontWeight: "700"
   },
   tenureNodeSelectionCheckIndicatorCircle: {
     position: "absolute",
     top: "-5px",
     right: "-5px",
-    width: "16px",
-    height: "16px",
+    width: "18px",
+    height: "18px",
     borderRadius: "50%",
     backgroundColor: "#ffffff",
     color: "#020617",
-    fontSize: "10px",
+    fontSize: "11px",
     fontWeight: "900",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+    boxShadow: "0 4px 10px rgba(0,0,0,0.5)"
   },
   adviceSystemBarWrapperBox: {
-    backgroundColor: "rgba(0, 210, 255, 0.03)",
-    border: "1px dashed rgba(0, 210, 255, 0.2)",
+    backgroundColor: "rgba(0, 210, 255, 0.05)",
+    border: "1px dashed rgba(0, 210, 255, 0.3)",
     borderRadius: "16px",
     padding: "16px 20px",
     display: "flex",
@@ -1317,14 +1332,10 @@ const styles = {
   },
   adviceSystemTextBodyBlock: {
     fontSize: "12px",
-    color: "#94a3b8",
+    color: "#cbd5e1",
     lineHeight: "1.6",
     margin: 0
   },
-
-  // =========================================================================
-  // SEPARATOR LINES AND HEADERS FOR THE CALCULATION SECTION AT THE BOTTOM
-  // =========================================================================
   compoundingHeaderSeparatorBlock: {
     display: "flex",
     alignItems: "center",
@@ -1335,45 +1346,41 @@ const styles = {
   separatorLineDecorativeLeft: {
     flex: 1,
     height: "1px",
-    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06))"
+    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.15))"
   },
   separatorLineDecorativeRight: {
     flex: 1,
     height: "1px",
-    background: "linear-gradient(90deg, rgba(255,255,255,0.06), transparent)"
+    background: "linear-gradient(90deg, rgba(255,255,255,0.15), transparent)"
   },
   separatorCentralHeadlineTitleText: {
     padding: "0 24px",
     fontSize: "13px",
     fontWeight: "800",
-    color: "#475569",
+    color: "#cbd5e1",
     letterSpacing: "3px",
     textTransform: "uppercase"
   },
-
-  // =========================================================================
-  // TARGET REDESIGN FIX: COMPOUNDING CALCULATION PARALLEL DUAL ROW BLOCK LAYOUTS
-  // =========================================================================
   compoundingDataDisplayRowLineOneGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr", // PASAJ-PASI DUAL DISPLAY MATRIX (LINE 1)
+    gridTemplateColumns: "1fr 1fr",
     gap: "24px",
     width: "100%",
     marginBottom: "24px"
   },
   compoundingDataDisplayRowLineTwoGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr", // PASAJ-PASI DUAL DISPLAY MATRIX (LINE 2)
+    gridTemplateColumns: "1fr 1fr",
     gap: "24px",
     width: "100%",
     marginBottom: "35px"
   },
   projectionDataMetricsCardCellBlock: {
-    backgroundColor: "rgba(10, 16, 30, 0.7)",
+    backgroundColor: "rgba(10, 16, 30, 0.85)",
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
     borderRadius: "20px",
-    border: "1px solid rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.06)",
     padding: "26px",
     boxSizing: "border-box",
     display: "flex",
@@ -1398,7 +1405,7 @@ const styles = {
   projectionCellMetaTitleLabelText: {
     fontSize: "12px",
     fontWeight: "700",
-    color: "#64748b",
+    color: "#ffffff",
     letterSpacing: "1px"
   },
   projectionCellBigMetricValueText: {
@@ -1409,8 +1416,8 @@ const styles = {
   },
   projectionCellBottomStatusBarTrack: {
     width: "100%",
-    height: "4px",
-    backgroundColor: "rgba(255,255,255,0.02)",
+    height: "5px",
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: "6px",
     overflow: "hidden"
   },
@@ -1421,14 +1428,13 @@ const styles = {
   projectionCellFooterNarrativeText: {
     margin: 0,
     fontSize: "12px",
-    color: "#475569",
+    color: "#cbd5e1",
     lineHeight: "1.4"
   },
-
   systemAnalyticalDisclaimerBox: {
     width: "100%",
-    backgroundColor: "rgba(15, 23, 42, 0.3)",
-    border: "1px solid rgba(255,255,255,0.02)",
+    backgroundColor: "rgba(15, 23, 42, 0.5)",
+    border: "1px solid rgba(255,255,255,0.06)",
     borderRadius: "16px",
     padding: "16px 24px",
     boxSizing: "border-box",
@@ -1441,18 +1447,18 @@ const styles = {
     width: "18px",
     height: "18px",
     borderRadius: "50%",
-    border: "1px solid #475569",
+    border: "1px solid #cbd5e1",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontSize: "11px",
-    color: "#64748b",
+    color: "#ffffff",
     fontWeight: "700",
     flexShrink: 0
   },
   disclaimerTextMessagePara: {
     fontSize: "12px",
-    color: "#64748b",
+    color: "#ffffff",
     lineHeight: "1.6",
     margin: 0
   },
@@ -1461,8 +1467,8 @@ const styles = {
     marginBottom: "35px"
   },
   legalInteractiveClickableRowBox: {
-    backgroundColor: "rgba(13, 20, 35, 0.4)",
-    border: "1px solid #1e293b",
+    backgroundColor: "rgba(13, 20, 35, 0.6)",
+    border: "1px solid #475569",
     borderRadius: "20px",
     padding: "22px 28px",
     boxSizing: "border-box",
@@ -1473,8 +1479,8 @@ const styles = {
     transition: "all 0.2s ease"
   },
   legalInteractiveClickableRowBoxActive: {
-    borderColor: "rgba(0, 255, 163, 0.3)",
-    backgroundColor: "rgba(0, 255, 163, 0.02)"
+    borderColor: "rgba(0, 255, 163, 0.5)",
+    backgroundColor: "rgba(0, 255, 163, 0.04)"
   },
   legalCustomCheckboxSquareBox: {
     width: "22px",
@@ -1498,7 +1504,7 @@ const styles = {
   legalMainDeclarationSentenceText: {
     margin: 0,
     fontSize: "13px",
-    color: "#94a3b8",
+    color: "#ffffff",
     lineHeight: "1.6"
   },
   legalHighLightHyperlinkText: {
@@ -1526,7 +1532,7 @@ const styles = {
     fontWeight: "900",
     letterSpacing: "1px",
     position: "relative",
-    boxShadow: "0 20px 45px rgba(0,255,163,0.25)",
+    boxShadow: "0 20px 45px rgba(0,255,163,0.35)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1539,14 +1545,14 @@ const styles = {
     borderRadius: "22px",
     background: "linear-gradient(90deg, #00ffa3 0%, #00d2ff 50%, #3b82f6 100%)",
     filter: "blur(10px)",
-    opacity: 0.5,
+    opacity: 0.6,
     zIndex: -1
   },
   ultimateLaunchBtnIconBadgeNode: {
     fontSize: "20px"
   },
   ultimateLaunchBtnMainStringLabelText: {
-    textShadow: "0 1px 1px rgba(255,255,255,0.2)"
+    textShadow: "0 1px 1px rgba(255,255,255,0.3)"
   },
   systemCapabilitiesTripleFooterGridColumnLayout: {
     display: "grid",
@@ -1555,8 +1561,8 @@ const styles = {
     width: "100%"
   },
   capabilityCellBlockNodeCard: {
-    backgroundColor: "rgba(15, 23, 42, 0.25)",
-    border: "1px solid rgba(255,255,255,0.02)",
+    backgroundColor: "rgba(15, 23, 42, 0.4)",
+    border: "1px solid rgba(255,255,255,0.04)",
     borderRadius: "20px",
     padding: "24px",
     boxSizing: "border-box",
@@ -1587,17 +1593,13 @@ const styles = {
   capabilitySubtextBodyParagraph: {
     margin: 0,
     fontSize: "12px",
-    color: "#475569",
+    color: "#cbd5e1",
     lineHeight: "1.5"
   },
-
-  // =========================================================================
-  // CORE UNTOUCHED BACKUP STRUCTURE FOR SYSTEM POPUP MODAL ARCHITECTURES
-  // =========================================================================
   modalSystemFallbackOverlayBlurScreen: {
     position: "fixed",
     inset: 0,
-    backgroundColor: "rgba(2,4,10,0.9)",
+    backgroundColor: "rgba(2,4,10,0.92)",
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
     zIndex: 99999,
@@ -1610,11 +1612,11 @@ const styles = {
     width: "100%",
     maxWidth: "480px",
     backgroundColor: "#0b111e",
-    border: "1px solid rgba(0, 255, 163, 0.2)",
+    border: "1px solid rgba(0, 255, 163, 0.3)",
     borderRadius: "32px",
     padding: "35px",
     boxSizing: "border-box",
-    boxShadow: "0 30px 80px rgba(0,0,0,0.7)"
+    boxShadow: "0 30px 80px rgba(0,0,0,0.8)"
   },
   modalSystemHeaderTitleFlexRow: {
     display: "flex",
@@ -1643,14 +1645,14 @@ const styles = {
   modalSystemParagraphParaBlockText: {
     margin: 0,
     fontSize: "13px",
-    color: "#94a3b8",
+    color: "#cbd5e1",
     lineHeight: "1.7",
     textAlign: "justify"
   },
   modalSystemParagraphParaBlockTextHelpTextBangla: {
     margin: 0,
     fontSize: "14px",
-    color: "#cbd5e1",
+    color: "#ffffff",
     lineHeight: "1.7"
   },
   modalSystemAcceptActionButtonTriggerElement: {
@@ -1664,6 +1666,6 @@ const styles = {
     fontWeight: "800",
     fontSize: "15px",
     cursor: "pointer",
-    boxShadow: "0 8px 25px rgba(0,255,163,0.2)"
+    boxShadow: "0 8px 25px rgba(0,255,163,0.3)"
   }
 };
