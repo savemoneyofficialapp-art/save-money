@@ -32,7 +32,7 @@ export default function SaveMoney() {
     }, 3000);
   };
 
-  // ১. পেজ লোড হলে একদম ওপর থেকে শুরু হওয়ার ফিক্স (Scroll Fix)
+  // স্ক্রল পজিশন ফিক্স
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
@@ -180,13 +180,13 @@ export default function SaveMoney() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.mobileFrame}>
+      <div style={styles.mainContainer}>
 
-        {/* BACKGROUND GLOWS FOR PREMIUM FEEL */}
+        {/* BACKGROUND LUSH GLOWS */}
         <div style={styles.glowTopLeft}></div>
         <div style={styles.glowBottomRight}></div>
 
-        {/* ২. সেন্টারড সুন্দর ইনফো মেসেজ ওভারলে UI */}
+        {/* কাস্টম প্রিমিয়াম স্ট্যাটাস বক্স ওভারলে */}
         {statusOverlay.show && (
           <div style={styles.statusOverlayBg}>
             <div style={{
@@ -208,11 +208,11 @@ export default function SaveMoney() {
         {/* TOP BAR */}
         <div style={styles.topBar}>
           <button style={styles.backBtn} onClick={() => window.history.back()}>
-            ←
+            ← Back
           </button>
-          <span style={styles.headerTitleMain}>Investment Plan</span>
+          <span style={styles.headerTitleMain}>Premium Investment Desk</span>
           <button style={styles.helpBtn} onClick={() => setHelpOpen(true)}>
-            ?
+            Need Help?
           </button>
         </div>
 
@@ -226,110 +226,119 @@ export default function SaveMoney() {
           <h1 style={styles.brandTitle}>
             SAVE <span style={styles.brandSpan}>MONEY</span>
           </h1>
-          <div style={styles.brandSub}>
-            <b>PREMIUM SIP PLATFORM</b>
-          </div>
+          <p style={styles.brandSub}>SECURE COMPREHENSIVE COMPOUNDING PLATFORM</p>
         </header>
 
-        {/* WALLET BALANCE CARD */}
-        <section style={styles.balanceCard}>
-          <div style={styles.walletIconBox}>
-            <span>👛</span>
-          </div>
-          <div style={styles.balanceInfo}>
-            <p style={styles.balanceLabel}>WALLET BALANCE</p>
-            <h2 style={styles.balanceAmount}>{money(balance)}</h2>
-            <small style={styles.balanceSubtext}>Available for Investment</small>
-          </div>
-          <button style={styles.addMoneyBtn} onClick={() => (window.location.href = "/wallet")}>
-            <span>＋</span> Add Funds
-          </button>
-        </section>
-
-        {/* SIP DETAILS MAIN CARD */}
-        <section style={styles.mainCard}>
-          <div style={styles.sectionHead}>
-            <div style={styles.sectionIcon}>🌱</div>
-            <h2 style={styles.sectionTitle}>Configure SIP Plan</h2>
-          </div>
-
-          <label style={styles.inputLabel}>Monthly SIP Amount</label>
-          <div style={styles.amountInputBox}>
-            <span style={styles.rupeeSymbol}>₹</span>
-            <input
-              style={styles.amountInput}
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter Amount"
-            />
-            <b style={styles.minBadge}>Min ₹2,000</b>
-          </div>
-
-          {Number(amount || 0) > 0 && Number(amount) < 2000 && (
-            <p style={styles.errorText}>⚠️ Minimum investment amount is ₹2000</p>
-          )}
-
-          <label style={styles.inputLabel}>SIP Duration</label>
-          <div style={styles.durationGrid}>
-            {[1, 3, 5, 10, 15, 20].map((y) => (
-              <button
-                key={y}
-                style={{
-                  ...styles.durationBtn,
-                  ...(years === y ? styles.durationActive : {})
-                }}
-                onClick={() => setYears(y)}
-              >
-                {y} {y === 1 ? "Year" : "Years"}
-                {years === y && <span style={styles.tickMark}>✓</span>}
+        {/* GRID LAYOUT FOR WIDE SCREENS */}
+        <div style={styles.dashboardGrid}>
+          
+          {/* LEFT COLUMN: WALLET & CONFIGURATION */}
+          <div style={styles.gridColumn}>
+            {/* WALLET BALANCE CARD */}
+            <section style={styles.balanceCard}>
+              <div style={styles.walletIconBox}>
+                <span>👛</span>
+              </div>
+              <div style={styles.balanceInfo}>
+                <p style={styles.balanceLabel}>TOTAL WALLET BALANCE</p>
+                <h2 style={styles.balanceAmount}>{money(balance)}</h2>
+                <small style={styles.balanceSubtext}>Available for instant deployment</small>
+              </div>
+              <button style={styles.addMoneyBtn} onClick={() => (window.location.href = "/wallet")}>
+                <span>＋</span> Add Funds
               </button>
-            ))}
+            </section>
+
+            {/* SIP DETAILS MAIN CARD */}
+            <section style={styles.mainCard}>
+              <div style={styles.sectionHead}>
+                <div style={styles.sectionIcon}>🌱</div>
+                <h2 style={styles.sectionTitle}>Configure Your SIP Plan</h2>
+              </div>
+
+              <label style={styles.inputLabel}>Monthly SIP Investment Amount</label>
+              <div style={styles.amountInputBox}>
+                <span style={styles.rupeeSymbol}>₹</span>
+                <input
+                  style={styles.amountInput}
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Enter Amount"
+                />
+                <b style={styles.minBadge}>Min ₹2,000</b>
+              </div>
+
+              {Number(amount || 0) > 0 && Number(amount) < 2000 && (
+                <p style={styles.errorText}>⚠️ Minimum investment amount required is ₹2000</p>
+              )}
+
+              <label style={styles.inputLabel}>SIP Tenure / Duration</label>
+              <div style={styles.durationGrid}>
+                {[1, 3, 5, 10, 15, 20].map((y) => (
+                  <button
+                    key={y}
+                    style={{
+                      ...styles.durationBtn,
+                      ...(years === y ? styles.durationActive : {})
+                    }}
+                    onClick={() => setYears(y)}
+                  >
+                    {y} {y === 1 ? "Year" : "Years"}
+                    {years === y && <span style={styles.tickMark}>✓</span>}
+                  </button>
+                ))}
+              </div>
+
+              <div style={styles.recommendBox}>
+                <div style={styles.starIcon}>⭐</div>
+                <p style={styles.recommendText}>
+                  <b>Strategic Advice:</b> 5 Years or higher lock-in periods generally trigger optimal asset compounding curves.
+                </p>
+              </div>
+            </section>
           </div>
 
-          <div style={styles.recommendBox}>
-            <div style={styles.starIcon}>⭐</div>
-            <p style={styles.recommendText}>
-              <b>Expert Advice:</b> 5 Years or higher is recommended for maximum compounding returns.
-            </p>
-          </div>
-        </section>
+          {/* RIGHT COLUMN: RETURNS & VALIDATION */}
+          <div style={styles.gridColumn}>
+            {/* ESTIMATED RETURNS */}
+            <section style={styles.returnCard}>
+              <h3 style={styles.returnTitle}>Compounding Growth Projections</h3>
+              <div style={styles.returnGrid}>
+                <ReturnItem icon="📈" title="Estimated Return" value={money(calc.estimatedReturn)} color="#10b981" bg="rgba(16,185,129,0.08)" />
+                <ReturnItem icon="👛" title="Total Principal Investment" value={money(calc.totalInvestment)} color="#3b82f6" bg="rgba(59,130,246,0.08)" />
+                <ReturnItem icon="🪙" title="Accumulated Interest" value={money(calc.totalInterest)} color="#f59e0b" bg="rgba(245,158,11,0.08)" />
+                <ReturnItem icon="📊" title="Expected Maturity Value" value={money(calc.totalReturn)} color="#a855f7" bg="rgba(168,85,247,0.08)" />
+              </div>
+              <div style={styles.infoNote}>
+                <span>ℹ</span> Analytics generated on statistical standard interest rates.
+              </div>
+            </section>
 
-        {/* ESTIMATED RETURNS */}
-        <section style={styles.returnCard}>
-          <h3 style={styles.returnTitle}>Estimated Compounding Projection</h3>
-          <div style={styles.returnGrid}>
-            <ReturnItem icon="📈" title="Estimated Return" value={money(calc.estimatedReturn)} color="#10b981" bg="rgba(16,185,129,0.1)" />
-            <ReturnItem icon="👛" title="Total Investment" value={money(calc.totalInvestment)} color="#3b82f6" bg="rgba(59,130,246,0.1)" />
-            <ReturnItem icon="🪙" title="Total Interest" value={money(calc.totalInterest)} color="#f59e0b" bg="rgba(245,158,11,0.1)" />
-            <ReturnItem icon="📊" title="Maturity Value" value={money(calc.totalReturn)} color="#a855f7" bg="rgba(168,85,247,0.1)" />
-          </div>
-          <div style={styles.infoNote}>
-            <span>ℹ</span> Market calculations are compounding estimations.
-          </div>
-        </section>
+            {/* TERMS AGREEMENT */}
+            <section style={styles.termsBox} onClick={openTerms}>
+              <div style={{ ...styles.checkbox, ...(accepted ? styles.checkboxActive : {}) }}>
+                {accepted ? "✓" : ""}
+              </div>
+              <p style={styles.termsText}>
+                I declare that I have read, verified and accepted the <b style={styles.termsBold}>Terms, Conditions & Asset Disclosures</b>
+              </p>
+              <div style={styles.termsDoc}>📄</div>
+            </section>
 
-        {/* TERMS AGREEMENT */}
-        <section style={styles.termsBox} onClick={openTerms}>
-          <div style={{ ...styles.checkbox, ...(accepted ? styles.checkboxActive : {}) }}>
-            {accepted ? "✓" : ""}
+            {/* MAIN ACTION CONFIRM BUTTON */}
+            <button style={styles.confirmBtn} onClick={confirmSip} disabled={loading}>
+              <span>🛡️</span> {loading ? "Authorizing Safe Deposit..." : "Confirm & Establish SIP Asset"}
+            </button>
           </div>
-          <p style={styles.termsText}>
-            I have read and agree to the <b style={styles.termsBold}>Terms & Conditions</b>
-          </p>
-          <div style={styles.termsDoc}>📄</div>
-        </section>
 
-        {/* MAIN PRO CONFIRM BUTTON */}
-        <button style={styles.confirmBtn} onClick={confirmSip} disabled={loading}>
-          <span>🛡️</span> {loading ? "Locking Deal..." : "Confirm & Launch SIP"}
-        </button>
+        </div>
 
-        {/* FOOTER FEATURES */}
+        {/* FOOTER CORE FEATURES */}
         <section style={styles.bottomFeatures}>
-          <FeatureItem icon="🔒" title="Secure Core" sub="End-to-End Vaulted" color="#3b82f6" />
-          <FeatureItem icon="📈" title="High Yield" sub="Compounding Growth" color="#10b981" />
-          <FeatureItem icon="⚡" title="Fluid Asset" sub="Easy Auto-Payouts" color="#a855f7" />
+          <FeatureItem icon="🔒" title="Vault-grade Security" sub="End-to-End Encrypted Protocols" color="#3b82f6" />
+          <FeatureItem icon="📈" title="Optimized Yield" sub="Compounding Asset Calibration" color="#10b981" />
+          <FeatureItem icon="⚡" title="Liquid Interfacing" sub="Automated Regular Payouts" color="#a855f7" />
         </section>
 
         {/* TERMS MODAL */}
@@ -371,7 +380,7 @@ export default function SaveMoney() {
   );
 }
 
-// SUB COMPONENTS
+// REUSABLE PRESENTATIONAL SUB-COMPONENTS
 function ReturnItem({ icon, title, value, color, bg }) {
   return (
     <div style={styles.returnItem}>
@@ -387,7 +396,7 @@ function ReturnItem({ icon, title, value, color, bg }) {
 function FeatureItem({ icon, title, sub, color }) {
   return (
     <div style={styles.featureItem}>
-      <div style={{ ...styles.featureIcon, color, background: `${color}15` }}>
+      <div style={{ ...styles.featureIcon, color, background: `${color}12` }}>
         {icon}
       </div>
       <b style={styles.featureTitle}>{title}</b>
@@ -396,10 +405,11 @@ function FeatureItem({ icon, title, sub, color }) {
   );
 }
 
-// ALL HIGH QUALITY STYLES
+// PREMIUM EXPANSIVE DESIGN SYSTEM
 const styles = {
   page: {
     minHeight: "100vh",
+    width: "100vw",
     background: "#020617",
     display: "flex",
     justifyContent: "center",
@@ -407,43 +417,41 @@ const styles = {
     color: "#f8fafc",
     overflowX: "hidden"
   },
-  mobileFrame: {
+  mainContainer: {
     width: "100%",
-    maxWidth: "460px",
+    maxWidth: "1280px", // ডেস্কটপের জন্য স্ট্যান্ডার্ড ওয়াইড কন্টেইনার ম্যাক্স-উইডথ
     minHeight: "100vh",
-    background: "linear-gradient(180deg, #090f24 0%, #030712 100%)",
+    background: "linear-gradient(180deg, #070c1e 0%, #030712 100%)",
     position: "relative",
-    padding: "20px 16px 40px",
-    boxSizing: "border-box",
-    borderLeft: "1px solid #1e293b",
-    borderRight: "1px solid #1e293b"
+    padding: "30px 24px 60px",
+    boxSizing: "border-box"
   },
   glowTopLeft: {
     position: "absolute",
-    top: "-100px",
-    left: "-100px",
-    width: "300px",
-    height: "300px",
-    background: "rgba(99, 102, 241, 0.15)",
-    filter: "blur(80px)",
+    top: "-150px",
+    left: "-150px",
+    width: "500px",
+    height: "500px",
+    background: "rgba(99, 102, 241, 0.12)",
+    filter: "blur(120px)",
     borderRadius: "50%",
     pointerEvents: "none"
   },
   glowBottomRight: {
     position: "absolute",
-    bottom: "100px",
-    right: "-100px",
-    width: "250px",
-    height: "250px",
-    background: "rgba(236, 72, 153, 0.12)",
-    filter: "blur(70px)",
+    bottom: "50px",
+    right: "-150px",
+    width: "450px",
+    height: "450px",
+    background: "rgba(236, 72, 153, 0.08)",
+    filter: "blur(100px)",
     borderRadius: "50%",
     pointerEvents: "none"
   },
   statusOverlayBg: {
     position: "fixed",
     inset: 0,
-    background: "rgba(2, 6, 23, 0.75)",
+    background: "rgba(2, 6, 23, 0.8)",
     backdropFilter: "blur(8px)",
     zIndex: 100000,
     display: "flex",
@@ -452,26 +460,26 @@ const styles = {
   },
   statusOverlayCard: {
     background: "#0f172a",
-    padding: "24px 30px",
+    padding: "30px",
     borderRadius: "24px",
     textAlign: "center",
-    boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+    boxShadow: "0 30px 70px rgba(0,0,0,0.7)",
     border: "1px solid #1e293b",
-    maxWidth: "350px",
-    width: "85%",
+    maxWidth: "400px",
+    width: "90%",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "14px"
+    gap: "16px"
   },
   statusOverlayIcon: {
-    width: "56px",
-    height: "56px",
+    width: "60px",
+    height: "60px",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "26px",
+    fontSize: "28px",
     fontWeight: "bold"
   },
   statusOverlayText: {
@@ -479,7 +487,7 @@ const styles = {
     color: "#ffffff",
     margin: 0,
     fontWeight: "700",
-    lineHeight: "1.4"
+    lineHeight: "1.5"
   },
   topBar: {
     display: "flex",
@@ -487,56 +495,54 @@ const styles = {
     alignItems: "center",
     position: "relative",
     zIndex: 5,
-    marginBottom: "20px"
+    marginBottom: "30px"
   },
   headerTitleMain: {
-    fontSize: "17px",
+    fontSize: "18px",
     fontWeight: "700",
-    color: "#94a3b8"
+    color: "#64748b",
+    letterSpacing: "0.5px"
   },
   backBtn: {
-    width: "42px",
-    height: "42px",
+    padding: "10px 18px",
     borderRadius: "14px",
     border: "1px solid #1e293b",
     background: "#0f172a",
     color: "#fff",
-    fontSize: "20px",
+    fontSize: "14px",
+    fontWeight: "600",
     cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
+    transition: "all 0.3s ease"
   },
   helpBtn: {
-    width: "42px",
-    height: "42px",
-    borderRadius: "50%",
+    padding: "10px 18px",
+    borderRadius: "14px",
     border: "1px solid #1e293b",
     background: "#0f172a",
     color: "#3b82f6",
-    fontSize: "18px",
-    fontWeight: "700",
+    fontSize: "14px",
+    fontWeight: "600",
     cursor: "pointer"
   },
   brandHeader: {
     textAlign: "center",
-    marginBottom: "24px"
+    marginBottom: "40px"
   },
   walletLogo: {
-    width: "70px",
-    height: "56px",
-    borderRadius: "16px",
-    margin: "0 auto 10px",
+    width: "76px",
+    height: "60px",
+    borderRadius: "18px",
+    margin: "0 auto 14px",
     background: "linear-gradient(135deg, #6366f1, #a855f7)",
     position: "relative",
-    boxShadow: "0 12px 24px rgba(99,102,241,0.3)"
+    boxShadow: "0 12px 28px rgba(99,102,241,0.3)"
   },
   logoMoneyOne: {
     position: "absolute",
     top: "-10px",
-    left: "14px",
-    width: "36px",
-    height: "24px",
+    left: "16px",
+    width: "40px",
+    height: "26px",
     borderRadius: "6px",
     background: "linear-gradient(135deg, #10b981, #059669)",
     transform: "rotate(-12deg)"
@@ -544,19 +550,19 @@ const styles = {
   logoMoneyTwo: {
     position: "absolute",
     top: "-4px",
-    left: "22px",
-    width: "36px",
-    height: "24px",
+    left: "24px",
+    width: "40px",
+    height: "26px",
     borderRadius: "6px",
     background: "linear-gradient(135deg, #06b6d4, #0891b2)",
     transform: "rotate(10deg)"
   },
   logoCoin: {
     position: "absolute",
-    right: "-6px",
+    right: "-8px",
     bottom: "4px",
-    width: "26px",
-    height: "26px",
+    width: "28px",
+    height: "28px",
     borderRadius: "50%",
     background: "linear-gradient(135deg, #eab308, #ca8a04)",
     color: "white",
@@ -564,97 +570,111 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontWeight: "bold",
-    fontSize: "14px"
+    fontSize: "15px"
   },
   brandTitle: {
     margin: "0px",
-    fontSize: "28px",
+    fontSize: "36px",
     fontWeight: "900",
-    letterSpacing: "1px",
+    letterSpacing: "1.5px",
     color: "#fff"
   },
   brandSpan: {
     color: "#10b981"
   },
   brandSub: {
-    fontSize: "11px",
-    letterSpacing: "2px",
-    color: "#64748b",
-    marginTop: "4px"
+    fontSize: "12px",
+    letterSpacing: "3px",
+    color: "#475569",
+    marginTop: "8px",
+    fontWeight: "700"
   },
+  
+  // ড্যাশবোর্ড গ্রিড (যা ফুল স্ক্রিন করতে সাহায্য করবে)
+  dashboardGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(450px, 1fr))", // স্ক্রিন বড় হলে পাশাপাশি ২টি কলাম হয়ে যাবে
+    gap: "24px",
+    alignItems: "start",
+    marginBottom: "30px"
+  },
+  gridColumn: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "24px"
+  },
+
   balanceCard: {
     background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)",
     borderRadius: "24px",
-    border: "1px solid #312e81",
-    padding: "20px",
+    border: "1px solid #2e2a85",
+    padding: "24px",
     display: "flex",
     alignItems: "center",
-    gap: "16px",
-    marginBottom: "20px",
-    boxShadow: "0 15px 35px rgba(0,0,0,0.4)"
+    gap: "20px",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.4)"
   },
   walletIconBox: {
-    width: "54px",
-    height: "54px",
-    borderRadius: "16px",
+    width: "60px",
+    height: "60px",
+    borderRadius: "18px",
     background: "rgba(99, 102, 241, 0.15)",
-    border: "1px solid rgba(99, 102, 241, 0.3)",
+    border: "1px solid rgba(99, 102, 241, 0.25)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "26px"
+    fontSize: "28px"
   },
   balanceInfo: {
     flex: 1
   },
   balanceLabel: {
     margin: 0,
-    fontSize: "11px",
+    fontSize: "12px",
     color: "#64748b",
     fontWeight: "700",
     letterSpacing: "0.5px"
   },
   balanceAmount: {
-    margin: "2px 0",
-    fontSize: "24px",
+    margin: "4px 0",
+    fontSize: "28px",
     fontWeight: "800",
     color: "#fff"
   },
   balanceSubtext: {
-    fontSize: "11px",
+    fontSize: "12px",
     color: "#10b981"
   },
   addMoneyBtn: {
-    padding: "10px 14px",
-    borderRadius: "12px",
+    padding: "12px 20px",
+    borderRadius: "14px",
     border: "none",
-    background: "#6366f1",
+    background: "#4f46e5",
     color: "white",
-    fontSize: "13px",
+    fontSize: "14px",
     fontWeight: "700",
     cursor: "pointer",
-    boxShadow: "0 8px 16px rgba(99,102,241,0.25)"
+    boxShadow: "0 8px 20px rgba(79,70,229,0.3)"
   },
   mainCard: {
     background: "#0f172a",
     borderRadius: "24px",
     border: "1px solid #1e293b",
-    padding: "20px",
-    marginBottom: "20px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+    padding: "24px",
+    boxShadow: "0 15px 35px rgba(0,0,0,0.25)"
   },
   sectionHead: {
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    marginBottom: "20px"
+    marginBottom: "24px"
   },
   sectionIcon: {
-    fontSize: "22px"
+    fontSize: "24px"
   },
   sectionTitle: {
     margin: 0,
-    fontSize: "18px",
+    fontSize: "20px",
     fontWeight: "700",
     color: "#fff"
   },
@@ -663,21 +683,21 @@ const styles = {
     fontWeight: "600",
     fontSize: "14px",
     color: "#94a3b8",
-    marginBottom: "8px"
+    marginBottom: "10px"
   },
   amountInputBox: {
-    height: "56px",
+    height: "60px",
     borderRadius: "16px",
     border: "1px solid #1e293b",
     background: "#020617",
     display: "flex",
     alignItems: "center",
-    padding: "0 16px",
-    gap: "10px",
+    padding: "0 18px",
+    gap: "12px",
     marginBottom: "8px"
   },
   rupeeSymbol: {
-    fontSize: "20px",
+    fontSize: "22px",
     fontWeight: "700",
     color: "#10b981"
   },
@@ -685,7 +705,7 @@ const styles = {
     flex: 1,
     border: "none",
     outline: "none",
-    fontSize: "18px",
+    fontSize: "20px",
     fontWeight: "700",
     color: "#fff",
     background: "transparent"
@@ -693,28 +713,28 @@ const styles = {
   minBadge: {
     background: "rgba(245,158,11,0.1)",
     color: "#f59e0b",
-    padding: "6px 10px",
+    padding: "6px 12px",
     borderRadius: "10px",
-    fontSize: "11px"
+    fontSize: "12px"
   },
   errorText: {
     color: "#ef4444",
     fontSize: "12px",
-    margin: "0 0 14px",
+    margin: "0 0 16px",
     fontWeight: "500"
   },
   durationGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "10px",
-    marginTop: "12px"
+    gap: "12px",
+    marginTop: "14px"
   },
   durationBtn: {
-    height: "46px",
-    borderRadius: "12px",
+    height: "50px",
+    borderRadius: "14px",
     border: "1px solid #1e293b",
     background: "#020617",
-    fontSize: "13px",
+    fontSize: "14px",
     fontWeight: "600",
     color: "#94a3b8",
     position: "relative",
@@ -724,17 +744,17 @@ const styles = {
     background: "linear-gradient(135deg, #6366f1, #4f46e5)",
     color: "white",
     border: "none",
-    boxShadow: "0 8px 20px rgba(99,102,241,0.3)"
+    boxShadow: "0 10px 25px rgba(99,102,241,0.35)"
   },
   tickMark: {
     position: "absolute",
-    top: "4px",
-    right: "6px",
+    top: "5px",
+    right: "8px",
     fontSize: "10px",
     color: "#10b981",
     background: "#fff",
-    width: "14px",
-    height: "14px",
+    width: "15px",
+    height: "15px",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
@@ -742,101 +762,99 @@ const styles = {
     fontWeight: "bold"
   },
   recommendBox: {
-    marginTop: "20px",
-    background: "rgba(99,102,241,0.06)",
-    border: "1px dashed rgba(99,102,241,0.3)",
+    marginTop: "24px",
+    background: "rgba(99,102,241,0.05)",
+    border: "1px dashed rgba(99,102,241,0.25)",
     borderRadius: "16px",
-    padding: "12px 16px",
+    padding: "14px 18px",
     display: "flex",
     alignItems: "center",
-    gap: "12px"
+    gap: "14px"
   },
   starIcon: {
-    fontSize: "20px"
+    fontSize: "22px"
   },
   recommendText: {
     margin: 0,
     fontSize: "12px",
     color: "#cbd5e1",
-    lineHeight: "1.5"
+    lineHeight: "1.6"
   },
   returnCard: {
     background: "#0f172a",
     borderRadius: "24px",
     border: "1px solid #1e293b",
-    padding: "20px",
-    marginBottom: "20px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+    padding: "24px",
+    boxShadow: "0 15px 35px rgba(0,0,0,0.25)"
   },
   returnTitle: {
-    margin: "0 0 16px",
+    margin: "0 0 20px",
     color: "#fff",
-    fontSize: "15px",
+    fontSize: "16px",
     fontWeight: "700",
     letterSpacing: "0.5px"
   },
   returnGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "12px"
+    gap: "14px"
   },
   returnItem: {
     border: "1px solid #1e293b",
-    borderRadius: "16px",
-    padding: "16px 12px",
+    borderRadius: "18px",
+    padding: "20px 16px",
     background: "#020617",
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-start"
   },
   returnIcon: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "10px",
+    width: "40px",
+    height: "40px",
+    borderRadius: "12px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "18px",
-    marginBottom: "12px"
+    fontSize: "20px",
+    marginBottom: "14px"
   },
   returnItemTitle: {
     margin: 0,
     color: "#64748b",
-    fontSize: "12px",
+    fontSize: "13px",
     fontWeight: "600"
   },
   returnItemValue: {
-    margin: "6px 0 0",
-    fontSize: "16px",
+    margin: "8px 0 0",
+    fontSize: "18px",
     fontWeight: "800"
   },
   infoNote: {
-    marginTop: "16px",
+    marginTop: "20px",
     color: "#64748b",
-    fontSize: "11px",
+    fontSize: "12px",
     textAlign: "center"
   },
   termsBox: {
     background: "#0f172a",
-    borderRadius: "16px",
-    padding: "14px 16px",
+    borderRadius: "18px",
+    padding: "16px 20px",
     border: "1px solid #1e293b",
     display: "flex",
     alignItems: "center",
-    gap: "12px",
-    marginBottom: "20px",
+    gap: "14px",
     cursor: "pointer"
   },
   checkbox: {
-    width: "20px",
-    height: "20px",
-    borderRadius: "6px",
+    width: "22px",
+    height: "22px",
+    borderRadius: "7px",
     border: "2px solid #6366f1",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     color: "white",
-    fontSize: "12px",
+    fontSize: "13px",
     fontWeight: "bold"
   },
   checkboxActive: {
@@ -844,74 +862,75 @@ const styles = {
   },
   termsText: {
     margin: 0,
-    fontSize: "12px",
-    color: "#94a3b8"
+    fontSize: "13px",
+    color: "#94a3b8",
+    lineHeight: "1.4"
   },
   termsBold: {
     color: "#6366f1"
   },
   termsDoc: {
     marginLeft: "auto",
-    fontSize: "18px",
-    color: "#64748b"
+    fontSize: "20px",
+    color: "#475569"
   },
   confirmBtn: {
     width: "100%",
-    height: "56px",
-    borderRadius: "16px",
+    height: "60px",
+    borderRadius: "18px",
     border: "none",
     background: "linear-gradient(90deg, #6366f1, #e11d48)",
     color: "white",
     fontSize: "16px",
     fontWeight: "700",
-    boxShadow: "0 10px 25px rgba(99,102,241,0.35)",
+    boxShadow: "0 12px 30px rgba(99,102,241,0.4)",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "8px"
+    gap: "10px"
   },
   bottomFeatures: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "10px",
-    marginTop: "24px"
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", // রেসপন্সিভ ফিচার গ্রিড
+    gap: "16px",
+    marginTop: "40px"
   },
   featureItem: {
     background: "#0f172a",
     border: "1px solid #1e293b",
-    borderRadius: "16px",
-    padding: "14px 10px",
+    borderRadius: "20px",
+    padding: "20px",
     display: "flex",
-    flexDirection: "column",
     alignItems: "center",
-    textAlign: "center"
+    gap: "16px",
+    textAlign: "left"
   },
   featureIcon: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "12px",
+    width: "46px",
+    height: "46px",
+    borderRadius: "14px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "18px",
-    marginBottom: "8px"
+    fontSize: "22px",
+    flexShrink: 0
   },
   featureTitle: {
-    fontSize: "11px",
+    fontSize: "14px",
     color: "#fff",
     display: "block"
   },
   featureSub: {
-    margin: "2px 0 0",
+    margin: "4px 0 0",
     color: "#64748b",
-    fontSize: "9px"
+    fontSize: "12px"
   },
   overlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(2,6,23,0.8)",
-    backdropFilter: "blur(6px)",
+    background: "rgba(2,6,23,0.85)",
+    backdropFilter: "blur(8px)",
     zIndex: 9999,
     display: "flex",
     alignItems: "center",
@@ -920,71 +939,71 @@ const styles = {
   },
   termsModal: {
     width: "100%",
-    maxWidth: "380px",
+    maxWidth: "450px",
     background: "#0f172a",
     border: "1px solid #1e293b",
-    borderRadius: "24px",
-    padding: "24px",
-    boxShadow: "0 20px 50px rgba(0,0,0,0.5)"
+    borderRadius: "28px",
+    padding: "30px",
+    boxShadow: "0 25px 60px rgba(0,0,0,0.6)"
   },
   modalTitle: {
-    margin: "0 0 16px",
-    fontSize: "20px",
+    margin: "0 0 20px",
+    fontSize: "22px",
     color: "#fff",
     fontWeight: "700"
   },
   termsScroll: {
-    maxHeight: "280px",
+    maxHeight: "300px",
     overflowY: "auto",
-    lineHeight: "1.6",
-    fontSize: "13px",
+    lineHeight: "1.7",
+    fontSize: "14px",
     color: "#94a3b8",
-    paddingRight: "6px"
+    paddingRight: "8px"
   },
   acceptBtn: {
     width: "100%",
-    height: "48px",
-    marginTop: "20px",
+    height: "52px",
+    marginTop: "24px",
     border: "none",
-    borderRadius: "12px",
+    borderRadius: "14px",
     background: "#10b981",
     color: "#fff",
     fontWeight: "700",
     fontSize: "15px",
     cursor: "pointer",
-    boxShadow: "0 6px 20px rgba(16,185,129,0.25)"
+    boxShadow: "0 6px 22px rgba(16,185,129,0.3)"
   },
   helpModal: {
     width: "100%",
-    maxWidth: "360px",
+    maxWidth: "400px",
     background: "#0f172a",
     border: "1px solid #1e293b",
-    borderRadius: "24px",
-    padding: "24px",
-    boxShadow: "0 20px 50px rgba(0,0,0,0.5)"
+    borderRadius: "28px",
+    padding: "30px",
+    boxShadow: "0 25px 60px rgba(0,0,0,0.6)"
   },
   modalTitleDark: {
-    margin: "0 0 16px",
-    fontSize: "18px",
+    margin: "0 0 18px",
+    fontSize: "20px",
     color: "#3b82f6",
     fontWeight: "700"
   },
   helpContentText: {
-    fontSize: "13px",
+    fontSize: "14px",
     color: "#cbd5e1",
     lineHeight: "1.6",
-    margin: "0 0 12px"
+    margin: "0 0 14px"
   },
   acceptBtnDark: {
     width: "100%",
-    height: "46px",
+    height: "50px",
     border: "none",
-    borderRadius: "12px",
+    borderRadius: "14px",
     background: "#3b82f6",
     color: "#fff",
     fontWeight: "700",
-    fontSize: "14px",
+    fontSize: "15px",
     cursor: "pointer",
-    marginTop: "8px"
+    marginTop: "10px"
   }
 };
