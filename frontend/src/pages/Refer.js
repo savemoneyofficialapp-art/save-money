@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { API } from "../config";
@@ -20,136 +20,107 @@ export default function Refer() {
   const [treeOpen, setTreeOpen] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [statusFilter, setStatusFilter] = useState("All");
-  const [referBonus,setReferBonus] = useState({});
+  const [referBonus, setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
   const [teamMonthFilter, setTeamMonthFilter] = useState("thisMonth");
   const [bonusFilter, setBonusFilter] = useState("All");
   const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
+  
+  // ফিল্টার ফিক্স করার জন্য স্টেট
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-const filteredPerformanceHistory = (
-  performance.history || []
-).filter((item) => {
-
-  const d = new Date(item.date);
-  const now = new Date();
-
-  if (performanceFilter === "thisMonth") {
-    return (
-      d.getMonth() === now.getMonth() &&
-      d.getFullYear() === now.getFullYear()
-    );
-  }
-
-  if (performanceFilter === "lastMonth") {
-
-    const last = new Date(
-      now.getFullYear(),
-      now.getMonth() - 1,
-      1
-    );
-
-    return (
-      d.getMonth() === last.getMonth() &&
-      d.getFullYear() === last.getFullYear()
-    );
-  }
-
-  return true;
-});
-
-  useEffect(() => {
-    loadReferData();
-  }, []);
-
-  const loadReferData = async (
-  month = selectedMonth,
-  year = selectedYear
-) => {
-  try {
-    setLoading(true);
-
-    const res = await fetch(`${API}/refer-data`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: token || ""
-      },
-      body: JSON.stringify({
-        email,
-        month,
-        year
-      })
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-
-      setUser(data.user || {});
-      setHistory(Array.isArray(data.history) ? data.history : []);
-      setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
-      setPerformance(data.performance || {});
-      setTeam(data.team || {});
-      setRoyalty(data.royalty || {});
-      setTreeData(data.treeData || {});
-      setReferBonus(data.referBonus || {});
-
-    }
-
-  } catch (err) {
-
-    console.log("REFER DATA ERROR:", err);
-
-  } finally {
-
-    setLoading(false);
-
-  }
-};
-
-  const getTeamHistory = () => {
-
-  if (!team.history) return [];
-
-  const now = new Date();
-
-  return team.history.filter(item => {
-
-    const d = new Date(item.date);
-
-    if (teamMonthFilter === "thisMonth") {
-
-      return (
-        d.getMonth() === now.getMonth() &&
-        d.getFullYear() === now.getFullYear()
-      );
-
-    }
-
-    if (teamMonthFilter === "lastMonth") {
-
-      const last = new Date(
-        now.getFullYear(),
-        now.getMonth() - 1,
-        1
-      );
-
-      return (
-        d.getMonth() === last.getMonth() &&
-        d.getFullYear() === last.getFullYear()
-      );
-
-    }
-
-    return (
-      d.getMonth() === Number(teamMonthFilter)
-    );
-
+  // --- স্ক্রিনের মাঝখানে বড় মেসেজ দেখানোর জন্য নতুন স্টেট ---
+  const [statusOverlay, setStatusOverlay] = useState({
+    show: false,
+    type: "info", // 'success' | 'info' | 'error'
+    message: ""
   });
 
-};
+  // মাঝখানে মেসেজ শো করানোর হেল্পার ফাংশন
+  const triggerStatusOverlay = (type, message) => {
+    setStatusOverlay({ show: true, type, message });
+    setTimeout(() => {
+      setStatusOverlay({ show: false, type: "info", message: "" });
+    }, 2200);
+  };
+
+  const filteredPerformanceHistory = (performance.history || []).filter((item) => {
+    const d = new Date(item.date);
+    const now = new Date();
+
+    if (performanceFilter === "thisMonth") {
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }
+
+    if (performanceFilter === "lastMonth") {
+      const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
+    }
+
+    return true;
+  });
+
+  useEffect(() => {
+    loadReferData(selectedMonth, selectedYear);
+  }, []);
+
+  const loadReferData = async (month = selectedMonth, year = selectedYear) => {
+    try {
+      setLoading(true);
+
+      const res = await fetch(`${API}/refer-data`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({
+          email,
+          month,
+          year
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setUser(data.user || {});
+        setHistory(Array.isArray(data.history) ? data.history : []);
+        setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
+        setPerformance(data.performance || {});
+        setTeam(data.team || {});
+        setRoyalty(data.royalty || {});
+        setTreeData(data.treeData || {});
+        setReferBonus(data.referBonus || {});
+      }
+    } catch (err) {
+      console.log("REFER DATA ERROR:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTeamHistory = () => {
+    if (!team.history) return [];
+
+    const now = new Date();
+
+    return team.history.filter((item) => {
+      const d = new Date(item.date);
+
+      if (teamMonthFilter === "thisMonth") {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+
+      if (teamMonthFilter === "lastMonth") {
+        const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
+      }
+
+      return d.getMonth() === Number(teamMonthFilter);
+    });
+  };
 
   const money = (n) =>
     `₹ ${Number(n || 0).toLocaleString("en-IN", {
@@ -157,23 +128,22 @@ const filteredPerformanceHistory = (
       maximumFractionDigits: 2
     })}`;
 
-  const referCode =
-    user.referCode || user.referralCode || user.walletId || "SMREF0001";
+  const referCode = user.referCode || user.referralCode || user.walletId || "SMREF0001";
 
   const totalReferWallet =
-  Number(user.referralIncome || 0) +
-  Number(user.performanceIncome || 0) +
-  Number(user.teamIncome || 0) +
-  Number(user.royaltyIncome || 0);
+    Number(user.referralIncome || 0) +
+    Number(user.performanceIncome || 0) +
+    Number(user.teamIncome || 0) +
+    Number(user.royaltyIncome || 0);
 
   const referLink = `${window.location.origin}/register?ref=${referCode}`;
 
   const copyText = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Copied Successfully");
+      triggerStatusOverlay("success", "Copied Successfully! 🎉");
     } catch {
-      toast.info("Copy failed");
+      triggerStatusOverlay("error", "Copy failed. Please try manually.");
     }
   };
 
@@ -193,39 +163,21 @@ const filteredPerformanceHistory = (
   };
 
   const safeHistory = Array.isArray(history) ? history : [];
-
-  const safeBonusHistory = Array.isArray(bonusHistory)
-  ? bonusHistory
-  : [];
+  const safeBonusHistory = Array.isArray(bonusHistory) ? bonusHistory : [];
 
   const filteredBonusHistory =
+    bonusFilter === "All"
+      ? safeBonusHistory
+      : safeBonusHistory.filter((x) => x.bonusType === bonusFilter);
 
-bonusFilter === "All"
-
-? safeBonusHistory
-
-: safeBonusHistory.filter(
-
-x => x.bonusType === bonusFilter
-
-);
-
-const visibleBonusHistory =
-
-showAllBonusHistory
-
-? filteredBonusHistory
-
-: filteredBonusHistory.slice(0,5);
+  const visibleBonusHistory = showAllBonusHistory
+    ? filteredBonusHistory
+    : filteredBonusHistory.slice(0, 5);
 
   const visibleHistory =
-    statusFilter === "All"
-      ? safeHistory
-      : safeHistory.filter((x) => x.status === statusFilter);
+    statusFilter === "All" ? safeHistory : safeHistory.filter((x) => x.status === statusFilter);
 
-  const finalHistory = showAllHistory
-    ? visibleHistory
-    : visibleHistory.slice(0, 3);
+  const finalHistory = showAllHistory ? visibleHistory : visibleHistory.slice(0, 3);
 
   const bonusCards = [
     {
@@ -253,16 +205,13 @@ showAllBonusHistory
       bg: "#fff7ed"
     },
     {
-key:"refer",
-title:"Refer Bonus",
-amount: referBonus.balance || user.referIncome || 0,
-
-icon:"🎁",
-
-color:"#16a34a",
-
-bg:"#ecfdf5"
-},
+      key: "refer",
+      title: "Refer Bonus",
+      amount: referBonus.balance || user.referIncome || 0,
+      icon: "🎁",
+      color: "#16a34a",
+      bg: "#ecfdf5"
+    }
   ];
 
   if (loading) {
@@ -278,11 +227,28 @@ bg:"#ecfdf5"
 
   return (
     <div style={styles.page}>
-      <button style={styles.backBtn} onClick={() => navigate(-1)}>←</button>
+      
+      {/* --- স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ দেখানোর কাস্টম ওভারলে UI --- */}
+      {statusOverlay.show && (
+        <div style={styles.statusOverlayBg}>
+          <div style={{
+            ...styles.statusOverlayCard,
+            borderTop: statusOverlay.type === "success" ? "6px solid #10b981" : statusOverlay.type === "error" ? "6px solid #ef4444" : "6px solid #2563eb"
+          }}>
+            <div style={{
+              ...styles.statusOverlayIcon,
+              background: statusOverlay.type === "success" ? "#dcfce7" : statusOverlay.type === "error" ? "#fee2e2" : "#dbeafe",
+              color: statusOverlay.type === "success" ? "#10b981" : statusOverlay.type === "error" ? "#ef4444" : "#2563eb"
+            }}>
+              {statusOverlay.type === "success" ? "✓" : statusOverlay.type === "error" ? "✕" : "ℹ"}
+            </div>
+            <h3 style={styles.statusOverlayText}>{statusOverlay.message}</h3>
+          </div>
+        </div>
+      )}
 
-      <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>
-        🔔
-      </button>
+      <button style={styles.backBtn} onClick={() => navigate(-1)}>←</button>
+      <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>🔔</button>
 
       <header style={styles.header}>
         <p style={styles.welcome}>Welcome to</p>
@@ -373,196 +339,77 @@ bg:"#ecfdf5"
             </button>
           </div>
         ))}
-
       </section>
 
       <section style={styles.historyCard}>
-
-<div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20
-  }}
->
-  <div>
-    <h2>💰 All Bonus History</h2>
-    
-  </div>
-
-  <select
-    value={bonusFilter}
-    onChange={(e) => setBonusFilter(e.target.value)}
-    style={styles.filterSelect}
-  >
-    <option value="All">All Bonus</option>
-    <option value="Referral Bonus">🎁 Referral</option>
-    <option value="Performance Bonus">📈 Performance</option>
-    <option value="Team Bonus">👥 Team</option>
-    <option value="Royalty Bonus">👑 Royalty</option>
-  </select>
-</div>
-
-<div style={styles.tableWrap}>
-
-<table style={styles.table}>
-
-<thead>
-
-<tr>
-
-<th>Bonus</th>
-
-<th>From User</th>
-
-<th>Level</th>
-
-<th>Amount</th>
-
-<th>Date</th>
-
-<th>Status</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{
-safeBonusHistory.length===0 ?
-
-<tr>
-
-<td colSpan="6">
-
-No Bonus History
-
-</td>
-
-</tr>
-
-:
-
-visibleBonusHistory.map((item,index)=>(
-
-<tr key={index}>
-
-<td>
-
-{item.bonusType}
-
-</td>
-
-<td>
-
-<b>
-
-{item.fromName || "-"}
-
-</b>
-
-<br/>
-
-<small>
-
-{item.fromEmail}
-
-</small>
-
-</td>
-
-<td>
-
-{item.level || "-"}
-
-</td>
-
-<td>
-
-{money(item.amount)}
-
-</td>
-
-<td>
-
-{
-new Date(item.date)
-.toLocaleString("en-IN")
-}
-
-</td>
-
-<td>
-
-<span
-style={{
-padding:"6px 12px",
-borderRadius:20,
-background:"#dcfce7",
-color:"#15803d",
-fontWeight:700
-}}
->
-
-Paid
-
-</span>
-
-</td>
-
-</tr>
-
-))
-
-}
-
-</tbody>
-
-</table>
-
-</div>
-
-</section>
-
-  {
-filteredBonusHistory.length>5 && (
-
-<button
-
-style={styles.viewMoreBtn}
-
-onClick={()=>
-
-setShowAllBonusHistory(
-
-!showAllBonusHistory
-
-)
-
-}
-
->
-
-{
-
-showAllBonusHistory
-
-?
-
-"Show Less ⌃"
-
-:
-
-"View More ⌄"
-
-}
-
-</button>
-
-)
-}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div>
+            <h2>💰 All Bonus History</h2>
+          </div>
+
+          <select
+            value={bonusFilter}
+            onChange={(e) => setBonusFilter(e.target.value)}
+            style={styles.filterSelect}
+          >
+            <option value="All">All Bonus</option>
+            <option value="Referral Bonus">🎁 Referral</option>
+            <option value="Performance Bonus">📈 Performance</option>
+            <option value="Team Bonus">👥 Team</option>
+            <option value="Royalty Bonus">👑 Royalty</option>
+          </select>
+        </div>
+
+        <div style={styles.tableWrap}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th>Bonus</th>
+                <th>From User</th>
+                <th>Level</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {safeBonusHistory.length === 0 ? (
+                <tr>
+                  <td colSpan="6">No Bonus History</td>
+                </tr>
+              ) : (
+                visibleBonusHistory.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.bonusType}</td>
+                    <td>
+                      <b>{item.fromName || "-"}</b>
+                      <br />
+                      <small>{item.fromEmail}</small>
+                    </td>
+                    <td>{item.level || "-"}</td>
+                    <td>{money(item.amount)}</td>
+                    <td>{new Date(item.date).toLocaleString("en-IN")}</td>
+                    <td>
+                      <span style={{ padding: "6px 12px", borderRadius: 20, background: "#dcfce7", color: "#15803d", fontWeight: 700 }}>
+                        Paid
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {filteredBonusHistory.length > 5 && (
+        <button
+          style={styles.viewMoreBtn}
+          onClick={() => setShowAllBonusHistory(!showAllBonusHistory)}
+        >
+          {showAllBonusHistory ? "Show Less ⌃" : "View More ⌄"}
+        </button>
+      )}
 
       <section style={styles.bottomBanner}>
         <div style={styles.bottomGift}>🎁</div>
@@ -575,670 +422,151 @@ showAllBonusHistory
         </button>
       </section>
 
-      
-
-        {bonusModal === "performance" && (
-
-<Modal onClose={() => setBonusModal(null)}>
-
-<h2>📈 Performance Bonus</h2>
-
-<h1>{money(performance.balance)}</h1>
-
-<p>
-
-Status :
-
-<b
-style={{
-color:
-performance.enabled
-?
-"#16a34a"
-:
-"#ef4444"
-}}
->
-
-{performance.enabled
-?
-"Active"
-:
-"Inactive"}
-
-</b>
-
-</p>
-
-{
-!performance.enabled
-&&
-!performance.adminOverride
-&&
-!performance.expired
-&&(
-
-<div style={styles.infoBox}>
-
-<h3>Task Progress</h3>
-
-<p>
-
-Completed :
-
-<b>
-
-{performance.directActiveCount}
-
-</b>
-
-/10
-
-</p>
-
-<p>
-
-Remaining :
-
-<b>
-
-{performance.remaining}
-
-</b>
-
-</p>
-
-<p>
-
-Days Left :
-
-<b>
-
-{performance.daysLeft}
-
-</b>
-
-Days
-
-</p>
-
-</div>
-
-)
-}
-
-{
-performance.expired
-&&
-!performance.enabled
-&&(
-
-<p style={styles.dangerText}>
-
-You did not complete your task.
-
-Please contact your upline.
-
-</p>
-
-)
-}
-
-{
-performance.enabled
-&&(
-
-<>
-
-<p>
-
-This Month Bonus
-
-</p>
-
-<h3>
-
-{money(performance.thisMonthBonus)}
-
-</h3>
-
-<p>
-
-Last Month Bonus
-
-</p>
-
-<h3>
-
-{money(performance.lastMonthBonus)}
-
-</h3>
-
-<select
-
-value={performanceFilter}
-
-onChange={(e)=>
-
-setPerformanceFilter(
-e.target.value
-)
-
-}
-
-style={styles.filterSelect}
-
->
-
-<option value="thisMonth">
-
-This Month
-
-</option>
-
-<option value="lastMonth">
-
-Last Month
-
-</option>
-
-<option value="all">
-
-All
-
-</option>
-
-</select>
-
-<div style={{marginTop:20}}>
-
-<h3>
-
-Performance History
-
-</h3>
-
-{
-
-filteredPerformanceHistory.length===0
-
-?
-
-<p>No History</p>
-
-:
-
-filteredPerformanceHistory.map((item,index)=>(
-
-<div
-key={index}
-style={styles.historyItem}
->
-
-<b>
-
-{item.fromName}
-
-</b>
-
-<p>
-
-Bonus :
-
-{money(item.amount)}
-
-</p>
-
-<p>
-
-Date :
-
-{
-
-new Date(item.date)
-
-.toLocaleDateString("en-IN")
-
-}
-
-</p>
-
-</div>
-
-))
-
-}
-
-</div>
-
-</>
-
-)
-
-}
-
-<button
-
-style={styles.closeBtn}
-
-onClick={()=>setBonusModal(null)}
-
->
-
-Close
-
-</button>
-
-</Modal>
-
-)}
-
+      {/* --- Performance Modal --- */}
+      {bonusModal === "performance" && (
+        <Modal onClose={() => setBonusModal(null)}>
+          <h2>📈 Performance Bonus</h2>
+          <h1>{money(performance.balance)}</h1>
+          <p>
+            Status : <b style={{ color: performance.enabled ? "#16a34a" : "#ef4444" }}>{performance.enabled ? "Active" : "Inactive"}</b>
+          </p>
+
+          {!performance.enabled && !performance.adminOverride && !performance.expired && (
+            <div style={styles.infoBox}>
+              <h3>Task Progress</h3>
+              <p>Completed : <b>{performance.directActiveCount}</b> /10</p>
+              <p>Remaining : <b>{performance.remaining}</b></p>
+              <p>Days Left : <b>{performance.daysLeft}</b> Days</p>
+            </div>
+          )}
+
+          {performance.expired && !performance.enabled && (
+            <p style={styles.dangerText}>You did not complete your task. Please contact your upline.</p>
+          )}
+
+          {performance.enabled && (
+            <>
+              <p>This Month Bonus</p>
+              <h3>{money(performance.thisMonthBonus)}</h3>
+              <p>Last Month Bonus</p>
+              <h3>{money(performance.lastMonthBonus)}</h3>
+
+              <select
+                value={performanceFilter}
+                onChange={(e) => setPerformanceFilter(e.target.value)}
+                style={styles.filterSelect}
+              >
+                <option value="thisMonth">This Month</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="all">All</option>
+              </select>
+
+              <div style={{ marginTop: 20 }}>
+                <h3>Performance History</h3>
+                {filteredPerformanceHistory.length === 0 ? (
+                  <p>No History</p>
+                ) : (
+                  filteredPerformanceHistory.map((item, index) => (
+                    <div key={index} style={styles.historyItem}>
+                      <b>{item.fromName}</b>
+                      <p>Bonus : {money(item.amount)}</p>
+                      <p>Date : {new Date(item.date).toLocaleDateString("en-IN")}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
+        </Modal>
+      )}
+
+      {/* --- Team Modal --- */}
       {bonusModal === "team" && (
-
-<Modal onClose={() => setBonusModal(null)}>
-
-<h2>👥 Team Bonus</h2>
-
-<h1>{money(team.balance || 0)}</h1>
-
-<p>
-
-Status :
-
-<b
-style={{
-color:
-team.enabled
-? "#16a34a"
-: "#ef4444"
-}}
->
-
-{team.enabled
-? "Active"
-: "Inactive"}
-
-</b>
-
-</p>
-
-<hr/>
-
-<h3>Today's Report</h3>
-
-<p>
-
-Today's Income :
-
-<b>
-
-{money(team.todayBonus)}
-
-</b>
-
-</p>
-
-<p>
-
-Today's New Joining :
-
-<b>
-
-{team.todayJoin || 0}
-
-</b>
-
-</p>
-
-<div style={styles.levelGrid}>
-
-<div>
-
-<b>L1</b>
-
-<br/>
-
-Join :
-
-{team.todayJoinCount?.[1] || 0}
-
-</div>
-
-<div>
-
-<b>L2</b>
-
-<br/>
-
-Join :
-
-{team.todayJoinCount?.[2] || 0}
-
-</div>
-
-<div>
-
-<b>L3</b>
-
-<br/>
-
-Join :
-
-{team.todayJoinCount?.[3] || 0}
-
-</div>
-
-<div>
-
-<b>L4</b>
-
-<br/>
-
-Join :
-
-{team.todayJoinCount?.[4] || 0}
-
-</div>
-
-<div>
-
-<b>L5</b>
-
-<br/>
-
-Join :
-
-{team.todayJoinCount?.[5] || 0}
-
-</div>
-
-</div>
-
-<hr/>
-
-  <div
-style={{
-marginTop:20,
-marginBottom:20
-}}
->
-
-<select
-
-value={teamMonthFilter}
-
-onChange={e=>
-setTeamMonthFilter(
-e.target.value
-)
-}
-
-style={styles.filterSelect}
-
->
-
-<option value="thisMonth">
-This Month
-</option>
-
-<option value="lastMonth">
-Last Month
-</option>
-
-<option value="0">January</option>
-
-<option value="1">February</option>
-
-<option value="2">March</option>
-
-<option value="3">April</option>
-
-<option value="4">May</option>
-
-<option value="5">June</option>
-
-<option value="6">July</option>
-
-<option value="7">August</option>
-
-<option value="8">September</option>
-
-<option value="9">October</option>
-
-<option value="10">November</option>
-
-<option value="11">December</option>
-
-</select>
-
-</div>
-
-<h3>Income Summary</h3>
-
-<p>
-
-This Month :
-
-<b>
-
-{money(team.thisMonthBonus)}
-
-</b>
-
-</p>
-
-<p>
-
-Last Month :
-
-<b>
-
-{money(team.lastMonthBonus)}
-
-</b>
-
-</p>
-
-<hr/>
-
-<h3>Level Income</h3>
-
-<div style={styles.levelGrid}>
-
-<div>
-
-Level 1
-
-<br/>
-
-{money(team.level1Income)}
-
-</div>
-
-<div>
-
-Level 2
-
-<br/>
-
-{money(team.level2Income)}
-
-</div>
-
-<div>
-
-Level 3
-
-<br/>
-
-{money(team.level3Income)}
-
-</div>
-
-<div>
-
-Level 4
-
-<br/>
-
-{money(team.level4Income)}
-
-</div>
-
-<div>
-
-Level 5
-
-<br/>
-
-{money(team.level5Income)}
-
-</div>
-
-</div>
-
-<hr/>
-
-<h3>Team Bonus History</h3>
-
-<div
-style={{
-maxHeight:350,
-overflowY:"auto"
-}}
->
-
-{
-
-getTeamHistory().length === 0
-
-?
-
-<p>No Team Bonus History</p>
-
-:
-
-getTeamHistory().map((item,index)=>(
-
-<div
-
-key={index}
-
-style={{
-
-padding:12,
-
-marginBottom:12,
-
-background:"#f8fafc",
-
-borderRadius:12
-
-}}
-
->
-
-<p>
-
-<b>
-
-User :
-
-</b>
-
-{item.fromName}
-
-</p>
-
-  <p>
-<b>Upline :</b>
-{item.uplineName || "-"}
-</p>
-
-<p>
-
-<b>
-
-Level :
-
-</b>
-
-{item.level}
-
-</p>
-
-<p>
-<b>Bonus :</b>
-
-Level {item.level}
-
-→ {money(item.amount)}
-
-</p>
-
-<p>
-
-<b>
-
-You Earned :
-
-</b>
-
-{money(item.amount)}
-
-</p>
-
-<p>
-
-<b>
-
-Date :
-
-</b>
-
-{
-
-new Date(item.date)
-
-.toLocaleDateString("en-IN")
-
-}
-
-</p>
-
-</div>
-
-))
-
-}
-
-</div>
-
-<button
-
-style={styles.closeBtn}
-
-onClick={()=>
-
-setBonusModal(null)
-
-}
-
->
-
-Close
-
-</button>
-
-</Modal>
-
-)}
-
+        <Modal onClose={() => setBonusModal(null)}>
+          <h2>👥 Team Bonus</h2>
+          <h1>{money(team.balance || 0)}</h1>
+          <p>
+            Status : <b style={{ color: team.enabled ? "#16a34a" : "#ef4444" }}>{team.enabled ? "Active" : "Inactive"}</b>
+          </p>
+          <hr />
+          <h3>Today's Report</h3>
+          <p>Today's Income : <b>{money(team.todayBonus)}</b></p>
+          <p>Today's New Joining : <b>{team.todayJoin || 0}</b></p>
+
+          <div style={styles.levelGrid}>
+            <div><b>L1</b><br />Join : {team.todayJoinCount?.[1] || 0}</div>
+            <div><b>L2</b><br />Join : {team.todayJoinCount?.[2] || 0}</div>
+            <div><b>L3</b><br />Join : {team.todayJoinCount?.[3] || 0}</div>
+            <div><b>L4</b><br />Join : {team.todayJoinCount?.[4] || 0}</div>
+            <div><b>L5</b><br />Join : {team.todayJoinCount?.[5] || 0}</div>
+          </div>
+          <hr />
+
+          <div style={{ marginTop: 20, marginBottom: 20 }}>
+            <select
+              value={teamMonthFilter}
+              onChange={(e) => setTeamMonthFilter(e.target.value)}
+              style={styles.filterSelect}
+            >
+              <option value="thisMonth">This Month</option>
+              <option value="lastMonth">Last Month</option>
+              <option value="0">January</option>
+              <option value="1">February</option>
+              <option value="2">March</option>
+              <option value="3">April</option>
+              <option value="4">May</option>
+              <option value="5">June</option>
+              <option value="6">July</option>
+              <option value="7">August</option>
+              <option value="8">September</option>
+              <option value="9">October</option>
+              <option value="10">November</option>
+              <option value="11">December</option>
+            </select>
+          </div>
+
+          <h3>Income Summary</h3>
+          <p>This Month : <b>{money(team.thisMonthBonus)}</b></p>
+          <p>Last Month : <b>{money(team.lastMonthBonus)}</b></p>
+          <hr />
+
+          <h3>Level Income</h3>
+          <div style={styles.levelGrid}>
+            <div>Level 1<br />{money(team.level1Income)}</div>
+            <div>Level 2<br />{money(team.level2Income)}</div>
+            <div>Level 3<br />{money(team.level3Income)}</div>
+            <div>Level 4<br />{money(team.level4Income)}</div>
+            <div>Level 5<br />{money(team.level5Income)}</div>
+          </div>
+          <hr />
+
+          <h3>Team Bonus History</h3>
+          <div style={{ maxHeight: 350, overflowY: "auto" }}>
+            {getTeamHistory().length === 0 ? (
+              <p>No Team Bonus History</p>
+            ) : (
+              getTeamHistory().map((item, index) => (
+                <div key={index} style={{ padding: 12, marginBottom: 12, background: "#f8fafc", borderRadius: 12 }}>
+                  <p><b>User :</b> {item.fromName}</p>
+                  <p><b>Upline :</b> {item.uplineName || "-"}</p>
+                  <p><b>Level :</b> {item.level}</p>
+                  <p><b>Bonus :</b> Level {item.level} → {money(item.amount)}</p>
+                  <p><b>You Earned :</b> {money(item.amount)}</p>
+                  <p><b>Date :</b> {new Date(item.date).toLocaleDateString("en-IN")}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
+        </Modal>
+      )}
+
+      {/* --- Royalty Modal --- */}
       {bonusModal === "royalty" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>👑 Royalty Bonus</h2>
           <h1>{money(royalty.balance)}</h1>
-
           <p>Status: <b>{royalty.enabled ? "Active" : "Inactive"}</b></p>
           <p>Direct Refer: <b>{royalty.directCount || 0}</b> / 50</p>
           <p>Remaining: <b>{royalty.remaining || 0}</b></p>
@@ -1256,185 +584,72 @@ Close
         </Modal>
       )}
 
-      
-
-        {bonusModal === "refer" && (
-
-<Modal onClose={() => setBonusModal(null)}>
-
-<h2>🎁 Refer Bonus</h2>
-
-<p style={styles.successText}>
-Congratulations! Every direct user's first investment gives you Refer Bonus.
-</p>
-
-<h1>{money(referBonus.balance || 0)}</h1>
-
-<p>
-Today's Bonus :
-<b> {money(referBonus.todayBonus || 0)}</b>
-</p>
-
-<p>
-This Month Bonus :
-<b> {money(referBonus.thisMonthBonus || 0)}</b>
-</p>
-
-<p>
-Last Month Bonus :
-<b> {money(referBonus.lastMonthBonus || 0)}</b>
-</p>
-
-<p>
-Total Refer Bonus :
-<b> {money(referBonus.totalBonus || 0)}</b>
-</p>
-
-<p>
-Eligible Refers :
-<b> {referBonus.count || 0}</b>
-</p>
-
-<div style={styles.levelGrid}>
-
-<div>
-
-Total Direct Refers
-
-<br/>
-
-<b>{history.length}</b>
-
-</div>
-
-<div>
-
-Active Refers
-
-<br/>
-
-<b>
-{history.filter(x=>x.status==="Active").length}
-</b>
-
-</div>
-
-<div>
-
-Inactive Refers
-
-<br/>
-
-<b>
-{history.filter(x=>x.status==="Inactive").length}
-</b>
-
-</div>
-
-</div>
-
-<div style={{marginTop:20}}>
-
-<select
-style={styles.filterSelect}
-value={referBonus.selectedMonth || "thisMonth"}
-onChange={(e)=>{
-
-const value = e.target.value;
-
-if(value==="thisMonth"){
-
-setSelectedMonth("");
-
-loadReferData(
-"",
-selectedYear
-);
-
-return;
-
-}
-
-if(value==="lastMonth"){
-
-const d=new Date();
-
-d.setMonth(d.getMonth()-1);
-
-loadReferData(
-d.getMonth()+1,
-d.getFullYear()
-);
-
-return;
-
-}
-
-setSelectedMonth(value);
-
-loadReferData(
-Number(value),
-selectedYear
-);
-
-}}
->
-
-<option value="thisMonth">
-
-This Month
-
-</option>
-
-<option value="lastMonth">
-
-Last Month
-
-</option>
-
-<option value="1">January</option>
-<option value="2">February</option>
-<option value="3">March</option>
-<option value="4">April</option>
-<option value="5">May</option>
-<option value="6">June</option>
-<option value="7">July</option>
-<option value="8">August</option>
-<option value="9">September</option>
-<option value="10">October</option>
-<option value="11">November</option>
-<option value="12">December</option>
-
-</select>
-
-</div>
-
-<BonusHistory
-
-type="Referral Bonus"
-
-data={referBonus.history||[]}
-
-/>
-
-<button
-
-style={styles.closeBtn}
-
-onClick={()=>setBonusModal(null)}
-
->
-
-Close
-
-</button>
-
-</Modal>
-
-)}
-
-
-}
+      {/* --- Refer Modal (ফিল্টার ফিক্স সহ) --- */}
+      {bonusModal === "refer" && (
+        <Modal onClose={() => setBonusModal(null)}>
+          <h2>🎁 Refer Bonus</h2>
+          <p style={styles.successText}>Congratulations! Every direct user's first investment gives you Refer Bonus.</p>
+          <h1>{money(referBonus.balance || 0)}</h1>
+
+          <p>Today's Bonus : <b> {money(referBonus.todayBonus || 0)}</b></p>
+          <p>This Month Bonus : <b> {money(referBonus.thisMonthBonus || 0)}</b></p>
+          <p>Last Month Bonus : <b> {money(referBonus.lastMonthBonus || 0)}</b></p>
+          <p>Total Refer Bonus : <b> {money(referBonus.totalBonus || 0)}</b></p>
+          <p>Eligible Refers : <b> {referBonus.count || 0}</b></p>
+
+          <div style={styles.levelGrid}>
+            <div>Total Direct Refers<br /><b>{history.length}</b></div>
+            <div>Active Refers<br /><b>{history.filter((x) => x.status === "Active").length}</b></div>
+            <div>Inactive Refers<br /><b>{history.filter((x) => x.status === "Inactive").length}</b></div>
+          </div>
+
+          <div style={{ marginTop: 20 }}>
+            {/* ফিল্টার হ্যান্ডেলার যা পেজ রিলোড না করে ড্রপডাউন ভ্যালু ধরে রাখবে */}
+            <select
+              style={styles.filterSelect}
+              value={selectedMonth}
+              onChange={(e) => {
+                const value = e.target.value;
+                let targetMonth = "";
+                let targetYear = new Date().getFullYear();
+
+                if (value === "thisMonth") {
+                  targetMonth = "";
+                } else if (value === "lastMonth") {
+                  const d = new Date();
+                  d.setMonth(d.getMonth() - 1);
+                  targetMonth = String(d.getMonth() + 1);
+                  targetYear = d.getFullYear();
+                } else {
+                  targetMonth = value;
+                }
+
+                setSelectedMonth(value);
+                setSelectedYear(targetYear);
+                loadReferData(targetMonth, targetYear);
+              }}
+            >
+              <option value="thisMonth">This Month</option>
+              <option value="lastMonth">Last Month</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+
+          <BonusHistory type="Referral Bonus" data={referBonus.history || []} />
+          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -1445,7 +660,6 @@ function BonusHistory({ type, data }) {
   return (
     <div style={{ marginTop: 20 }}>
       <h3>Bonus History</h3>
-
       {rows.length === 0 ? (
         <p>No history found</p>
       ) : (
@@ -1453,61 +667,24 @@ function BonusHistory({ type, data }) {
           <table style={styles.table}>
             <thead>
               <tr>
-
-<th>User</th>
-
-<th>Date</th>
-
-<th>Level</th>
-
-<th>Bonus</th>
-
-<th>Type</th>
-
-</tr>
+                <th>User</th>
+                <th>Date</th>
+                <th>Level</th>
+                <th>Bonus</th>
+                <th>Type</th>
+              </tr>
             </thead>
-
             <tbody>
               {rows.map((x, i) => (
                 <tr key={i}>
-
-<td>
-
-<b>{x.fromName}</b>
-
-<br/>
-
-<small>{x.fromEmail}</small>
-
-</td>
-
-<td>
-
-{x.date
-? new Date(x.date).toLocaleDateString("en-IN")
-: "-"}
-
-</td>
-
-<td>
-
-L{x.level||1}
-
-</td>
-
-<td>
-
-₹{Number(x.amount||0).toLocaleString("en-IN")}
-
-</td>
-
-<td>
-
-{x.note||type}
-
-</td>
-
-</tr>
+                  <td>
+                    <b>{x.fromName}</b><br /><small>{x.fromEmail}</small>
+                  </td>
+                  <td>{x.date ? new Date(x.date).toLocaleDateString("en-IN") : "-"}</td>
+                  <td>L{x.level || 1}</td>
+                  <td>₹{Number(x.amount || 0).toLocaleString("en-IN")}</td>
+                  <td>{x.note || type}</td>
+                </tr>
               ))}
             </tbody>
           </table>
@@ -1528,6 +705,47 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
+  // --- নতুন মিডল ওভারলে নোটিফিকেশনের স্টাইলস সমূহ ---
+  statusOverlayBg: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15, 23, 42, 0.4)",
+    backdropFilter: "blur(6px)",
+    zIndex: 100000,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  statusOverlayCard: {
+    background: "#ffffff",
+    padding: "24px 34px",
+    borderRadius: "24px",
+    textAlign: "center",
+    boxShadow: "0 30px 70px rgba(0,0,0,0.25)",
+    maxWidth: "380px",
+    width: "85%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "14px"
+  },
+  statusOverlayIcon: {
+    width: "58px",
+    height: "58px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "28px",
+    fontWeight: "bold"
+  },
+  statusOverlayText: {
+    fontSize: "18px",
+    color: "#0f172a",
+    margin: 0,
+    fontWeight: "800",
+    lineHeight: "1.4"
+  },
   loadingPage: {
     minHeight: "100vh",
     background: "#fff7ff",
@@ -1870,29 +1088,18 @@ const styles = {
     borderRadius: 14,
     lineHeight: 1.6
   },
-  historyItem:{
-
-padding:15,
-
-marginTop:10,
-
-background:"#f8fafc",
-
-borderRadius:12,
-
-border:"1px solid #e5e7eb"
-
-},
-
-dangerText:{
-
-color:"#dc2626",
-
-fontWeight:"bold",
-
-marginTop:20
-
-},
+  historyItem: {
+    padding: 15,
+    marginTop: 10,
+    background: "#f8fafc",
+    borderRadius: 12,
+    border: "1px solid #e5e7eb"
+  },
+  dangerText: {
+    color: "#dc2626",
+    fontWeight: "bold",
+    marginTop: 20
+  },
   successText: {
     color: "#16a34a",
     fontWeight: 900
