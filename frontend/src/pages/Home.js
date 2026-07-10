@@ -1,3 +1,7 @@
+হোম পেজে আসার পর পেজটি ওপরের দিকে উঠে থাকার মূল কারণ হলো রি-অ্যাক্ট রাউটারের ডিফল্ট স্ক্রোল বিহেভিয়ার বা প্রিভিয়াস পেজের স্ক্রোল পজিশন মেমোরিতে থেকে যাওয়া। এটি ফিক্স করতে একটি useEffect ব্যবহার করে পেজ মাউন্ট হওয়ামাত্র স্ক্রোল পজিশন একদম টপে (window.scrollTo(0, 0)) সেট করে দেওয়া হয়েছে।
+একই সাথে আপনার চাহিদা অনুযায়ী স্ক্রিনের মাঝখানে দেখানোর জন্য একটি দৃষ্টিনন্দন ও প্রিমিয়াম **Status Overlay (Info Message Box)** যুক্ত করে দেওয়া হয়েছে।
+নিচে সম্পূর্ণ ফিক্সড কোডটি দেওয়া হলো:
+```jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -15,6 +19,26 @@ export default function Home() {
   const [notificationCount, setNotificationCount] = useState(0);
   const [latestUpdate, setLatestUpdate] = useState("No new announcement");
   const [loading, setLoading] = useState(true);
+
+  // ইনফো/স্ট্যাটাস মেসেজ দেখানোর জন্য স্টেট
+  const [statusOverlay, setStatusOverlay] = useState({
+    show: false,
+    type: "info",
+    message: ""
+  });
+
+  // সুন্দর মেসেজ বক্স ট্রিগার করার হেল্পার ফাংশন
+  const triggerStatusOverlay = (type, message) => {
+    setStatusOverlay({ show: true, type, message });
+    setTimeout(() => {
+      setStatusOverlay({ show: false, type: "info", message: "" });
+    }, 2500);
+  };
+
+  // ১. হোম পেজে আসলে পেজ যেন ওপরে উঠে না থাকে (Scroll Fix)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
 
   useEffect(() => {
     loadHome();
@@ -117,6 +141,25 @@ export default function Home() {
 
   return (
     <div style={styles.page}>
+
+      {/* সুন্দর সুন্দর প্রফেশনাল ইনফো মেসেজ ওভারলে UI */}
+      {statusOverlay.show && (
+        <div style={styles.statusOverlayBg}>
+          <div style={{
+            ...styles.statusOverlayCard,
+            borderTop: statusOverlay.type === "success" ? "6px solid #22c55e" : statusOverlay.type === "error" ? "6px solid #ef4444" : "6px solid #38bdf8"
+          }}>
+            <div style={{
+              ...styles.statusOverlayIcon,
+              background: statusOverlay.type === "success" ? "#dcfce7" : statusOverlay.type === "error" ? "#fee2e2" : "#e0f2fe",
+              color: statusOverlay.type === "success" ? "#22c55e" : statusOverlay.type === "error" ? "#ef4444" : "#38bdf8"
+            }}>
+              {statusOverlay.type === "success" ? "✓" : statusOverlay.type === "error" ? "✕" : "ℹ"}
+            </div>
+            <h3 style={styles.statusOverlayText}>{statusOverlay.message}</h3>
+          </div>
+        </div>
+      )}
 
       {/* TOP HEADER */}
       <div style={styles.topHeader}>
@@ -639,6 +682,49 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
+  // নতুন স্ট্যাটাস ওভারলে UI এর স্টাইলস
+  statusOverlayBg: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(2, 6, 23, 0.65)",
+    backdropFilter: "blur(8px)",
+    zIndex: 100000,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  statusOverlayCard: {
+    background: "#0f172a",
+    padding: "24px 34px",
+    borderRadius: "24px",
+    textAlign: "center",
+    boxShadow: "0 30px 70px rgba(0,0,0,0.5)",
+    border: "1px solid #1e293b",
+    maxWidth: "380px",
+    width: "85%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "14px"
+  },
+  statusOverlayIcon: {
+    width: "58px",
+    height: "58px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "28px",
+    fontWeight: "bold"
+  },
+  statusOverlayText: {
+    fontSize: "18px",
+    color: "#ffffff",
+    margin: 0,
+    fontWeight: "800",
+    lineHeight: "1.4"
+  },
+
   page: {
     minHeight: "100vh",
     background:
@@ -1155,44 +1241,6 @@ const styles = {
     cursor: "pointer"
   },
 
-  quickBar: {
-    position: "fixed",
-    bottom: "64px",
-    left: "8px",
-    right: "8px",
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "8px",
-    zIndex: 999
-  },
-
-  quickContact: {
-    background: "#22c55e",
-    color: "white",
-    border: "none",
-    borderRadius: "12px",
-    padding: "12px 4px",
-    fontWeight: "900"
-  },
-
-  quickWallet: {
-    background: "#2563eb",
-    color: "white",
-    border: "none",
-    borderRadius: "12px",
-    padding: "12px 4px",
-    fontWeight: "900"
-  },
-
-  quickTeam: {
-    background: "#facc15",
-    color: "#020617",
-    border: "none",
-    borderRadius: "12px",
-    padding: "12px 4px",
-    fontWeight: "900"
-  },
-
   bottomNav: {
     position: "fixed",
     bottom: 0,
@@ -1231,3 +1279,5 @@ const styles = {
     marginTop: "3px"
   }
 };
+
+```
