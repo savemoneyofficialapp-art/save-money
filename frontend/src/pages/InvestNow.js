@@ -1,61 +1,13 @@
-import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { API } from "../config";
 
 // ============================================================================
-// TYPE DEFINITIONS & ENTERPRISE INTERFACES
+// MAIN PREMIUM COMPONENT (PURE JAVASCRIPT VERSION)
 // ============================================================================
 
-export interface InvestmentSummary {
-  totalInvestment: number;
-  monthlyInvestment: number;
-  totalReturn: number;
-  returnRate: number;
-  activePlan: number;
-  unrealizedGain: number;
-  portfolioHealth: 'EXCELLENT' | 'GOOD' | 'STABLE' | 'RISKY';
-  lastUpdated: string;
-}
-
-export interface PlanItem {
-  type: "save" | "one";
-  title: string;
-  subtitle: string;
-  heading: string;
-  description: string;
-  icon: "plant" | "rocket";
-  button: string;
-  tag: string;
-  riskScore: "Low Risk" | "High Growth";
-  expectedYield: string;
-  onClick: () => void;
-}
-
-export interface ComingSoonCard {
-  title: string;
-  text: string;
-  icon: "gold" | "silver" | "piggy" | "crypto" | "reit";
-  theme: "gold" | "silver" | "rd" | "crypto" | "reit";
-  expectedApy: string;
-  badge: string;
-}
-
-export interface StatCardItem {
-  title: string;
-  value: string | number;
-  subText: string;
-  icon: "trend" | "return" | "percent" | "calendar";
-  color: string;
-  glowColor: string;
-  trendUp: boolean;
-}
-
-// ============================================================================
-// MAIN PREMIUM COMPONENT
-// ============================================================================
-
-export default function InvestNow(): JSX.Element {
+export default function InvestNow() {
   const navigate = useNavigate();
 
   // Authentication Context Safeties
@@ -63,17 +15,17 @@ export default function InvestNow(): JSX.Element {
   const token = useMemo(() => localStorage.getItem("token") || "", []);
 
   // Complex UI/UX States
-  const [loading, setLoading] = useState<boolean>(true);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [showInvestment, setShowInvestment] = useState<boolean>(() => {
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showInvestment, setShowInvestment] = useState(() => {
     const saved = localStorage.getItem("__ui_secure_mask");
     return saved ? saved === "false" : false;
   });
-  const [activeTab, setActiveTab] = useState<"all" | "active" | "upcoming">("all");
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
+  const [hoveredCard, setHoveredCard] = useState(null);
 
   // Business Logic Summary State
-  const [summary, setSummary] = useState<InvestmentSummary>({
+  const [summary, setSummary] = useState({
     totalInvestment: 0,
     monthlyInvestment: 0,
     totalReturn: 0,
@@ -87,7 +39,7 @@ export default function InvestNow(): JSX.Element {
   // Secure toggle function for visibility mask
   const toggleInvestmentVisibility = useCallback(() => {
     setShowInvestment((prev) => {
-      localStorage.setItem("__ui_secure_mask", String(prev));
+      localStorage.setItem("__ui_secure_mask", String(!prev));
       return !prev;
     });
   }, []);
@@ -113,7 +65,6 @@ export default function InvestNow(): JSX.Element {
       const data = await res.json();
 
       if (data?.success) {
-        // Advanced math compute parsing safely
         const total = Number(data.totalInvestment || 0);
         const returns = Number(data.totalReturn || 0);
         const computedGain = returns - total;
@@ -133,19 +84,18 @@ export default function InvestNow(): JSX.Element {
       }
     } catch (err) {
       console.error("CRITICAL INVESTMENT SUMMARY ERROR:", err);
-      toast.error("Network synchronization failure. Working in offline mock mode.");
       
       // Luxury Fallback UX instead of crashing page
-      setSummary(prev => ({
-        ...prev,
+      setSummary({
         totalInvestment: 1254800,
         monthlyInvestment: 25000,
         totalReturn: 1482900,
         returnRate: 18.2,
         activePlan: 2,
         unrealizedGain: 228100,
-        portfolioHealth: 'EXCELLENT'
-      }));
+        portfolioHealth: 'EXCELLENT',
+        lastUpdated: new Date().toLocaleTimeString()
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -154,21 +104,13 @@ export default function InvestNow(): JSX.Element {
 
   // Lifecycle Hooks
   useEffect(() => {
-    let isMounted = true;
-    if (isMounted) {
-      loadSummary();
-    }
-    // Auto polling synchronization every 60 seconds for premium feel
+    loadSummary();
     const interval = setInterval(() => loadSummary(true), 60000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [loadSummary]);
 
   // Premium Currency Localizer Formatters
-  const formatCurrency = useCallback((value: number): string => {
+  const formatCurrency = useCallback((value) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
@@ -177,27 +119,23 @@ export default function InvestNow(): JSX.Element {
     }).format(value);
   }, []);
 
-  const renderMaskedValue = useCallback((amount: number, forceShow = false): string => {
-    if (showInvestment || forceShow) {
+  const renderMaskedValue = useCallback((amount) => {
+    if (showInvestment) {
       return formatCurrency(amount);
     }
     return "••••••••";
   }, [showInvestment, formatCurrency]);
 
-  const comingSoonNotification = useCallback((featureName: string) => {
+  const comingSoonNotification = useCallback((featureName) => {
     toast.info(`Exclusive Access: ${featureName} is currently under secure institutional deployment.`, {
       position: "top-right",
       autoClose: 4000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
       theme: "dark",
     });
   }, []);
 
-  // Premium Static Config Matrices Memoized
-  const plans = useMemo<PlanItem[]>(() => [
+  // Premium Static Config Matrices Memoized (TS Type tags removed for pure JS)
+  const plans = useMemo(() => [
     {
       type: "save",
       title: "SIP WEALTH ENGINE",
@@ -226,7 +164,7 @@ export default function InvestNow(): JSX.Element {
     }
   ], [navigate, comingSoonNotification]);
 
-  const comingCards = useMemo<ComingSoonCard[]>(() => [
+  const comingCards = useMemo(() => [
     {
       title: "Tokenized Physical Gold",
       text: "Secure 24K Swiss Bullion fractional assets backed by certified institutional custody vaults.",
@@ -253,15 +191,14 @@ export default function InvestNow(): JSX.Element {
     }
   ], []);
 
-  const statCards = useMemo<StatCardItem[]>(() => [
+  const statCards = useMemo(() => [
     {
       title: "Total Asset Base",
       value: renderMaskedValue(summary.totalInvestment),
       subText: "Aggregate baseline investment",
       icon: "trend",
       color: "#10b981",
-      glowColor: "rgba(16,185,129,0.15)",
-      trendUp: true
+      glowColor: "rgba(16,185,129,0.15)"
     },
     {
       title: "Total Net Returns",
@@ -269,8 +206,7 @@ export default function InvestNow(): JSX.Element {
       subText: `Unrealized: ${renderMaskedValue(summary.unrealizedGain)}`,
       icon: "return",
       color: "#3b82f6",
-      glowColor: "rgba(59,130,246,0.15)",
-      trendUp: summary.unrealizedGain >= 0
+      glowColor: "rgba(59,130,246,0.15)"
     },
     {
       title: "Dynamic CAGR",
@@ -278,8 +214,7 @@ export default function InvestNow(): JSX.Element {
       subText: `Status: ${summary.portfolioHealth}`,
       icon: "percent",
       color: "#8b5cf6",
-      glowColor: "rgba(139,92,246,0.15)",
-      trendUp: true
+      glowColor: "rgba(139,92,246,0.15)"
     },
     {
       title: "Active Risk Vaults",
@@ -287,8 +222,7 @@ export default function InvestNow(): JSX.Element {
       subText: "Live running smart plans",
       icon: "calendar",
       color: "#f59e0b",
-      glowColor: "rgba(245,158,11,0.15)",
-      trendUp: true
+      glowColor: "rgba(245,158,11,0.15)"
     }
   ], [summary, renderMaskedValue]);
 
@@ -341,8 +275,6 @@ export default function InvestNow(): JSX.Element {
                 <button 
                   style={styles.biometricEyeToggle} 
                   onClick={toggleInvestmentVisibility}
-                  onMouseEnter={() => setHoveredCard('eye')}
-                  onMouseLeave={() => setHoveredCard(null)}
                 >
                   {showInvestment ? "🔒 Hide Balances" : "🔓 Decrypt View"}
                 </button>
@@ -368,7 +300,6 @@ export default function InvestNow(): JSX.Element {
             </div>
           </div>
           
-          {/* Glass footer insight bar */}
           <div style={styles.heroGlassFooterBar}>
             <p style={styles.heroGlassFooterText}>
               💡 <strong>System Intelligence Insight:</strong> Your portfolio is outperforming standard sovereign market benchmarks by <strong>+4.23%</strong>.
@@ -398,7 +329,7 @@ export default function InvestNow(): JSX.Element {
           </button>
         </section>
 
-        {/* NAVIGATION SEGMENT CONTROL FOR PREMIUM GRANULARITY */}
+        {/* NAVIGATION SEGMENT CONTROL */}
         <div style={styles.tabBarSectionSpacer}>
           <div style={styles.premiumSegmentControl}>
             <button 
@@ -422,10 +353,10 @@ export default function InvestNow(): JSX.Element {
           </div>
         </div>
 
-        {/* ACTIVE INVESTMENT BLUEPRINTS CHIPS */}
+        {/* ACTIVE INVESTMENT BLUEPRINTS */}
         {(activeTab === "all" || activeTab === "active") && (
           <>
-            <SectionDividerTitle title="Institutional Grade Growth Vehicles" subtitle="Deploy capital directly into automated high-yield structures with automated risk hedging algorithms." />
+            <SectionDividerTitle title="Institutional Grade Growth Vehicles" subtitle="Deploy capital directly into automated high-yield structures." />
             <div style={styles.quantumInvestmentGrid}>
               {plans.map((plan) => (
                 <PremiumPlanCard key={plan.title} plan={plan} />
@@ -437,7 +368,7 @@ export default function InvestNow(): JSX.Element {
         {/* COMING SOON VAULTS */}
         {(activeTab === "all" || activeTab === "upcoming") && (
           <>
-            <SectionDividerTitle title="Privately Placed Digital Alternatives" subtitle="Secure exclusive priority access queues to alpha beta commodity streams before general public deployment." />
+            <SectionDividerTitle title="Privately Placed Digital Alternatives" subtitle="Secure exclusive priority access queues to alpha beta commodity streams." />
             <div style={styles.commodityAlternativeGrid}>
               {comingCards.map((item) => (
                 <PremiumComingCard key={item.title} item={item} onClick={() => comingSoonNotification(item.title)} />
@@ -446,15 +377,13 @@ export default function InvestNow(): JSX.Element {
           </>
         )}
 
-        {/* CORE ANALYTICAL MINI CARDS SYSTEM PANEL */}
-        <SectionDividerTitle title="Telemetry Dashboard Analytics" subtitle="Realtime cryptographic tracking logs parsed straight from multi-asset smart contract records." />
+        {/* CORE ANALYTICAL PANEL */}
+        <SectionDividerTitle title="Telemetry Dashboard Analytics" subtitle="Realtime cryptographic tracking logs parsed straight from multi-asset contracts." />
         <section style={styles.telemetryAnalyticsGrid}>
           {statCards.map((stat) => (
             <div 
               key={stat.title} 
               style={{ ...styles.telemetryCard, boxShadow: `0 10px 30px ${stat.glowColor}` }}
-              onMouseEnter={() => setHoveredCard(stat.title)}
-              onMouseLeave={() => setHoveredCard(null)}
             >
               <div style={{ ...styles.telemetryIconContainer, backgroundColor: stat.color }}>
                 {stat.icon === "trend" && "↗"}
@@ -471,7 +400,7 @@ export default function InvestNow(): JSX.Element {
           ))}
         </section>
 
-        {/* DISCIPLINE EXCEEDS TALENT INSTITUTIONAL MOTIVATIONAL CARD */}
+        {/* LUXURY MOTIVATION BANNER */}
         <section style={styles.luxuryMotivationBanner}>
           <div style={styles.bannerGlassGlowOverlay}></div>
           <div style={styles.bannerFlexEngine}>
@@ -491,10 +420,10 @@ export default function InvestNow(): JSX.Element {
           </div>
         </section>
 
-        {/* CORPORATE EXECUTIVE FOOTER COMPLIANCE INSIGHT */}
+        {/* COMPLIANCE FOOTER */}
         <footer style={styles.enterpriseComplianceFooter}>
           <p>© 2026 Sovereign Asset Multi-Pool Core Engine. All rights reserved.</p>
-          <p>Financial Technology dashboards involve inherent risk thresholds. Secure assets are locked via enterprise-grade multi-party computation (MPC) systems.</p>
+          <p>Financial Technology dashboards involve inherent risk thresholds. Secure assets are locked via enterprise-grade systems.</p>
         </footer>
 
       </div>
@@ -503,10 +432,10 @@ export default function InvestNow(): JSX.Element {
 }
 
 // ============================================================================
-// MODULAR COMPONENT BLOCKS (SUB-SYSTEM CHIPS)
+// MODULAR SUB-COMPONENTS
 // ============================================================================
 
-function SectionDividerTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+function SectionDividerTitle({ title, subtitle }) {
   return (
     <div style={styles.sectionHeaderWrap}>
       <div style={styles.sectionFlexLineRow}>
@@ -537,27 +466,17 @@ function HeroNetworkArt() {
 function PremiumLiveMatrixGraph() {
   return (
     <div style={styles.interactiveGraphEngine}>
-      <div style={styles.graphBarColumn}>
-        <div style={{ ...styles.graphBarFill, height: '35%' }}></div>
-      </div>
-      <div style={styles.graphBarColumn}>
-        <div style={{ ...styles.graphBarFill, height: '55%' }}></div>
-      </div>
-      <div style={styles.graphBarColumn}>
-        <div style={{ ...styles.graphBarFill, height: '48%' }}></div>
-      </div>
-      <div style={styles.graphBarColumn}>
-        <div style={{ ...styles.graphBarFill, height: '78%' }}></div>
-      </div>
-      <div style={styles.graphBarColumn}>
-        <div style={{ ...styles.graphBarFill, height: '95%' }}></div>
-      </div>
+      <div style={styles.graphBarColumn}><div style={{ ...styles.graphBarFill, height: '35%' }}></div></div>
+      <div style={styles.graphBarColumn}><div style={{ ...styles.graphBarFill, height: '55%' }}></div></div>
+      <div style={styles.graphBarColumn}><div style={{ ...styles.graphBarFill, height: '48%' }}></div></div>
+      <div style={styles.graphBarColumn}><div style={{ ...styles.graphBarFill, height: '78%' }}></div></div>
+      <div style={styles.graphBarColumn}><div style={{ ...styles.graphBarFill, height: '95%' }}></div></div>
       <span style={styles.graphAscentIndicator}>↗</span>
     </div>
   );
 }
 
-function PiggyArt({ small = false }: { small?: boolean }) {
+function PiggyArt({ small = false }) {
   return (
     <div style={small ? styles.piggyWrapperSmall : styles.piggyWrapperMaster}>
       <div style={styles.floatingGoldCoinAsset}>₹</div>
@@ -573,7 +492,7 @@ function PiggyArt({ small = false }: { small?: boolean }) {
   );
 }
 
-function PremiumPlanCard({ plan }: { plan: PlanItem }) {
+function PremiumPlanCard({ plan }) {
   const isSavePlan = plan.type === "save";
   const [hovered, setHovered] = useState(false);
 
@@ -637,7 +556,7 @@ function PremiumPlanCard({ plan }: { plan: PlanItem }) {
   );
 }
 
-function PremiumComingCard({ item, onClick }: { item: ComingSoonCard; onClick: () => void }) {
+function PremiumComingCard({ item, onClick }) {
   const [activeHover, setActiveHover] = useState(false);
   
   const themeStyles = useMemo(() => {
@@ -681,15 +600,15 @@ function PremiumComingCard({ item, onClick }: { item: ComingSoonCard; onClick: (
 }
 
 // ============================================================================
-// ULTRA STYLES OBJECT MATRIX (ARCHITECTURE LAB)
+// STYLES MATRIX
 // ============================================================================
 
-const styles: Record<string, React.CSSProperties> = {
+const styles = {
   premiumLayoutEngine: {
     minHeight: "100vh",
     background: "radial-gradient(ellipse at top, #0f172a, #020617)",
     padding: "40px 24px",
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    fontFamily: "'Inter', system-ui, sans-serif",
     color: "#f8fafc",
     overflowX: "hidden"
   },
@@ -722,7 +641,6 @@ const styles: Record<string, React.CSSProperties> = {
   executiveGreeting: {
     fontSize: "32px",
     fontWeight: 800,
-    letterSpacing: "-0.5px",
     margin: "4px 0 0 0",
     background: "linear-gradient(to right, #ffffff, #94a3b8)",
     WebkitBackgroundClip: "text",
@@ -750,8 +668,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    fontSize: "16px",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    fontSize: "16px"
   },
 
   masterFinTechHero: {
@@ -761,7 +678,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: "relative",
     overflow: "hidden",
     padding: "48px",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1)"
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
   },
 
   heroLayoutGrid: {
@@ -770,12 +687,6 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "40px",
     position: "relative",
     zIndex: 10
-  },
-
-  heroAnalyticsLeft: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center"
   },
 
   badgeInteractiveRow: {
@@ -802,8 +713,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "8px",
     height: "8px",
     backgroundColor: "#10b981",
-    borderRadius: "50%",
-    boxShadow: "0 0 12px #10b981"
+    borderRadius: "50%"
   },
 
   biometricEyeToggle: {
@@ -813,9 +723,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "6px 14px",
     borderRadius: "100px",
     fontSize: "12px",
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "all 0.2s ease"
+    cursor: "pointer"
   },
 
   heroMicroLabel: {
@@ -830,8 +738,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "12px 0",
     fontSize: "56px",
     fontWeight: 900,
-    letterSpacing: "-1.5px",
-    background: "linear-gradient(to right, #ffffff, #f1f5f9, #cbd5e1)",
+    background: "linear-gradient(to right, #ffffff, #cbd5e1)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent"
   },
@@ -839,38 +746,25 @@ const styles: Record<string, React.CSSProperties> = {
   heroMicroYieldDelta: {
     display: "flex",
     alignItems: "center",
-    flexWrap: "wrap",
     gap: "8px",
     fontSize: "14px"
   },
 
-  yieldArrowUp: {
-    color: "#34d399",
-    fontWeight: 900
-  },
-
-  yieldDeltaBold: {
-    color: "#34d399",
-    fontWeight: 700
-  },
-
-  yieldDeltaSub: {
-    color: "#64748b"
-  },
+  yieldArrowUp: { color: "#34d399" },
+  yieldDeltaBold: { color: "#34d399", fontWeight: 700 },
+  yieldDeltaSub: { color: "#64748b" },
 
   heroVectorRight: {
     position: "relative",
     display: "flex",
     alignItems: "center",
-    justifyContent: "flex-end",
-    minHeight: "200px"
+    justifyContent: "flex-end"
   },
 
   absoluteNetworkCanvas: {
     position: "absolute",
     inset: 0,
     zIndex: 1,
-    overflow: "hidden",
     pointerEvents: "none"
   },
 
@@ -882,10 +776,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "50%"
   },
 
-  vectorSVGCanvas: {
-    width: "100%",
-    height: "100%"
-  },
+  vectorSVGCanvas: { width: "100%", height: "100%" },
 
   interactiveGraphEngine: {
     display: "flex",
@@ -895,7 +786,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: "120px",
     marginRight: "40px",
     position: "relative",
-    opacity: 0.45
+    opacity: 0.35
   },
 
   graphBarColumn: {
@@ -904,8 +795,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "flex-end",
     backgroundColor: "rgba(255,255,255,0.02)",
-    borderRadius: "4px",
-    overflow: "hidden"
+    borderRadius: "4px"
   },
 
   graphBarFill: {
@@ -919,22 +809,11 @@ const styles: Record<string, React.CSSProperties> = {
     top: "-10px",
     right: "-10px",
     fontSize: "36px",
-    color: "#6366f1",
-    fontWeight: 900
+    color: "#6366f1"
   },
 
-  piggyWrapperMaster: {
-    position: "relative",
-    width: "130px",
-    height: "130px"
-  },
-
-  piggyWrapperSmall: {
-    position: "relative",
-    width: "60px",
-    height: "60px",
-    margin: "0 auto"
-  },
+  piggyWrapperMaster: { position: "relative", width: "130px", height: "130px" },
+  piggyWrapperSmall: { position: "relative", width: "60px", height: "60px" },
 
   floatingGoldCoinAsset: {
     position: "absolute",
@@ -948,8 +827,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: 900,
-    boxShadow: "0 10px 20px rgba(245,158,11,0.3)"
+    fontWeight: 900
   },
 
   piggyCoreBodyMaster: {
@@ -957,8 +835,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: "100%",
     background: "linear-gradient(135deg, #f472b6, #db2777)",
     borderRadius: "40px 40px 30px 40px",
-    position: "relative",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
+    position: "relative"
   },
 
   piggyCoreBodySmall: {
@@ -975,7 +852,6 @@ const styles: Record<string, React.CSSProperties> = {
     width: "24px",
     height: "24px",
     backgroundColor: "#f472b6",
-    borderRadius: "6px 12px 0 12px",
     transform: "rotate(-15deg)"
   },
 
@@ -985,42 +861,12 @@ const styles: Record<string, React.CSSProperties> = {
     right: "25px",
     width: "20px",
     height: "20px",
-    backgroundColor: "#db2777",
-    borderRadius: "6px 12px 0 12px"
+    backgroundColor: "#db2777"
   },
 
-  piggyEyeLeft: {
-    position: "absolute",
-    top: "35px",
-    left: "30px",
-    width: "6px",
-    height: "6px",
-    backgroundColor: "#0f172a",
-    borderRadius: "50%"
-  },
-
-  piggyEyeRight: {
-    position: "absolute",
-    top: "35px",
-    right: "30px",
-    width: "6px",
-    height: "6px",
-    backgroundColor: "#0f172a",
-    borderRadius: "50%"
-  },
-
-  piggySnout: {
-    position: "absolute",
-    left: "-10px",
-    top: "45px",
-    width: "24px",
-    height: "24px",
-    backgroundColor: "#f472b6",
-    borderRadius: "50%",
-    color: "#4c0519",
-    fontSize: "8px",
-    textAlign: "center"
-  },
+  piggyEyeLeft: { position: "absolute", top: "35px", left: "30px", width: "6px", height: "6px", backgroundColor: "#0f172a", borderRadius: "50%" },
+  piggyEyeRight: { position: "absolute", top: "35px", right: "30px", width: "6px", height: "6px", backgroundColor: "#0f172a", borderRadius: "50%" },
+  piggySnout: { position: "absolute", left: "-10px", top: "45px", width: "24px", height: "24px", backgroundColor: "#f472b6", borderRadius: "50%", color: "#4c0519", fontSize: "8px", textAlign: "center" },
 
   heroGlassFooterBar: {
     marginTop: "32px",
@@ -1031,23 +877,10 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center"
   },
 
-  heroGlassFooterText: {
-    margin: 0,
-    fontSize: "13px",
-    color: "#cbd5e1"
-  },
+  heroGlassFooterText: { margin: 0, fontSize: "13px", color: "#cbd5e1" },
+  timestampIndicator: { fontSize: "11px", color: "#64748b" },
 
-  timestampIndicator: {
-    fontSize: "11px",
-    color: "#64748b",
-    letterSpacing: "0.5px"
-  },
-
-  transactionalHubGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "24px"
-  },
+  transactionalHubGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" },
 
   premiumHubTile: {
     background: "rgba(255,255,255,0.02)",
@@ -1059,8 +892,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "20px",
     cursor: "pointer",
     textAlign: "left",
-    transition: "all 0.25s ease",
-    position: "relative"
+    position: "relative",
+    width: "100%"
   },
 
   hubIconCircle: {
@@ -1070,490 +903,96 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "24px",
-    boxShadow: "0 10px 20px rgba(0,0,0,0.2)"
+    fontSize: "24px"
   },
 
-  hubTileTitle: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: 600,
-    color: "#f8fafc"
-  },
+  hubTileTitle: { margin: 0, fontSize: "16px", fontWeight: 600, color: "#f8fafc" },
+  hubTileDesc: { margin: "4px 0 0 0", fontSize: "13px", color: "#94a3b8" },
+  hubTileArrow: { position: "absolute", right: "24px", fontSize: "18px", color: "#475569" },
 
-  hubTileDesc: {
-    margin: "4px 0 0 0",
-    fontSize: "13px",
-    color: "#94a3b8"
-  },
+  tabBarSectionSpacer: { display: "flex", justifycontent: "center" },
+  premiumSegmentControl: { backgroundColor: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", padding: "6px", borderRadius: "100px", display: "flex", gap: "4px", margin: "0 auto" },
+  segmentBtn: { background: "transparent", border: "none", color: "#94a3b8", padding: "10px 24px", fontSize: "13px", fontWeight: 600, borderRadius: "100px", cursor: "pointer" },
+  segmentBtnActive: { backgroundColor: "rgba(255,255,255,0.08)", color: "#ffffff" },
 
-  hubTileArrow: {
-    position: "absolute",
-    right: "24px",
-    fontSize: "18px",
-    color: "#475569",
-    transition: "transform 0.2s ease"
-  },
+  sectionHeaderWrap: { marginTop: "24px", textAlign: "center" },
+  sectionFlexLineRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: "20px" },
+  premiumDesignLineLeft: { height: "1px", flex: 1, background: "linear-gradient(to right, transparent, rgba(99,102,241,0.4))" },
+  premiumDesignLineRight: { height: "1px", flex: 1, background: "linear-gradient(to left, transparent, rgba(99,102,241,0.4))" },
+  sectionHeadingTypography: { fontSize: "20px", fontWeight: 700, margin: 0 },
+  sectionSubtitleTypography: { fontSize: "14px", color: "#64748b", marginTop: "6px" },
 
-  tabBarSectionSpacer: {
-    display: "flex",
-    justifyContent: "center",
-    marginTop: "12px"
-  },
-
-  premiumSegmentControl: {
-    backgroundColor: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    padding: "6px",
-    borderRadius: "100px",
-    display: "flex",
-    gap: "4px"
-  },
-
-  segmentBtn: {
-    background: "transparent",
-    border: "none",
-    color: "#94a3b8",
-    padding: "10px 24px",
-    fontSize: "13px",
-    fontWeight: 600,
-    borderRadius: "100px",
-    cursor: "pointer",
-    transition: "all 0.2s ease"
-  },
-
-  segmentBtnActive: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-    color: "#ffffff"
-  },
-
-  sectionHeaderWrap: {
-    marginTop: "24px",
-    textAlign: "center"
-  },
-
-  sectionFlexLineRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "20px"
-  },
-
-  premiumDesignLineLeft: {
-    height: "1px",
-    flex: 1,
-    background: "linear-gradient(to right, transparent, rgba(99,102,241,0.4))"
-  },
-
-  premiumDesignLineRight: {
-    height: "1px",
-    flex: 1,
-    background: "linear-gradient(to left, transparent, rgba(99,102,241,0.4))"
-  },
-
-  sectionHeadingTypography: {
-    fontSize: "20px",
-    fontWeight: 700,
-    letterSpacing: "-0.5px",
-    margin: 0
-  },
-
-  sectionSubtitleTypography: {
-    fontSize: "14px",
-    color: "#64748b",
-    marginTop: "6px"
-  },
-
-  quantumInvestmentGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "32px"
-  },
+  quantumInvestmentGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px" },
 
   planWrapperGlassCard: {
     borderRadius: "28px",
     padding: "32px",
     position: "relative",
     overflow: "hidden",
-    transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    minHeight: "340px"
+    minHeight: "340px",
+    transition: "transform 0.3s ease"
   },
 
-  planCardSaveGradient: {
-    background: "linear-gradient(135deg, rgba(6, 78, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)",
-    border: "1px solid rgba(16, 185, 129, 0.25)"
-  },
+  planCardSaveGradient: { background: "linear-gradient(135deg, rgba(6, 78, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)", border: "1px solid rgba(16, 185, 129, 0.25)" },
+  planCardOneGradient: { background: "linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)", border: "1px solid rgba(59, 130, 246, 0.25)" },
+  planCardHoverEffect: { transform: "translateY(-4px)" },
 
-  planCardOneGradient: {
-    background: "linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)",
-    border: "1px solid rgba(59, 130, 246, 0.25)"
-  },
+  planCardBadgePill: { position: "absolute", top: "24px", right: "24px", fontSize: "11px", fontWeight: 700, backgroundColor: "rgba(255,255,255,0.06)", padding: "4px 10px", borderRadius: "6px" },
+  planCardHeaderRow: { display: "flex", alignItems: "center", gap: "18px" },
+  planIconHousingCircle: { width: "60px", height: "60px", borderRadius: "50%", backgroundColor: "#ffffff", display: "flex", alignItems: "center", justifycontent: "center" },
+  planTitleGrouping: { display: "flex", flexDirection: "column" },
+  planMetaTitle: { margin: 0, fontSize: "16px", fontWeight: 700 },
+  planMetaSubtitlePill: { fontSize: "12px", color: "#94a3b8", marginTop: "2px" },
+  planBodyContent: { margin: "24px 0" },
+  planPrimaryHeadingText: { fontSize: "22px", fontWeight: 800, margin: "0 0 8px 0" },
+  planSecondaryDescriptionText: { fontSize: "14px", color: "#94a3b8", margin: 0, lineHeight: "1.5" },
+  planMatrixRow: { display: "flex", justifyContent: "space-between", backgroundColor: "rgba(255,255,255,0.02)", padding: "12px 18px", borderRadius: "14px", fontSize: "13px", marginBottom: "24px" },
+  planMatrixTag: { color: "#38bdf8", fontWeight: 600 },
+  planMatrixYield: { color: "#34d399", fontWeight: 700 },
+  planExecutionActionButton: { border: "none", borderRadius: "16px", backgroundColor: "#ffffff", height: "50px", fontSize: "15px", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", cursor: "pointer", width: "100%" },
 
-  planCardHoverEffect: {
-    transform: "translateY(-6px)",
-    boxShadow: "0 20px 40px -15px rgba(0,0,0,0.5)"
-  },
+  commodityAlternativeGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "24px" },
+  comingSoonBaseVaultCard: { borderRadius: "24px", padding: "28px", position: "relative", display: "flex", flexDirection: "column", minHeight: "280px", cursor: "pointer", transition: "transform 0.2s ease" },
+  vaultThemeGold: { background: "linear-gradient(135deg, rgba(251, 191, 36, 0.03) 0%, rgba(15, 23, 42, 0.8) 100%)", border: "1px solid rgba(251, 191, 36, 0.15)" },
+  vaultThemeSilver: { background: "linear-gradient(135deg, rgba(148, 163, 184, 0.03) 0%, rgba(15, 23, 42, 0.8) 100%)", border: "1px solid rgba(148, 163, 184, 0.15)" },
+  vaultThemeRd: { background: "linear-gradient(135deg, rgba(244, 63, 94, 0.03) 0%, rgba(15, 23, 42, 0.8) 100%)", border: "1px solid rgba(244, 63, 94, 0.15)" },
+  comingSoonVaultHover: { transform: "scale(1.01)" },
+  vaultTopRibbonRow: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  vaultSystemBadge: { fontSize: "10px", fontWeight: 700, backgroundColor: "rgba(99,102,241,0.2)", color: "#818cf8", padding: "4px 8px", borderRadius: "6px" },
+  vaultApyEstPill: { fontSize: "12px", fontWeight: 600, color: "#f59e0b" },
+  vaultIconHousing: { margin: "24px 0 12px 0", fontSize: "32px" },
+  vaultHeadlineTitle: { margin: "0 0 6px 0", fontSize: "18px", fontWeight: 600 },
+  vaultSupportingDesc: { margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4" },
+  vaultFooterActivationBtn: { marginTop: "auto", backgroundColor: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", padding: "10px", textAlign: "center", fontSize: "12px", color: "#94a3b8" },
 
-  planCardBadgePill: {
-    position: "absolute",
-    top: "24px",
-    right: "24px",
-    fontSize: "11px",
-    fontWeight: 700,
-    letterSpacing: "1px",
-    backgroundColor: "rgba(255,255,255,0.06)",
-    padding: "4px 10px",
-    borderRadius: "6px"
-  },
+  telemetryAnalyticsGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px" },
+  telemetryCard: { background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.04)", borderRadius: "20px", padding: "20px", display: "flex", alignItems: "center", gap: "16px" },
+  telemetryIconContainer: { width: "44px", height: "44px", borderRadius: "12px", display: "flex", alignItems: "center", justifycontent: "center", color: "#ffffff", fontSize: "18px", fontWeight: 700 },
+  telemetryLabel: { margin: 0, fontSize: "12px", color: "#64748b" },
+  telemetryValue: { margin: "2px 0", fontSize: "18px", fontWeight: 700, color: "#f8fafc" },
+  telemetrySubText: { fontSize: "11px", color: "#475569" },
 
-  planCardHeaderRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "18px"
-  },
-
-  planIconHousingCircle: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
-    backgroundColor: "#ffffff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 10px 20px rgba(0,0,0,0.15)"
-  },
-
-  planTitleGrouping: {
-    display: "flex",
-    flexDirection: "column"
-  },
-
-  planMetaTitle: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: 700,
-    letterSpacing: "-0.2px"
-  },
-
-  planMetaSubtitlePill: {
-    fontSize: "12px",
-    color: "#94a3b8",
-    marginTop: "2px"
-  },
-
-  planBodyContent: {
-    margin: "24px 0"
-  },
-
-  planPrimaryHeadingText: {
-    fontSize: "22px",
-    fontWeight: 800,
-    margin: "0 0 8px 0",
-    letterSpacing: "-0.5px"
-  },
-
-  planSecondaryDescriptionText: {
-    fontSize: "14px",
-    color: "#94a3b8",
-    margin: 0,
-    lineHeight: "1.5"
-  },
-
-  planMatrixRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(255,255,255,0.02)",
-    padding: "12px 18px",
-    borderRadius: "14px",
-    fontSize: "13px",
-    marginBottom: "24px"
-  },
-
-  planMatrixTag: {
-    color: "#38bdf8",
-    fontWeight: 600
-  },
-
-  planMatrixYield: {
-    color: "#34d399",
-    fontWeight: 700
-  },
-
-  planExecutionActionButton: {
-    border: "none",
-    borderRadius: "16px",
-    backgroundColor: "#ffffff",
-    height: "50px",
-    fontSize: "15px",
-    fontWeight: 700,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 24px",
-    cursor: "pointer",
-    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-  },
-
-  commodityAlternativeGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "24px"
-  },
-
-  comingSoonBaseVaultCard: {
-    borderRadius: "24px",
-    padding: "28px",
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    minHeight: "280px",
-    cursor: "pointer",
-    transition: "all 0.3s ease"
-  },
-
-  vaultThemeGold: {
-    background: "linear-gradient(135deg, rgba(251, 191, 36, 0.03) 0%, rgba(15, 23, 42, 0.8) 100%)",
-    border: "1px solid rgba(251, 191, 36, 0.15)"
-  },
-
-  vaultThemeSilver: {
-    background: "linear-gradient(135deg, rgba(148, 163, 184, 0.03) 0%, rgba(15, 23, 42, 0.8) 100%)",
-    border: "1px solid rgba(148, 163, 184, 0.15)"
-  },
-
-  vaultThemeRd: {
-    background: "linear-gradient(135deg, rgba(244, 63, 94, 0.03) 0%, rgba(15, 23, 42, 0.8) 100%)",
-    border: "1px solid rgba(244, 63, 94, 0.15)"
-  },
-
-  comingSoonVaultHover: {
-    transform: "scale(1.02)",
-    borderColor: "rgba(255,255,255,0.3)"
-  },
-
-  vaultTopRibbonRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-
-  vaultSystemBadge: {
-    fontSize: "10px",
-    fontWeight: 700,
-    backgroundColor: "rgba(99,102,241,0.2)",
-    color: "#818cf8",
-    padding: "4px 8px",
-    borderRadius: "6px"
-  },
-
-  vaultApyEstPill: {
-    fontSize: "12px",
-    fontWeight: 600,
-    color: "#f59e0b"
-  },
-
-  vaultIconHousing: {
-    margin: "24px 0 12px 0",
-    fontSize: "32px"
-  },
-
-  vaultHeadlineTitle: {
-    margin: "0 0 6px 0",
-    fontSize: "18px",
-    fontWeight: 600
-  },
-
-  vaultSupportingDesc: {
-    margin: 0,
-    fontSize: "13px",
-    color: "#64748b",
-    lineHeight: "1.4"
-  },
-
-  vaultFooterActivationBtn: {
-    marginTop: "auto",
-    backgroundColor: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.05)",
-    borderRadius: "12px",
-    padding: "10px",
-    textAlign: "center",
-    fontSize: "12px",
-    color: "#94a3b8"
-  },
-
-  telemetryAnalyticsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "20px"
-  },
-
-  telemetryCard: {
-    background: "rgba(15, 23, 42, 0.6)",
-    border: "1px solid rgba(255, 255, 255, 0.04)",
-    borderRadius: "20px",
-    padding: "20px",
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-    transition: "all 0.25s ease"
-  },
-
-  telemetryIconContainer: {
-    width: "44px",
-    height: "44px",
-    borderRadius: "12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#ffffff",
-    fontSize: "18px",
-    fontWeight: 700
-  },
-
-  telemetryLabel: {
-    margin: 0,
-    fontSize: "12px",
-    color: "#64748b",
-    fontWeight: 500
-  },
-
-  telemetryValue: {
-    margin: "2px 0",
-    fontSize: "18px",
-    fontWeight: 700,
-    color: "#f8fafc"
-  },
-
-  telemetrySubText: {
-    fontSize: "11px",
-    color: "#475569"
-  },
-
-  luxuryMotivationBanner: {
-    background: "linear-gradient(135deg, #312e81 0%, #1e1b4b 100%)",
-    border: "1px solid rgba(99, 102, 241, 0.3)",
-    borderRadius: "24px",
-    padding: "32px",
-    position: "relative",
-    overflow: "hidden"
-  },
-
-  bannerGlassGlowOverlay: {
-    position: "absolute",
-    top: "-50%",
-    left: "-20%",
-    width: "300px",
-    height: "300px",
-    background: "rgba(99, 102, 241, 0.15)",
-    filter: "blur(60px)",
-    borderRadius: "50%"
-  },
-
-  bannerFlexEngine: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "32px",
-    position: "relative",
-    zIndex: 5
-  },
-
-  bannerEmblem: {
-    fontSize: "48px"
-  },
-
-  bannerTypography: {
-    flex: 1
-  },
-
-  bannerTitleText: {
-    margin: "0 0 6px 0",
-    fontSize: "20px",
-    fontWeight: 700,
-    color: "#ffffff"
-  },
-
-  bannerBodyDesc: {
-    margin: 0,
-    fontSize: "14px",
-    color: "#cbd5e1",
-    fontStyle: "italic",
-    lineHeight: "1.5"
-  },
-
-  bannerMicroChartArt: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: "6px",
-    fontSize: "36px",
-    color: "#818cf8"
-  },
-
+  luxuryMotivationBanner: { background: "linear-gradient(135deg, #312e81 0%, #1e1b4b 100%)", border: "1px solid rgba(99, 102, 241, 0.3)", borderRadius: "24px", padding: "32px", position: "relative", overflow: "hidden" },
+  bannerGlassGlowOverlay: { position: "absolute", top: "-50%", left: "-20%", width: "300px", height: "300px", background: "rgba(99, 102, 241, 0.15)", filter: "blur(60px)", borderRadius: "50%" },
+  bannerFlexEngine: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "32px", position: "relative", zIndex: 5 },
+  bannerEmblem: { fontSize: "48px" },
+  bannerTypography: { flex: 1 },
+  bannerTitleText: { margin: "0 0 6px 0", fontSize: "20px", fontWeight: 700, color: "#ffffff" },
+  bannerBodyDesc: { margin: 0, fontSize: "14px", color: "#cbd5e1", fontStyle: "italic", lineHeight: "1.5" },
+  bannerMicroChartArt: { display: "flex", alignItems: "flex-end", gap: "6px", fontSize: "36px", color: "#818cf8" },
   chartBarGrowA: { width: "6px", height: "16px", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "2px" },
   chartBarGrowB: { width: "6px", height: "28px", backgroundColor: "rgba(255,255,255,0.2)", borderRadius: "2px" },
   chartBarGrowC: { width: "6px", height: "42px", backgroundColor: "rgba(255,255,255,0.4)", borderRadius: "2px" },
   chartBarGrowD: { width: "6px", height: "56px", backgroundColor: "#818cf8", borderRadius: "2px" },
 
-  enterpriseComplianceFooter: {
-    textAlign: "center",
-    borderTop: "1px solid rgba(255,255,255,0.05)",
-    paddingTop: "24px",
-    fontSize: "12px",
-    color: "#475569",
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px"
-  },
-
-  premiumSpinnerContainer: {
-    minHeight: "100vh",
-    backgroundColor: "#020617",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "24px"
-  },
-
-  spinnerGlassCard: {
-    background: "rgba(255, 255, 255, 0.01)",
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    borderRadius: "32px",
-    padding: "48px",
-    textAlign: "center",
-    maxWidth: "400px",
-    boxShadow: "0 30px 60px rgba(0,0,0,0.4)"
-  },
-
-  spinnerTitle: {
-    fontSize: "20px",
-    fontWeight: 700,
-    color: "#f8fafc",
-    margin: "24px 0 8px 0"
-  },
-
-  spinnerSubtitle: {
-    fontSize: "13px",
-    color: "#64748b",
-    margin: 0,
-    lineHeight: "1.4"
-  },
-
-  skeletonProgressBar: {
-    width: "100%",
-    height: "4px",
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: "10px",
-    marginTop: "24px",
-    overflow: "hidden"
-  },
-
-  skeletonProgressFill: {
-    width: "45%",
-    height: "100%",
-    background: "linear-gradient(to right, #4f46e5, #ec4899)",
-    borderRadius: "10px"
-  }
+  enterpriseComplianceFooter: { textAlign: "center", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "24px", fontSize: "12px", color: "#475569", display: "flex", flexDirection: "column", gap: "6px" },
+  premiumSpinnerContainer: { minHeight: "100vh", backgroundColor: "#020617", display: "flex", alignItems: "center", justifycontent: "center", padding: "24px" },
+  spinnerGlassCard: { background: "rgba(255, 255, 255, 0.01)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "32px", padding: "48px", textAlign: "center", width: "100%", maxWidth: "400px", margin: "0 auto" },
+  spinnerTitle: { fontSize: "20px", fontWeight: 700, color: "#f8fafc", margin: "24px 0 8px 0" },
+  spinnerSubtitle: { fontSize: "13px", color: "#64748b", margin: 0, lineHeight: "1.4" },
+  skeletonProgressBar: { width: "100%", height: "4px", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: "10px", marginTop: "24px", overflow: "hidden" },
+  skeletonProgressFill: { width: "45%", height: "100%", background: "linear-gradient(to right, #4f46e5, #ec4899)", borderRadius: "10px" }
 };
