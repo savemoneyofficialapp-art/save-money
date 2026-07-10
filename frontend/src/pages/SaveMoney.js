@@ -4,12 +4,21 @@ import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function SaveMoney() {
+  // =========================================================================
+  // CORE HOOKS & ROUTING INFRASTRUCTURE
+  // =========================================================================
   const navigate = useNavigate();
   const location = useLocation();
 
+  // =========================================================================
+  // LOCAL STORAGE & AUTHENTICATION STATE EXTROLLERS
+  // =========================================================================
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
 
+  // =========================================================================
+  // SYSTEM STATE MANAGEMENT UNITS
+  // =========================================================================
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState("");
   const [years, setYears] = useState(5);
@@ -18,12 +27,24 @@ export default function SaveMoney() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // =========================================================================
+  // PREMIUM OVERLAY INTERFACE STATES
+  // =========================================================================
   const [statusOverlay, setStatusOverlay] = useState({
     show: false,
     type: "info",
     message: ""
   });
 
+  // =========================================================================
+  // ANIMATION & INTERACTIVE STATE LOGIC
+  // =========================================================================
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [activeInputFocus, setActiveInputFocus] = useState(false);
+
+  // =========================================================================
+  // NOTIFICATION & TOAST ALTERNATIVE OVERLAY DISPATCHER
+  // =========================================================================
   const showStatusMsg = (type, message) => {
     setStatusOverlay({ show: true, type, message });
     setTimeout(() => {
@@ -31,10 +52,16 @@ export default function SaveMoney() {
     }, 3000);
   };
 
+  // =========================================================================
+  // SCROLL ANCHOR CORRECTION MECHANISM (SCROLL FIX)
+  // =========================================================================
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
 
+  // =========================================================================
+  // ASYNC WALLET BALANCE SYNCER
+  // =========================================================================
   useEffect(() => {
     loadBalance();
   }, []);
@@ -49,6 +76,7 @@ export default function SaveMoney() {
         },
         body: JSON.stringify({ email })
       });
+
       const data = await res.json();
       setBalance(Number(data.balance || data.wallet || 0));
     } catch (err) {
@@ -56,6 +84,9 @@ export default function SaveMoney() {
     }
   };
 
+  // =========================================================================
+  // ROI INTEREST RATE DICTIONARY MATRIX
+  // =========================================================================
   const getRate = (y) => {
     if (Number(y) === 1) return 11;
     if (Number(y) === 3) return 14;
@@ -67,6 +98,9 @@ export default function SaveMoney() {
 
   const rate = getRate(years);
 
+  // =========================================================================
+  // ADVANCED MATHEMATICAL COMPOUNDING ENGINE (MEMOIZED)
+  // =========================================================================
   const calc = useMemo(() => {
     const monthly = Number(amount || 0);
     const annualRate = Number(rate || 0);
@@ -94,6 +128,9 @@ export default function SaveMoney() {
     };
   }, [amount, years, rate]);
 
+  // =========================================================================
+  // CURRENCY STRING FORMATTING UTILITY (INR)
+  // =========================================================================
   const money = (n) => {
     return `₹ ${Number(n || 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
@@ -101,6 +138,9 @@ export default function SaveMoney() {
     })}`;
   };
 
+  // =========================================================================
+  // MODAL CONTROLLERS & INTERACTION HANDLERS
+  // =========================================================================
   const openTerms = () => {
     if (accepted) {
       setAccepted(false);
@@ -112,18 +152,23 @@ export default function SaveMoney() {
   const acceptTerms = () => {
     setAccepted(true);
     setTermsOpen(false);
-    showStatusMsg("success", "Terms accepted successfully.");
+    showStatusMsg("success", "Terms & Conditions Accepted!");
   };
 
+  // =========================================================================
+  // TRANSACTION SUBMISSION DISPATCHER (API COMMIT)
+  // =========================================================================
   const confirmSip = async () => {
     if (Number(amount) < 2000) {
       showStatusMsg("error", "Minimum SIP amount ₹2000 required");
       return toast.info("Minimum SIP amount ₹2000 required");
     }
+
     if (!accepted) {
       setTermsOpen(true);
       return;
     }
+
     if (Number(balance) < Number(amount)) {
       showStatusMsg("error", "Insufficient wallet balance");
       return toast.error("Insufficient wallet balance");
@@ -149,177 +194,460 @@ export default function SaveMoney() {
       });
 
       const data = await res.json();
+
       if (data.msg === "Token expired or invalid") {
         localStorage.clear();
-        showStatusMsg("error", "Session expired.");
+        showStatusMsg("error", "Session expired. Logging out.");
         setTimeout(() => { window.location.href = "/login"; }, 2000);
         return;
       }
 
       if (data.success) {
-        showStatusMsg("success", data.msg || "SIP Confirmed 🌱");
+        showStatusMsg("success", data.msg || "SIP Plan Started Successfully! 🌱");
         setAmount("");
         setAccepted(false);
         loadBalance();
       } else {
-        showStatusMsg("info", data.msg || "Transaction failed");
+        showStatusMsg("info", data.msg || "Could not complete transaction");
       }
     } catch (err) {
-      showStatusMsg("error", "Something went wrong.");
+      console.log("START SIP ERROR:", err);
+      showStatusMsg("error", "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.page}>
-      
-      {/* STATUS OVERLAY */}
+    <div style={styles.cyberPageWrapper}>
+      {/* BACKGROUND GLOBAL LAYER MATRIX */}
+      <div style={styles.neonMatrixGrid}></div>
+      <div style={styles.dynamicAuraSphere1}></div>
+      <div style={styles.dynamicAuraSphere2}></div>
+      <div style={styles.dynamicAuraSphere3}></div>
+
+      {/* SYSTEM VIP METRIC FLOATING BANNER */}
+      <div style={styles.vipStatusBar}>
+        <div style={styles.vipStatusIndicator}>
+          <span style={styles.pulseNode}></span> LIVE CONNECTION SECURE
+        </div>
+        <div style={styles.vipTimestamp}>HIGH SPEED AUTO-COMPOUND ENGINE ACTIVE</div>
+      </div>
+
+      {/* ULTRA PRECISE ABSOLUTE OVERLAY POPUP */}
       {statusOverlay.show && (
-        <div style={styles.statusOverlayBg}>
-          <div style={styles.statusOverlayCard}>
-            <span style={styles.statusOverlayText}>{statusOverlay.message}</span>
+        <div style={styles.glassOverlayShield}>
+          <div style={{
+            ...styles.glassOverlayContainer,
+            borderBottom: statusOverlay.type === "success" ? "4px solid #00ffa3" : statusOverlay.type === "error" ? "4px solid #ff4a4a" : "4px solid #00d2ff"
+          }}>
+            <div style={{
+              ...styles.glassOverlayIconFrame,
+              backgroundColor: statusOverlay.type === "success" ? "rgba(0,255,163,0.1)" : statusOverlay.type === "error" ? "rgba(255,74,74,0.1)" : "rgba(0,210,255,0.1)",
+              color: statusOverlay.type === "success" ? "#00ffa3" : statusOverlay.type === "error" ? "#ff4a4a" : "#00d2ff"
+            }}>
+              {statusOverlay.type === "success" ? "✓" : statusOverlay.type === "error" ? "✕" : "⚡"}
+            </div>
+            <p style={styles.glassOverlayMessageText}>{statusOverlay.message}</p>
           </div>
         </div>
       )}
 
-      {/* TOP DECORATIVE GLOBAL LINING */}
-      <div style={styles.topLining}></div>
-
-      {/* FULL WIDTH WRAPPER */}
-      <div style={styles.fluidContainer}>
+      {/* MAIN LAYOUT CANVAS CONTAINER (STRETCHED SCREEN WINDOW) */}
+      <div style={styles.ultimateMainCanvas}>
         
-        {/* ROW 1: HEADER SECTION */}
-        <header style={styles.mainHeader}>
-          <div style={styles.headerBrandBox}>
-            <button style={styles.classicBackBtn} onClick={() => window.history.back()}>← Go Back</button>
-            <h1 style={styles.brandTitle}>SAVE <span style={styles.brandSpan}>MONEY</span></h1>
-            <span style={styles.badgePremium}>INSTITUTIONAL INVESTING</span>
-          </div>
+        {/* TOP INTERACTIVE CONTROL HELM */}
+        <div style={styles.controlHelmRow}>
+          <button 
+            style={{...styles.helmActionBtn, ...(hoveredCard === 'back' ? styles.helmActionBtnHover : {})}}
+            onMouseEnter={() => setHoveredCard('back')}
+            onMouseLeave={() => setHoveredCard(null)}
+            onClick={() => window.history.back()}
+          >
+            <span style={styles.helmBtnIcon}>◀</span> RETURN DASHBOARD
+          </button>
           
-          {/* BALANCE BLOCK */}
-          <div style={styles.headerBalanceContainer}>
-            <div style={styles.balanceMiniMeta}>
-              <span style={styles.lbl}>WALLET CLEARING BALANCE</span>
-              <h2 style={styles.val}>{money(balance)}</h2>
-            </div>
-            <button style={styles.actionAddMoney} onClick={() => (window.location.href = "/wallet")}>Deposit Funds</button>
-            <button style={styles.actionHelp} onClick={() => setHelpOpen(true)}>Guide</button>
+          <div style={styles.helmCenterBadge}>
+            <span style={styles.goldTextBadge}>QUANTUM VIP NETWORK ACCESS</span>
           </div>
+
+          <button 
+            style={{...styles.helmHelpBtn, ...(hoveredCard === 'help' ? styles.helmHelpBtnHover : {})}}
+            onMouseEnter={() => setHoveredCard('help')}
+            onMouseLeave={() => setHoveredCard(null)}
+            onClick={() => setHelpOpen(true)}
+          >
+            ASSISTANT CORE <span style={styles.helpQuestionMark}>?</span>
+          </button>
+        </div>
+
+        {/* HIGH-END METROPOLIS CORE BRAND HEADER */}
+        <header style={styles.cyberBrandHeaderSection}>
+          <div style={styles.cyberLogoHexagonWrap}>
+            <div style={styles.cyberLogoCoreElement}>
+              <span style={styles.cyberLogoSymbolText}>₹</span>
+            </div>
+            <div style={styles.cyberLogoOrbitLine1}></div>
+            <div style={styles.cyberLogoOrbitLine2}></div>
+          </div>
+          <h1 style={styles.cyberMainTitleText}>
+            SAVE <span style={styles.cyberMainTitleHighlight}>MONEY</span>
+          </h1>
+          <div style={styles.cyberBrandDividerLine}>
+            <div style={styles.cyberDividerCoreGlow}></div>
+          </div>
+          <p style={styles.cyberBrandSubtextPara}>INTELLIGENT WEALTH GENERATION SYSTEM</p>
         </header>
 
-        {/* ROW 2: INPUT CONFIGURATION (FULL SCREEN STRETCHED) */}
-        <section style={styles.configFullPanel}>
-          <div style={styles.panelRow}>
-            <div style={{ flex: 2 }}>
-              <label style={styles.fieldLabel}>Enter Monthly SIP Contribution Amount</label>
-              <div style={styles.hugeInputWrapper}>
-                <span style={styles.inputCurrency}>₹</span>
-                <input 
-                  type="number" 
-                  value={amount} 
-                  onChange={(e) => setAmount(e.target.value)} 
-                  style={styles.hugeInput} 
-                  placeholder="0.00"
-                />
-                <span style={styles.inputNotice}>Min Limit ₹2,000</span>
-              </div>
-              {Number(amount) > 0 && Number(amount) < 2000 && (
-                <span style={styles.inlineError}>⚠️ Requested threshold is beneath the minimum requirement of ₹2,000.</span>
-              )}
-            </div>
-
-            <div style={{ flex: 3 }}>
-              <label style={styles.fieldLabel}>Select Dynamic Tenure Matrix</label>
-              <div style={styles.flexTenureGroup}>
-                {[1, 3, 5, 10, 15, 20].map((y) => (
-                  <button 
-                    key={y} 
-                    onClick={() => setYears(y)}
-                    style={{ ...styles.tenureChip, ...(years === y ? styles.tenureChipActive : {}) }}
-                  >
-                    {y} {y === 1 ? "Year Plan" : "Years Plan"}
-                    <span style={styles.percentageIndicator}>{getRate(y)}% ROI</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ROW 3: COMPOUNDING CALCULATION (নিচে পাশাপাশি দুটো সমান রেখায় বিস্তৃত হিসাব) */}
-        <section style={styles.compoundingDataSection}>
-          <h3 style={styles.sectionHeadingLine}>COMPOUNDING CALCULATION & MATRIX PROJECTIONS</h3>
+        {/* UPPER DOUBLE EXECUTIVE MODULE PANELS */}
+        <div style={styles.executiveTwinControlLayout}>
           
-          <div style={styles.twinGridRows}>
-            {/* LINE 1 COMPONENT */}
-            <div style={styles.gridRowBlock}>
-              <div style={styles.metricBlock}>
-                <span style={styles.metricLabel}>PRINCIPAL INVESTMENT VALUE</span>
-                <h3 style={{ ...styles.metricValue, color: "#3b82f6" }}>{money(calc.totalInvestment)}</h3>
+          {/* LEFT INTERACTION ZONE: WALLET ASSETS */}
+          <div style={styles.executivePanelZone}>
+            <section 
+              style={{...styles.cyberLuxuryCardUnit, ...(hoveredCard === 'wallet' ? styles.cyberLuxuryCardUnitHover : {})}}
+              onMouseEnter={() => setHoveredCard('wallet')}
+              onMouseLeave={() => setHoveredCard(null)}
+            >
+              <div style={styles.cardGlowCornerTop}></div>
+              <div style={styles.cardHeaderFlexBox}>
+                <div style={styles.cardTitleBadgeRow}>
+                  <div style={styles.cardHeaderIconBoxContainer}>💳</div>
+                  <h3 style={styles.cardHeaderMainTitleText}>SECURE WALLET MANAGEMENT</h3>
+                </div>
+                <span style={styles.onlinePulseStatusText}>ONLINE POOL</span>
               </div>
-              <div style={styles.metricBlock}>
-                <span style={styles.metricLabel}>TOTAL YIELD INTEREST ACCRUED</span>
-                <h3 style={{ ...styles.metricValue, color: "#f59e0b" }}>{money(calc.totalInterest)}</h3>
-              </div>
-            </div>
 
-            {/* LINE 2 COMPONENT */}
-            <div style={styles.gridRowBlock}>
-              <div style={styles.metricBlock}>
-                <span style={styles.metricLabel}>ESTIMATED COMPOUND RETURNS</span>
-                <h3 style={{ ...styles.metricValue, color: "#10b981" }}>{money(calc.estimatedReturn)}</h3>
+              <div style={styles.walletBalanceDisplayBlock}>
+                <div style={styles.walletMetaLabelRow}>
+                  <span style={styles.walletMetaLabel}>LIQUID CAPITAL AVAILABILITY</span>
+                  <span style={styles.walletSecureShieldTag}>🔒 256-BIT CRYPTO VAULT</span>
+                </div>
+                <div style={styles.walletLargeNumericalSum}>
+                  {money(balance)}
+                </div>
+                <div style={styles.walletProgressIndicatorTrack}>
+                  <div style={styles.walletProgressIndicatorFillBar}></div>
+                </div>
+                <div style={styles.walletBottomCapLabelFlex}>
+                  <span style={styles.walletCapSubtextText}>Status: Fully Eligible for Immediate Auto-Investment</span>
+                  <span style={styles.walletCapPercentageText}>100% Verified</span>
+                </div>
               </div>
-              <div style={styles.metricBlock}>
-                <span style={styles.metricLabel}>EXPECTED MATURITY LIQUID ASSET</span>
-                <h3 style={{ ...styles.metricValue, color: "#a855f7" }}>{money(calc.totalReturn)}</h3>
+
+              <button 
+                style={styles.walletActionInjectFundsBtn}
+                onClick={() => (window.location.href = "/wallet")}
+              >
+                <span style={styles.btnAccentPlusSymbol}>+</span> DEPOSIT FRESH CAPITAL INTO POOL
+              </button>
+            </section>
+          </div>
+
+          {/* RIGHT INTERACTION ZONE: SIP TELEMETRY CONFIGURATION */}
+          <div style={styles.executivePanelZone}>
+            <section 
+              style={{...styles.cyberLuxuryCardUnit, ...(hoveredCard === 'config' ? styles.cyberLuxuryCardUnitHover : {})}}
+              onMouseEnter={() => setHoveredCard('config')}
+              onMouseLeave={() => setHoveredCard(null)}
+            >
+              <div style={styles.cardGlowCornerTopAccent}></div>
+              <div style={styles.cardHeaderFlexBox}>
+                <div style={styles.cardTitleBadgeRow}>
+                  <div style={styles.cardHeaderIconBoxContainerAccent}>🌱</div>
+                  <h3 style={styles.cardHeaderMainTitleText}>ASSET DEPLOYMENT CALIBRATION</h3>
+                </div>
+                <span style={styles.onlinePulseStatusTextAccent}>CONFIG READY</span>
               </div>
+
+              {/* INPUT MATRIX FIELD */}
+              <div style={styles.inputFieldComplexContainer}>
+                <div style={styles.inputFieldLabelFlexHeader}>
+                  <span style={styles.inputFieldMainTitleLabel}>CHOOSE MONTHLY COMMITMENT AMOUNT</span>
+                  <span style={styles.inputFieldRightHandBadge}>MINIMUM BOUNDARY REQUIRED</span>
+                </div>
+                <div style={{
+                  ...styles.cyberInputWrapperGlassBox,
+                  borderColor: activeInputFocus ? "#00ffa3" : "#1e293b",
+                  boxShadow: activeInputFocus ? "0 0 20px rgba(0,255,163,0.15)" : "none"
+                }}>
+                  <div style={styles.cyberInputPrependCurrencySymbol}>₹</div>
+                  <input
+                    style={styles.cyberInputActualInputElement}
+                    type="number"
+                    value={amount}
+                    onFocus={() => setActiveInputFocus(true)}
+                    onBlur={() => setActiveInputFocus(false)}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="Enter Custom Investment Capital"
+                  />
+                  <div style={styles.cyberInputAppendBadgeUnit}>
+                    <span style={styles.cyberInputAppendBadgeText}>INR VALUES</span>
+                  </div>
+                </div>
+
+                {Number(amount || 0) > 0 && Number(amount) < 2000 && (
+                  <div style={styles.cyberValidationWarningAlertBox}>
+                    <span style={styles.validationWarningIcon}>⚠️</span> 
+                    <span style={styles.validationWarningText}>System Threshold Warning: Minimum required configuration is ₹2000</span>
+                  </div>
+                )}
+              </div>
+
+              {/* GRID SELECTION INTERFACE MATRIX FOR YEARS */}
+              <div style={styles.tenureSelectionStructureBox}>
+                <div style={styles.inputFieldLabelFlexHeader}>
+                  <span style={styles.inputFieldMainTitleLabel}>SELECT ASSET ACCUMULATION TIMEFRAME</span>
+                  <span style={styles.inputFieldRightHandBadgeAccent}>ROI SCALING SYSTEM ACTIVE</span>
+                </div>
+
+                <div style={styles.tenureGridSelectorLayoutMatrix}>
+                  {[1, 3, 5, 10, 15, 20].map((y) => {
+                    const isSelected = years === y;
+                    return (
+                      <button
+                        key={y}
+                        style={{
+                          ...styles.tenureSelectorNodeItemButton,
+                          ...(isSelected ? styles.tenureSelectorNodeItemButtonActive : {})
+                        }}
+                        onClick={() => setYears(y)}
+                      >
+                        <div style={styles.tenureNodeYearLabelText}>
+                          {y} {y === 1 ? "YEAR PLAN" : "YEARS PLAN"}
+                        </div>
+                        <div style={{
+                          ...styles.tenureNodePercentageSubBadge,
+                          color: isSelected ? "#020617" : "#00ffa3"
+                        }}>
+                          Yield Rate: {getRate(y)}%
+                        </div>
+                        {isSelected && <div style={styles.tenureNodeSelectionCheckIndicatorCircle}>✓</div>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ADVICE SYSTEM INSIGHT BAR */}
+              <div style={styles.adviceSystemBarWrapperBox}>
+                <div style={styles.adviceSystemLightBulbIcon}>💡</div>
+                <div style={styles.adviceSystemTextBodyBlock}>
+                  <strong>Compounding Multiplier Alert:</strong> Selection of a tenure exceeding 5 Years triggers exponential growth modules, maximizing capital retention and interest yield loops.
+                </div>
+              </div>
+
+            </section>
+          </div>
+
+        </div>
+
+        {/* ========================================================================= */}
+        {/* LOWER GEOMETRIC SECTION: COMPOUNDING CALCULATION GRAPHIC TRACKS (RE-POSITIONED TO BOTTOM) */}
+        {/* ========================================================================= */}
+        <div style={styles.compoundingHeaderSeparatorBlock}>
+          <div style={styles.separatorLineDecorativeLeft}></div>
+          <span style={styles.separatorCentralHeadlineTitleText}>LIVE ASSET PROJECTION DATA SHEETS</span>
+          <div style={styles.separatorLineDecorativeRight}></div>
+        </div>
+
+        {/* ROW LINE 1 OF COMPOUNDING PROJECTION VALUES (PASAJ-PASI DUAL LINE 1) */}
+        <div style={styles.compoundingDataDisplayRowLineOneGrid}>
+          
+          {/* CARD PROJECTION NODE: ESTIMATED RETURNS */}
+          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "4px solid #00ffa3"}}>
+            <div style={styles.projectionCellTopMetaLine}>
+              <div style={{...styles.projectionCellIconCircleBox, color: "#00ffa3", backgroundColor: "rgba(0,255,163,0.06)"}}>📈</div>
+              <span style={styles.projectionCellMetaTitleLabelText}>ESTIMATED COMPOUNDING RETURNS</span>
+            </div>
+            <div style={{...styles.projectionCellBigMetricValueText, color: "#00ffa3"}}>
+              {money(calc.estimatedReturn)}
+            </div>
+            <div style={styles.projectionCellBottomStatusBarTrack}>
+              <div style={{...styles.projectionCellStatusFillColorBar, backgroundColor: "#00ffa3", width: "85%"}}></div>
+            </div>
+            <p style={styles.projectionCellFooterNarrativeText}>Estimated return accrual across selected timeline framework matrix.</p>
+          </div>
+
+          {/* CARD PROJECTION NODE: TOTAL PRINCIPAL INVESTMENT */}
+          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "4px solid #00d2ff"}}>
+            <div style={styles.projectionCellTopMetaLine}>
+              <div style={{...styles.projectionCellIconCircleBox, color: "#00d2ff", backgroundColor: "rgba(0,210,255,0.06)"}}>👛</div>
+              <span style={styles.projectionCellMetaTitleLabelText}>TOTAL DEPLOYED PRINCIPAL CAPITAL</span>
+            </div>
+            <div style={{...styles.projectionCellBigMetricValueText, color: "#00d2ff"}}>
+              {money(calc.totalInvestment)}
+            </div>
+            <div style={styles.projectionCellBottomStatusBarTrack}>
+              <div style={{...styles.projectionCellStatusFillColorBar, backgroundColor: "#00d2ff", width: "60%"}}></div>
+            </div>
+            <p style={styles.projectionCellFooterNarrativeText}>Total cumulative sum of sequential net monthly deposits performed.</p>
+          </div>
+
+        </div>
+
+        {/* ROW LINE 2 OF COMPOUNDING PROJECTION VALUES (PASAJ-PASI DUAL LINE 2) */}
+        <div style={styles.compoundingDataDisplayRowLineTwoGrid}>
+          
+          {/* CARD PROJECTION NODE: ACCUMULATED INTEREST YIELD */}
+          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "4px solid #ffb800"}}>
+            <div style={styles.projectionCellTopMetaLine}>
+              <div style={{...styles.projectionCellIconCircleBox, color: "#ffb800", backgroundColor: "rgba(255,184,0,0.06)"}}>🪙</div>
+              <span style={styles.projectionCellMetaTitleLabelText}>NET COMPREHENSIVE INTEREST EARNED</span>
+            </div>
+            <div style={{...styles.projectionCellBigMetricValueText, color: "#ffb800"}}>
+              {money(calc.totalInterest)}
+            </div>
+            <div style={styles.projectionCellBottomStatusBarTrack}>
+              <div style={{...styles.projectionCellStatusFillColorBar, backgroundColor: "#ffb800", width: "70%"}}></div>
+            </div>
+            <p style={styles.projectionCellFooterNarrativeText}>Pure asset yield generation extracted via algorithmic standard interest modules.</p>
+          </div>
+
+          {/* CARD PROJECTION NODE: EXPECTED MATURITY TOTAL ASSET */}
+          <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "4px solid #cc00ff"}}>
+            <div style={styles.projectionCellTopMetaLine}>
+              <div style={{...styles.projectionCellIconCircleBox, color: "#cc00ff", backgroundColor: "rgba(204,0,255,0.06)"}}>📊</div>
+              <span style={styles.projectionCellMetaTitleLabelText}>ESTIMATED MATURITY ASSET VALUE</span>
+            </div>
+            <div style={{...styles.projectionCellBigMetricValueText, color: "#cc00ff"}}>
+              {money(calc.totalReturn)}
+            </div>
+            <div style={styles.projectionCellBottomStatusBarTrack}>
+              <div style={{...styles.projectionCellStatusFillColorBar, backgroundColor: "#cc00ff", width: "95%"}}></div>
+            </div>
+            <p style={styles.projectionCellFooterNarrativeText}>Total forecasted terminal capital extraction sum upon maturity event fulfillment.</p>
+          </div>
+
+        </div>
+
+        {/* SYSTEM ANALYTICAL STATEMENT NOTICE BAR */}
+        <div style={styles.systemAnalyticalDisclaimerBox}>
+          <span style={styles.disclaimerIconInfoBadge}>i</span>
+          <span style={styles.disclaimerTextMessagePara}>
+            Mathematical forecasting projection model operates under high-fidelity compounding interest matrix calculations. Historical performance criteria configurations represent standard index projections.
+          </span>
+        </div>
+
+        {/* FINAL CLOSURE LEGAL COMPLIANCE BOX SECTION */}
+        <div style={styles.legalComplianceActionShieldContainerBox}>
+          <div 
+            style={{...styles.legalInteractiveClickableRowBox, ...(accepted ? styles.legalInteractiveClickableRowBoxActive : {})}}
+            onClick={openTerms}
+          >
+            <div style={{
+              ...styles.legalCustomCheckboxSquareBox,
+              backgroundColor: accepted ? "#00ffa3" : "#020617",
+              borderColor: accepted ? "#00ffa3" : "#334155"
+            }}>
+              {accepted && <span style={styles.legalCheckboxCheckMarkCheck}>✓</span>}
+            </div>
+            <div style={styles.legalTextStatementColumnLabelBlock}>
+              <p style={styles.legalMainDeclarationSentenceText}>
+                I hereby declare, authorize and confirm that I have meticulously read, verified and mutually consented to be legally bound by the comprehensive system-wide <b style={styles.legalHighLightHyperlinkText}>Terms, Conditions, Asset Allocation Disclosures & Risk Protocols</b>.
+              </p>
+            </div>
+            <div style={{...styles.legalPaperDocumentIconBadgeUnit, color: accepted ? "#00ffa3" : "#64748b"}}>📄</div>
+          </div>
+        </div>
+
+        {/* ABSOLUTE MAIN FIREPOWER INITIALIZATION LAUNCH BUTTON */}
+        <div style={styles.ultimateLaunchButtonCentralContainerFlex}>
+          <button 
+            style={{
+              ...styles.ultimateLaunchCoreActionBtnElement,
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? "not-allowed" : "pointer"
+            }} 
+            onClick={confirmSip} 
+            disabled={loading}
+          >
+            <div style={styles.ultimateLaunchBtnGlowBackingTrack}></div>
+            <span style={styles.ultimateLaunchBtnIconBadgeNode}>🛡️</span> 
+            <span style={styles.ultimateLaunchBtnMainStringLabelText}>
+              {loading ? "AUTHORIZING DIGITAL SECURE DEPOSIT..." : "INITIATE & LAUNCH ASSET CONFIGURATION PLAN"}
+            </span>
+          </button>
+        </div>
+
+        {/* GRID FOOTER MATRIX SYSTEM CORE CAPABILITIES */}
+        <section style={styles.systemCapabilitiesTripleFooterGridColumnLayout}>
+          <div style={styles.capabilityCellBlockNodeCard}>
+            <div style={{...styles.capabilityIconCircleWrapContainer, color: "#3b82f6", backgroundColor: "rgba(59,130,246,0.1)"}}>🔒</div>
+            <div style={styles.capabilityTextInformationBlockWrap}>
+              <h4 style={styles.capabilityHeadingMainTextTitle}>VAULT-GRADE CYBER SECURITY</h4>
+              <p style={styles.capabilitySubtextBodyParagraph}>End-to-End encrypted cryptographic ledger vault safeguards absolute transactional safety limits.</p>
+            </div>
+          </div>
+
+          <div style={styles.capabilityCellBlockNodeCard}>
+            <div style={{...styles.capabilityIconCircleWrapContainer, color: "#10b981", backgroundColor: "rgba(16,185,129,0.1)"}}>📈</div>
+            <div style={styles.capabilityTextInformationBlockWrap}>
+              <h4 style={styles.capabilityHeadingMainTextTitle}>MAXIMIZED TIMELINE YIELD CURVE</h4>
+              <p style={styles.capabilitySubtextBodyParagraph}>Algorithmic compounding interest indexing structures optimized to generate enhanced fiscal performance assets.</p>
+            </div>
+          </div>
+
+          <div style={styles.capabilityCellBlockNodeCard}>
+            <div style={{...styles.capabilityIconCircleWrapContainer, color: "#a855f7", backgroundColor: "rgba(168,85,247,0.1)"}}>⚡</div>
+            <div style={styles.capabilityTextInformationBlockWrap}>
+              <h4 style={styles.capabilityHeadingMainTextTitle}>FLUID AUTO-PAYOUT INTERFACING</h4>
+              <p style={styles.capabilitySubtextBodyParagraph}>Seamless architectural design allows automated liquidity conversion options upon reaching target timelines.</p>
             </div>
           </div>
         </section>
-
-        {/* ROW 4: INTERACTION WORKFLOW TERMINAL */}
-        <footer style={styles.actionTerminal}>
-          <div style={styles.termsAgreementBar} onClick={openTerms}>
-            <div style={{ ...styles.customCheck, ...(accepted ? styles.customCheckActive : {}) }}>
-              {accepted && "✓"}
-            </div>
-            <p style={styles.agreementMessage}>
-              I authorize the validation of the inputs and accept the corporate structural <span style={{ color: "#6366f1", textDecoration: "underline" }}>investment asset guidelines</span>.
-            </p>
-          </div>
-
-          <button style={styles.masterSubmitBtn} onClick={confirmSip} disabled={loading}>
-            {loading ? "COMMITTING ASSET PROTOCOL..." : "PROCEED & DEPLOY SIP TERM ASSET"}
-          </button>
-        </footer>
 
       </div>
 
-      {/* TERMS MODAL */}
+      {/* ========================================================================= */}
+      {/* COMPLETELY PRESERVED HIGHLY SECURE MODAL LAYER WINDOWS */}
+      {/* ========================================================================= */}
+      
+      {/* MODAL UNIT 1: TERMS AND CONDITIONS SYSTEM MODAL OVERLAY */}
       {termsOpen && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.cleanModal}>
-            <h3 style={{ marginTop: 0, color: "#fff" }}>Investment Disclosure Policy</h3>
-            <div style={styles.modalBodyText}>
-              <p>1. Save Money SIP functions on strict monthly recurring asset allocation cycles.</p>
-              <p>2. Failure to supply liquidity to the wallet pool on target deployment dates may affect compound estimations.</p>
-              <p>3. Standard calculations are computed using uniform compound formulas based on institutional company performance indices.</p>
+        <div style={styles.modalSystemFallbackOverlayBlurScreen}>
+          <div style={styles.modalSystemOuterBoxArchitecture}>
+            <div style={styles.modalSystemHeaderTitleFlexRow}>
+              <div style={styles.modalSystemHeaderIconBadge}>📋</div>
+              <h2 style={styles.modalSystemHeaderMainTitleHeadlineText}>Terms & Conditions</h2>
             </div>
-            <button style={styles.modalActionBtn} onClick={acceptTerms}>Acknowledge Policy & Term</button>
+            
+            <div style={styles.modalSystemInternalScrollableContentPanelBox}>
+              <p style={styles.modalSystemParagraphParaBlockText}>Save Money SIP is a disciplined monthly saving and investment plan. The minimum monthly SIP investment amount is ₹2000.</p>
+              <p style={styles.modalSystemParagraphParaBlockText}>User must select SIP duration and understand all estimated return values before confirming the investment from wallet balance.</p>
+              <p style={styles.modalSystemParagraphParaBlockText}>This SIP plan requires timely monthly renewal. If renewal is missed, investment benefits, bonuses, rewards or auto-withdrawal eligibility may be affected.</p>
+              <p style={styles.modalSystemParagraphParaBlockText}>Returns shown inside the application are estimated values only. Actual return may increase or decrease depending on company performance.</p>
+              <p style={styles.modalSystemParagraphParaBlockText}>Investment always involves financial risk. User confirms that they are investing voluntarily after understanding risk, reward and possible variation in ROI.</p>
+            </div>
+
+            <button style={styles.modalSystemAcceptActionButtonTriggerElement} onClick={acceptTerms}>
+              Accept & Commit Verification
+            </button>
           </div>
         </div>
       )}
 
-      {/* HELP ASSISTANT MODAL */}
+      {/* MODAL UNIT 2: HELP DESK INTELLIGENT ASSISTANT OVERLAY SCREEN */}
       {helpOpen && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.cleanModal}>
-            <h3 style={{ marginTop: 0, color: "#3b82f6" }}>Platform Guide</h3>
-            <p style={styles.modalBodyText}>
-              নির্ধারিত পরিমাণ ব্যালেন্স ইনপুট বক্সে সেট করুন (নূন্যতম ₹২,০০০) এবং ডানদিকের প্যানেল থেকে আপনার সুবিধাজনক মেয়াদী প্ল্যান নির্বাচন করুন। নিচে অটোমেটিক রিয়েল-টাইম হিসাব দেখতে পাবেন।
-            </p>
-            <button style={{ ...styles.modalActionBtn, background: "#3b82f6" }} onClick={() => setHelpOpen(false)}>Close Guide</button>
+        <div style={styles.modalSystemFallbackOverlayBlurScreen}>
+          <div style={{...styles.modalSystemOuterBoxArchitecture, borderColor: "#3b82f6"}}>
+            <div style={styles.modalSystemHeaderTitleFlexRow}>
+              <div style={{...styles.modalSystemHeaderIconBadge, color: "#3b82f6"}}>🧠</div>
+              <h2 style={{...styles.modalSystemHeaderMainTitleHeadlineText, color: "#3b82f6"}}>Investment Assistant</h2>
+            </div>
+            
+            <div style={styles.modalSystemInternalScrollableContentPanelBox}>
+              <p style={styles.modalSystemParagraphParaBlockTextHelpTextBangla}>Save Money SIP plan আপনাকে প্রতি মাসে নিয়মিত saving করতে সাহায্য করবে।</p>
+              <p style={styles.modalSystemParagraphParaBlockTextHelpTextBangla}>Minimum monthly SIP amount হলো ₹2000। Amount লিখে duration select করলে নিচে estimated return দেখতে পাবেন।</p>
+              <p style={styles.modalSystemParagraphParaBlockTextHelpTextBangla}>1 Year = 11%, 3 Years = 14%, 5+ Years = 20% থেকে 30% পর্যন্ত estimated return দেখানো হবে।</p>
+            </div>
+
+            <button 
+              style={{...styles.modalSystemAcceptActionButtonTriggerElement, background: "linear-gradient(90deg, #3b82f6, #1d4ed8)"}} 
+              onClick={() => setHelpOpen(false)}
+            >
+              Acknowledge & Close Core
+            </button>
           </div>
         </div>
       )}
@@ -328,336 +656,1014 @@ export default function SaveMoney() {
   );
 }
 
-// ULTRA-CLEAN FULL SCREEN LUXURY STYLING SHEET
+// =========================================================================
+// WIDE EXECUTIVE STYLE GRID MATRIX CORES (THE MASSIVE STYLE SHEET)
+// =========================================================================
 const styles = {
-  page: {
+  cyberPageWrapper: {
     minHeight: "100vh",
     width: "100vw",
-    background: "#030712",
+    backgroundColor: "#02040a",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    fontFamily: "'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     color: "#f1f5f9",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    margin: 0,
-    padding: 0,
     overflowX: "hidden",
+    position: "relative",
+    boxSizing: "border-box"
+  },
+  neonMatrixGrid: {
+    position: "absolute",
+    inset: 0,
+    backgroundImage: `
+      linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px)
+    `,
+    backgroundSize: "40px 40px",
+    maskImage: "linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0.3))",
+    WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0.3))",
+    pointerEvents: "none",
+    zIndex: 1
+  },
+  dynamicAuraSphere1: {
+    position: "absolute",
+    top: "-200px",
+    left: "5%",
+    width: "600px",
+    height: "600px",
+    background: "radial-gradient(circle, rgba(0, 255, 163, 0.08) 0%, rgba(0,0,0,0) 70%)",
+    filter: "blur(60px)",
+    borderRadius: "50%",
+    pointerEvents: "none",
+    zIndex: 2
+  },
+  dynamicAuraSphere2: {
+    position: "absolute",
+    bottom: "10%",
+    right: "-100px",
+    width: "700px",
+    height: "700px",
+    background: "radial-gradient(circle, rgba(204, 0, 255, 0.06) 0%, rgba(0,0,0,0) 70%)",
+    filter: "blur(80px)",
+    borderRadius: "50%",
+    pointerEvents: "none",
+    zIndex: 2
+  },
+  dynamicAuraSphere3: {
+    position: "absolute",
+    top: "40%",
+    left: "40%",
+    width: "500px",
+    height: "500px",
+    background: "radial-gradient(circle, rgba(0, 210, 255, 0.05) 0%, rgba(0,0,0,0) 70%)",
+    filter: "blur(50px)",
+    borderRadius: "50%",
+    pointerEvents: "none",
+    zIndex: 2
+  },
+  vipStatusBar: {
+    width: "100%",
+    height: "36px",
+    backgroundColor: "#090d16",
+    borderBottom: "1px solid #111827",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 40px",
+    boxSizing: "border-box",
+    zIndex: 10,
     position: "relative"
   },
-  topLining: {
-    height: "4px",
-    width: "100%",
-    background: "linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)"
-  },
-  fluidContainer: {
-    width: "100%",
-    padding: "40px 60px",
-    boxSizing: "border-box",
-    display: "flex",
-    flexDirection: "column",
-    gap: "35px"
-  },
-  mainHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottom: "1px solid #1e293b",
-    paddingBottom: "25px"
-  },
-  headerBrandBox: {
+  vipStatusIndicator: {
+    fontSize: "11px",
+    fontWeight: "700",
+    color: "#00ffa3",
+    letterSpacing: "1.5px",
     display: "flex",
     alignItems: "center",
-    gap: "20px"
+    gap: "8px"
   },
-  classicBackBtn: {
-    background: "transparent",
-    border: "1px solid #334155",
-    color: "#94a3b8",
-    padding: "8px 16px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "13px",
-    fontWeight: "500"
+  pulseNode: {
+    width: "7px",
+    height: "7px",
+    backgroundColor: "#00ffa3",
+    borderRadius: "50%",
+    display: "inline-block",
+    boxShadow: "0 0 10px #00ffa3"
   },
-  brandTitle: {
-    margin: 0,
-    fontSize: "24px",
-    fontWeight: "800",
+  vipTimestamp: {
+    fontSize: "11px",
+    color: "#4b5563",
+    fontWeight: "600",
     letterSpacing: "1px"
   },
-  brandSpan: {
-    color: "#10b981"
-  },
-  badgePremium: {
-    background: "rgba(99,102,241,0.1)",
-    border: "1px solid rgba(99,102,241,0.2)",
-    color: "#818cf8",
-    fontSize: "11px",
-    padding: "4px 10px",
-    borderRadius: "6px",
-    fontWeight: "700",
-    letterSpacing: "0.5px"
-  },
-  headerBalanceContainer: {
+  glassOverlayShield: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(2, 4, 10, 0.85)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    zIndex: 50000,
     display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  glassOverlayContainer: {
+    backgroundColor: "#0d1321",
+    padding: "40px",
+    borderRadius: "24px",
+    textAlign: "center",
+    boxShadow: "0 30px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)",
+    border: "1px solid #1e293b",
+    maxWidth: "460px",
+    width: "85%",
+    display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     gap: "20px"
   },
-  balanceMiniMeta: {
-    textAlign: "right"
-  },
-  lbl: {
-    display: "block",
-    fontSize: "10px",
-    color: "#64748b",
-    fontWeight: "700"
-  },
-  val: {
-    margin: 0,
-    fontSize: "22px",
-    fontWeight: "700",
-    color: "#ffffff"
-  },
-  actionAddMoney: {
-    background: "#ffffff",
-    color: "#030712",
-    border: "none",
-    padding: "10px 20px",
-    borderRadius: "10px",
-    fontWeight: "700",
-    fontSize: "13px",
-    cursor: "pointer"
-  },
-  actionHelp: {
-    background: "#1f2937",
-    color: "#94a3b8",
-    border: "1px solid #374151",
-    padding: "10px 16px",
-    borderRadius: "10px",
-    fontWeight: "600",
-    fontSize: "13px",
-    cursor: "pointer"
-  },
-  configFullPanel: {
-    background: "#0b1329",
-    border: "1px solid #1e293b",
-    borderRadius: "16px",
-    padding: "30px"
-  },
-  panelRow: {
-    display: "flex",
-    gap: "40px",
-    alignItems: "center"
-  },
-  fieldLabel: {
-    display: "block",
-    fontSize: "13px",
-    color: "#94a3b8",
-    fontWeight: "600",
-    marginBottom: "12px",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px"
-  },
-  hugeInputWrapper: {
+  glassOverlayIconFrame: {
+    width: "70px",
+    height: "70px",
+    borderRadius: "20px",
     display: "flex",
     alignItems: "center",
-    background: "#030712",
-    border: "1px solid #334155",
-    borderRadius: "12px",
-    height: "56px",
-    padding: "0 16px",
-    gap: "10px"
+    justifyContent: "center",
+    fontSize: "30px",
+    fontWeight: "bold",
+    boxShadow: "inset 0 2px 5px rgba(255,255,255,0.05)"
   },
-  inputCurrency: {
-    fontSize: "22px",
-    color: "#10b981",
-    fontWeight: "700"
-  },
-  hugeInput: {
-    background: "transparent",
-    border: "none",
-    outline: "none",
+  glassOverlayMessageText: {
+    fontSize: "18px",
     color: "#ffffff",
-    fontSize: "20px",
+    margin: 0,
     fontWeight: "700",
-    flex: 1
+    lineHeight: "1.5",
+    letterSpacing: "0.3px"
   },
-  inputNotice: {
-    fontSize: "11px",
-    color: "#f59e0b",
-    background: "rgba(245,158,11,0.08)",
-    padding: "4px 8px",
-    borderRadius: "6px",
-    fontWeight: "600"
-  },
-  inlineError: {
-    color: "#f43f5e",
-    fontSize: "12px",
-    display: "block",
-    marginTop: "6px"
-  },
-  flexTenureGroup: {
+  ultimateMainCanvas: {
+    width: "100%",
+    maxWidth: "100%", // FULL SCREEN WIDTH SPECIFICATION
+    padding: "40px",
+    boxSizing: "border-box",
+    zIndex: 5,
+    position: "relative",
     display: "flex",
-    flexWrap: "wrap",
-    gap: "10px"
+    flexDirection: "column"
   },
-  tenureChip: {
-    flex: "1 1 140px",
-    background: "#111827",
-    border: "1px solid #374151",
-    borderRadius: "10px",
-    padding: "12px 14px",
-    cursor: "pointer",
-    textAlign: "left",
-    color: "#cbd5e1"
-  },
-  tenureChipActive: {
-    background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
-    border: "1px solid #3b82f6",
-    color: "#ffffff"
-  },
-  percentageIndicator: {
-    display: "block",
-    fontSize: "11px",
-    color: "#10b981",
-    fontWeight: "700",
-    marginTop: "2px"
-  },
-
-  // COMPOUNDING SECTION (স্ক্রিনের নিচে পাশাপাশি ২টি রেখায় বিস্তৃত হিসাব)
-  compoundingDataSection: {
-    marginTop: "10px"
-  },
-  sectionHeadingLine: {
-    margin: "0 0 16px",
-    fontSize: "12px",
-    letterSpacing: "1px",
-    color: "#64748b",
-    fontWeight: "700"
-  },
-  twinGridRows: {
+  controlHelmRow: {
     display: "flex",
-    flexDirection: "column",
-    gap: "14px"
-  },
-  gridRowBlock: {
-    display: "flex",
-    gap: "14px",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "40px",
     width: "100%"
   },
-  metricBlock: {
-    flex: 1,
-    background: "#0b1329",
+  helmActionBtn: {
+    padding: "14px 28px",
+    borderRadius: "16px",
     border: "1px solid #1e293b",
-    borderRadius: "12px",
-    padding: "24px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  metricLabel: {
-    fontSize: "13px",
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    backdropFilter: "blur(10px)",
     color: "#94a3b8",
-    fontWeight: "600"
-  },
-  metricValue: {
-    margin: 0,
-    fontSize: "22px",
-    fontWeight: "800"
-  },
-
-  actionTerminal: {
+    fontSize: "13px",
+    fontWeight: "700",
+    letterSpacing: "1px",
+    cursor: "pointer",
     display: "flex",
-    justifyContent: "space-between",
     alignItems: "center",
-    borderTop: "1px solid #1e293b",
-    paddingTop: "25px",
-    marginTop: "10px"
+    gap: "10px",
+    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
   },
-  termsAgreementBar: {
+  helmActionBtnHover: {
+    borderColor: "#00ffa3",
+    color: "#fff",
+    backgroundColor: "rgba(0, 255, 163, 0.05)",
+    boxShadow: "0 0 25px rgba(0, 255, 163, 0.1)"
+  },
+  helmBtnIcon: {
+    fontSize: "11px",
+    color: "#475569"
+  },
+  helmCenterBadge: {
+    backgroundColor: "rgba(30, 41, 59, 0.4)",
+    border: "1px solid rgba(255, 215, 0, 0.15)",
+    padding: "8px 20px",
+    borderRadius: "30px",
+    backdropFilter: "blur(5px)"
+  },
+  goldTextBadge: {
+    fontSize: "11px",
+    fontWeight: "800",
+    color: "#ffd700",
+    letterSpacing: "2.5px"
+  },
+  helmHelpBtn: {
+    padding: "14px 28px",
+    borderRadius: "16px",
+    border: "1px solid #1e293b",
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    backdropFilter: "blur(10px)",
+    color: "#3b82f6",
+    fontSize: "13px",
+    fontWeight: "700",
+    letterSpacing: "1px",
+    cursor: "pointer",
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    cursor: "pointer"
+    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
   },
-  customCheck: {
+  helmHelpBtnHover: {
+    borderColor: "#3b82f6",
+    color: "#fff",
+    backgroundColor: "rgba(59, 130, 246, 0.05)",
+    boxShadow: "0 0 25px rgba(59, 130, 246, 0.1)"
+  },
+  helpQuestionMark: {
     width: "18px",
     height: "18px",
-    border: "2px solid #475569",
-    borderRadius: "4px",
+    borderRadius: "50%",
+    backgroundColor: "rgba(59, 130, 246, 0.15)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#fff",
-    fontSize: "12px"
+    fontSize: "11px"
   },
-  customCheckActive: {
-    background: "#6366f1",
-    borderColor: "#6366f1"
+  cyberBrandHeaderSection: {
+    textAlign: "center",
+    marginBottom: "50px",
+    width: "100%"
   },
-  agreementMessage: {
+  cyberLogoHexagonWrap: {
+    width: "90px",
+    height: "90px",
+    margin: "0 auto 20px",
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  cyberLogoCoreElement: {
+    width: "60px",
+    height: "60px",
+    borderRadius: "20px",
+    background: "linear-gradient(135deg, #00ffa3 0%, #00d2ff 100%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "28px",
+    fontWeight: "900",
+    color: "#020617",
+    boxShadow: "0 15px 35px rgba(0,255,163,0.3)",
+    zIndex: 5
+  },
+  cyberLogoOrbitLine1: {
+    position: "absolute",
+    inset: "-5px",
+    borderRadius: "28px",
+    border: "2px dashed rgba(0, 255, 163, 0.3)",
+    animation: "spin 20s linear infinite"
+  },
+  cyberLogoOrbitLine2: {
+    position: "absolute",
+    inset: "5px",
+    borderRadius: "22px",
+    border: "1px solid rgba(0, 210, 255, 0.2)"
+  },
+  cyberMainTitleText: {
     margin: 0,
-    fontSize: "13px",
-    color: "#94a3b8"
+    fontSize: "46px",
+    fontWeight: "900",
+    letterSpacing: "4px",
+    color: "#ffffff"
   },
-  masterSubmitBtn: {
-    background: "linear-gradient(90deg, #10b981, #059669)",
+  cyberMainTitleHighlight: {
+    background: "linear-gradient(90deg, #00ffa3, #00d2ff)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent"
+  },
+  cyberBrandDividerLine: {
+    width: "160px",
+    height: "2px",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    margin: "18px auto",
+    position: "relative"
+  },
+  cyberDividerCoreGlow: {
+    position: "absolute",
+    inset: "0 25%",
+    background: "linear-gradient(90deg, transparent, #00ffa3, transparent)"
+  },
+  cyberBrandSubtextPara: {
+    fontSize: "13px",
+    letterSpacing: "4px",
+    color: "#475569",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    margin: 0
+  },
+  executiveTwinControlLayout: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr", // SIDE-BY-SIDE EQUAL HALF DIVISION
+    gap: "30px",
+    width: "100%",
+    marginBottom: "40px"
+  },
+  executivePanelZone: {
+    width: "100%",
+    display: "flex"
+  },
+  cyberLuxuryCardUnit: {
+    width: "100%",
+    backgroundColor: "rgba(13, 20, 35, 0.45)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
+    borderRadius: "28px",
+    border: "1px solid rgba(255, 255, 255, 0.04)",
+    padding: "35px",
+    boxSizing: "border-box",
+    position: "relative",
+    boxShadow: "0 20px 50px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.02)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  cyberLuxuryCardUnitHover: {
+    transform: "translateY(-4px)",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    boxShadow: "0 30px 60px rgba(0,0,0,0.5)"
+  },
+  cardGlowCornerTop: {
+    position: "absolute",
+    top: 0,
+    left: "10%",
+    width: "80px",
+    height: "2px",
+    background: "linear-gradient(90deg, transparent, #00d2ff, transparent)"
+  },
+  cardGlowCornerTopAccent: {
+    position: "absolute",
+    top: 0,
+    left: "10%",
+    width: "80px",
+    height: "2px",
+    background: "linear-gradient(90deg, transparent, #00ffa3, transparent)"
+  },
+  cardHeaderFlexBox: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: "30px"
+  },
+  cardTitleBadgeRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px"
+  },
+  cardHeaderIconBoxContainer: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "14px",
+    backgroundColor: "rgba(0, 210, 255, 0.08)",
+    border: "1px solid rgba(0, 210, 255, 0.2)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "20px"
+  },
+  cardHeaderIconBoxContainerAccent: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "14px",
+    backgroundColor: "rgba(0, 255, 163, 0.08)",
+    border: "1px solid rgba(0, 255, 163, 0.2)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "20px"
+  },
+  cardHeaderMainTitleText: {
+    margin: 0,
+    fontSize: "15px",
+    fontWeight: "800",
     color: "#ffffff",
+    letterSpacing: "1.2px"
+  },
+  onlinePulseStatusText: {
+    fontSize: "10px",
+    fontWeight: "700",
+    color: "#00d2ff",
+    backgroundColor: "rgba(0, 210, 255, 0.08)",
+    padding: "6px 14px",
+    borderRadius: "10px",
+    letterSpacing: "1px"
+  },
+  onlinePulseStatusTextAccent: {
+    fontSize: "10px",
+    fontWeight: "700",
+    color: "#00ffa3",
+    backgroundColor: "rgba(0, 255, 163, 0.08)",
+    padding: "6px 14px",
+    borderRadius: "10px",
+    letterSpacing: "1px"
+  },
+  walletBalanceDisplayBlock: {
+    backgroundColor: "rgba(2, 6, 12, 0.5)",
+    border: "1px solid rgba(255,255,255,0.02)",
+    borderRadius: "20px",
+    padding: "26px",
+    width: "100%",
+    boxSizing: "border-box",
+    marginBottom: "24px"
+  },
+  walletMetaLabelRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: "12px"
+  },
+  walletMetaLabel: {
+    fontSize: "11px",
+    fontWeight: "700",
+    color: "#64748b",
+    letterSpacing: "1px"
+  },
+  walletSecureShieldTag: {
+    fontSize: "10px",
+    fontWeight: "600",
+    color: "#475569"
+  },
+  walletLargeNumericalSum: {
+    fontSize: "42px",
+    fontWeight: "900",
+    color: "#ffffff",
+    letterSpacing: "-0.5px",
+    marginBottom: "18px"
+  },
+  walletProgressIndicatorTrack: {
+    width: "100%",
+    height: "6px",
+    backgroundColor: "#1e293b",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "12px"
+  },
+  walletProgressIndicatorFillBar: {
+    width: "100%",
+    height: "100%",
+    background: "linear-gradient(90deg, #00d2ff, #00ffa3)"
+  },
+  walletBottomCapLabelFlex: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%"
+  },
+  walletCapSubtextText: {
+    fontSize: "11px",
+    color: "#475569"
+  },
+  walletCapPercentageText: {
+    fontSize: "11px",
+    fontWeight: "700",
+    color: "#00ffa3"
+  },
+  walletActionInjectFundsBtn: {
+    width: "100%",
+    height: "54px",
+    borderRadius: "16px",
     border: "none",
-    padding: "16px 36px",
-    borderRadius: "12px",
+    background: "linear-gradient(90deg, rgba(30,41,59,1) 0%, rgba(15,23,42,1) 100%)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.03)",
+    color: "#ffffff",
     fontSize: "14px",
     fontWeight: "700",
+    letterSpacing: "0.5px",
     cursor: "pointer",
-    letterSpacing: "0.5px"
-  },
-  statusOverlayBg: {
-    position: "fixed",
-    top: "30px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 99999
-  },
-  statusOverlayCard: {
-    background: "#1e293b",
-    border: "1px solid #475569",
-    padding: "12px 24px",
-    borderRadius: "30px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.5)"
-  },
-  statusOverlayText: {
-    color: "#ffffff",
-    fontSize: "14px",
-    fontWeight: "600"
-  },
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(3,7,18,0.8)",
-    backdropFilter: "blur(4px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 9999
+    gap: "10px",
+    transition: "all 0.2s ease"
   },
-  cleanModal: {
-    background: "#0b1329",
+  btnAccentPlusSymbol: {
+    color: "#00d2ff",
+    fontSize: "18px"
+  },
+  inputFieldComplexContainer: {
+    width: "100%",
+    marginBottom: "24px"
+  },
+  inputFieldLabelFlexHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: "10px"
+  },
+  inputFieldMainTitleLabel: {
+    fontSize: "11px",
+    fontWeight: "700",
+    color: "#64748b",
+    letterSpacing: "1px"
+  },
+  inputFieldRightHandBadge: {
+    fontSize: "10px",
+    fontWeight: "700",
+    color: "#ff9c00",
+    backgroundColor: "rgba(255,156,0,0.08)",
+    padding: "3px 8px",
+    borderRadius: "6px"
+  },
+  inputFieldRightHandBadgeAccent: {
+    fontSize: "10px",
+    fontWeight: "700",
+    color: "#00ffa3",
+    backgroundColor: "rgba(0,255,163,0.08)",
+    padding: "3px 8px",
+    borderRadius: "6px"
+  },
+  cyberInputWrapperGlassBox: {
+    height: "60px",
+    width: "100%",
+    borderRadius: "18px",
     border: "1px solid #1e293b",
-    borderRadius: "16px",
-    padding: "30px",
-    width: "450px"
+    backgroundColor: "rgba(2, 6, 12, 0.5)",
+    display: "flex",
+    alignItems: "center",
+    padding: "0 20px",
+    boxSizing: "border-box",
+    gap: "14px",
+    transition: "all 0.2s ease"
   },
-  modalBodyText: {
+  cyberInputPrependCurrencySymbol: {
+    fontSize: "22px",
+    fontWeight: "800",
+    color: "#00ffa3"
+  },
+  cyberInputActualInputElement: {
+    flex: 1,
+    border: "none",
+    outline: "none",
+    backgroundColor: "transparent",
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#ffffff"
+  },
+  cyberInputAppendBadgeUnit: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.05)",
+    padding: "6px 12px",
+    borderRadius: "10px"
+  },
+  cyberInputAppendBadgeText: {
+    fontSize: "10px",
+    fontWeight: "700",
+    color: "#475569",
+    letterSpacing: "0.5px"
+  },
+  cyberValidationWarningAlertBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginTop: "10px",
+    backgroundColor: "rgba(239, 68, 68, 0.06)",
+    border: "1px solid rgba(239, 68, 68, 0.15)",
+    padding: "10px 14px",
+    borderRadius: "12px"
+  },
+  validationWarningIcon: {
+    fontSize: "14px"
+  },
+  validationWarningText: {
+    fontSize: "12px",
+    color: "#f87171",
+    fontWeight: "600"
+  },
+  tenureSelectionStructureBox: {
+    width: "100%",
+    marginBottom: "24px"
+  },
+  tenureGridSelectorLayoutMatrix: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "12px",
+    width: "100%"
+  },
+  tenureSelectorNodeItemButton: {
+    height: "64px",
+    borderRadius: "16px",
+    border: "1px solid #1e293b",
+    backgroundColor: "rgba(2, 6, 12, 0.3)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    position: "relative",
+    gap: "4px",
+    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  tenureSelectorNodeItemButtonActive: {
+    backgroundColor: "#00ffa3",
+    borderColor: "#00ffa3",
+    boxShadow: "0 10px 25px rgba(0, 255, 163, 0.25)"
+  },
+  tenureNodeYearLabelText: {
+    fontSize: "12px",
+    fontWeight: "800",
+    letterSpacing: "0.5px"
+  },
+  tenureNodePercentageSubBadge: {
+    fontSize: "10px",
+    fontWeight: "700"
+  },
+  tenureNodeSelectionCheckIndicatorCircle: {
+    position: "absolute",
+    top: "-5px",
+    right: "-5px",
+    width: "16px",
+    height: "16px",
+    borderRadius: "50%",
+    backgroundColor: "#ffffff",
+    color: "#020617",
+    fontSize: "10px",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+  },
+  adviceSystemBarWrapperBox: {
+    backgroundColor: "rgba(0, 210, 255, 0.03)",
+    border: "1px dashed rgba(0, 210, 255, 0.2)",
+    borderRadius: "16px",
+    padding: "16px 20px",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "14px",
+    width: "100%",
+    boxSizing: "border-box"
+  },
+  adviceSystemLightBulbIcon: {
+    fontSize: "18px",
+    color: "#00d2ff"
+  },
+  adviceSystemTextBodyBlock: {
+    fontSize: "12px",
+    color: "#94a3b8",
+    lineHeight: "1.6",
+    margin: 0
+  },
+
+  // =========================================================================
+  // SEPARATOR LINES AND HEADERS FOR THE CALCULATION SECTION AT THE BOTTOM
+  // =========================================================================
+  compoundingHeaderSeparatorBlock: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    margin: "30px 0 24px"
+  },
+  separatorLineDecorativeLeft: {
+    flex: 1,
+    height: "1px",
+    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06))"
+  },
+  separatorLineDecorativeRight: {
+    flex: 1,
+    height: "1px",
+    background: "linear-gradient(90deg, rgba(255,255,255,0.06), transparent)"
+  },
+  separatorCentralHeadlineTitleText: {
+    padding: "0 24px",
+    fontSize: "13px",
+    fontWeight: "800",
+    color: "#475569",
+    letterSpacing: "3px",
+    textTransform: "uppercase"
+  },
+
+  // =========================================================================
+  // TARGET REDESIGN FIX: COMPOUNDING CALCULATION PARALLEL DUAL ROW BLOCK LAYOUTS
+  // =========================================================================
+  compoundingDataDisplayRowLineOneGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr", // PASAJ-PASI DUAL DISPLAY MATRIX (LINE 1)
+    gap: "24px",
+    width: "100%",
+    marginBottom: "24px"
+  },
+  compoundingDataDisplayRowLineTwoGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr", // PASAJ-PASI DUAL DISPLAY MATRIX (LINE 2)
+    gap: "24px",
+    width: "100%",
+    marginBottom: "35px"
+  },
+  projectionDataMetricsCardCellBlock: {
+    backgroundColor: "rgba(10, 16, 30, 0.7)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    borderRadius: "20px",
+    border: "1px solid rgba(255,255,255,0.03)",
+    padding: "26px",
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    gap: "12px"
+  },
+  projectionCellTopMetaLine: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px"
+  },
+  projectionCellIconCircleBox: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "10px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "18px"
+  },
+  projectionCellMetaTitleLabelText: {
+    fontSize: "12px",
+    fontWeight: "700",
+    color: "#64748b",
+    letterSpacing: "1px"
+  },
+  projectionCellBigMetricValueText: {
+    fontSize: "32px",
+    fontWeight: "900",
+    margin: "4px 0",
+    letterSpacing: "-0.5px"
+  },
+  projectionCellBottomStatusBarTrack: {
+    width: "100%",
+    height: "4px",
+    backgroundColor: "rgba(255,255,255,0.02)",
+    borderRadius: "6px",
+    overflow: "hidden"
+  },
+  projectionCellStatusFillColorBar: {
+    height: "100%",
+    borderRadius: "6px"
+  },
+  projectionCellFooterNarrativeText: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#475569",
+    lineHeight: "1.4"
+  },
+
+  systemAnalyticalDisclaimerBox: {
+    width: "100%",
+    backgroundColor: "rgba(15, 23, 42, 0.3)",
+    border: "1px solid rgba(255,255,255,0.02)",
+    borderRadius: "16px",
+    padding: "16px 24px",
+    boxSizing: "border-box",
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    marginBottom: "35px"
+  },
+  disclaimerIconInfoBadge: {
+    width: "18px",
+    height: "18px",
+    borderRadius: "50%",
+    border: "1px solid #475569",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "11px",
+    color: "#64748b",
+    fontWeight: "700",
+    flexShrink: 0
+  },
+  disclaimerTextMessagePara: {
+    fontSize: "12px",
+    color: "#64748b",
+    lineHeight: "1.6",
+    margin: 0
+  },
+  legalComplianceActionShieldContainerBox: {
+    width: "100%",
+    marginBottom: "35px"
+  },
+  legalInteractiveClickableRowBox: {
+    backgroundColor: "rgba(13, 20, 35, 0.4)",
+    border: "1px solid #1e293b",
+    borderRadius: "20px",
+    padding: "22px 28px",
+    boxSizing: "border-box",
+    display: "flex",
+    alignItems: "center",
+    gap: "20px",
+    cursor: "pointer",
+    transition: "all 0.2s ease"
+  },
+  legalInteractiveClickableRowBoxActive: {
+    borderColor: "rgba(0, 255, 163, 0.3)",
+    backgroundColor: "rgba(0, 255, 163, 0.02)"
+  },
+  legalCustomCheckboxSquareBox: {
+    width: "22px",
+    height: "22px",
+    borderRadius: "7px",
+    border: "2px solid",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    transition: "all 0.2s ease"
+  },
+  legalCheckboxCheckMarkCheck: {
+    color: "#020617",
+    fontSize: "13px",
+    fontWeight: "900"
+  },
+  legalTextStatementColumnLabelBlock: {
+    flex: 1
+  },
+  legalMainDeclarationSentenceText: {
+    margin: 0,
     fontSize: "13px",
     color: "#94a3b8",
     lineHeight: "1.6"
   },
-  modalActionBtn: {
+  legalHighLightHyperlinkText: {
+    color: "#00ffa3",
+    fontWeight: "700"
+  },
+  legalPaperDocumentIconBadgeUnit: {
+    fontSize: "22px",
+    flexShrink: 0
+  },
+  ultimateLaunchButtonCentralContainerFlex: {
     width: "100%",
-    padding: "12px",
-    background: "#10b981",
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "60px"
+  },
+  ultimateLaunchCoreActionBtnElement: {
+    width: "100%",
+    height: "68px",
+    borderRadius: "22px",
     border: "none",
-    borderRadius: "8px",
-    color: "#fff",
-    fontWeight: "700",
+    background: "linear-gradient(90deg, #00ffa3 0%, #00d2ff 50%, #3b82f6 100%)",
+    color: "#020617",
+    fontSize: "17px",
+    fontWeight: "900",
+    letterSpacing: "1px",
+    position: "relative",
+    boxShadow: "0 20px 45px rgba(0,255,163,0.25)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "14px",
+    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  ultimateLaunchBtnGlowBackingTrack: {
+    position: "absolute",
+    inset: 0,
+    borderRadius: "22px",
+    background: "linear-gradient(90deg, #00ffa3 0%, #00d2ff 50%, #3b82f6 100%)",
+    filter: "blur(10px)",
+    opacity: 0.5,
+    zIndex: -1
+  },
+  ultimateLaunchBtnIconBadgeNode: {
+    fontSize: "20px"
+  },
+  ultimateLaunchBtnMainStringLabelText: {
+    textShadow: "0 1px 1px rgba(255,255,255,0.2)"
+  },
+  systemCapabilitiesTripleFooterGridColumnLayout: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+    gap: "20px",
+    width: "100%"
+  },
+  capabilityCellBlockNodeCard: {
+    backgroundColor: "rgba(15, 23, 42, 0.25)",
+    border: "1px solid rgba(255,255,255,0.02)",
+    borderRadius: "20px",
+    padding: "24px",
+    boxSizing: "border-box",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "18px"
+  },
+  capabilityIconCircleWrapContainer: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "20px",
+    flexShrink: 0
+  },
+  capabilityTextInformationBlockWrap: {
+    flex: 1
+  },
+  capabilityHeadingMainTextTitle: {
+    margin: "0 0 6px",
+    fontSize: "13px",
+    fontWeight: "800",
+    color: "#ffffff",
+    letterSpacing: "0.5px"
+  },
+  capabilitySubtextBodyParagraph: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#475569",
+    lineHeight: "1.5"
+  },
+
+  // =========================================================================
+  // CORE UNTOUCHED BACKUP STRUCTURE FOR SYSTEM POPUP MODAL ARCHITECTURES
+  // =========================================================================
+  modalSystemFallbackOverlayBlurScreen: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(2,4,10,0.9)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    zIndex: 99999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "24px"
+  },
+  modalSystemOuterBoxArchitecture: {
+    width: "100%",
+    maxWidth: "480px",
+    backgroundColor: "#0b111e",
+    border: "1px solid rgba(0, 255, 163, 0.2)",
+    borderRadius: "32px",
+    padding: "35px",
+    boxSizing: "border-box",
+    boxShadow: "0 30px 80px rgba(0,0,0,0.7)"
+  },
+  modalSystemHeaderTitleFlexRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    marginBottom: "24px"
+  },
+  modalSystemHeaderIconBadge: {
+    fontSize: "26px",
+    color: "#00ffa3"
+  },
+  modalSystemHeaderMainTitleHeadlineText: {
+    margin: 0,
+    fontSize: "22px",
+    fontWeight: "800",
+    color: "#ffffff"
+  },
+  modalSystemInternalScrollableContentPanelBox: {
+    maxHeight: "260px",
+    overflowY: "auto",
+    paddingRight: "10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px"
+  },
+  modalSystemParagraphParaBlockText: {
+    margin: 0,
+    fontSize: "13px",
+    color: "#94a3b8",
+    lineHeight: "1.7",
+    textAlign: "justify"
+  },
+  modalSystemParagraphParaBlockTextHelpTextBangla: {
+    margin: 0,
+    fontSize: "14px",
+    color: "#cbd5e1",
+    lineHeight: "1.7"
+  },
+  modalSystemAcceptActionButtonTriggerElement: {
+    width: "100%",
+    height: "54px",
+    marginTop: "30px",
+    border: "none",
+    borderRadius: "16px",
+    background: "linear-gradient(90deg, #00ffa3, #00b876)",
+    color: "#020617",
+    fontWeight: "800",
+    fontSize: "15px",
     cursor: "pointer",
-    marginTop: "15px"
+    boxShadow: "0 8px 25px rgba(0,255,163,0.2)"
   }
 };
