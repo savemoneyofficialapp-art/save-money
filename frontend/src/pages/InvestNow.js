@@ -20,13 +20,13 @@ export default function InvestNow() {
     activePlan: 0
   });
 
- useEffect(() => {
-  loadSummary();
+  useEffect(() => {
+    loadSummary();
 
-  return () => {
-    setShowInvestment(false);
-  };
-}, []);
+    return () => {
+      setShowInvestment(false);
+    };
+  }, []);
 
   const loadSummary = async () => {
     try {
@@ -62,15 +62,15 @@ export default function InvestNow() {
   };
 
   const money = (n) => {
-  return `₹ ${Number(n || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })}`;
-};
+    return `₹ ${Number(n || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  };
 
   const showMoney = (amount) => {
-  return showInvestment ? money(amount) : "₹ ••••••••";
-};
+    return showInvestment ? money(amount) : "₹ ••••••••";
+  };
 
   const comingSoon = () => {
     toast.info("Temporary Unavailable - Coming Soon");
@@ -129,13 +129,13 @@ export default function InvestNow() {
       title: "Total Invested",
       value: money(summary.totalInvestment),
       icon: "trend",
-      color: "#18c98b"
+      color: "#10b981"
     },
     {
       title: "Total Return",
       value: money(summary.totalReturn),
       icon: "return",
-      color: "#2f80ed"
+      color: "#3b82f6"
     },
     {
       title: "Return Rate",
@@ -147,7 +147,7 @@ export default function InvestNow() {
       title: "Active Plan",
       value: summary.activePlan,
       icon: "calendar",
-      color: "#ff9f1c"
+      color: "#f59e0b"
     }
   ];
 
@@ -159,8 +159,8 @@ export default function InvestNow() {
             <PiggyArt small />
           </div>
 
-          <h2>Loading Investment</h2>
-          <p>Please wait...</p>
+          <h2 style={{ color: "#ffffff", margin: "10px 0 5px 0" }}>Loading Investment</h2>
+          <p style={{ color: "#9ca3af", margin: 0 }}>Please wait...</p>
         </div>
       </div>
     );
@@ -168,26 +168,21 @@ export default function InvestNow() {
 
   return (
     <div style={styles.page}>
-
       <div style={styles.appWrap}>
 
         {/* HERO */}
         <section style={styles.heroCard}>
-
           <HeroNetwork />
 
           <div style={styles.heroLeft}>
             <div style={styles.heroLabelRow}>
-              <p style={styles.heroLabel}>
-                Total Investment Value
-              </p>
-
+              <p style={styles.heroLabel}>Total Investment Value</p>
               <button
-  style={styles.eyeBtn}
-  onClick={() => setShowInvestment(!showInvestment)}
->
-  {showInvestment ? "👁" : "🙈"}
-</button>
+                style={styles.eyeBtn}
+                onClick={() => setShowInvestment(!showInvestment)}
+              >
+                {showInvestment ? "👁" : "🙈"}
+              </button>
             </div>
 
             <h1 style={styles.heroAmount}>
@@ -195,28 +190,23 @@ export default function InvestNow() {
             </h1>
 
             <p style={styles.heroGain}>
-              +{showInvestment ? money(summary.monthlyInvestment) : "₹ •••••"}    
-                        {" "}
-              <span>
+              +{showInvestment ? money(summary.monthlyInvestment) : "₹ •••••"}{" "}
+              <span style={{ color: "#a7f3d0", fontSize: "16px" }}>
                 (▲ {summary.returnRate}%)
               </span>
             </p>
 
-            <p style={styles.heroSub}>
-              This Month Added
-            </p>
+            <p style={styles.heroSub}>This Month Added</p>
           </div>
 
           <div style={styles.heroRight}>
             <HeroGraph />
             <PiggyArt />
           </div>
-
         </section>
 
         {/* QUICK ACTIONS */}
         <section style={styles.quickPanel}>
-
           <QuickAction
             icon="wallet"
             title="Add Money"
@@ -234,75 +224,48 @@ export default function InvestNow() {
             color="green"
             onClick={() => navigate("/my-investment")}
           />
-
         </section>
 
         <SectionTitle title="Active Investment" />
 
         {/* ACTIVE INVESTMENT */}
         <section style={styles.activeGrid}>
-
           {plans.map((plan) => (
-            <PlanCard
-              key={plan.title}
-              plan={plan}
-            />
+            <PlanCard key={plan.title} plan={plan} />
           ))}
-
         </section>
 
         <SectionTitle title="Coming Soon 🕒" />
 
         {/* COMING SOON */}
         <section style={styles.comingGrid}>
-
           {comingCards.map((item) => (
-            <ComingCard
-              key={item.title}
-              item={item}
-              onClick={comingSoon}
-            />
+            <ComingCard key={item.title} item={item} onClick={comingSoon} />
           ))}
-
         </section>
 
         {/* MOTIVATION */}
         <section style={styles.motivationCard}>
-
-          <div style={styles.trophyIcon}>
-            🏆
-          </div>
-
+          <div style={styles.trophyIcon}>🏆</div>
           <div style={styles.motivationText}>
-            <h2>
+            <h2 style={{ margin: "0 0 5px 0", fontSize: "22px", fontWeight: "bold" }}>
               Discipline Today, Wealth Tomorrow.
             </h2>
-
-            <p>
+            <p style={{ margin: 0, opacity: 0.8, fontSize: "15px" }}>
               Small steps now, big freedom later.
             </p>
           </div>
-
-          <div style={styles.motiveChart}>
-            ▂▃▅▇
-          </div>
-
+          <div style={styles.motiveChart}>▂▃▅▇</div>
         </section>
 
         {/* STATS */}
         <section style={styles.statsPanel}>
-
           {statCards.map((stat) => (
-            <MiniStat
-              key={stat.title}
-              stat={stat}
-            />
+            <MiniStat key={stat.title} stat={stat} />
           ))}
-
         </section>
 
       </div>
-
     </div>
   );
 }
@@ -340,7 +303,6 @@ function PiggyArt({ small }) {
   return (
     <div style={small ? styles.piggySmallStage : styles.piggyStage}>
       <div style={styles.pigCoin}>₹</div>
-
       <div style={small ? styles.pigBodySmall : styles.pigBody}>
         <span style={styles.pigEarLeft}></span>
         <span style={styles.pigEarRight}></span>
@@ -351,7 +313,6 @@ function PiggyArt({ small }) {
         <span style={styles.pigLegRight}></span>
         <span style={styles.pigTail}>↺</span>
       </div>
-
       {!small && (
         <>
           <span style={styles.floatCoinA}>●</span>
@@ -365,19 +326,14 @@ function PiggyArt({ small }) {
 
 function QuickAction({ icon, title, subtitle, color, onClick }) {
   const iconStyle =
-    color === "purple"
-      ? styles.quickIconPurple
-      : styles.quickIconGreen;
+    color === "purple" ? styles.quickIconPurple : styles.quickIconGreen;
 
   return (
     <button style={styles.quickAction} onClick={onClick}>
-      <div style={iconStyle}>
-        {icon === "wallet" ? "💳" : "📋"}
-      </div>
-
+      <div style={iconStyle}>{icon === "wallet" ? "💳" : "📋"}</div>
       <div>
-        <h3>{title}</h3>
-        <p>{subtitle}</p>
+        <h3 style={{ margin: "0 0 4px 0", fontSize: "16px", color: "#ffffff", fontWeight: "bold" }}>{title}</h3>
+        <p style={{ margin: 0, fontSize: "13px", color: "#9ca3af" }}>{subtitle}</p>
       </div>
     </button>
   );
@@ -387,9 +343,7 @@ function SectionTitle({ title }) {
   return (
     <div style={styles.sectionTitle}>
       <div style={styles.sectionLineLeft}></div>
-
-      <h2>{title}</h2>
-
+      <h2 style={{ color: "#ffffff", margin: 0, fontSize: "20px", fontWeight: "bold" }}>{title}</h2>
       <div style={styles.sectionLineRight}></div>
     </div>
   );
@@ -425,31 +379,39 @@ function PlanCard({ plan }) {
         </div>
 
         <div style={styles.planHeadingBox}>
-          <h1>{plan.title}</h1>
-<span style={styles.planSubtitleYellow}>
-  {plan.subtitle}
-</span>        </div>
+          <h1 style={{ margin: 0, fontSize: "18px", fontWeight: "bold", color: "#ffffff" }}>{plan.title}</h1>
+          <span style={styles.planSubtitleYellow}>{plan.subtitle}</span>
+        </div>
       </div>
 
       <div style={styles.planContent}>
-<h2 style={styles.planContent_h2}>{plan.heading}</h2>
-<p style={styles.planContent_p}>{plan.description}</p>
+        <h2 style={styles.planContent_h2}>{plan.heading}</h2>
+        <p style={styles.planContent_p}>{plan.description}</p>
       </div>
 
       <button
         style={{
           ...styles.planButton,
-          color: isSave ? "#12a866" : "#0877ec"
+          color: isSave ? "#059669" : "#2563eb",
+          background: "#1f2937"
         }}
         onClick={plan.onClick}
       >
-        <span>{plan.button}</span>
-
-        <b style={{
-          background: isSave
-            ? "linear-gradient(135deg,#22c55e,#00a86b)"
-            : "linear-gradient(135deg,#1d9bf0,#0866d9)"
-        }}>
+        <span style={{ color: "#ffffff" }}>{plan.button}</span>
+        <b
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "28px",
+            height: "28px",
+            borderRadius: "50%",
+            color: "#ffffff",
+            background: isSave
+              ? "linear-gradient(135deg,#10b981,#059669)"
+              : "linear-gradient(135deg,#3b82f6,#2563eb)"
+          }}
+        >
           ›
         </b>
       </button>
@@ -467,9 +429,7 @@ function ComingCard({ item, onClick }) {
 
   return (
     <button style={{ ...styles.comingCard, ...cardStyle }} onClick={onClick}>
-      <div style={styles.comingRibbon}>
-        Coming Soon
-      </div>
+      <div style={styles.comingRibbon}>Coming Soon</div>
 
       <div style={styles.comingIconCircle}>
         {item.icon === "gold" && <GoldIcon />}
@@ -477,12 +437,10 @@ function ComingCard({ item, onClick }) {
         {item.icon === "piggy" && <MiniPiggy />}
       </div>
 
-      <h3>{item.title}</h3>
-      <p>{item.text}</p>
+      <h3 style={{ margin: "14px 0 6px 0", fontSize: "16px", color: "#ffffff", fontWeight: "bold" }}>{item.title}</h3>
+      <p style={{ margin: "0 0 40px 0", fontSize: "13px", color: "#9ca3af", lineHeight: "1.4" }}>{item.text}</p>
 
-      <div style={styles.comingButton}>
-        🕒 Coming Soon
-      </div>
+      <div style={styles.comingButton}>🕒 Coming Soon</div>
     </button>
   );
 }
@@ -517,12 +475,7 @@ function MiniPiggy() {
 function MiniStat({ stat }) {
   return (
     <div style={styles.miniStat}>
-      <div
-        style={{
-          ...styles.miniIcon,
-          background: stat.color
-        }}
-      >
+      <div style={{ ...styles.miniIcon, background: stat.color }}>
         {stat.icon === "trend" && "↗"}
         {stat.icon === "return" && "₹"}
         {stat.icon === "percent" && "%"}
@@ -530,8 +483,8 @@ function MiniStat({ stat }) {
       </div>
 
       <div>
-        <p>{stat.title}</p>
-        <h3>{stat.value}</h3>
+        <p style={{ margin: "0 0 2px 0", fontSize: "13px", color: "#9ca3af" }}>{stat.title}</p>
+        <h3 style={{ margin: 0, fontSize: "16px", color: "#ffffff", fontWeight: "bold" }}>{stat.value}</h3>
       </div>
     </div>
   );
@@ -540,10 +493,10 @@ function MiniStat({ stat }) {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(180deg,#f8f9ff,#eef3ff)",
+    background: "linear-gradient(180deg, #0f172a, #020617)", // Premium Dark Gradient
     padding: "18px",
     fontFamily: "Arial, sans-serif",
-    color: "#101a3a"
+    color: "#f8fafc"
   },
 
   appWrap: {
@@ -554,18 +507,18 @@ const styles = {
 
   loadingPage: {
     minHeight: "100vh",
-    background: "#f7f8ff",
+    background: "#0f172a",
     display: "flex",
     justifyContent: "center",
     alignItems: "center"
   },
 
   loadingCard: {
-    background: "white",
+    background: "#1e293b",
     padding: "28px",
     borderRadius: "28px",
     textAlign: "center",
-    boxShadow: "0 18px 45px rgba(124,58,237,.18)"
+    boxShadow: "0 18px 45px rgba(0,0,0,.4)"
   },
 
   loadingPiggy: {
@@ -577,18 +530,18 @@ const styles = {
   heroCard: {
     height: "230px",
     borderRadius: "32px",
-    background: "linear-gradient(135deg,#4d2df4,#7c3aed,#ec4899)",
+    background: "linear-gradient(135deg,#31108f,#5b21b6,#db2777)", // Richer Dark Gradient for Hero
     position: "relative",
     overflow: "hidden",
     padding: "36px 44px",
     color: "white",
-    boxShadow: "0 20px 42px rgba(124,58,237,.32)"
+    boxShadow: "0 20px 42px rgba(0,0,0,.4)"
   },
 
   networkLayer: {
     position: "absolute",
     inset: 0,
-    opacity: 0.35
+    opacity: 0.25
   },
 
   netDotA: {
@@ -667,7 +620,7 @@ const styles = {
     top: "25px",
     width: "150px",
     height: "150px",
-    border: "1px solid white",
+    border: "1px solid rgba(255,255,255,0.2)",
     borderRadius: "50%"
   },
 
@@ -677,7 +630,7 @@ const styles = {
     bottom: "-35px",
     width: "170px",
     height: "170px",
-    border: "1px solid white",
+    border: "1px solid rgba(255,255,255,0.2)",
     borderRadius: "50%"
   },
 
@@ -699,10 +652,6 @@ const styles = {
     fontWeight: "600"
   },
 
-  eyeIcon: {
-    fontSize: "18px"
-  },
-
   heroAmount: {
     margin: "18px 0 8px",
     fontSize: "50px",
@@ -712,7 +661,7 @@ const styles = {
 
   heroGain: {
     margin: 0,
-    color: "#4ade80",
+    color: "#34d399",
     fontSize: "22px",
     fontWeight: "900"
   },
@@ -738,7 +687,7 @@ const styles = {
     bottom: "0",
     width: "280px",
     height: "160px",
-    opacity: 0.22
+    opacity: 0.15
   },
 
   graphArrow: {
@@ -832,7 +781,7 @@ const styles = {
     fontWeight: "900",
     fontSize: "22px",
     zIndex: 8,
-    boxShadow: "0 8px 16px rgba(0,0,0,.2)"
+    boxShadow: "0 8px 16px rgba(0,0,0,.3)"
   },
 
   pigBody: {
@@ -841,9 +790,9 @@ const styles = {
     left: 0,
     width: "135px",
     height: "88px",
-    background: "linear-gradient(135deg,#ffc2d1,#fb7185)",
+    background: "linear-gradient(135deg,#ffb3c6,#f43f5e)",
     borderRadius: "58px 62px 46px 46px",
-    boxShadow: "inset -10px -8px 0 rgba(244,63,94,.16),0 18px 22px rgba(0,0,0,.22)"
+    boxShadow: "inset -10px -8px 0 rgba(0,0,0,.2),0 18px 22px rgba(0,0,0,.3)"
   },
 
   pigBodySmall: {
@@ -852,9 +801,9 @@ const styles = {
     left: 0,
     width: "105px",
     height: "68px",
-    background: "linear-gradient(135deg,#ffc2d1,#fb7185)",
+    background: "linear-gradient(135deg,#ffb3c6,#f43f5e)",
     borderRadius: "45px 48px 35px 35px",
-    boxShadow: "inset -8px -6px 0 rgba(244,63,94,.16)"
+    boxShadow: "inset -8px -6px 0 rgba(0,0,0,.2)"
   },
 
   pigEarLeft: {
@@ -863,7 +812,7 @@ const styles = {
     left: "25px",
     width: "30px",
     height: "30px",
-    background: "#ff8fab",
+    background: "#ff758f",
     borderRadius: "10px 22px 10px 22px",
     transform: "rotate(28deg)"
   },
@@ -874,7 +823,7 @@ const styles = {
     right: "22px",
     width: "25px",
     height: "25px",
-    background: "#ff8fab",
+    background: "#ff758f",
     borderRadius: "10px 20px 10px 20px",
     transform: "rotate(45deg)"
   },
@@ -905,7 +854,7 @@ const styles = {
     top: "36px",
     width: "36px",
     height: "26px",
-    background: "#fb7185",
+    background: "#f43f5e",
     borderRadius: "50%",
     color: "#7f1d1d",
     fontSize: "9px",
@@ -920,7 +869,7 @@ const styles = {
     left: "35px",
     width: "20px",
     height: "16px",
-    background: "#fb7185",
+    background: "#f43f5e",
     borderRadius: "0 0 8px 8px"
   },
 
@@ -930,7 +879,7 @@ const styles = {
     right: "34px",
     width: "20px",
     height: "16px",
-    background: "#fb7185",
+    background: "#f43f5e",
     borderRadius: "0 0 8px 8px"
   },
 
@@ -938,7 +887,7 @@ const styles = {
     position: "absolute",
     left: "-14px",
     top: "35px",
-    color: "#fb7185",
+    color: "#f43f5e",
     fontSize: "20px",
     fontWeight: "900"
   },
@@ -955,7 +904,7 @@ const styles = {
     position: "absolute",
     right: "-12px",
     bottom: "22px",
-    color: "#bfdbfe",
+    color: "#93c5fd",
     fontSize: "20px"
   },
 
@@ -963,25 +912,25 @@ const styles = {
     position: "absolute",
     top: "45px",
     right: "-25px",
-    color: "#f0abfc",
+    color: "#f472b6",
     fontSize: "18px"
   },
 
   quickPanel: {
     height: "92px",
-    background: "white",
+    background: "#1e293b", // Dark Panel Background
     borderRadius: "28px",
     margin: "18px 4px 0",
     display: "grid",
     gridTemplateColumns: "1fr 1px 1fr",
     alignItems: "center",
     padding: "0 26px",
-    boxShadow: "0 12px 30px rgba(16,24,40,.08)"
+    boxShadow: "0 12px 30px rgba(0,0,0,.2)"
   },
 
   quickDivider: {
     height: "46px",
-    background: "#d9deea"
+    background: "#334155"
   },
 
   quickAction: {
@@ -990,7 +939,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "16px",
-    color: "#101a3a",
+    color: "#ffffff",
     textAlign: "left",
     cursor: "pointer"
   },
@@ -999,33 +948,33 @@ const styles = {
     width: 52,
     height: 52,
     borderRadius: "18px",
-    background: "linear-gradient(135deg,#7537f4,#9b4dff)",
+    background: "linear-gradient(135deg,#6d28d9,#8b5cf6)",
     color: "white",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontSize: 24,
-    boxShadow: "0 8px 18px rgba(124,58,237,.28)"
+    boxShadow: "0 8px 18px rgba(139,92,246,.2)"
   },
 
   quickIconGreen: {
     width: 52,
     height: 52,
     borderRadius: "18px",
-    background: "linear-gradient(135deg,#18d78b,#0bbf78)",
+    background: "linear-gradient(135deg,#059669,#10b981)",
     color: "white",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontSize: 24,
-    boxShadow: "0 8px 18px rgba(34,197,94,.28)"
+    boxShadow: "0 8px 18px rgba(16,185,129,.2)"
   },
 
   sectionTitle: {
     margin: "34px 0 22px",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
+    justify Center: "center",
     gap: "18px"
   },
 
@@ -1033,14 +982,14 @@ const styles = {
     width: "82px",
     height: "4px",
     borderRadius: "20px",
-    background: "linear-gradient(90deg,transparent,#8b5cf6,#ec4899)"
+    background: "linear-gradient(90deg,transparent,#6d28d9,#db2777)"
   },
 
   sectionLineRight: {
     width: "82px",
     height: "4px",
     borderRadius: "20px",
-    background: "linear-gradient(90deg,#ec4899,#8b5cf6,transparent)"
+    background: "linear-gradient(90deg,#db2777,#6d28d9,transparent)"
   },
 
   activeGrid: {
@@ -1050,23 +999,23 @@ const styles = {
   },
 
   savePlanCard: {
-    background: "linear-gradient(135deg,#22d686,#00b972)",
+    background: "linear-gradient(135deg,#065f46,#047857)", // Darker Emerald
     borderRadius: "28px",
     minHeight: "260px",
     padding: "22px",
     position: "relative",
     overflow: "hidden",
-    boxShadow: "0 15px 32px rgba(0,185,114,.28)"
+    boxShadow: "0 15px 32px rgba(4,120,87,.2)"
   },
 
   onePlanCard: {
-    background: "linear-gradient(135deg,#27a7ff,#0877ec)",
+    background: "linear-gradient(135deg,#1e3a8a,#1d4ed8)", // Darker Blue
     borderRadius: "28px",
     minHeight: "260px",
     padding: "22px",
     position: "relative",
     overflow: "hidden",
-    boxShadow: "0 15px 32px rgba(8,119,236,.28)"
+    boxShadow: "0 15px 32px rgba(29,78,216,.2)"
   },
 
   planGlow: {
@@ -1075,7 +1024,7 @@ const styles = {
     top: "-45px",
     width: "150px",
     height: "150px",
-    background: "rgba(255,255,255,.18)",
+    background: "rgba(255,255,255,.1)",
     borderRadius: "50%"
   },
 
@@ -1085,7 +1034,7 @@ const styles = {
     bottom: "-30px",
     width: "120px",
     height: "120px",
-    border: "18px solid rgba(255,255,255,.08)",
+    border: "18px solid rgba(255,255,255,.05)",
     borderRadius: "50%"
   },
 
@@ -1101,11 +1050,11 @@ const styles = {
     width: "118px",
     height: "118px",
     borderRadius: "50%",
-    background: "white",
+    background: "#1f2937", // Dark circle for icon background
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 12px 26px rgba(0,0,0,.18)"
+    boxShadow: "0 12px 26px rgba(0,0,0,.3)"
   },
 
   planHeadingBox: {
@@ -1113,8 +1062,6 @@ const styles = {
     color: "white",
     maxWidth: "210px"
   },
-
-  planHeadingBox_h1: {},
 
   plantArt: {
     position: "relative",
@@ -1128,7 +1075,7 @@ const styles = {
     top: "22px",
     width: "6px",
     height: "35px",
-    background: "#16a34a",
+    background: "#059669",
     borderRadius: "8px"
   },
 
@@ -1138,7 +1085,7 @@ const styles = {
     top: "23px",
     width: "28px",
     height: "18px",
-    background: "#22c55e",
+    background: "#10b981",
     borderRadius: "100% 0 100% 0",
     transform: "rotate(-20deg)"
   },
@@ -1149,7 +1096,7 @@ const styles = {
     top: "15px",
     width: "30px",
     height: "20px",
-    background: "#4ade80",
+    background: "#34d399",
     borderRadius: "0 100% 0 100%",
     transform: "rotate(20deg)"
   },
@@ -1160,7 +1107,7 @@ const styles = {
     left: "22px",
     width: "38px",
     height: "24px",
-    background: "#f97316",
+    background: "#ea580c",
     borderRadius: "0 0 12px 12px"
   },
 
@@ -1191,7 +1138,7 @@ const styles = {
     top: "8px",
     width: "28px",
     height: "55px",
-    background: "linear-gradient(180deg,#e0f2fe,#38bdf8)",
+    background: "linear-gradient(180deg,#f0f9ff,#7dd3fc)",
     borderRadius: "50% 50% 18px 18px",
     transform: "rotate(25deg)"
   },
@@ -1202,7 +1149,7 @@ const styles = {
     top: "27px",
     width: "12px",
     height: "12px",
-    background: "#2563eb",
+    background: "#1d4ed8",
     borderRadius: "50%"
   },
 
@@ -1212,7 +1159,7 @@ const styles = {
     bottom: "20px",
     width: "18px",
     height: "18px",
-    background: "#ef4444",
+    background: "#dc2626",
     clipPath: "polygon(100% 0,0 100%,100% 100%)"
   },
 
@@ -1222,7 +1169,7 @@ const styles = {
     bottom: "14px",
     width: "18px",
     height: "18px",
-    background: "#ef4444",
+    background: "#dc2626",
     clipPath: "polygon(0 0,0 100%,100% 100%)"
   },
 
@@ -1232,7 +1179,7 @@ const styles = {
     bottom: "4px",
     width: "28px",
     height: "28px",
-    background: "linear-gradient(180deg,#facc15,#f97316)",
+    background: "linear-gradient(180deg,#facc15,#ea580c)",
     borderRadius: "50% 50% 50% 0",
     transform: "rotate(30deg)"
   },
@@ -1247,39 +1194,38 @@ const styles = {
   },
 
   planContent_h2: {
-  margin: "0 0 10px 0",
-  fontSize: "28px",
-  lineHeight: "1.1",
-  fontWeight: "900"
-},
+    margin: "0 0 10px 0",
+    fontSize: "28px",
+    lineHeight: "1.1",
+    fontWeight: "900"
+  },
 
-planContent_p: {
-  margin: 0,
-  fontSize: "16px",
-  lineHeight: "1.35",
-  opacity: 0.95
-},
+  planContent_p: {
+    margin: 0,
+    fontSize: "16px",
+    lineHeight: "1.35",
+    opacity: 0.85
+  },
 
- planButton: {
-  position: "absolute",
-  left: "22px",
-  right: "22px",
-  bottom: "18px",
-  height: "54px",
-  border: "none",
-  borderRadius: "17px",
-  background: "white",
-  fontSize: "20px",
-  fontWeight: "900",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  paddingTop: "0",
-  paddingBottom: "0",
-  cursor: "pointer",
-  boxShadow: "0 10px 22px rgba(0,0,0,.18)",
-  lineHeight: "1"
-},
+  planButton: {
+    position: "absolute",
+    left: "22px",
+    right: "22px",
+    bottom: "18px",
+    height: "54px",
+    border: "none",
+    borderRadius: "17px",
+    fontSize: "20px",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingLeft: "20px",
+    paddingRight: "15px",
+    cursor: "pointer",
+    boxShadow: "0 10px 22px rgba(0,0,0,.3)",
+    lineHeight: "1"
+  },
 
   comingGrid: {
     display: "grid",
@@ -1294,28 +1240,28 @@ planContent_p: {
     padding: "20px",
     position: "relative",
     textAlign: "left",
-    boxShadow: "0 12px 30px rgba(16,24,40,.08)",
+    boxShadow: "0 12px 30px rgba(0,0,0,.2)",
     overflow: "hidden",
     cursor: "pointer"
   },
 
   comingGold: {
-    background: "linear-gradient(135deg,#fff6d6,#fffaf0)"
+    background: "linear-gradient(135deg,#2e2509,#1e1805)" // Dark Gold Theme
   },
 
   comingSilver: {
-    background: "linear-gradient(135deg,#f6f8ff,#ffffff)"
+    background: "linear-gradient(135deg,#1e293b,#0f172a)" // Dark Silver Theme
   },
 
   comingRd: {
-    background: "linear-gradient(135deg,#fff0ec,#fff9f6)"
+    background: "linear-gradient(135deg,#2d1510,#1c0d0a)" // Dark RD Theme
   },
 
   comingRibbon: {
     position: "absolute",
     top: 0,
     left: 22,
-    background: "linear-gradient(135deg,#9b5cf7,#b65cff)",
+    background: "linear-gradient(135deg,#7c3aed,#9f1239)",
     color: "white",
     padding: "8px 17px",
     borderBottomLeftRadius: 12,
@@ -1329,19 +1275,19 @@ planContent_p: {
     width: "70px",
     height: "70px",
     borderRadius: "22px",
-    background: "rgba(255,255,255,.75)",
+    background: "#334155",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 8px 18px rgba(0,0,0,.08)"
+    boxShadow: "0 8px 18px rgba(0,0,0,.2)"
   },
 
   goldIcon: {
     width: "46px",
     height: "46px",
     borderRadius: "50%",
-    background: "linear-gradient(135deg,#facc15,#f59e0b)",
-    color: "#92400e",
+    background: "linear-gradient(135deg,#eab308,#ca8a04)",
+    color: "#451a03",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1353,8 +1299,8 @@ planContent_p: {
     width: "46px",
     height: "46px",
     borderRadius: "50%",
-    background: "linear-gradient(135deg,#e5e7eb,#94a3b8)",
-    color: "#334155",
+    background: "linear-gradient(135deg,#94a3b8,#64748b)",
+    color: "#0f172a",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1375,7 +1321,7 @@ planContent_p: {
     width: "48px",
     height: "32px",
     borderRadius: "20px",
-    background: "#fb7185"
+    background: "#e11d48"
   },
 
   miniPigEye: {
@@ -1407,10 +1353,10 @@ planContent_p: {
     left: 18,
     right: 18,
     bottom: 14,
-    background: "rgba(155,92,247,.10)",
+    background: "rgba(124,58,237,.15)",
     borderRadius: 15,
     padding: "11px",
-    color: "#7c3aed",
+    color: "#a78bfa",
     textAlign: "center",
     fontWeight: "900"
   },
@@ -1419,12 +1365,12 @@ planContent_p: {
     marginTop: "24px",
     minHeight: "130px",
     borderRadius: "28px",
-    background: "linear-gradient(135deg,#2500a8,#4300d8,#120082)",
+    background: "linear-gradient(135deg,#1e1b4b,#311042,#0f172a)", // Premium Cyberpunk Dark
     color: "white",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-around",
-    boxShadow: "0 15px 30px rgba(37,0,168,.22)",
+    boxShadow: "0 15px 30px rgba(0,0,0,.3)",
     padding: "18px"
   },
 
@@ -1438,17 +1384,17 @@ planContent_p: {
 
   motiveChart: {
     fontSize: "70px",
-    color: "#b467ff"
+    color: "#a78bfa"
   },
 
   statsPanel: {
     minHeight: "86px",
-    background: "white",
+    background: "#1e293b", // Dark Stats Panel
     marginTop: "20px",
     borderRadius: "26px",
     display: "grid",
     gridTemplateColumns: "repeat(4,1fr)",
-    boxShadow: "0 12px 30px rgba(16,24,40,.08)",
+    boxShadow: "0 12px 30px rgba(0,0,0,.2)",
     overflow: "hidden"
   },
 
@@ -1457,7 +1403,7 @@ planContent_p: {
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
-    borderRight: "1px solid #e3e7f0",
+    borderRight: "1px solid #334155",
     padding: "12px"
   },
 
@@ -1474,30 +1420,30 @@ planContent_p: {
   },
 
   eyeBtn: {
-  border: "2px solid rgba(255,255,255,.7)",
-  background: "rgba(255,255,255,.12)",
-  color: "white",
-  width: "42px",
-  height: "30px",
-  borderRadius: "10px",
-  cursor: "pointer",
-  fontSize: "15px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center"
-},
+    border: "2px solid rgba(255,255,255,.4)",
+    background: "rgba(255,255,255,.08)",
+    color: "white",
+    width: "42px",
+    height: "30px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontSize: "15px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
 
-planSubtitleYellow: {
-  display: "inline-block",
-  marginTop: "8px",
-  background: "#facc15",
-  color: "#111827",
-  padding: "6px 14px",
-  borderRadius: "14px",
-  fontWeight: "900",
-  fontSize: "14px",
-  boxShadow: "0 6px 12px rgba(0,0,0,.12)"
-},
+  planSubtitleYellow: {
+    display: "inline-block",
+    marginTop: "8px",
+    background: "#eab308",
+    color: "#0f172a",
+    padding: "6px 14px",
+    borderRadius: "14px",
+    fontWeight: "900",
+    fontSize: "14px",
+    boxShadow: "0 6px 12px rgba(0,0,0,.2)"
+  },
 
   "@media": {}
 };
