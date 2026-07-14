@@ -971,12 +971,13 @@ const styles = {
   },
 
   sectionTitle: {
-    margin: "34px 0 22px",
-    display: "flex",
-    alignItems: "center",
-    justify Center: "center",
-    gap: "18px"
-  },
+  margin: "34px 0 22px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center", //  ঠিক করা হয়েছে
+  gap: "18px"
+},
+
 
   sectionLineLeft: {
     width: "82px",
