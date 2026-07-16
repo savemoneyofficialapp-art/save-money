@@ -919,45 +919,40 @@ transporter.verify(function (error, success) {
 });
 
 async function sendEmail(to, subject, message) {
-
- try {
-  await axios.post(
-    "https://api.brevo.com/v3/smtp/email",
-    {
-      sender: {
-        name: "Save Money",
-        email: process.env.EMAIL_USER
+  try {
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "Save Money",
+          email: process.env.EMAIL_USER
+        },
+        to: [
+          {
+            email: to
+          }
+        ],
+        subject: subject,
+        htmlContent: `
+          <div style="font-family:Arial;padding:20px">
+            <h2 style="color:#7c3aed">Save Money Notification</h2>
+            <p>${message}</p>
+          </div>
+        `
       },
-      to: [
-        {
-          email: email
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json"
         }
-      ],
-      subject: "Save Money Password Reset OTP",
-      htmlContent: `
-        <div style="font-family:Arial;padding:20px">
-          <h2 style="color:#7c3aed">Save Money</h2>
-          <p>Your password reset OTP is:</p>
-          <h1 style="letter-spacing:6px;color:#16a34a">${otp}</h1>
-          <p>This OTP will expire in 5 minutes.</p>
-        </div>
-      `
-    },
-    {
-      headers: {
-        "api-key": process.env.BREVO_API_KEY,
-        "Content-Type": "application/json"
       }
-    }
-  );
-} catch (mailErr) {
-  console.log("BREVO API EMAIL ERROR:", mailErr.response?.data || mailErr.message);
+    );
+  } catch (mailErr) {
+    console.log("BREVO API EMAIL ERROR:", mailErr.response?.data || mailErr.message);
+    throw mailErr;
+  }
+}
 
-  return res.status(500).json({
-    msg: "Email send failed"
-  });
-}
-}
 
 app.post("/send-email-otp", async (req, res) => {
 
@@ -3735,11 +3730,6 @@ app.get("/all-users", auth, adminAuth, async (req, res) => {
 
 });
 
-app.get("/all-users",auth, adminAuth, async (req, res) => {
-  const data = await User.find();
-  res.json(data);
-});
-
 app.get("/pending-kyc", auth, adminAuth, async (req,res)=>{
 
 try{
@@ -4073,7 +4063,7 @@ app.post("/admin-withdraw-list", async(req,res)=>{
 try{
 
 const requests =
-await AutoWithdrawal.find()
+await AutoWithdraw.find()
 .sort({
 createdAt:-1
 });
@@ -5173,41 +5163,29 @@ app.post("/broadcast",
 auth,
 adminAuth,
 async (req, res) => {
+  try {
+    const { title, message } = req.body;
+    const users = await User.find();
 
-  const { title, message } = req.body;
+    for (let u of users) { // ✅ team পরিবর্তন করে users করা হলো
+      await Notification.create({
+        email: u.email, // "all" এর পরিবর্তে নির্দিষ্ট ইউজারের ইমেইল বা গ্লোবাল নোটিফিকেশন লজিক
+        title,
+        message,
+        read: false
+      });
 
-  const users = await User.find();
-
-  for (let u of team) {
-
-    await Notification.create({
-  email: "all",
-  title,
-  message,
-  read: false
-});
-
-    const socketId =
-      onlineUsers[u.email];
-
-    if (socketId) {
-
-      io.to(socketId).emit(
-        "new_notification",
-        {
-          title,
-          message
-        }
-      );
-
+      const socketId = onlineUsers[u.email];
+      if (socketId) {
+        io.to(socketId).emit("new_notification", { title, message });
+      }
     }
+    res.json({ msg: "Broadcast Sent" });
+  } catch (err) {
+    res.status(500).json({ msg: "Server Error" });
   }
-
-  res.json({
-    msg:"Broadcast Sent"
-  });
-
 });
+
 
 app.post("/send-notification", async (req, res) => {
 
@@ -5220,7 +5198,7 @@ app.post("/send-notification", async (req, res) => {
   });
 
   // 2️⃣ realtime send
-  if (users[email]) {
+  if (onlineUsers[email]) {
     io.to(users[email]).emit("new-notification", newNotification);
   }
 
