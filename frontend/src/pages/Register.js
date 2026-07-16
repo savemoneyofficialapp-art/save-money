@@ -19,8 +19,10 @@ export default function Register() {
   // Email Verification States
   const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isOtpVerified, setIsOtpVerified] = useState(false); // ওটিপি ভেরিফাই স্টেট
   const [otpTimer, setOtpTimer] = useState(0);
   const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false); // ভেরিফিকেশন লোডিং
 
   // OTP Countdown Timer Effect
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function Register() {
       const data = await res.json();
       if (res.ok || data.success) {
         setIsOtpSent(true);
+        setIsOtpVerified(false); // নতুন করে ওটিপি পাঠালে আগের ভেরিফিকেশন রিসেট হবে
         setOtpTimer(120); // 2 minutes countdown
         toast.success("Verification code sent to your email!");
       } else {
@@ -63,6 +66,39 @@ export default function Register() {
       toast.error("Failed to connect for sending OTP");
     } finally {
       setSendingOtp(false);
+    }
+  };
+
+  // Verify OTP Function (নতুন ট্যাব/বাটনের লজিক)
+  const verifyOtpCode = async () => {
+    if (!otp || otp.trim().length !== 6) {
+      toast.warning("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    try {
+      setVerifyingOtp(true);
+      const res = await fetch(`${API}/verify-email-otp`, { // আপনার এপিআই এন্ডপয়েন্ট অনুযায়ী নাম পরিবর্তন করতে পারেন
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: email.trim().toLowerCase(), 
+          otp: otp.trim() 
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok || data.success) {
+        setIsOtpVerified(true);
+        toast.success("Email verified successfully!");
+      } else {
+        toast.error(data.msg || "Invalid OTP");
+      }
+    } catch (err) {
+      console.log(err);
+      toast.error("Verification failed. Try again.");
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
@@ -78,7 +114,12 @@ export default function Register() {
     }
 
     if (!isOtpSent || !otp) {
-      toast.warning("Please request and enter your email OTP verification");
+      toast.warning("Please enter your email OTP verification code");
+      return;
+    }
+
+    if (!isOtpVerified) {
+      toast.warning("Please verify your email OTP first before registration");
       return;
     }
 
@@ -95,7 +136,7 @@ export default function Register() {
           mobile: mobile.trim(),
           email: email.trim().toLowerCase(),
           password,
-          otp: otp.trim(), // Verification code included
+          otp: otp.trim(),
           referCode: referCode.trim(),
           termsAccepted: true
         })
@@ -168,33 +209,58 @@ export default function Register() {
           <InputBox color="#7c3aed" icon="📱" placeholder="Mobile Number" value={mobile} setValue={setMobile} />
           
           {/* Email input with inline OTP dispatch button */}
-          <div style={{ ...styles.inputWrap, borderColor: "#0ea5e9" }}>
-            <div style={{ ...styles.iconBox, background: "linear-gradient(135deg,#0ea5e9,#7c3aed)" }}>
-              ✉️
+          <div style={{ ...styles.inputWrap, borderColor: isOtpVerified ? "#22c55e" : "#0ea5e9" }}>
+            <div style={{ ...styles.iconBox, background: isOtpVerified ? "linear-gradient(135deg,#22c55e,#10b981)" : "linear-gradient(135deg,#0ea5e9,#7c3aed)" }}>
+              {isOtpVerified ? "✓" : "✉️"}
             </div>
             <input
               style={styles.input}
               placeholder="Email ID"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isOtpSent}
+              disabled={isOtpVerified}
             />
             <button
               style={{
                 ...styles.otpInlineBtn,
-                opacity: (sendingOtp || otpTimer > 0) ? 0.6 : 1
+                opacity: (sendingOtp || otpTimer > 0 || isOtpVerified) ? 0.6 : 1,
+                background: isOtpVerified ? "#10b981" : "linear-gradient(135deg,#0ea5e9,#7c3aed)"
               }}
               type="button"
               onClick={sendOtpCode}
-              disabled={sendingOtp || otpTimer > 0}
+              disabled={sendingOtp || otpTimer > 0 || isOtpVerified}
             >
-              {sendingOtp ? "Sending..." : otpTimer > 0 ? `${otpTimer}s` : isOtpSent ? "Resend" : "Send OTP"}
+              {isOtpVerified ? "Verified" : sendingOtp ? "Sending..." : otpTimer > 0 ? `${otpTimer}s` : isOtpSent ? "Resend" : "Send OTP"}
             </button>
           </div>
 
-          {/* Conditional Input Box for Email OTP verification */}
+          {/* Conditional Input Box for Email OTP verification with NEW Verify Tab */}
           {isOtpSent && (
-            <InputBox color="#f43f5e" icon="🔑" placeholder="Enter 6-Digit Email OTP" value={otp} setValue={setOtp} />
+            <div style={{ ...styles.inputWrap, borderColor: isOtpVerified ? "#22c55e" : "#f43f5e" }}>
+              <div style={{ ...styles.iconBox, background: isOtpVerified ? "linear-gradient(135deg,#22c55e,#10b981)" : "linear-gradient(135deg,#f43f5e,#7c3aed)" }}>
+                🔑
+              </div>
+              <input
+                style={styles.input}
+                placeholder="Enter 6-Digit Email OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                disabled={isOtpVerified}
+                maxLength={6}
+              />
+              <button
+                style={{
+                  ...styles.otpInlineBtn,
+                  background: isOtpVerified ? "#22c55e" : "linear-gradient(135deg,#f43f5e,#e11d48)",
+                  opacity: verifyingOtp ? 0.6 : 1
+                }}
+                type="button"
+                onClick={verifyOtpCode}
+                disabled={verifyingOtp || isOtpVerified}
+              >
+                {verifyingOtp ? "Verifying..." : isOtpVerified ? "Verified ✓" : "Verify OTP"}
+              </button>
+            </div>
           )}
 
           <div style={{ ...styles.inputWrap, borderColor: "#10b981" }}>
@@ -219,7 +285,6 @@ export default function Register() {
             </button>
           </div>
 
-          
           <InputBox color="#f59e0b" icon="🎁" placeholder="Refer Code Optional" value={referCode} setValue={setReferCode} />
 
           {/* Checkbox triggers T&C verification explicitly */}
@@ -229,7 +294,6 @@ export default function Register() {
               checked={terms}
               onChange={(e) => {
                 e.preventDefault();
-                // User cannot just toggle, they must accept terms from modal
                 if (!terms) {
                   setShowTerms(true);
                 } else {
@@ -256,7 +320,7 @@ export default function Register() {
           <button
             style={{
               ...styles.registerBtn,
-              opacity: loading ? 0.7 : 1
+              opacity: (loading || !isOtpVerified) ? 0.7 : 1
             }}
             onClick={register}
             disabled={loading}
@@ -283,7 +347,7 @@ export default function Register() {
 
               <p style={styles.disclaimerText}>
                 Save Money is a private digital saving and investment initiative.
-               Investment returns may vary based on company performance, market
+                Investment returns may vary based on company performance, market
                 conditions, internal policies and future updates. Early closure may
                 include deduction as per platform policy. Referral, performance,
                 team, royalty and reward benefits are subject to eligibility rules.
@@ -455,7 +519,9 @@ function Benefit({ icon, title, text }) {
   );
 }
 
+// styles অবজেক্টের বাকি অংশ অপরিবর্তিত রয়েছে, তবে ইনপুটের কাটা অংশ ঠিক করা হলো
 const styles = {
+  // ... (আপনার আগের সব স্টাইল এখানে সেম থাকবে)
   page: {
     minHeight: "100vh",
     background: "linear-gradient(135deg,#ffd18a,#eef3ff,#dff7ff)",
