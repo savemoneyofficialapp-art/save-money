@@ -30,6 +30,9 @@ export default function Refer() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  // নতুন স্টেট: পেন্ডিং রেফারাল দেখার সাব-মডাল
+  const [showPendingModal, setShowPendingModal] = useState(false);
+
   // স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ দেখানোর জন্য স্টেট
   const [statusOverlay, setStatusOverlay] = useState({
     show: false,
@@ -48,7 +51,7 @@ export default function Refer() {
   // স্ক্রোল পজিশন ফিক্স করার জন্য useEffect
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, [bonusModal]); // কোনো মডাল খুললে বা পেজে ঢুকলে স্ক্রোল পজিশন ঠিক থাকবে
+  }, [bonusModal]);
 
   useEffect(() => {
     loadReferData(selectedMonth, selectedYear);
@@ -77,7 +80,7 @@ export default function Refer() {
         setHistory(Array.isArray(data.history) ? data.history : []);
         setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
         setPerformance(data.performance || {});
-        setTeam(data.team || {}); // টিম ডাটা সঠিকভাবে সেট করা হচ্ছে
+        setTeam(data.team || {}); 
         setRoyalty(data.royalty || {});
         setTreeData(data.treeData || {});
         setReferBonus(data.referBonus || {});
@@ -215,6 +218,9 @@ export default function Refer() {
       </div>
     );
   }
+
+  // পেন্ডিং রেফারাল ফিল্টারিং লজিক
+  const pendingRefers = history.filter((x) => !x.firstInvestmentDone);
 
   return (
     <div style={styles.page}>
@@ -554,11 +560,20 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- Refer Modal (Pending Refer অপশন যুক্ত করা হয়েছে) --- */}
+      {/* --- Refer Modal (এখানে নতুন বাটনটি যোগ করা হয়েছে) --- */}
       {bonusModal === "refer" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>🎁 Refer Bonus</h2>
           <p style={styles.successText}>Congratulations! Every direct user's first investment gives you Refer Bonus.</p>
+          
+          {/* নতুন বাটন: পেন্ডিং রেফারাল লিস্ট দেখার জন্য */}
+          <button 
+            style={styles.pendingToggleBtn}
+            onClick={() => setShowPendingModal(true)}
+          >
+            ⏳ View Pending Refers ({pendingRefers.length})
+          </button>
+
           <h1>{money(referBonus.balance || 0)}</h1>
 
           <p>Today's Bonus : <b> {money(referBonus.todayBonus || 0)}</b></p>
@@ -573,39 +588,13 @@ export default function Refer() {
             <div>Inactive Refers<br /><b>{history.filter((x) => x.status === "Inactive").length}</b></div>
           </div>
 
-          {/* --- নতুন যোগ করা Pending Refer সেকশন --- */}
-          <div style={{ marginTop: 20, padding: 15, background: "#fff7ed", borderRadius: 16, border: "1px dashed #f97316" }}>
-            <h3 style={{ margin: "0 0 10px 0", color: "#c2410c", display: "flex", alignItems: "center", gap: 6 }}>
-              ⏳ Pending Refers (No Investment Yet)
-            </h3>
-            {history.filter((x) => !x.firstInvestmentDone).length === 0 ? (
-              <p style={{ margin: 0, color: "#9a3412", fontSize: 14 }}>No pending users found.</p>
-            ) : (
-              <div style={{ maxHeight: 150, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
-                {history.filter((x) => !x.firstInvestmentDone).map((item, idx) => (
-                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#ffffff", padding: "8px 12px", borderRadius: 10, boxShadow: "0 2px 4px rgba(0,0,0,0.04)" }}>
-                    <div>
-                      <b style={{ color: "#1e293b", fontSize: 14 }}>{item.name || "Save Money User"}</b>
-                      <br />
-                      <small style={{ color: "#64748b" }}>{item.email}</small>
-                    </div>
-                    <span style={{ fontSize: 12, padding: "4px 8px", borderRadius: 6, background: "#ffedd5", color: "#ea580c", fontWeight: 700 }}>
-                      {item.kycStatus === "approved" ? "KYC Done" : "ID Created"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* ------------------------------------------- */}
-
           <div style={{ marginTop: 20 }}>
             <select
               style={styles.filterSelect}
               value={selectedMonth}
               onChange={(e) => {
                 const value = e.target.value;
-                setSelectedMonth(value); // সিলেক্টেড ভ্যালু স্টেটে থাকবে, তাই মাস চেঞ্জ হবে না বা হারাবে না
+                setSelectedMonth(value);
 
                 let targetMonth = "";
                 let targetYear = new Date().getFullYear();
@@ -620,8 +609,6 @@ export default function Refer() {
                 } else {
                   targetMonth = value;
                 }
-                
-                // এখানে API কল করা হচ্ছে কোনো উইন্ডো রিলোড ছাড়াই ডাটা রি-ফেচ করার জন্য
                 loadReferData(targetMonth, targetYear);
               }}
             >
@@ -646,6 +633,41 @@ export default function Refer() {
           <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
         </Modal>
       )}
+
+      {/* --- পেন্ডিং রেফারাল সাব-মডাল পপআপ --- */}
+      {showPendingModal && (
+        <Modal onClose={() => setShowPendingModal(false)}>
+          <h2 style={{ color: "#ea580c" }}>⏳ Pending Refers List</h2>
+          <p style={{ color: "#64748b", fontSize: 14 }}>These users registered but have not made their first investment yet.</p>
+          
+          <div style={{ maxHeight: "350px", overflowY: "auto", margin: "20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+            {pendingRefers.length === 0 ? (
+              <p style={{ textAlign: "center", color: "#94a3b8", padding: 20 }}>No pending refers available.</p>
+            ) : (
+              pendingRefers.map((item, idx) => (
+                <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "12px 16px", borderRadius: 14, border: "1px solid #e2e8f0" }}>
+                  <div>
+                    <b style={{ color: "#1e293b", fontSize: 15 }}>{item.name || "Save Money User"}</b>
+                    <br />
+                    <small style={{ color: "#64748b" }}>{item.email}</small>
+                  </div>
+                  <span style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, background: "#ffedd5", color: "#ea580c", fontWeight: 700 }}>
+                    {item.kycStatus === "approved" ? "KYC Approved" : "Registered"}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+          
+          <button 
+            style={{ ...styles.closeBtn, background: "#ea580c", color: "#fff" }} 
+            onClick={() => setShowPendingModal(false)}
+          >
+            Back to Refer Bonus
+          </button>
+        </Modal>
+      )}
+
     </div>
   );
 }
@@ -1074,5 +1096,20 @@ const styles = {
   successText: {
     color: "#16a34a",
     fontWeight: 900
+  },
+  // পেন্ডিং বাটনের কাস্টম স্টাইল 
+  pendingToggleBtn: {
+    display: "block",
+    width: "100%",
+    padding: "14px",
+    margin: "10px 0 20px 0",
+    background: "linear-gradient(90deg, #ff9800, #f44336)",
+    color: "#fff",
+    border: "none",
+    borderRadius: "14px",
+    fontWeight: "bold",
+    fontSize: "16px",
+    cursor: "pointer",
+    boxShadow: "0 8px 20px rgba(244,67,54,0.2)"
   }
 };
