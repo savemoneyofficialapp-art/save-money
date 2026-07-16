@@ -275,7 +275,7 @@ export default function ForgotPassword() {
               <h3 style={styles.resetTitle}>Create New Password</h3>
 
               <input
-                type="password"
+                type="text"
                 placeholder="New Password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -283,7 +283,7 @@ export default function ForgotPassword() {
               />
 
               <input
-                type="password"
+                type="text"
                 placeholder="Confirm Password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
