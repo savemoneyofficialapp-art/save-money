@@ -156,7 +156,7 @@ export default function Wallet() {
       return triggerStatusOverlay("warning", "Please enter a valid amount");
     }
 
-    const MY_UPI_ID = "s-m128@ptyes";
+    const MY_UPI_ID = "savemoney@razorpay";
     const MERCHANT_NAME = "SaveMoney. Wallet";
     const txnRef = "TXN" + Date.now();
 
