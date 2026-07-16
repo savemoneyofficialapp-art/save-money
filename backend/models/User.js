@@ -275,7 +275,7 @@ totalDirect: {
 
 resetOtp: {
   type: String,
-  default: null
+  default: ""
 },
 resetOtpExpire: {
   type: Date,
