@@ -340,7 +340,6 @@ export default function Register() {
 
             <div style={styles.modalFooter}>
               <button 
-                className="decline-btn" 
                 style={styles.modalDeclineBtn} 
                 onClick={() => { setTermsAccepted(false); setShowTermsModal(false); }}
               >
@@ -397,7 +396,7 @@ const styles = {
     marginBottom: "8px",
     background: "linear-gradient(90deg, #a5b4fc, #e0e7ff)",
     WebkitBackgroundClip: "text",
-    WebkitTextFillColor: transparent => "transparent"
+    WebkitTextFillColor: "transparent"
   },
   headerSubtitle: {
     color: "#94a3b8",
@@ -443,7 +442,6 @@ const styles = {
     background: "#4f46e5",
     color: "white",
     border: "none",
-    border-radius: "10px",
     borderRadius: "10px",
     padding: "0 20px",
     fontWeight: "600",
@@ -514,7 +512,6 @@ const styles = {
     background: "linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)",
     color: "white",
     border: "none",
-    border-radius: "12px",
     borderRadius: "12px",
     padding: "15px",
     fontSize: "1rem",
@@ -528,7 +525,6 @@ const styles = {
   },
   feedbackBanner: {
     display: "flex",
-    justifyContent: "between",
     justifyContent: "space-between",
     alignItems: "center",
     padding: "12px 16px",
