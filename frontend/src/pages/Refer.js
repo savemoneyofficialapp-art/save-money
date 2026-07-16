@@ -554,7 +554,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- Refer Modal (স্থায়ীভাবে ফিক্সড ফিল্টারিং লজিক) --- */}
+      {/* --- Refer Modal (Pending Refer অপশন যুক্ত করা হয়েছে) --- */}
       {bonusModal === "refer" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>🎁 Refer Bonus</h2>
@@ -572,6 +572,32 @@ export default function Refer() {
             <div>Active Refers<br /><b>{history.filter((x) => x.status === "Active").length}</b></div>
             <div>Inactive Refers<br /><b>{history.filter((x) => x.status === "Inactive").length}</b></div>
           </div>
+
+          {/* --- নতুন যোগ করা Pending Refer সেকশন --- */}
+          <div style={{ marginTop: 20, padding: 15, background: "#fff7ed", borderRadius: 16, border: "1px dashed #f97316" }}>
+            <h3 style={{ margin: "0 0 10px 0", color: "#c2410c", display: "flex", alignItems: "center", gap: 6 }}>
+              ⏳ Pending Refers (No Investment Yet)
+            </h3>
+            {history.filter((x) => !x.firstInvestmentDone).length === 0 ? (
+              <p style={{ margin: 0, color: "#9a3412", fontSize: 14 }}>No pending users found.</p>
+            ) : (
+              <div style={{ maxHeight: 150, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+                {history.filter((x) => !x.firstInvestmentDone).map((item, idx) => (
+                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#ffffff", padding: "8px 12px", borderRadius: 10, boxShadow: "0 2px 4px rgba(0,0,0,0.04)" }}>
+                    <div>
+                      <b style={{ color: "#1e293b", fontSize: 14 }}>{item.name || "Save Money User"}</b>
+                      <br />
+                      <small style={{ color: "#64748b" }}>{item.email}</small>
+                    </div>
+                    <span style={{ fontSize: 12, padding: "4px 8px", borderRadius: 6, background: "#ffedd5", color: "#ea580c", fontWeight: 700 }}>
+                      {item.kycStatus === "approved" ? "KYC Done" : "ID Created"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* ------------------------------------------- */}
 
           <div style={{ marginTop: 20 }}>
             <select
