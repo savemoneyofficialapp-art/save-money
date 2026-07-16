@@ -655,9 +655,9 @@ export default function SaveMoney() {
             </div>
             
             <div style={styles.modalSystemInternalScrollableContentPanelBox}>
-              <p style={styles.modalSystemParagraphParaBlockTextHelpTextBangla}>Save Money SIP plan আপনাকে প্রতি মাসে নিয়মিত saving করতে সাহায্য করবে।</p>
-              <p style={styles.modalSystemParagraphParaBlockTextHelpTextBangla}>Minimum monthly SIP amount হলো ₹2000। Amount লিখে duration select করলে নিচে estimated return দেখতে পাবেন।</p>
-              <p style={styles.modalSystemParagraphParaBlockTextHelpTextBangla}>1 Year = 11%, 3 Years = 14%, 5+ Years = 20% থেকে 30% পর্যন্ত estimated return দেখানো হবে।</p>
+              <p style={styles.modalSystemParagraphParaBlockTextHelpTextBangla}>The Save Money SIP plan will help you save regularly every month.</p>
+              <p style={styles.modalSystemParagraphParaBlockTextHelpTextBangla}>The minimum monthly SIP amount is ₹2,000. Once you enter the amount and select the duration, you will see the estimated return below.</p>
+              <p style={styles.modalSystemParagraphParaBlockTextHelpTextBangla}>Estimated returns of 11% for 1 year, 14% for 3 years, and 20% to 30% for 5+ years will be displayed.</p>
             </div>
 
             <button 
