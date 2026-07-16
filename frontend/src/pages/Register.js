@@ -1,845 +1,361 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { API } from "../config";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import "./Register.css";
 
 export default function Register() {
-  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    mobile: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    referCode: "",
+    otp: ""
+  });
 
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [referCode, setReferCode] = useState("");
-  const [terms, setTerms] = useState(false);
-  const [showPass, setShowPass] = useState(false);
+  // UI & Verification States
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  
+  // Loading & Feedback States
   const [loading, setLoading] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
+  const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: "", color: "" });
 
-  const register = async () => {
-    if (!name || !mobile || !email || !password) {
-      toast.warning("Please fill all required fields");
-      return;
+  // Resend OTP Countdown Timer
+  useEffect(() => {
+    let interval = null;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
     }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
 
-    if (!terms) {
-      toast.warning("Please accept Terms & Conditions");
+  // Real-time Password Strength Estimator
+  const checkPasswordStrength = (pwd) => {
+    if (!pwd) return { score: 0, label: "", color: "" };
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+    const labels = ["Very Weak", "Weak", "Medium", "Strong"];
+    const colors = ["#ff4d4d", "#ff944d", "#ffd11a", "#00e676"];
+    return { score, label: labels[score - 1] || "Very Weak", color: colors[score - 1] || "#ff4d4d" };
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "password") {
+      setPasswordStrength(checkPasswordStrength(value));
+    }
+  };
+
+  // 1. Trigger OTP Request
+  const handleSendOtp = async () => {
+    setFeedback({ type: "", message: "" });
+
+    // Client-side Email Check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email || !emailRegex.test(formData.email)) {
+      setFeedback({ type: "error", message: "Please enter a valid email address." });
       return;
     }
 
     try {
       setLoading(true);
-
-      const res = await fetch(`${API}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          mobile: mobile.trim(),
-          email: email.trim().toLowerCase(),
-          password,
-          referCode: referCode.trim(),
-          termsAccepted: true
-        })
+      const response = await axios.post("/send-email-otp", { 
+        email: formData.email.toLowerCase() 
       });
 
-      const data = await res.json();
-
-      toast.success(data.msg || "Registered");
-
-      if (data.msg === "Registered Successfully" || data.success === true) {
-        navigate("/login");
+      if (response.data.success) {
+        setIsOtpSent(true);
+        setOtpTimer(120); // 2 minutes cooldown
+        setFeedback({ type: "success", message: "Verification code sent to your email." });
+      } else {
+        setFeedback({ type: "error", message: response.data.msg || "Failed to dispatch OTP." });
       }
     } catch (err) {
-      console.log(err);
-      toast.error("Registration failed");
+      setFeedback({ 
+        type: "error", 
+        message: err.response?.data?.msg || "Server connection failed. Try again later." 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Final Registration Process
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    setFeedback({ type: "", message: "" });
+
+    // Extra Validation Layers
+    if (formData.password !== formData.confirmPassword) {
+      setFeedback({ type: "error", message: "Passwords do not match." });
+      return;
+    }
+
+    if (passwordStrength.score < 3) {
+      setFeedback({ type: "error", message: "Please choose a stronger password containing numbers and letters." });
+      return;
+    }
+
+    if (!termsAccepted) {
+      setFeedback({ type: "error", message: "You must agree to the terms and conditions." });
+      return;
+    }
+
+    if (!isOtpSent || !formData.otp) {
+      setFeedback({ type: "error", message: "Email verification is required." });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.post("/register", {
+        ...formData,
+        termsAccepted
+      });
+
+      if (response.data.success) {
+        setFeedback({ type: "success", message: "Your registration is successful!" });
+        // Reset state after success
+        setFormData({ name: "", mobile: "", email: "", password: "", confirmPassword: "", referCode: "", otp: "" });
+        setIsOtpSent(false);
+        setTermsAccepted(false);
+      } else {
+        setFeedback({ type: "error", message: response.data.msg || "Registration failed." });
+      }
+    } catch (err) {
+      setFeedback({ 
+        type: "error", 
+        message: err.response?.data?.msg || "An error occurred during registration." 
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
+    <div className="register-page-bg">
+      <div className="register-container">
+        <div className="form-card">
+          <div className="form-header">
+            <h2>Get Started</h2>
+            <p>Create your secured transaction wallet account</p>
+          </div>
 
-        <div style={styles.leftPanel}>
-          <div style={styles.piggyWrap}>
-            <div style={styles.coin}>₹</div>
-            <div style={styles.piggy}>
-              <div style={styles.earLeft}></div>
-              <div style={styles.earRight}></div>
-              <div style={styles.eyeLeft}></div>
-              <div style={styles.eyeRight}></div>
-              <div style={styles.nose}>● ●</div>
-              <div style={styles.legOne}></div>
-              <div style={styles.legTwo}></div>
+          {/* Feedback Toast Notification */}
+          {feedback.message && (
+            <div className={`feedback-banner ${feedback.type}`}>
+              <span>{feedback.message}</span>
+              <button onClick={() => setFeedback({ type: "", message: "" })} className="close-banner">×</button>
             </div>
-          </div>
+          )}
 
-          <h1 style={styles.brand}>
-            save<br />
-            money
-          </h1>
+          <form onSubmit={handleRegisterSubmit} className="register-form">
+            <div className="grid-2-col">
+              {/* Full Name */}
+              <div className="input-box">
+                <label>Full Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Enter your name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-          <p style={styles.brandSub}>
-            Save Today, Secure Tomorrow
-          </p>
-
-          <h2 style={styles.why}>Why Join Us?</h2>
-
-          <Benefit icon="🛡️" title="100% Secure" text="Your data is safe with us" />
-          <Benefit icon="👛" title="Save More" text="Smart saving for a better future" />
-          <Benefit icon="📈" title="Grow Faster" text="Achieve your financial goals" />
-          <Benefit icon="🎁" title="Exciting Rewards" text="Earn rewards and benefits" />
-
-          <div style={styles.smallSteps}>
-            Small Steps<br />Big Savings!
-          </div>
-        </div>
-
-        <div style={styles.rightPanel}>
-          <h2 style={styles.create}>Create Your</h2>
-          <h1 style={styles.account}>Account</h1>
-
-          <p style={styles.join}>
-            Join <b>Save Money</b> and start your journey to financial freedom.
-          </p>
-
-          <InputBox color="#ff4cc4" icon="👤" placeholder="Full Name" value={name} setValue={setName} />
-          <InputBox color="#7c3aed" icon="📱" placeholder="Mobile Number" value={mobile} setValue={setMobile} />
-          <InputBox color="#0ea5e9" icon="✉️" placeholder="Email ID" value={email} setValue={setEmail} />
-
-          <div style={{ ...styles.inputWrap, borderColor: "#10b981" }}>
-            <div style={{ ...styles.iconBox, background: "linear-gradient(135deg,#10b981,#22c55e)" }}>
-              🔒
+              {/* Mobile Number */}
+              <div className="input-box">
+                <label>Mobile Number</label>
+                <input
+                  type="tel"
+                  name="mobile"
+                  placeholder="e.g. +123456789"
+                  value={formData.mobile}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
             </div>
 
-            <input
-              style={styles.input}
-              type={showPass ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            {/* Email with Side Button */}
+            <div className="input-box">
+              <label>Email Address</label>
+              <div className="email-input-group">
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="name@example.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  disabled={isOtpSent}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  className="otp-button"
+                  disabled={loading || otpTimer > 0 || !formData.email}
+                >
+                  {otpTimer > 0 ? `Resend in ${otpTimer}s` : isOtpSent ? "Resend OTP" : "Send OTP"}
+                </button>
+              </div>
+            </div>
 
-            <button
-              style={styles.eye}
-              type="button"
-              onClick={() => setShowPass(!showPass)}
-            >
-              👁
-            </button>
-          </div>
+            {/* OTP Input Field with CSS slide-down effect */}
+            {isOtpSent && (
+              <div className="input-box animate-slide-down">
+                <label>Email Verification OTP</label>
+                <input
+                  type="text"
+                  name="otp"
+                  placeholder="Enter 6-digit OTP"
+                  maxLength="6"
+                  value={formData.otp}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            )}
 
-          
-          <InputBox color="#f59e0b" icon="🎁" placeholder="Refer Code Optional" value={referCode} setValue={setReferCode} />
+            <div className="grid-2-col">
+              {/* Password */}
+              <div className="input-box">
+                <label>Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Choose password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                />
+                {/* Password strength meter */}
+                {formData.password && (
+                  <div className="strength-meter-bar">
+                    <div 
+                      className="fill" 
+                      style={{ 
+                        width: `${(passwordStrength.score / 4) * 100}%`, 
+                        backgroundColor: passwordStrength.color 
+                      }}
+                    ></div>
+                    <span className="strength-label" style={{ color: passwordStrength.color }}>
+                      {passwordStrength.label}
+                    </span>
+                  </div>
+                )}
+              </div>
 
-          <label style={styles.checkRow}>
-            <input
-              type="checkbox"
-              checked={terms}
-              onChange={(e) => setTerms(e.target.checked)}
-              style={styles.checkbox}
-            />
+              {/* Confirm Password */}
+              <div className="input-box">
+                <label>Confirm Password</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Retype password"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
 
-            <span>
-              I agree to the{" "}
-              <b
-                style={styles.termsLink}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowTerms(true);
-                }}
+            {/* Referral Code */}
+            <div className="input-box">
+              <label>Referral Code (Optional)</label>
+              <input
+                type="text"
+                name="referCode"
+                placeholder="Enter valid code"
+                value={formData.referCode}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            {/* Terms and conditions Container */}
+            <div className="checkbox-container">
+              <div 
+                className={`custom-checkbox-wrapper ${termsAccepted ? "checked" : ""}`}
+                onClick={() => setShowTermsModal(true)}
               >
-                Terms & Conditions
-              </b>
-            </span>
-          </label>
-
-          <button
-            style={{
-              ...styles.registerBtn,
-              opacity: loading ? 0.7 : 1
-            }}
-            onClick={register}
-            disabled={loading}
-          >
-            {loading ? "Creating Account..." : "Register Now"}
-            <span style={styles.arrow}>›</span>
-          </button>
-
-          <p style={styles.loginText}>
-            Already have an account?
-            <span
-              style={styles.loginLink}
-              onClick={() => navigate("/login")}
-            >
-              Login
-            </span>
-          </p>
-
-          <div style={styles.disclaimer}>
-            <div style={styles.disIcon}>🛡️</div>
-
-            <div>
-              <h3 style={styles.disclaimerTitle}>Disclaimer</h3>
-
-              <p style={styles.disclaimerText}>
-                Save Money is a private digital saving and investment initiative.
-               Investment returns may vary based on company performance, market
-                conditions, internal policies and future updates. Early closure may
-                include deduction as per platform policy. Referral, performance,
-                team, royalty and reward benefits are subject to eligibility rules.
-              </p>
+                <div className="checkbox-icon">
+                  {termsAccepted && <span className="checkmark">✔</span>}
+                </div>
+                <span className="checkbox-text">
+                  I read and accept the <span className="highlight-link">Terms & Conditions</span>
+                </span>
+              </div>
             </div>
-          </div>
 
-<div style={styles.bottomFeatures}>
-
-  <div style={styles.bottomItem}>
-    <div style={{
-      ...styles.bottomIcon,
-      background: "linear-gradient(135deg,#22c55e,#86efac)"
-    }}>
-      🛡
-    </div>
-
-    <div>
-      <div style={styles.bottomTitle}>100% Secure</div>
-      <div style={styles.bottomText}>& Safe</div>
-    </div>
-  </div>
-
-  <div style={styles.bottomItem}>
-    <div style={{
-      ...styles.bottomIcon,
-      background: "linear-gradient(135deg,#9333ea,#c084fc)"
-    }}>
-      🔒
-    </div>
-
-    <div>
-      <div style={styles.bottomTitle}>Your Data is</div>
-      <div style={styles.bottomText}>Protected</div>
-    </div>
-  </div>
-
-  <div style={styles.bottomItem}>
-    <div style={{
-      ...styles.bottomIcon,
-      background: "linear-gradient(135deg,#2563eb,#60a5fa)"
-    }}>
-      🎧
-    </div>
-
-    <div>
-      <div style={styles.bottomTitle}>24/7 Customer</div>
-      <div style={styles.bottomText}>Support</div>
-    </div>
-  </div>
-
-  <div style={styles.bottomItem}>
-    <div style={{
-      ...styles.bottomIcon,
-      background: "linear-gradient(135deg,#f59e0b,#facc15)"
-    }}>
-      ⭐
-    </div>
-
-    <div>
-      <div style={styles.bottomTitle}>Trusted by</div>
-      <div style={styles.bottomText}>Thousands</div>
-    </div>
-  </div>
-
-</div>
-
+            {/* Submit Button */}
+            <button type="submit" className="primary-register-btn" disabled={loading}>
+              {loading ? (
+                <div className="spinner"></div>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+          </form>
         </div>
       </div>
 
-      
+      {/* Modern Backdrop blur Modal for T&C */}
+      {showTermsModal && (
+        <div className="modal-backdrop-blur">
+          <div className="modal-container-card">
+            <div className="modal-header-section">
+              <h3>System Terms & Regulations</h3>
+              <p>Please review our operating guidelines carefully before accepting.</p>
+            </div>
+            
+            <div className="modal-scroll-body">
+              <div className="legal-segment">
+                <h4>1. Scope of Service</h4>
+                <p>This platform acts as a secured saving utility wallet. We provide features utilizing cutting-edge security mechanisms, designed to safeguard users assets.</p>
+              </div>
 
-      
+              <div className="legal-segment">
+                <h4>2. Identity and Multi-Accounts</h4>
+                <p>Users are allowed to operate only one unique verified profile. Creating dummy profiles, multi-accounting on the same physical device, or utilizing VPN structures to exploit referrals is strictly restricted and will cause immediate ban without refunds.</p>
+              </div>
 
-      {showTerms && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modal}>
-            <h2 style={styles.modalTitle}>Save Money Terms & Conditions</h2>
+              <div className="legal-segment">
+                <h4>3. OTP & Registration Verification</h4>
+                <p>Email verification codes are system generated. Users must not share received OTPs with any admin or third party. Our personnel will never request your account OTP.</p>
+              </div>
 
-            <div style={styles.modalBody}>
-              <p>
-                Save Money is a private digital saving and investment initiative created
-                to help users build disciplined saving habits and explore digital earning
-                opportunities through a structured platform.
-              </p>
-
-              <p>
-                Users must complete registration with correct personal information and
-                must complete KYC verification before accessing investment, referral,
-                wallet and earning related features.
-              </p>
-
-              <p>
-                Users are responsible for providing accurate mobile number, email ID,
-                USDT wallet address, PAN details, Aadhaar details and uploaded documents.
-                Wrong information may result in rejection, delay, freeze or restriction.
-              </p>
-
-              <p>
-                If a user closes an investment before completing the selected tenure,
-                the platform may deduct 20% from the principal investment amount and
-                return the remaining principal without interest, according to company
-                policy.
-              </p>
-
-              <p>
-                Save Money works as a systematic saving and investment style platform.
-                ROI may be updated, increased or decreased depending on company profit,
-                business performance, risk factors, market conditions and internal
-                decisions.
-              </p>
-
-              <p>
-                Referral income, performance bonus, team bonus, royalty bonus and daily
-                reward are not guaranteed income. These benefits depend on eligibility,
-                active status, investment completion, renewals, direct referral tasks
-                and other platform rules.
-              </p>
-
-              <p>
-                Wallet balance, rewards, referral income and other earnings may be
-                reviewed by admin before approval, withdrawal or adjustment. Any
-                suspicious activity, fake account, duplicate KYC, false referral or
-                policy violation may result in account block.
-              </p>
-
-              <p>
-                Auto withdrawal is subject to renewal status, wallet eligibility, admin
-                verification and company policy. Withdrawal delays may happen due to
-                verification, bank or wallet network issues.
-              </p>
-
-              <p>
-                Save Money aims to grow into a bigger, transparent and legally compliant
-                financial technology ecosystem in the future. Users should use the
-                platform only after understanding all possible risks and rules.
-              </p>
-
-              <p>
-                By creating an account, the user confirms that they have read,
-                understood and accepted all policies, risks, rules, conditions,
-                deductions, renewal rules, KYC rules and platform limitations.
-              </p>
+              <div className="legal-segment">
+                <h4>4. Liability & Asset Control</h4>
+                <p>Users hold the utmost responsibility for executing safe peer transactions, withdrawals, and keeping safe access keys. Transactions committed in the blockchain or system ledgers cannot be rolled back.</p>
+              </div>
             </div>
 
-            <button
-              style={styles.modalBtn}
-              onClick={() => {
-                setTerms(true);
-                setShowTerms(false);
-              }}
-            >
-              Accept & Continue
-            </button>
-
-            <button
-              style={styles.closeBtn}
-              onClick={() => setShowTerms(false)}
-            >
-              Close
-            </button>
+            <div className="modal-button-footer">
+              <button className="decline-action-btn" onClick={handleDeclineTerms}>
+                Decline
+              </button>
+              <button className="accept-action-btn" onClick={handleAcceptTerms}>
+                Accept & Agree
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
-
-function InputBox({ color, icon, placeholder, value, setValue }) {
-  return (
-    <div style={{ ...styles.inputWrap, borderColor: color }}>
-      <div style={{ ...styles.iconBox, background: `linear-gradient(135deg,${color},#7c3aed)` }}>
-        {icon}
-      </div>
-
-      <input
-        style={styles.input}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-      />
-    </div>
-  );
-}
-
-function Benefit({ icon, title, text }) {
-  return (
-    <div style={styles.benefit}>
-      <div style={styles.benefitIcon}>{icon}</div>
-
-      <div>
-        <h3>{title}</h3>
-        <p>{text}</p>
-      </div>
-    </div>
-  );
-}
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg,#ffd18a,#eef3ff,#dff7ff)",
-    padding: "25px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-
-  card: {
-    width: "100%",
-    maxWidth: "980px",
-    minHeight: "92vh",
-    background: "#fff",
-    borderRadius: "46px",
-    display: "flex",
-    overflow: "hidden",
-    boxShadow: "0 25px 70px rgba(0,0,0,.18)"
-  },
-
-  leftPanel: {
-    width: "33%",
-    background: "linear-gradient(180deg,#7c2cff,#4f20d8,#631bd9)",
-    color: "white",
-    padding: "38px 32px",
-    borderTopRightRadius: "60px",
-    borderBottomRightRadius: "60px",
-    position: "relative"
-  },
-
-  piggyWrap: {
-    position: "relative",
-    width: "145px",
-    height: "125px",
-    marginBottom: "25px"
-  },
-
-  coin: {
-    position: "absolute",
-    top: "-8px",
-    left: "52px",
-    width: "42px",
-    height: "42px",
-    borderRadius: "50%",
-    background: "#ffd43b",
-    color: "#7c3aed",
-    fontWeight: "900",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "25px",
-    zIndex: 3,
-    boxShadow: "0 8px 15px rgba(0,0,0,.2)"
-  },
-
-  piggy: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    width: "135px",
-    height: "92px",
-    borderRadius: "55px 60px 45px 45px",
-    background: "linear-gradient(135deg,#ffb3c7,#ff6aa2)",
-    boxShadow: "inset -10px -8px 0 rgba(255,0,100,.16)"
-  },
-
-  earLeft: {
-    position: "absolute",
-    top: "-18px",
-    left: "25px",
-    width: "32px",
-    height: "32px",
-    background: "#ff8ab8",
-    borderRadius: "8px 20px 8px 20px",
-    transform: "rotate(25deg)"
-  },
-
-  earRight: {
-    position: "absolute",
-    top: "-14px",
-    right: "20px",
-    width: "26px",
-    height: "26px",
-    background: "#ff8ab8",
-    borderRadius: "8px 18px 8px 18px",
-    transform: "rotate(45deg)"
-  },
-
-  eyeLeft: {
-    position: "absolute",
-    top: "28px",
-    left: "78px",
-    width: "7px",
-    height: "7px",
-    borderRadius: "50%",
-    background: "#1e293b"
-  },
-
-  eyeRight: {
-    position: "absolute",
-    top: "28px",
-    left: "100px",
-    width: "7px",
-    height: "7px",
-    borderRadius: "50%",
-    background: "#1e293b"
-  },
-
-  nose: {
-    position: "absolute",
-    right: "-8px",
-    top: "36px",
-    width: "36px",
-    height: "26px",
-    borderRadius: "50%",
-    background: "#ff8ab8",
-    color: "#7c2d12",
-    fontSize: "8px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-
-  legOne: {
-    position: "absolute",
-    bottom: "-8px",
-    left: "32px",
-    width: "20px",
-    height: "18px",
-    background: "#ff6aa2",
-    borderRadius: "0 0 8px 8px"
-  },
-
-  legTwo: {
-    position: "absolute",
-    bottom: "-8px",
-    right: "34px",
-    width: "20px",
-    height: "18px",
-    background: "#ff6aa2",
-    borderRadius: "0 0 8px 8px"
-  },
-
-  brand: {
-    fontSize: "58px",
-    lineHeight: "52px",
-    margin: 0,
-    fontWeight: "900",
-    letterSpacing: "-2px"
-  },
-
-  brandSub: {
-    marginTop: "20px",
-    fontSize: "17px"
-  },
-
-  why: {
-    color: "#ffde3b",
-    marginTop: "70px",
-    fontSize: "24px"
-  },
-
-  benefit: {
-    display: "flex",
-    gap: "14px",
-    alignItems: "center",
-    marginTop: "18px"
-  },
-
-  benefitIcon: {
-    width: "50px",
-    height: "50px",
-    borderRadius: "15px",
-    background: "linear-gradient(135deg,#38bdf8,#2563eb)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "24px",
-    flexShrink: 0
-  },
-
-  smallSteps: {
-    position: "absolute",
-    bottom: "28px",
-    left: "35px",
-    fontSize: "24px",
-    color: "#efe7ff",
-    fontStyle: "italic",
-    lineHeight: "34px"
-  },
-
-  rightPanel: {
-    flex: 1,
-    padding: "48px 42px"
-  },
-
-  create: {
-    textAlign: "center",
-    fontSize: "34px",
-    color: "#0f172a",
-    margin: 0
-  },
-
-  account: {
-    textAlign: "center",
-    fontSize: "68px",
-    margin: "-5px 0 10px",
-    background: "linear-gradient(135deg,#ff2ebd,#8b2cff,#118cff)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    fontWeight: "900"
-  },
-
-  join: {
-    textAlign: "center",
-    fontSize: "17px",
-    color: "#475569",
-    marginBottom: "28px"
-  },
-
-  inputWrap: {
-    height: "70px",
-    border: "1.8px solid",
-    borderRadius: "24px",
-    display: "flex",
-    alignItems: "center",
-    padding: "0 14px",
-    gap: "18px",
-    marginTop: "15px"
-  },
-
-  iconBox: {
-    width: "52px",
-    height: "52px",
-    borderRadius: "17px",
-    color: "white",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "25px",
-    flexShrink: 0
-  },
-
-  input: {
-    flex: 1,
-    border: "none",
-    outline: "none",
-    fontSize: "18px",
-    color: "#0f172a",
-    background: "transparent"
-  },
-
-  eye: {
-    border: "none",
-    background: "transparent",
-    fontSize: "22px",
-    cursor: "pointer"
-  },
-
-  checkRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginTop: "22px",
-    fontSize: "16px",
-    color: "#334155"
-  },
-
-  checkbox: {
-    width: "22px",
-    height: "22px"
-  },
-
-  termsLink: {
-    color: "#7c3aed",
-    cursor: "pointer"
-  },
-
-  registerBtn: {
-    width: "100%",
-    height: "74px",
-    border: "none",
-    borderRadius: "26px",
-    marginTop: "26px",
-    background: "linear-gradient(135deg,#ff2ebd,#8b2cff,#412cff)",
-    color: "white",
-    fontSize: "24px",
-    fontWeight: "900",
-    position: "relative",
-    boxShadow: "0 14px 25px rgba(124,58,237,.35)",
-    cursor: "pointer"
-  },
-
-  arrow: {
-    position: "absolute",
-    right: "20px",
-    top: "12px",
-    width: "50px",
-    height: "50px",
-    borderRadius: "50%",
-    background: "white",
-    color: "#4f46e5",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "42px"
-  },
-
-  loginText: {
-    textAlign: "center",
-    marginTop: "20px",
-    color: "#475569"
-  },
-
-  loginLink: {
-    color: "#7c3aed",
-    fontWeight: "900",
-    cursor: "pointer",
-    marginLeft: "6px"
-  },
-
-  disclaimer: {
-    marginTop: "26px",
-    background: "#f0fdf4",
-    border: "1px solid #bbf7d0",
-    borderRadius: "24px",
-    padding: "18px",
-    display: "flex",
-    gap: "16px"
-  },
-
-  disIcon: {
-    width: "55px",
-    height: "55px",
-    borderRadius: "18px",
-    background: "linear-gradient(135deg,#22c55e,#16a34a)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "28px",
-    flexShrink: 0
-  },
-
-  disclaimerTitle: {
-    margin: 0,
-    color: "#16a34a"
-  },
-
-  disclaimerText: {
-    color: "#334155",
-    lineHeight: "24px",
-    fontSize: "14px"
-  },
-
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15,23,42,.55)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 9999,
-    padding: "20px"
-  },
-
-  modal: {
-    width: "100%",
-    maxWidth: "520px",
-    maxHeight: "82vh",
-    background: "white",
-    borderRadius: "28px",
-    padding: "24px",
-    boxShadow: "0 25px 70px rgba(0,0,0,.35)"
-  },
-
-  modalTitle: {
-    margin: 0,
-    color: "#7c3aed",
-    textAlign: "center"
-  },
-
-  modalBody: {
-    marginTop: "18px",
-    maxHeight: "52vh",
-    overflowY: "auto",
-    color: "#334155",
-    lineHeight: "25px",
-    fontSize: "14px"
-  },
-
-  modalBtn: {
-    width: "100%",
-    marginTop: "18px",
-    padding: "14px",
-    border: "none",
-    borderRadius: "16px",
-    background: "linear-gradient(135deg,#7c3aed,#2563eb)",
-    color: "white",
-    fontWeight: "900"
-  },
-
-  closeBtn: {
-    width: "100%",
-    marginTop: "10px",
-    padding: "12px",
-    border: "none",
-    borderRadius: "14px",
-    background: "#e2e8f0",
-    color: "#334155",
-    fontWeight: "800"
-  },
-
-bottomFeatures: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "10px",
-  marginTop: "28px",
-  flexWrap: "wrap"
-},
-
-bottomItem: {
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  minWidth: "140px"
-},
-
-bottomIcon: {
-  width: "48px",
-  height: "48px",
-  borderRadius: "50%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "white",
-  fontSize: "15px",
-  boxShadow: "0 8px 15px rgba(0,0,0,0.12)"
-},
-
-bottomTitle: {
-  fontSize: "14px",
-  fontWeight: "700",
-  color: "#111827",
-  lineHeight: "18px"
-},
-
-bottomText: {
-  fontSize: "14px",
-  fontWeight: "700",
-  color: "#111827",
-  lineHeight: "18px"
-},
-
-};
