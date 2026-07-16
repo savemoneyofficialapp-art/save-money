@@ -1458,15 +1458,14 @@ app.post("/verify-forgot-otp", async (req, res) => {
       });
     }
 
-    // ১. চেক করুন ডাটাবেজে ওটিপি আদেও সেভ হয়েছে কিনা
     if (!user.resetOtp) {
       return res.status(400).json({
         success: false,
-        msg: "No OTP requested or OTP expired. Please send a new OTP."
+        msg: "No OTP requested. Please send a new OTP."
       });
     }
 
-    // ২. ওটিপি ম্যাচিং এবং এক্সপায়ার টাইম চেক (String এ কনভার্ট করে চেক করা হচ্ছে সেফটির জন্য)
+    // ওটিপি ভেরিফিকেশন চেক (এখানে ওটিপি ডাটাবেজ থেকে মোছা যাবে না)
     const isOtpMatched = user.resetOtp.toString() === otp.toString();
     const isOtpExpired = new Date() > new Date(user.resetOtpExpire);
 
@@ -1484,11 +1483,7 @@ app.post("/verify-forgot-otp", async (req, res) => {
       });
     }
 
-    // ওটিপি ভেরিফাইড হলে ডেটাবেজ থেকে ওটিপি ক্লিয়ার করে দিন যাতে পুনরায় ব্যবহার না করা যায়
-    user.resetOtp = null;
-    user.resetOtpExpire = null;
-    await user.save();
-
+    // দ্রষ্টব্য: ওটিপি সঠিক হলে শুধু সাকসেস মেসেজ পাঠানো হবে, পাসওয়ার্ড পরিবর্তন করার পর এটি ডিলিট করা হবে।
     return res.json({
       success: true,
       msg: "OTP verified successfully. You can now reset your password."
@@ -1512,6 +1507,7 @@ app.post("/reset-password", async (req, res) => {
 
     if (!email || !otp || !newPassword) {
       return res.status(400).json({
+        success: false,
         msg: "Email, OTP and new password required"
       });
     }
@@ -1521,21 +1517,42 @@ app.post("/reset-password", async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ 
+        success: false, 
+        msg: "User not found" 
+      });
     }
 
-    if (!user.resetOtp || user.resetOtp !== otp) {
-      return res.status(400).json({ msg: "Invalid OTP" });
+    // ১. ডাটাবেজে ওটিপি আছে কিনা চেক করা
+    if (!user.resetOtp) {
+      return res.status(400).json({ 
+        success: false, 
+        msg: "No OTP found. Please request a new one." 
+      });
     }
 
-    if (!user.resetOtpExpire || user.resetOtpExpire < new Date()) {
-      return res.status(400).json({ msg: "OTP expired" });
+    // ২. String-এ কনভার্ট করে ওটিপি ম্যাচ করানো (টাইপ সেফটির জন্য)
+    if (user.resetOtp.toString() !== otp.toString()) {
+      return res.status(400).json({ 
+        success: false, 
+        msg: "Invalid OTP" 
+      });
     }
 
+    // ৩. ওটিপি এক্সপায়ার চেক
+    if (!user.resetOtpExpire || new Date(user.resetOtpExpire) < new Date()) {
+      return res.status(400).json({ 
+        success: false, 
+        msg: "OTP expired" 
+      });
+    }
+
+    // ৪. পাসওয়ার্ড হ্যাশ করে আপডেট করা
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
     user.password = hashedPassword;
-    user.resetOtp = "";
+
+    // ৫. পাসওয়ার্ড সফলভাবে রিসেট হওয়ার পর ওটিপি মুছে ফেলা
+    user.resetOtp = null;
     user.resetOtpExpire = null;
 
     await user.save();
@@ -1547,9 +1564,13 @@ app.post("/reset-password", async (req, res) => {
 
   } catch (err) {
     console.log("RESET PASSWORD ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ 
+      success: false, 
+      msg: "Server error" 
+    });
   }
 });
+
 
 app.post("/invest", async (req, res) => {
   const { email, amount, years } = req.body;
