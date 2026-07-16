@@ -1354,11 +1354,11 @@ app.post("/send-otp", async (req, res) => {
 // SEND FORGOT PASSWORD OTP BY EMAIL
 app.post("/send-forgot-otp", async (req, res) => {
   try {
-
     const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
+        success: false,
         msg: "Email required"
       });
     }
@@ -1369,49 +1369,56 @@ app.post("/send-forgot-otp", async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
+        success: false,
         msg: "User not found"
       });
     }
 
-    const otp =
-      Math.floor(100000 + Math.random() * 900000).toString();
+    // ৬ ডিজিটের ওটিপি জেনারেট করা হচ্ছে
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // ইউজারের মডেলে ওটিপি এবং ৫ মিনিটের এক্সপায়ার টাইম সেট করা হচ্ছে
     user.resetOtp = otp;
-    user.resetOtpExpire =
-      new Date(Date.now() + 5 * 60 * 1000);
+    user.resetOtpExpire = new Date(Date.now() + 5 * 60 * 1000);
 
     await user.save();
 
-    console.log("FORGOT PASSWORD OTP:", otp);
-try {
-    await axios.post(
-  "https://api.brevo.com/v3/smtp/email",
-  {
-    sender: {
-      name: "Save Money",
-      email: process.env.EMAIL_USER
-    },
-    to: [{ email }],
-    subject: "Save Money Password Reset OTP",
-    htmlContent: `<h2>Your OTP: ${otp}</h2>`
-  },
-  {
-    headers: {
-      "api-key": process.env.BREVO_API_KEY,
-      "Content-Type": "application/json"
-    }
-  }
-);
+    console.log("FORGOT PASSWORD OTP SENT TO:", email, "OTP:", otp);
 
-    } catch (mailErr) {
-
-      console.log(
-        "SEND FORGOT OTP ERROR:",
-        mailErr
+    try {
+      // Brevo API দিয়ে ইমেইল পাঠানো
+      await axios.post(
+        "https://api.brevo.com/v3/smtp/email",
+        {
+          sender: {
+            name: "Save Money",
+            email: process.env.EMAIL_USER
+          },
+          to: [{ email: email.toLowerCase() }],
+          subject: "Save Money Password Reset OTP",
+          htmlContent: `
+            <div style="font-family:Arial;padding:20px;border:1px solid #e1e1e1;border-radius:10px;max-width:500px;">
+              <h2 style="color:#7c3aed;text-align:center;">Save Money</h2>
+              <p style="font-size:16px;">Dear User,</p>
+              <p style="font-size:16px;">Your password reset OTP is:</p>
+              <h1 style="letter-spacing:6px;color:#16a34a;text-align:center;font-size:36px;margin:20px 0;">${otp}</h1>
+              <p style="color:#ef4444;font-size:14px;text-align:center;">This OTP will expire in 5 minutes.</p>
+            </div>
+          `
+        },
+        {
+          headers: {
+            "api-key": process.env.BREVO_API_KEY,
+            "Content-Type": "application/json"
+          }
+        }
       );
 
+    } catch (mailErr) {
+      console.log("SEND FORGOT OTP EMAIL ERROR:", mailErr.response?.data || mailErr.message);
       return res.status(500).json({
-        msg: "Email send failed"
+        success: false,
+        msg: "Failed to send OTP email"
       });
     }
 
@@ -1421,13 +1428,9 @@ try {
     });
 
   } catch (err) {
-
-    console.log(
-      "FORGOT OTP MAIN ERROR:",
-      err
-    );
-
+    console.log("FORGOT OTP MAIN ERROR:", err);
     return res.status(500).json({
+      success: false,
       msg: "Server error"
     });
   }
