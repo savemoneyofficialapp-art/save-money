@@ -1443,35 +1443,66 @@ app.post("/verify-forgot-otp", async (req, res) => {
     const { email, otp } = req.body;
 
     if (!email || !otp) {
-      return res.status(400).json({ msg: "Email and OTP required" });
+      return res.status(400).json({
+        success: false,
+        msg: "Email and OTP are required"
+      });
     }
 
-    const user = await User.findOne({
-      email: email.toLowerCase()
-    });
+    const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({
+        success: false,
+        msg: "User not found"
+      });
     }
 
-    if (!user.resetOtp || user.resetOtp !== otp) {
-      return res.status(400).json({ msg: "Invalid OTP" });
+    // ১. চেক করুন ডাটাবেজে ওটিপি আদেও সেভ হয়েছে কিনা
+    if (!user.resetOtp) {
+      return res.status(400).json({
+        success: false,
+        msg: "No OTP requested or OTP expired. Please send a new OTP."
+      });
     }
 
-    if (!user.resetOtpExpire || user.resetOtpExpire < new Date()) {
-      return res.status(400).json({ msg: "OTP expired" });
+    // ২. ওটিপি ম্যাচিং এবং এক্সপায়ার টাইম চেক (String এ কনভার্ট করে চেক করা হচ্ছে সেফটির জন্য)
+    const isOtpMatched = user.resetOtp.toString() === otp.toString();
+    const isOtpExpired = new Date() > new Date(user.resetOtpExpire);
+
+    if (isOtpExpired) {
+      return res.status(400).json({
+        success: false,
+        msg: "OTP has expired. Please request a new one."
+      });
     }
+
+    if (!isOtpMatched) {
+      return res.status(400).json({
+        success: false,
+        msg: "Invalid OTP. Please try again."
+      });
+    }
+
+    // ওটিপি ভেরিফাইড হলে ডেটাবেজ থেকে ওটিপি ক্লিয়ার করে দিন যাতে পুনরায় ব্যবহার না করা যায়
+    user.resetOtp = null;
+    user.resetOtpExpire = null;
+    await user.save();
 
     return res.json({
       success: true,
-      msg: "OTP verified successfully"
+      msg: "OTP verified successfully. You can now reset your password."
     });
 
   } catch (err) {
     console.log("VERIFY OTP ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    return res.status(500).json({
+      success: false,
+      msg: "Server error during verification"
+    });
   }
 });
+
 
 
 // RESET PASSWORD
