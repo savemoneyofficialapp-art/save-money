@@ -39,9 +39,9 @@ export default function ForgotPassword() {
       });
 
       const data = await res.json();
-      toast.success(data.msg || "OTP sent");
 
       if (res.ok || data.success) {
+        toast.success(data.msg || "OTP sent");
         setOtpSent(true);
         setTimer(30);
 
@@ -54,11 +54,13 @@ export default function ForgotPassword() {
             clearInterval(interval);
           }
         }, 1000);
+      } else {
+        toast.error(data.msg || "Failed to send OTP");
       }
 
     } catch (err) {
       console.log("SEND OTP ERROR:", err);
-      toast.info("OTP send failed");
+      toast.error("OTP send failed");
     } finally {
       setLoading(false);
     }
@@ -101,16 +103,16 @@ export default function ForgotPassword() {
 
       const data = await res.json();
 
-      if (data.success) {
-        toast.verifyOTP("OTP Verified");
+      if (res.ok || data.success) {
+        toast.success(data.msg || "OTP Verified Successfully!"); // এখানে ভুল toast মেথডটি ঠিক করা হয়েছে
         setOtpVerified(true);
       } else {
-        toast.info(data.msg || "OTP verification failed");
+        toast.error(data.msg || "OTP verification failed");
       }
 
     } catch (err) {
       console.log("VERIFY OTP ERROR:", err);
-      toast.info("Verification failed");
+      toast.error("Verification failed");
     } finally {
       setVerifyLoading(false);
     }
@@ -146,10 +148,11 @@ export default function ForgotPassword() {
 
       const data = await res.json();
 
-      toast.success(data.msg || "Password reset done");
-
-      if (data.success) {
+      if (res.ok || data.success) {
+        toast.success(data.msg || "Password reset done");
         navigate("/login");
+      } else {
+        toast.error(data.msg || "Failed to reset password");
       }
 
     } catch (err) {
@@ -251,7 +254,7 @@ export default function ForgotPassword() {
           <div style={styles.resendRow}>
             <span style={styles.grayText}>Didn’t receive code?</span>
 
-            <span style={styles.resend}>
+            <span style={styles.resend} onClick={sendOTP} style={{ ...styles.resend, cursor: "pointer" }}>
               Resend OTP
               <span style={styles.timer}>
                 (00:{timer < 10 ? `0${timer}` : timer})
