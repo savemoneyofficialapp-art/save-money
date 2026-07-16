@@ -156,8 +156,8 @@ export default function Wallet() {
       return triggerStatusOverlay("warning", "Please enter a valid amount");
     }
 
-    const MY_UPI_ID = "investwell@ybl";
-    const MERCHANT_NAME = "InvestWell Wallet";
+    const MY_UPI_ID = "s-m128@ptyes";
+    const MERCHANT_NAME = "SaveMoney Wallet";
     const txnRef = "TXN" + Date.now();
 
     const upiUrl = `upi://pay?pa=${MY_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${addAmount}&cu=INR&tr=${txnRef}`;
