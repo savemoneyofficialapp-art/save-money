@@ -157,7 +157,7 @@ export default function Wallet() {
     }
 
     const MY_UPI_ID = "s-m128@ptyes";
-    const MERCHANT_NAME = "SaveMoney Wallet";
+    const MERCHANT_NAME = "SaveMoney. Wallet";
     const txnRef = "TXN" + Date.now();
 
     const upiUrl = `upi://pay?pa=${MY_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${addAmount}&cu=INR&tr=${txnRef}`;
