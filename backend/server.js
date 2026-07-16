@@ -1135,11 +1135,9 @@ async function generateShortWalletId() {
   return walletId;
 }
 
-// ================= REGISTER =================
+// ================= REGISTER WITH T&C AND OTP VERIFICATION =================
 app.post("/register", async (req, res) => {
-
   try {
-
     console.log("REGISTER BODY:", req.body);
 
     const {
@@ -1147,234 +1145,110 @@ app.post("/register", async (req, res) => {
       mobile,
       email,
       password,
-      referCode
+      referCode,
+      otp,           // ফ্রন্টএন্ড থেকে ওটিপি আসবে
+      termsAccepted  // ফ্রন্টএন্ড থেকে চেকবক্স ট্রু আসবে
     } = req.body;
 
-    // validation
-    if (
-      !name ||
-      !mobile ||
-      !email ||
-      !password
-    ) {
-      return res.status(400).json({
-        msg: "Please fill all required fields"
-      });
+    // ১. সব রিকোয়ার্ড ফিল্ড ভ্যালিডেশন
+    if (!name || !mobile || !email || !password || !otp) {
+      return res.status(400).json({ msg: "Please fill all required fields and enter OTP" });
     }
 
-    // email validate
+    // ২. Terms & Conditions চেক
+    if (!termsAccepted) {
+      return res.status(400).json({ msg: "You must accept the Terms and Conditions to register." });
+    }
+
+    // ৩. ইমেইল ভ্যালিডেশন
     if (!validator.isEmail(email)) {
-      return res.status(400).json({
-        msg: "Invalid email"
-      });
+      return res.status(400).json({ msg: "Invalid email" });
     }
 
-    // password validate
-    if (
-      !validator.isStrongPassword(password, {
-        minLength: 6,
-        minNumbers: 1,
-        minLowercase: 1,
-        minUppercase: 1,
-        minSymbols: 0
-      })
-    ) {
-      return res.status(400).json({
-        msg: "Password must contain letters and numbers"
-      });
+    // ৪. OTP ভেরিফিকেশন (গ্লোবাল স্টোর অথবা DB থেকে চেক)
+    if (!global.otpStore || global.otpStore[email.toLowerCase()] !== otp) {
+      return res.status(400).json({ msg: "Invalid or expired OTP. Please try again." });
     }
 
-    // existing email
-    const existingUser =
-      await User.findOne({
-        email: email.toLowerCase()
-      });
+    // ৫. ওটিপি ম্যাচ করলে গ্লোবাল স্টোর থেকে ডিলিট করে দিন
+    delete global.otpStore[email.toLowerCase()];
 
+    // ৬. পাসওয়ার্ড স্ট্রং কিনা চেক
+    if (!validator.isStrongPassword(password, {
+        minLength: 6, minNumbers: 1, minLowercase: 1, minUppercase: 1, minSymbols: 0
+      })) {
+      return res.status(400).json({ msg: "Password must contain letters and numbers" });
+    }
+
+    // ৭. ডুপ্লিকেট ইমেইল চেক
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
-      return res.status(400).json({
-        msg: "Email already registered"
-      });
+      return res.status(400).json({ msg: "Email already registered" });
     }
 
-    // existing mobile
-    const existingMobile =
-      await User.findOne({
-        mobile
-      });
-
+    // ৮. ডুপ্লিকেট মোবাইল চেক
+    const existingMobile = await User.findOne({ mobile });
     if (existingMobile) {
-      return res.status(400).json({
-        msg: "Mobile already registered"
-      });
+      return res.status(400).json({ msg: "Mobile already registered" });
     }
 
-    // hash password
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
+    // ৯. পাসওয়ার্ড হ্যাশিং
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const myReferCode = "SM" + Math.floor(100000 + Math.random() * 900000);
+    const walletId = await generateShortWalletId();
 
-    // generate refer code
-    const myReferCode =
-      "SM" +
-      Math.floor(
-        100000 + Math.random() * 900000
-      );
-
-    // create wallet id
-   const walletId = await generateShortWalletId();
-
-    // referred by user
     let referredBy = "";
-
     if (referCode) {
-
-      const refUser =
-        await User.findOne({
-          referCode
-        });
-
-      if (refUser) {
-        referredBy = referCode;
-      }
-
+      const refUser = await User.findOne({ referCode });
+      if (refUser) referredBy = referCode;
     }
 
-    // create user
+    // ১০. নতুন ইউজার তৈরি
     const newUser = new User({
-
       name,
-
       mobile,
-
       email: email.toLowerCase(),
-
       password: hashedPassword,
-
       referCode: myReferCode,
-
       referredBy,
-
       walletId: walletId,
-
       role: "user",
-
-      wallet: 0,
-
-      totalIncome: 0,
-
-      referralIncome: 0,
-
-      performanceIncome: 0,
-
-      teamIncome: 0,
-
-      royaltyIncome: 0,
-
       activeStatus: "Inactive",
-
       kycStatus: "Not Submitted",
-
-      banned: false,
-
-      freezeWallet: false,
-
-      disableInvestment: false,
-
-      disableWithdrawal: false,
-
-      disableBonus: false,
-
-      termsAccepted: true
-
+      termsAccepted: true // যেহেতু সে চেক করেই এসেছে
     });
 
     await newUser.save();
 
+    // স্পন্সর পারফরম্যান্স আপডেট
+    if (referredBy) {
+      try {
+        const sponsor = await User.findOne({ $or: [{ referCode: referredBy }, { walletId: referredBy }] });
+        if (sponsor) await updatePerformanceStatus(sponsor.email);
+      } catch (err) {
+        console.log("PERFORMANCE UPDATE ERROR", err);
+      }
+    }
 
-// Update sponsor performance progress
-if(referredBy){
-
-try{
-
-const sponsor = await User.findOne({
-
-$or:[
-
-{referCode:referredBy},
-{walletId:referredBy}
-
-]
-
-});
-
-
-if(sponsor){
-
-await updatePerformanceStatus(
-
-sponsor.email
-
-);
-
-}
-
-}catch(err){
-
-console.log(
-
-"PERFORMANCE UPDATE ERROR",
-
-err
-
-);
-
-}
-
-}
-
-    // notification
+    // স্বাগতম নোটিফিকেশন
     try {
-
       await Notification.create({
-
         email: newUser.email,
-
         title: "Welcome",
-
-        message:
-          "Welcome to Save Money platform"
-
+        message: "Welcome to Save Money platform"
       });
-
     } catch (e) {
       console.log("Notification error");
     }
 
-    return res.status(201).json({
-
-      success: true,
-
-      msg: "Registered Successfully"
-
-    });
+    return res.status(201).json({ success: true, msg: "Registered Successfully" });
 
   } catch (err) {
-
     console.log("REGISTER ERROR:", err);
-
-    return res.status(500).json({
-
-      msg: "Server error",
-
-      error:
-        process.env.NODE_ENV === "development"
-          ? err.message
-          : undefined
-
-    });
-
+    return res.status(500).json({ msg: "Server error" });
   }
-
 });
+
 
 // ================= LOGIN =================
 
