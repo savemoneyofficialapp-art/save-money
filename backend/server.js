@@ -1131,7 +1131,8 @@ async function generateShortWalletId() {
 }
 
 // ================= REGISTER WITH T&C AND OTP VERIFICATION =================
-app.post("/register", async (req, res) => {
+
+      app.post("/register", async (req, res) => {
   try {
     console.log("REGISTER BODY:", req.body);
 
@@ -1150,23 +1151,25 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ msg: "Please fill all required fields and enter OTP" });
     }
 
+    const lowerEmail = email.trim().toLowerCase();
+
     // ২. Terms & Conditions চেক
     if (!termsAccepted) {
       return res.status(400).json({ msg: "You must accept the Terms and Conditions to register." });
     }
 
     // ৩. ইমেইল ভ্যালিডেশন
-    if (!validator.isEmail(email)) {
+    if (!validator.isEmail(lowerEmail)) {
       return res.status(400).json({ msg: "Invalid email" });
     }
 
-    // ৪. OTP ভেরিফিকেশন (গ্লোবাল স্টোর অথবা DB থেকে চেক)
-    if (!global.otpStore || global.otpStore[email.toLowerCase()] !== otp) {
-      return res.status(400).json({ msg: "Invalid or expired OTP. Please try again." });
+    // ৪. ইমেইল ওটিপি দিয়ে আগে ভেরিফাই করা হয়েছে কি না তা চেক (নতুন লজিক)
+    if (!global.otpStore || global.otpStore[lowerEmail] !== "VERIFIED") {
+      return res.status(400).json({ msg: "Please verify your email OTP first." });
     }
 
-    // ৫. ওটিপি ম্যাচ করলে গ্লোবাল স্টোর থেকে ডিলিট করে দিন
-    delete global.otpStore[email.toLowerCase()];
+    // ৫. রেজিস্ট্রেশন সফল হওয়ার পথে, তাই এবার গ্লোবাল স্টোর থেকে ভেরিফিকেশন ডাটা মুছে দিন (ক্লিনআপ)
+    delete global.otpStore[lowerEmail];
 
     // ৬. পাসওয়ার্ড স্ট্রং কিনা চেক
     if (!validator.isStrongPassword(password, {
@@ -1176,33 +1179,33 @@ app.post("/register", async (req, res) => {
     }
 
     // ৭. ডুপ্লিকেট ইমেইল চেক
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await User.findOne({ email: lowerEmail });
     if (existingUser) {
       return res.status(400).json({ msg: "Email already registered" });
     }
 
     // ৮. ডুপ্লিকেট মোবাইল চেক
-    const existingMobile = await User.findOne({ mobile });
+    const existingMobile = await User.findOne({ mobile: mobile.trim() });
     if (existingMobile) {
       return res.status(400).json({ msg: "Mobile already registered" });
     }
 
-    // ৯. পাসওয়ার্ড হ্যাশিং
+    // ৯. পাসওয়ার্ড হ্যাশিং এবং অন্যান্য প্রসেস
     const hashedPassword = await bcrypt.hash(password, 10);
     const myReferCode = "SM" + Math.floor(100000 + Math.random() * 900000);
     const walletId = await generateShortWalletId();
 
     let referredBy = "";
     if (referCode) {
-      const refUser = await User.findOne({ referCode });
-      if (refUser) referredBy = referCode;
+      const refUser = await User.findOne({ referCode: referCode.trim() });
+      if (refUser) referredBy = referCode.trim();
     }
 
     // ১০. নতুন ইউজার তৈরি
     const newUser = new User({
-      name,
-      mobile,
-      email: email.toLowerCase(),
+      name: name.trim(),
+      mobile: mobile.trim(),
+      email: lowerEmail,
       password: hashedPassword,
       referCode: myReferCode,
       referredBy,
@@ -1210,7 +1213,7 @@ app.post("/register", async (req, res) => {
       role: "user",
       activeStatus: "Inactive",
       kycStatus: "Not Submitted",
-      termsAccepted: true // যেহেতু সে চেক করেই এসেছে
+      termsAccepted: true
     });
 
     await newUser.save();
