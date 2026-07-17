@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // রিডাইরেক্ট করার জন্য যোগ করা হয়েছে
-import { toast } from "react-toastify"; // ইউজারকে অ্যালার্ট দেখানোর জন্য
+import { useNavigate } from "react-router-dom"; 
+import { toast } from "react-toastify"; 
 import {
   ResponsiveContainer,
   LineChart,
@@ -25,10 +25,9 @@ export default function UserAnalytics() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    // 💡 ট্রিক ১: পেজ লোড হওয়ার সাথে সাথেই আগে চেক হবে টোকেন আছে কি না
     if (!token || !email) {
       toast.warning("Please login first to view analytics");
-      navigate("/login"); // আপনার প্রজেক্টের লগইন রাউটের পাথ (যেমন: /login)
+      navigate("/login"); 
       return;
     }
     load();
@@ -40,12 +39,12 @@ export default function UserAnalytics() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          authorization: token // টোকেন পাঠানো হচ্ছে
+          // 💡 ফিক্স: টোকেন সাধারণত 'Bearer ' সহ পাঠাতে হয় (নতুবা শুধু token-ই যদি ব্যাকএন্ডে চান তবে এটি চেক করুন)
+          authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` 
         },
         body: JSON.stringify({ email })
       });
 
-      // যদি সার্ভার থেকে ৪০১ বা ৪০৩ (Unauthorized) রেসপন্স আসে
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem("token");
         localStorage.removeItem("email");
@@ -172,44 +171,10 @@ export default function UserAnalytics() {
 }
 
 const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg,#020617,#0f172a)",
-    color: "white",
-    padding: "20px"
-  },
-  loading: {
-    minHeight: "100vh",
-    background: "#020617",
-    color: "white",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  title: {
-    textAlign: "center",
-    color: "#22c55e",
-    fontWeight: "bold",
-    marginBottom: "20px"
-  },
-  summaryGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "12px",
-    marginTop: "20px"
-  },
-  card: {
-    background: "#1e293b",
-    padding: "18px",
-    borderRadius: "18px",
-    textAlign: "center",
-    border: "1px solid #334155"
-  },
-  chartBox: {
-    background: "#1e293b",
-    padding: "20px",
-    borderRadius: "20px",
-    marginTop: "20px",
-    border: "1px solid #334155"
-  }
+  container: { minHeight: "100vh", background: "linear-gradient(135deg,#020617,#0f172a)", color: "white", padding: "20px" },
+  loading: { minHeight: "100vh", background: "#020617", color: "white", display: "flex", alignItems: "center", justifyCenter: "center" },
+  title: { textAlign: "center", color: "#22c55e", fontWeight: "bold", marginBottom: "20px" },
+  summaryGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginTop: "20px" },
+  card: { background: "#1e293b", padding: "18px", borderRadius: "18px", textAlign: "center", border: "1px solid #334155" },
+  chartBox: { background: "#1e293b", padding: "20px", borderRadius: "20px", marginTop: "20px", border: "1px solid #334155" }
 };
