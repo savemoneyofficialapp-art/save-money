@@ -27,7 +27,7 @@ const DailyReward = require("./models/DailyReward");
 const SupportTicket = require("./models/SupportTicket");
 const BonusLedger = require("./models/BonusLedger");
 const cloudinary = require("cloudinary").v2;
-const Otp = require("./models/Otp");
+const OtpModel = require("./models/Otp");
 const axios = require("axios");
 const { CloudinaryStorage } =
 require("multer-storage-cloudinary");
