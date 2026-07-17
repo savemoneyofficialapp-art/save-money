@@ -86,7 +86,7 @@ export default function Withdraw() {
   return (
     <div style={styles.page}>
       
-      {/* Header Section */}
+      {/* Top Header Navigation */}
       <div style={styles.topNav}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -104,9 +104,9 @@ export default function Withdraw() {
         </div>
       </div>
 
-      {/* Wallet Info Grid */}
+      {/* Wallet Balance Row */}
       <section style={styles.balanceGrid}>
-        <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #1c1437 0%, #090e1a 100%)", borderColor: "#3c2275" }}>
+        <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #1c1437 0%, #090e1a 100%)", borderColor: "#4c2899" }}>
           <div style={styles.cardHeaderFlex}>
             <div style={{ ...styles.walletIconBox, background: "linear-gradient(135deg, #5b4bf5 0%, #9333ea 100%)" }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M12 11h10v2H12z"></path></svg>
@@ -122,7 +122,7 @@ export default function Withdraw() {
           <p style={styles.cardDesc}>Available in wallet today</p>
         </div>
 
-        <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #09284b 0%, #090e1a 100%)", borderColor: "#0e5a87" }}>
+        <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #09284b 0%, #090e1a 100%)", borderColor: "#0f6aa3" }}>
           <div style={styles.cardHeaderFlex}>
             <div style={{ ...styles.walletIconBox, background: "linear-gradient(135deg, #0284c7 0%, #0891b2 100%)" }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M12 11h10v2H12z"></path></svg>
@@ -140,7 +140,7 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Amount Payout Input Area */}
+      {/* Payout Form Component */}
       <section style={styles.glassContainer}>
         <h3 style={styles.sectionTitle}>Amount to Payout</h3>
         
@@ -195,69 +195,41 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Settlement Account */}
+      {/* Settlement Account Box */}
       <section style={styles.glassContainer}>
         <div style={styles.sectionHeaderTitle}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M3 22v-4h18v4H3zM12 2L2 7h20L12 2zM4 9v7h3V9H4zm5 0v7h3V9H9zm5 0v7h3V9h-3zm5 0v7h3V9h-3z"/></svg>
           <h3 style={{ ...styles.sectionTitle, margin: 0 }}>Settlement Account</h3>
         </div>
 
-        {!bank ? (
-          <div style={styles.bankGrid}>
-            <div style={styles.bankFieldsGroup}>
-              <div style={styles.bankMeta}>
-                <span style={styles.metaLabel}>HOLDER NAME</span>
-                <span style={styles.metaValue}>Rama basu</span>
-              </div>
-              <div style={styles.bankMeta}>
-                <span style={styles.metaLabel}>BANK NAME</span>
-                <span style={styles.metaValue}>Sbi</span>
-              </div>
-              <div style={styles.bankMeta}>
-                <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
-                <span style={styles.metaValue}>6347223058</span>
-              </div>
-              <div style={styles.bankMeta}>
-                <span style={styles.metaLabel}>IFSC CODE</span>
-                <span style={styles.metaValue}>KKBK0007451</span>
-              </div>
+        <div style={styles.bankGrid}>
+          <div style={styles.bankFieldsGroup}>
+            <div style={styles.bankMeta}>
+              <span style={styles.metaLabel}>HOLDER NAME</span>
+              <span style={styles.metaValue}>{bank?.accountHolderName || "Rama basu"}</span>
             </div>
-            <div style={styles.bankArrowContainer}>
-              <button style={styles.bankActionCircle}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              </button>
+            <div style={styles.bankMeta}>
+              <span style={styles.metaLabel}>BANK NAME</span>
+              <span style={styles.metaValue}>{bank?.bankName || "Sbi"}</span>
+            </div>
+            <div style={styles.bankMeta}>
+              <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
+              <span style={styles.metaValue}>{bank?.accountNumber || "6347223058"}</span>
+            </div>
+            <div style={styles.bankMeta}>
+              <span style={styles.metaLabel}>IFSC CODE</span>
+              <span style={styles.metaValue}>{bank?.ifscCode || "KKBK0007451"}</span>
             </div>
           </div>
-        ) : (
-          <div style={styles.bankGrid}>
-            <div style={styles.bankFieldsGroup}>
-              <div style={styles.bankMeta}>
-                <span style={styles.metaLabel}>HOLDER NAME</span>
-                <span style={styles.metaValue}>{bank.accountHolderName}</span>
-              </div>
-              <div style={styles.bankMeta}>
-                <span style={styles.metaLabel}>BANK NAME</span>
-                <span style={styles.metaValue}>{bank.bankName}</span>
-              </div>
-              <div style={styles.bankMeta}>
-                <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
-                <span style={styles.metaValue}>{bank.accountNumber}</span>
-              </div>
-              <div style={styles.bankMeta}>
-                <span style={styles.metaLabel}>IFSC CODE</span>
-                <span style={styles.metaValue}>{bank.ifscCode}</span>
-              </div>
-            </div>
-            <div style={styles.bankArrowContainer}>
-              <button style={styles.bankActionCircle}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              </button>
-            </div>
+          <div style={styles.bankArrowContainer}>
+            <button style={styles.bankActionCircle}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
           </div>
-        )}
+        </div>
       </section>
 
-      {/* Audit Statement */}
+      {/* Audit Statement History Block */}
       <section style={styles.glassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
@@ -284,80 +256,70 @@ export default function Withdraw() {
           </div>
         ) : (
           <div style={styles.historyList}>
-            {history.map((x) => {
-              const isSuccess = x.status === "Success";
-              const isRejected = x.status === "Rejected";
-              return (
-                <div key={x._id} style={styles.historyRow}>
-                  <div style={styles.historyLeft}>
-                    <span style={{
-                      ...styles.statusDot,
-                      background: isSuccess ? "#22c55e" : isRejected ? "#ef4444" : "#eab308"
-                    }}></span>
-                    <div>
-                      <span style={styles.historyAmt}>{money(x.amount)}</span>
-                      <span style={styles.historyDate}>
-                        {new Date(x.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
-                      </span>
-                    </div>
+            {history.map((x) => (
+              <div key={x._id} style={styles.historyRow}>
+                <div style={styles.historyLeft}>
+                  <span style={{ ...styles.statusDot, background: x.status === "Success" ? "#22c55e" : "#ef4444" }}></span>
+                  <div>
+                    <span style={styles.historyAmt}>{money(x.amount)}</span>
+                    <span style={styles.historyDate}>{new Date(x.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <span style={{
-                    ...styles.statusBadge,
-                    background: isSuccess ? "rgba(34,197,94,0.1)" : isRejected ? "rgba(239,68,68,0.1)" : "rgba(234,179,8,0.1)",
-                    color: isSuccess ? "#4ade80" : isRejected ? "#f87171" : "#facc15"
-                  }}>{x.status}</span>
                 </div>
-              );
-            })}
+                <span style={styles.statusBadge}>{x.status}</span>
+              </div>
+            ))}
           </div>
         )}
       </section>
 
-      {/* 4 Bottom Trust Columns */}
-      <section style={styles.trustGrid}>
-        <div style={styles.trustItem}>
-          <div style={styles.trustIconWrapper}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          </div>
-          <h4 style={styles.trustTitle}>Secure & Trusted</h4>
-          <p style={styles.trustDesc}>100% safe and secure transactions</p>
+      {/* 🔴 FIXED: 4 PILLARS IN EXACTLY ONE SINGLE LINE CONTAINER */}
+      <section style={styles.singleLineTrustContainer}>
+        
+        <div style={styles.trustItemSingle}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <h4 style={styles.trustTitleSingle}>Secure & Trusted</h4>
+          <p style={styles.trustDescSingle}>100% safe and secure transactions</p>
         </div>
-        <div style={styles.trustItem}>
-          <div style={styles.trustIconWrapper}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-          </div>
-          <h4 style={styles.trustTitle}>Quick Processing</h4>
-          <p style={styles.trustDesc}>Withdrawals processed within few hours</p>
+        
+        <div style={styles.dividerLine} />
+
+        <div style={styles.trustItemSingle}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <h4 style={styles.trustTitleSingle}>Quick Processing</h4>
+          <p style={styles.trustDescSingle}>Withdrawals processed within few hours</p>
         </div>
-        <div style={styles.trustItem}>
-          <div style={styles.trustIconWrapper}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
-          </div>
-          <h4 style={styles.trustTitle}>24/7 Support</h4>
-          <p style={styles.trustDesc}>We are here to help you anytime</p>
+
+        <div style={styles.dividerLine} />
+
+        <div style={styles.trustItemSingle}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+          <h4 style={styles.trustTitleSingle}>24/7 Support</h4>
+          <p style={styles.trustDescSingle}>We are here to help you anytime</p>
         </div>
-        <div style={styles.trustItem}>
-          <div style={styles.trustIconWrapper}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-          </div>
-          <h4 style={styles.trustTitle}>Trusted Platform</h4>
-          <p style={styles.trustDesc}>Thousands of users trust us</p>
+
+        <div style={styles.dividerLine} />
+
+        <div style={styles.trustItemSingle}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <h4 style={styles.trustTitleSingle}>Trusted Platform</h4>
+          <p style={styles.trustDescSingle}>Thousands of users trust us</p>
         </div>
+
       </section>
 
     </div>
   );
 }
 
-// 🎨 CSS STYLES WITH UPDATED PADDING AND GAP TO MATCH SCREEN height EXACTLY
+// 🎨 HIGH CONTRAST & MAXIMUM CLEARNESS STYLES SHEET
 const styles = {
   page: {
     minHeight: "100vh",
     width: "100%",
-    backgroundColor: "#030712",
+    backgroundColor: "#030610",
     color: "#ffffff",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-    padding: "24px 20px 40px 20px",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    padding: "24px 16px 40px 16px",
     boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
@@ -368,15 +330,14 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    width: "100%",
-    marginBottom: "4px"
+    width: "100%"
   },
   backBtn: {
     width: "48px",
     height: "48px",
     borderRadius: "12px",
     border: "1px solid #1e293b",
-    background: "#0f172a",
+    background: "#0c1324",
     color: "#ffffff",
     cursor: "pointer",
     display: "flex",
@@ -400,7 +361,7 @@ const styles = {
     color: "#ffffff"
   },
   subHeading: {
-    margin: "6px 0 0 0",
+    margin: "4px 0 0 0",
     fontSize: "14px",
     color: "#94a3b8"
   },
@@ -408,8 +369,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "6px",
-    background: "rgba(34, 197, 94, 0.1)",
-    border: "1px solid rgba(34, 197, 94, 0.3)",
+    background: "rgba(34, 197, 94, 0.12)",
+    border: "1px solid #22c55e",
     padding: "8px 14px",
     borderRadius: "10px",
     color: "#4ade80"
@@ -452,16 +413,16 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    marginTop: "6px"
+    marginTop: "4px"
   },
   eyeIcon: {
     fontSize: "16px",
-    color: "#94a3b8",
+    color: "#cbd5e1",
     cursor: "pointer"
   },
   cardTag: {
     fontSize: "14px",
-    fontWeight: "500",
+    fontWeight: "600",
     color: "#94a3b8"
   },
   cardAmount: {
@@ -471,9 +432,9 @@ const styles = {
     color: "#ffffff"
   },
   cardDesc: {
-    margin: "20px 0 0 0",
+    margin: "18px 0 0 0",
     fontSize: "13px",
-    color: "#64748b"
+    color: "#94a3b8"
   },
   percentageBadge: {
     position: "absolute",
@@ -495,20 +456,20 @@ const styles = {
     width: "100%",
     padding: "28px 24px", 
     borderRadius: "20px",
-    background: "#090f1c",
-    border: "1px solid #1e293b",
+    background: "#090f1d",
+    border: "1px solid #1e2942",
     boxSizing: "border-box"
   },
   sectionTitle: {
     margin: "0 0 20px 0",
     fontSize: "18px",
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#ffffff"
   },
   inputWrapper: {
     display: "flex",
     alignItems: "center",
-    background: "#020617",
+    background: "#020613",
     border: "1px solid #334155",
     borderRadius: "14px",
     padding: "0 20px"
@@ -516,7 +477,7 @@ const styles = {
   currencyPrefix: {
     fontSize: "28px",
     fontWeight: "600",
-    color: "#94a3b8",
+    color: "#ffffff",
     marginRight: "12px"
   },
   input: {
@@ -526,7 +487,7 @@ const styles = {
     background: "transparent",
     color: "#ffffff",
     fontSize: "28px",
-    fontWeight: "600",
+    fontWeight: "700",
     outline: "none"
   },
   calculationBox: {
@@ -549,15 +510,18 @@ const styles = {
   },
   calcLabel: {
     fontSize: "15px",
-    color: "#94a3b8"
+    fontWeight: "600",
+    color: "#cbd5e1"
   },
   calcValue: {
     fontSize: "15px",
+    fontWeight: "700",
     color: "#ffffff"
   },
   minNotice: {
     fontSize: "14px",
-    color: "#64748b",
+    fontWeight: "500",
+    color: "#94a3b8",
     margin: "16px 0 24px 2px"
   },
   submitBtn: {
@@ -565,31 +529,17 @@ const styles = {
     height: "60px", 
     border: "none",
     borderRadius: "14px",
-    background: "linear-gradient(90deg, #6366f1 0%, #2563eb 100%)",
+    background: "linear-gradient(90deg, #4f46e5 0%, #2563eb 100%)",
     color: "#ffffff",
     fontWeight: "700",
     fontSize: "18px",
-    cursor: "pointer",
-    boxShadow: "0 4px 20px rgba(99, 102, 241, 0.2)"
+    cursor: "pointer"
   },
   btnContent: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "12px"
-  },
-  loaderFlex: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px"
-  },
-  spinner: {
-    width: "18px",
-    height: "18px",
-    border: "2px solid rgba(255,255,255,0.3)",
-    borderTopColor: "white",
-    borderRadius: "50%"
   },
   noteBox: {
     display: "flex",
@@ -602,8 +552,8 @@ const styles = {
   },
   noteText: {
     margin: 0,
-    fontSize: "13.5px",
-    color: "#64748b",
+    fontSize: "14px",
+    color: "#94a3b8",
     lineHeight: "1.6"
   },
   sectionHeaderTitle: {
@@ -616,10 +566,10 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    background: "#020617",
+    background: "#020613",
     padding: "24px",
     borderRadius: "16px",
-    border: "1px solid #1e293b"
+    border: "1px solid #1e2942"
   },
   bankFieldsGroup: {
     display: "grid",
@@ -633,15 +583,15 @@ const styles = {
     gap: "6px"
   },
   metaLabel: {
-    fontSize: "12px",
+    fontSize: "13px",
     fontWeight: "700",
-    color: "#64748b",
+    color: "#94a3b8",
     letterSpacing: "0.5px"
   },
   metaValue: {
     fontSize: "16px",
-    fontWeight: "600",
-    color: "#f1f5f9"
+    fontWeight: "700",
+    color: "#ffffff"
   },
   bankArrowContainer: {
     paddingLeft: "16px"
@@ -651,7 +601,7 @@ const styles = {
     height: "46px",
     borderRadius: "50%",
     border: "none",
-    background: "#1e293b",
+    background: "#1e2942",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -668,7 +618,7 @@ const styles = {
     border: "none",
     color: "#6366f1",
     fontSize: "15px",
-    fontWeight: "600",
+    fontWeight: "700",
     cursor: "pointer"
   },
   emptyStateContainer: {
@@ -682,46 +632,55 @@ const styles = {
   },
   emptyMainText: {
     fontSize: "18px",
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#ffffff",
     margin: "0 0 8px 0"
   },
   emptySubText: {
     fontSize: "14px",
-    color: "#64748b",
+    color: "#94a3b8",
     margin: 0
   },
-  trustGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
+
+  /* 🔴 FIXED NEW SINGLE LINE STYLE FOR THE 4 PILLARS */
+  singleLineTrustContainer: {
     width: "100%",
-    marginTop: "8px"
+    background: "#090f1d",
+    border: "1px solid #1e2942",
+    borderRadius: "20px",
+    padding: "24px 12px",
+    display: "flex",
+    alignItems: "stretch",
+    justifyContent: "space-between",
+    boxSizing: "border-box",
+    gap: "6px"
   },
-  trustItem: {
+  trustItemSingle: {
+    flex: 1,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
-    padding: "26px 16px", 
-    background: "#090f1c",
-    border: "1px solid #1e293b",
-    borderRadius: "16px",
-    boxSizing: "border-box"
+    padding: "0 4px"
   },
-  trustIconWrapper: {
-    marginBottom: "12px"
+  dividerLine: {
+    width: "1px",
+    backgroundColor: "#1e2942",
+    alignSelf: "stretch",
+    margin: "4px 0"
   },
-  trustTitle: {
-    fontSize: "15px",
-    fontWeight: "600",
+  trustTitleSingle: {
+    fontSize: "13px",
+    fontWeight: "700",
     color: "#ffffff",
-    margin: "0 0 8px 0"
+    margin: "10px 0 6px 0",
+    whiteSpace: "nowrap" // টেক্সট ভেঙে নিচের লাইনে যাবে না
   },
-  trustDesc: {
-    fontSize: "12px",
-    color: "#64748b",
+  trustDescSingle: {
+    fontSize: "10px",
+    fontWeight: "500",
+    color: "#94a3b8",
     margin: 0,
-    lineHeight: "1.5"
+    lineHeight: "1.4"
   }
 };
