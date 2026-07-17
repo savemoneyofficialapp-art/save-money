@@ -917,7 +917,7 @@ transporter.verify(function (error, success) {
     console.log("SMTP READY");
   }
 });
-*/
+
 
 // ====================================================================
 // 🚀 BREVO API EMAIL FUNCTION (এটি আপনার মেইল পাঠানোর মূল লজিক)
