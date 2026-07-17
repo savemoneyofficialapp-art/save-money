@@ -111,7 +111,7 @@ export default function Withdraw() {
         </div>
       </div>
 
-      {/* Balance Cards (Ultra-Zoomed) */}
+      {/* Balance Cards */}
       <section style={styles.balanceGrid}>
         <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #1c1437 0%, #090e1a 100%)", borderColor: "#4c2899" }}>
           <div style={styles.cardHeaderFlex}>
@@ -161,7 +161,6 @@ export default function Withdraw() {
           />
         </div>
         
-        {/* 🔴 ফিক্স: ডান পাশে সুন্দরভাবে ৫% ডিডাকশন ডাটা দেখানোর জন্য বক্স */}
         {inputAmount > 0 && (
           <div style={styles.calculationBox}>
             <div style={styles.calcRow}>
@@ -224,38 +223,38 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Audit Statement */}
-      <section style={styles.glassContainer}>
+      {/* 🔴 আপডেট: মস্ত বড় Audit Statement ট্যাব সেকশন */}
+      <section style={styles.superGlassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-            <h3 style={{ ...styles.sectionTitle, margin: 0 }}>
-              Audit Statement {showAllHistory && "(All Records)"}
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            <h3 style={styles.superSectionTitle}>
+              Audit Statement {showAllHistory && "(All)"}
             </h3>
           </div>
           {history.length > 5 && (
-            <button style={styles.viewAllBtn} onClick={() => setShowAllHistory(!showAllHistory)}>
+            <button style={styles.superViewAllBtn} onClick={() => setShowAllHistory(!showAllHistory)}>
               {showAllHistory ? "Show Less ❮" : "View All ❯"}
             </button>
           )}
         </div>
 
         {history.length === 0 ? (
-          <div style={styles.emptyStateContainer}>
-            <p style={styles.emptyMainText}>No past settlement records found.</p>
+          <div style={styles.superEmptyStateContainer}>
+            <p style={styles.superEmptyMainText}>No past settlement records found.</p>
           </div>
         ) : (
           <div style={styles.historyList}>
             {visibleHistory.map((x) => (
-              <div key={x._id} style={styles.historyRow}>
+              <div key={x._id} style={styles.superHistoryRow}>
                 <div>
-                  <div style={styles.historyAmt}>{money(x.amount)}</div>
-                  <div style={styles.historyDate}>{new Date(x.createdAt).toLocaleString()}</div>
+                  <div style={styles.superHistoryAmt}>{money(x.amount)}</div>
+                  <div style={styles.superHistoryDate}>{new Date(x.createdAt).toLocaleString()}</div>
                 </div>
                 <span style={{ 
                   color: x.status === "Success" || x.status === "Approved" ? "#22c55e" : "#eab308", 
                   fontWeight: "900",
-                  fontSize: "18px" 
+                  fontSize: "22px" 
                 }}>
                   {x.status}
                 </span>
@@ -265,26 +264,26 @@ export default function Withdraw() {
         )}
       </section>
 
-      {/* 4 Pillars Section */}
-      <section style={styles.singleLineTrustContainer}>
-        <div style={styles.trustItemSingle}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          <h4 style={styles.trustTitleSingle}>Secure & Trusted</h4>
+      {/* 🔴 আপডেট: নিচের চারটা ট্রাস্ট আইটেমও মেগা সাইজ ও স্পষ্ট করা হলো */}
+      <section style={styles.superTrustContainer}>
+        <div style={styles.superTrustItem}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <h4 style={styles.superTrustTitle}>Secure & Trusted</h4>
         </div>
-        <div style={styles.dividerLine} />
-        <div style={styles.trustItemSingle}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-          <h4 style={styles.trustTitleSingle}>Quick Pay</h4>
+        <div style={styles.superDivider} />
+        <div style={styles.superTrustItem}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <h4 style={styles.superTrustTitle}>Quick Pay</h4>
         </div>
-        <div style={styles.dividerLine} />
-        <div style={styles.trustItemSingle}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path></svg>
-          <h4 style={styles.trustTitleSingle}>24/7 Support</h4>
+        <div style={styles.superDivider} />
+        <div style={styles.superTrustItem}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path></svg>
+          <h4 style={styles.superTrustTitle}>24/7 Support</h4>
         </div>
-        <div style={styles.dividerLine} />
-        <div style={styles.trustItemSingle}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
-          <h4 style={styles.trustTitleSingle}>Top Platform</h4>
+        <div style={styles.superDivider} />
+        <div style={styles.superTrustItem}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
+          <h4 style={styles.superTrustTitle}>Top Platform</h4>
         </div>
       </section>
 
@@ -292,7 +291,7 @@ export default function Withdraw() {
   );
 }
 
-// 🎨 ULTRA-ZOOMED & FLEX HIGH RESOLUTION UI STYLE SHEET
+// 🎨 স্টাইল শিট (Audit Statement এবং নিচের ৪টি আইটেম স্পেশাল বড় করা হয়েছে)
 const styles = {
   page: {
     minHeight: "100vh", 
@@ -324,40 +323,42 @@ const styles = {
   cardAmount: { fontSize: "34px", fontWeight: "900", margin: 0 }, 
   cardDesc: { margin: "24px 0 0 0", fontSize: "16px", color: "#94a3b8", fontWeight: "500" },
   percentageBadge: { position: "absolute", top: "22px", right: "22px", width: "48px", height: "48px", borderRadius: "50%", background: "rgba(14, 165, 233, 0.2)", border: "2px solid #0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: "900", color: "#38bdf8" },
-  glassContainer: { width: "100%", padding: "38px 30px", borderRadius: "26px", background: "#0a1122", border: "1.5px solid #202f4e", boxSizing: "border-box", boxShadow: "0 10px 30px rgba(0,0,0,0.3)" },
-  sectionTitle: { margin: "0 0 26px 0", fontSize: "25px", fontWeight: "900", letterSpacing: "0.5px" }, 
+  glassContainer: { width: "100%", padding: "38px 30px", borderRadius: "26px", background: "#0a1122", border: "1.5px solid #202f4e", boxSizing: "border-box" },
+  sectionTitle: { margin: "0 0 26px 0", fontSize: "25px", fontWeight: "900" }, 
   inputWrapper: { display: "flex", alignItems: "center", background: "#020716", border: "2px solid #475d82", borderRadius: "18px", padding: "0 28px" },
   currencyPrefix: { fontSize: "38px", fontWeight: "800", marginRight: "16px", color: "#3b82f6" },
   input: { width: "100%", height: "80px", border: "none", background: "transparent", color: "#ffffff", fontSize: "38px", fontWeight: "900", outline: "none" },
-  
-  // 🔴 ফিক্সড রোর স্টাইল: দুপাশে সমান গ্যাপের জন্য
   calculationBox: { marginTop: "26px", padding: "20px 0", display: "flex", flexDirection: "column", gap: "18px", borderBottom: "2.5px dashed #202f4e" },
   calcRow: { display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" },
   calcTotalRow: { marginTop: "12px", paddingTop: "22px", borderTop: "2px solid #202f4e" },
   calcLabel: { fontSize: "19px", fontWeight: "700", color: "#cbd5e1" }, 
   calcValue: { fontSize: "20px", fontWeight: "800" },
-  
   minNotice: { fontSize: "17px", color: "#94a3b8", margin: "20px 0 28px 4px", fontWeight: "500" },
-  submitBtn: { width: "100%", height: "72px", border: "none", borderRadius: "18px", background: "linear-gradient(90deg, #4f46e5 0%, #2563eb 100%)", color: "#ffffff", fontWeight: "900", fontSize: "23px", cursor: "pointer", boxShadow: "0 8px 20px rgba(37, 99, 235, 0.3)" },
+  submitBtn: { width: "100%", height: "72px", border: "none", borderRadius: "18px", background: "linear-gradient(90deg, #4f46e5 0%, #2563eb 100%)", color: "#ffffff", fontWeight: "900", fontSize: "23px", cursor: "pointer" },
   btnContent: { display: "flex", alignItems: "center", justifyContent: "center", gap: "16px" },
-  sectionHeaderTitle: { display: "flex", alignItems: "center", gap: "16px", marginBottom: "26px" },
+  sectionHeaderTitle: { display: "flex", alignItems: "center", gap: "16px", marginBottom: "0px" },
   bankGrid: { display: "flex", justifyContent: "space-between", alignItems: "center", background: "#020716", padding: "32px", borderRadius: "22px", border: "2px solid #202f4e", cursor: "pointer" },
   bankFieldsGroup: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px 24px", flex: 1 },
   bankMeta: { display: "flex", flexDirection: "column", gap: "8px" },
-  metaLabel: { fontSize: "16px", fontWeight: "800", color: "#64748b", letterSpacing: "0.8px" }, 
-  metaValue: { fontSize: "21px", fontWeight: "900", color: "#f8fafc" }, 
+  metaLabel: { fontSize: "16px", fontWeight: "800", color: "#64748b" }, 
+  metaValue: { fontSize: "21px", fontWeight: "900" }, 
   bankArrowContainer: { paddingLeft: "22px" },
   bankActionCircle: { width: "56px", height: "56px", borderRadius: "50%", border: "none", background: "#202f4e", display: "flex", alignItems: "center", justifyContent: "center" },
-  historySectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" },
-  viewAllBtn: { background: "none", border: "none", color: "#818cf8", fontSize: "20px", fontWeight: "900", cursor: "pointer", padding: "8px 16px" },
-  emptyStateContainer: { textAlign: "center", padding: "40px" },
-  emptyMainText: { fontSize: "21px", color: "#94a3b8", fontWeight: "700" },
-  historyList: { display: "flex", flexDirection: "column", gap: "18px" },
-  historyRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0", borderBottom: "2px solid #202f4e" },
-  historyAmt: { fontSize: "22px", fontWeight: "900" }, 
-  historyDate: { fontSize: "16px", color: "#94a3b8", marginTop: "6px" },
-  singleLineTrustContainer: { width: "100%", background: "#0a1122", border: "1.5px solid #202f4e", borderRadius: "26px", padding: "32px 20px", display: "flex", alignItems: "stretch", justifyContent: "space-between", boxSizing: "border-box", gap: "10px" },
-  trustItemSingle: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" },
-  dividerLine: { width: "2px", backgroundColor: "#202f4e", alignSelf: "stretch" },
-  trustTitleSingle: { fontSize: "16px", fontWeight: "900", margin: "14px 0 0 0", whiteSpace: "nowrap" }
+  historySectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "26px", width: "100%" },
+
+  // 🔥 Audit Statement স্পেশাল মেগা ডিজাইন
+  superGlassContainer: { width: "100%", padding: "46px 36px", borderRadius: "28px", background: "#0a1122", border: "2px solid #22375e", boxSizing: "border-box", boxShadow: "0 15px 35px rgba(0,0,0,0.4)" },
+  superSectionTitle: { margin: 0, fontSize: "29px", fontWeight: "950", letterSpacing: "0.5px" },
+  superViewAllBtn: { background: "none", border: "none", color: "#818cf8", fontSize: "22px", fontWeight: "900", cursor: "pointer", padding: "8px 16px" },
+  superEmptyStateContainer: { textAlign: "center", padding: "60px 20px" },
+  superEmptyMainText: { fontSize: "24px", color: "#94a3b8", fontWeight: "700" },
+  superHistoryRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px 0", borderBottom: "2.5px solid #202f4e" },
+  superHistoryAmt: { fontSize: "25px", fontWeight: "900" }, 
+  superHistoryDate: { fontSize: "18px", color: "#94a3b8", marginTop: "8px" },
+
+  // 🔥 নিচের ৪টি ট্রাস্ট বাটন মেগা ডিজাইন
+  superTrustContainer: { width: "100%", background: "#0a1122", border: "2px solid #202f4e", borderRadius: "26px", padding: "36px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" },
+  superTrustItem: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", justifycontent: "center" },
+  superDivider: { width: "2.5px", backgroundColor: "#202f4e", height: "45px", alignSelf: "center" },
+  superTrustTitle: { fontSize: "17px", fontWeight: "950", margin: "16px 0 0 0", whiteSpace: "nowrap", letterSpacing: "0.3px" }
 };
