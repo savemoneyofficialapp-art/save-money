@@ -344,7 +344,7 @@ export default function Home() {
           title="Leaderboard"
           subtitle="Top Referer"
           gradient="transaction"
-          onClick={() => go("/Leaderboard")}
+          onClick={() => go("/leaderboard")}
         />
       </section>
 
@@ -392,7 +392,7 @@ export default function Home() {
           title="Analytics"
           subtitle="User Analytics"
           gradient="notification"
-          onClick={() => go("/user-analytics")}
+          onClick={() => go("/analytics")}
         />
 
         <PremiumActionButton
