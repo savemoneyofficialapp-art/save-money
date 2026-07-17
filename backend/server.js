@@ -917,39 +917,56 @@ transporter.verify(function (error, success) {
     console.log("SMTP READY");
   }
 });
+*/
 
+// ====================================================================
+// 🚀 BREVO API EMAIL FUNCTION (এটি আপনার মেইল পাঠানোর মূল লজিক)
+// ====================================================================
 async function sendEmail(to, subject, message) {
   try {
-    await axios.post(
+    // ইমেইল এড্রেস ট্রিম এবং লোয়ারকেস নিশ্চিত করা
+    const recipientEmail = to.trim().toLowerCase();
+
+    const response = await axios.post(
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
           name: "Save Money",
-          email: process.env.EMAIL_USER
+          email: process.env.EMAIL_USER // নিশ্চিত করুন এই ইমেইলটি Brevo তে ভেরিফাইড সেন্ডার হিসেবে আছে
         },
         to: [
           {
-            email: to
+            email: recipientEmail
           }
         ],
         subject: subject,
         htmlContent: `
-          <div style="font-family:Arial;padding:20px">
-            <h2 style="color:#7c3aed">Save Money Notification</h2>
-            <p>${message}</p>
+          <div style="font-family:Arial;padding:20px;border:1px solid #eee;border-radius:5px;">
+            <h2 style="color:#7c3aed;margin-bottom:15px;">Save Money Notification</h2>
+            <div style="font-size:16px;color:#333;line-height:1.5;">
+              ${message}
+            </div>
+            <p style="font-size:12px;color:#777;margin-top:25px;border-top:1px solid #eee;padding-top:10px;">
+              This is an automated message from Save Money platform. Please do not reply directly to this email.
+            </p>
           </div>
         `
       },
       {
         headers: {
-          "api-key": process.env.BREVO_API_KEY,
+          "api-key": process.env.BREVO_API_KEY, // Render environment variables এ এটি থাকতে হবে
           "Content-Type": "application/json"
         }
       }
     );
+
+    console.log(`[Brevo API] Email successfully sent to ${recipientEmail}. Message ID:`, response.data.messageId);
+    return response.data;
+
   } catch (mailErr) {
+    // এরর ডিবাগিং সহজ করার জন্য বিস্তারিত লগ
     console.log("BREVO API EMAIL ERROR:", mailErr.response?.data || mailErr.message);
-    throw mailErr;
+    throw mailErr; // এই throw টি আপনার /send-email-otp রাউটকে এরর হ্যান্ডেল করতে সাহায্য করবে
   }
 }
 
