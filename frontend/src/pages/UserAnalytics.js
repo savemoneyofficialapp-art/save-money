@@ -1,180 +1,178 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; 
-import { toast } from "react-toastify"; 
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  Tooltip
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  PieChart, Pie, Cell, AreaChart, Area 
 } from "recharts";
-import { API } from "../config";
 
-export default function UserAnalytics() {
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-  const email = localStorage.getItem("email");
-
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(false);
+const UserAnalytics = () => {
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!token || !email) {
-      toast.warning("Please login first to view analytics");
-      navigate("/login"); 
-      return;
-    }
-    load();
-  }, [token, email]);
+    const fetchAnalytics = async () => {
+      try {
+        let token = localStorage.getItem("token");
+        if (token && !token.startsWith("Bearer ")) {
+          token = `Bearer ${token}`;
+        }
 
-  const load = async () => {
-    try {
-      const res = await fetch(`${API}/user-dashboard-chart`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // 💡 ফিক্স: টোকেন সাধারণত 'Bearer ' সহ পাঠাতে হয় (নতুবা শুধু token-ই যদি ব্যাকএন্ডে চান তবে এটি চেক করুন)
-          authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` 
-        },
-        body: JSON.stringify({ email })
-      });
+        const response = await axios.get("http://localhost:5000/api/analytics", {
+          headers: { Authorization: token },
+        });
 
-      if (res.status === 401 || res.status === 403) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("email");
-        toast.error("Session expired. Please login again.");
-        navigate("/login");
-        return;
+        setAnalyticsData(response.data);
+      } catch (err) {
+        setError(err.response?.data?.message || "অ্যানালিটিক্স ডাটা লোড করতে ব্যর্থ হয়েছে।");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const result = await res.json();
+    fetchAnalytics();
+  }, []);
 
-      if (result && result.success !== false) {
-        setData(result);
-      } else {
-        setError(true);
-        toast.error(result.msg || "Failed to load analytics data");
-      }
-    } catch (err) {
-      console.log("ANALYTICS LOAD ERROR:", err);
-      setError(true);
-      toast.error("Server error. Could not load data.");
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-600"></div>
+        <span className="ml-3 text-lg font-medium text-gray-600">ডাটা লোড হচ্ছে...</span>
+      </div>
+    );
+  }
 
   if (error) {
     return (
-      <div style={styles.loading}>
-        <p style={{ color: "#ef4444" }}>Failed to load charts. Please try refreshing.</p>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div style={styles.loading}>
-        <div style={{ textAlign: "center" }}>
-          <span style={{ fontSize: "30px" }}>📊</span>
-          <h2>Loading Analytics...</h2>
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <div className="bg-red-50 text-red-700 px-6 py-4 rounded-lg shadow-sm border border-red-200 text-center">
+          <p className="font-semibold text-lg">⚠️ দুঃখিত!</p>
+          <p className="mt-1 text-sm">{error}</p>
         </div>
       </div>
     );
   }
+
+  // COLORS for Pie Chart
+  const COLORS = ["#10B981", "#F59E0B", "#EF4444"];
+
+  // Formatted data for charts
+  const taskStatusData = [
+    { name: "সম্পন্ন", value: analyticsData?.completedTasks || 0 },
+    { name: "চলমান", value: analyticsData?.pendingTasks || 0 },
+  ];
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>My Analytics</h1>
-
-      <div style={styles.summaryGrid}>
-        <div style={styles.card}>
-          <h2>₹{Number(data.wallet || 0).toLocaleString("en-IN")}</h2>
-          <p>Wallet Balance</p>
+    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Header Section */}
+        <div className="mb-10 text-center sm:text-left">
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">
+            📊 আপনার কাজের অ্যানালিটিক্স
+          </h1>
+          <p className="mt-2 text-md text-slate-500">
+            এখানে আপনার টাস্ক ম্যানেজমেন্ট ও পারফরম্যান্সের একটি সামগ্রিক চিত্র দেওয়া হলো।
+          </p>
         </div>
 
-        <div style={styles.card}>
-          <h2>₹{Number(data.totalBonus || 0).toLocaleString("en-IN")}</h2>
-          <p>Total Bonus</p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-10">
+          {/* Card 1: Total Tasks */}
+          <div className="bg-white overflow-hidden shadow-sm border border-slate-100 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+            <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">মোট টাস্ক</p>
+            <p className="mt-2 text-4xl font-bold text-indigo-600">{analyticsData?.totalTasks || 0}</p>
+          </div>
+          {/* Card 2: Completed Tasks */}
+          <div className="bg-white overflow-hidden shadow-sm border border-slate-100 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+            <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">সম্পন্ন হয়েছে</p>
+            <p className="mt-2 text-4xl font-bold text-emerald-500">{analyticsData?.completedTasks || 0}</p>
+          </div>
+          {/* Card 3: Pending Tasks */}
+          <div className="bg-white overflow-hidden shadow-sm border border-slate-100 rounded-xl p-6 transition-transform hover:scale-[1.02]">
+            <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">চলমান/বাকি আছে</p>
+            <p className="mt-2 text-4xl font-bold text-amber-500">{analyticsData?.pendingTasks || 0}</p>
+          </div>
         </div>
 
-        <div style={styles.card}>
-          <h2 style={{ color: String(data.activeStatus).toLowerCase() === "active" ? "#22c55e" : "#ef4444" }}>
-            {data.activeStatus || "N/A"}
-          </h2>
-          <p>Account Status</p>
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Chart 1: Bar Chart (Task Overview) */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <h3 className="text-lg font-bold text-slate-800 mb-6">📉 টাস্ক ওভারভিউ (বার চার্ট)</h3>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={taskStatusData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={13} />
+                  <YAxis stroke="#94a3b8" fontSize={13} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", color: "#fff" }}
+                    itemStyle={{ color: "#38bdf8" }}
+                  />
+                  <Bar dataKey="value" name="টাস্ক সংখ্যা" radius={[8, 8, 0, 0]}>
+                    <Cell fill="#3b82f6" />
+                    <Cell fill="#f59e0b" />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Chart 2: Area/Line Chart (Performance Trend) */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <h3 className="text-lg font-bold text-slate-800 mb-6">📈 প্রগ্রেস ট্রেন্ড (এরিয়া চার্ট)</h3>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={taskStatusData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={13} />
+                  <YAxis stroke="#94a3b8" fontSize={13} />
+                  <Tooltip contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", color: "#fff" }} />
+                  <Area type="monotone" dataKey="value" name="টাস্ক সংখ্যা" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Chart 3: Pie Chart (Distribution) */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-2">
+            <h3 className="text-lg font-bold text-slate-800 mb-6 text-center">🍕 টাস্ক বন্টন অনুপাত (পাই চার্ট)</h3>
+            <div className="h-80 w-full flex justify-center items-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={taskStatusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {taskStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", color: "#fff" }} />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
         </div>
-      </div>
 
-      <div style={styles.chartBox}>
-        <h2>Monthly Income Growth</h2>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={data.monthlyData || []}>
-            <XAxis dataKey="month" stroke="#94a3b8" />
-            <YAxis stroke="#94a3b8" />
-            <Tooltip contentStyle={{ background: "#1e293b", borderRadius: "10px", border: "none" }} />
-            <Line type="monotone" dataKey="income" stroke="#22c55e" strokeWidth={3} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div style={styles.chartBox}>
-        <h2>Investment Growth</h2>
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={data.monthlyData || []}>
-            <XAxis dataKey="month" stroke="#94a3b8" />
-            <YAxis stroke="#94a3b8" />
-            <Tooltip contentStyle={{ background: "#1e293b", borderRadius: "10px", border: "none" }} />
-            <Bar dataKey="investment" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div style={styles.chartBox}>
-        <h2>Monthly Referral Growth</h2>
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={data.monthlyData || []}>
-            <XAxis dataKey="month" stroke="#94a3b8" />
-            <YAxis stroke="#94a3b8" />
-            <Tooltip contentStyle={{ background: "#1e293b", borderRadius: "10px", border: "none" }} />
-            <Bar dataKey="referrals" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div style={styles.chartBox}>
-        <h2>Income Breakdown</h2>
-        <ResponsiveContainer width="100%" height={320}>
-          <PieChart>
-            <Pie
-              data={data.incomeBreakdown || []}
-              dataKey="value"
-              nameKey="name"
-              outerRadius={100}
-              label={{ fill: 'white', fontSize: 13 }}
-            >
-              {(data.incomeBreakdown || []).map((entry, index) => {
-                const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6"];
-                return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-              })}
-            </Pie>
-            <Tooltip contentStyle={{ background: "#1e293b", borderRadius: "10px", border: "none" }} />
-          </PieChart>
-        </ResponsiveContainer>
       </div>
     </div>
   );
-}
-
-const styles = {
-  container: { minHeight: "100vh", background: "linear-gradient(135deg,#020617,#0f172a)", color: "white", padding: "20px" },
-  loading: { minHeight: "100vh", background: "#020617", color: "white", display: "flex", alignItems: "center", justifyCenter: "center" },
-  title: { textAlign: "center", color: "#22c55e", fontWeight: "bold", marginBottom: "20px" },
-  summaryGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginTop: "20px" },
-  card: { background: "#1e293b", padding: "18px", borderRadius: "18px", textAlign: "center", border: "1px solid #334155" },
-  chartBox: { background: "#1e293b", padding: "20px", borderRadius: "20px", marginTop: "20px", border: "1px solid #334155" }
 };
+
+export default UserAnalytics;
