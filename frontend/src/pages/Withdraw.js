@@ -270,100 +270,109 @@ export default function Withdraw() {
   );
 }
 
-// 💎 HIGH-END FINTECH GLASSMORPHISM UX STYLESHEET
+// 💎 HIGH-END FINTECH GLASSMORPHISM UX STYLESHEET (UPDATED FOR FULLSCREEN & PREMIUM BACKGROUND)
 const styles = {
   page: {
     minHeight: "100vh",
+    width: "100%",
     color: "#f8fafc",
     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-    background: "linear-gradient(180deg, #030712 0%, #0b1530 50%, #030712 100%)",
-    padding: "16px 16px 60px",
-    boxSizing: "border-box"
+    // প্রিমিয়াম অ্যাবস্ট্রাক্ট ডার্ক ব্যাকগ্রাউন্ড ইমেজ লিনিয়ার গ্রেডিয়েন্ট ওভারলে সহ
+    backgroundImage: "linear-gradient(180deg, rgba(3, 7, 18, 0.88) 0%, rgba(11, 21, 48, 0.93) 100%), url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1200&q=80')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundAttachment: "fixed",
+    padding: "20px 14px 40px",
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center"
   },
   topNav: {
     display: "flex",
     alignItems: "center",
     gap: "16px",
-    maxWidth: "680px",
-    margin: "0 auto 20px"
+    width: "100%",
+    maxWidth: "100%", // মোবাইল স্ক্রিনে ফুল উইডথ পাওয়ার জন্য
+    marginBottom: "16px"
   },
   backBtn: {
-    width: "42px",
-    height: "42px",
+    width: "40px",
+    height: "40px",
     borderRadius: "50%",
-    border: "1px solid rgba(255, 255, 255, 0.08)",
-    background: "rgba(255, 255, 255, 0.03)",
-    color: "#94a3b8",
-    fontSize: "16px",
+    border: "1px solid rgba(255, 255, 255, 0.12)",
+    background: "rgba(255, 255, 255, 0.05)",
+    color: "#ffffff",
+    fontSize: "15px",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center"
   },
   topNavTitle: {
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#64748b",
-    letterSpacing: "0.5px",
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#94a3b8",
+    letterSpacing: "0.8px",
     textTransform: "uppercase"
   },
   mainWrapper: {
-    maxWidth: "680px",
-    margin: "0 auto",
+    width: "100%", // মোবাইলে পুরো স্ক্রিন কভার করবে
     display: "flex",
     flexDirection: "column",
-    gap: "20px"
+    gap: "16px"
   },
   header: {
     textAlign: "left",
-    padding: "0 4px"
+    padding: "0 4px",
+    marginBottom: "4px"
   },
   mainHeading: {
-    fontSize: "28px",
+    fontSize: "26px",
     fontWeight: "800",
     letterSpacing: "-0.5px",
     margin: "0 0 6px 0",
-    background: "linear-gradient(to right, #ffffff, #94a3b8)",
+    background: "linear-gradient(to right, #ffffff, #cbd5e1)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent"
   },
   subHeading: {
     margin: 0,
-    fontSize: "14px",
-    color: "#64748b"
+    fontSize: "13px",
+    color: "#94a3b8"
   },
   balanceGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "14px"
+    gap: "12px"
   },
   balanceCard: {
-    padding: "20px",
-    borderRadius: "24px",
-    background: "linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%)",
-    border: "1px solid rgba(255, 255, 255, 0.04)",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
+    padding: "16px",
+    borderRadius: "20px",
+    background: "linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(30, 41, 59, 0.85) 100%)",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.4)"
   },
   balanceCardSpecial: {
-    background: "linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)",
-    border: "1px solid rgba(6, 182, 212, 0.15)"
+    background: "linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%)",
+    border: "1px solid rgba(6, 182, 212, 0.25)"
   },
   cardHeader: {
     display: "flex",
     alignItems: "center",
-    gap: "8px",
-    marginBottom: "12px"
+    gap: "6px",
+    marginBottom: "8px"
   },
   cardIcon: {
-    fontSize: "16px"
+    fontSize: "14px"
   },
   cardTag: {
-    fontSize: "12px",
+    fontSize: "11px",
     fontWeight: "600",
-    color: "#94a3b8"
+    color: "#cbd5e1"
   },
   cardAmount: {
-    fontSize: "22px",
+    fontSize: "20px",
     fontWeight: "800",
     margin: "0 0 4px 0",
     color: "#ffffff"
@@ -371,58 +380,57 @@ const styles = {
   cardDesc: {
     margin: 0,
     fontSize: "11px",
-    color: "#475569"
+    color: "#94a3b8"
   },
   glassContainer: {
-    padding: "24px",
-    borderRadius: "28px",
-    background: "rgba(15, 23, 42, 0.4)",
-    border: "1px solid rgba(255, 255, 255, 0.06)",
-    backdropFilter: "blur(20px)",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
+    padding: "20px",
+    borderRadius: "24px",
+    background: "rgba(15, 23, 42, 0.65)", // গ্লাস ফিল ব্যাকগ্রাউন্ড ডার্ক করা হয়েছে
+    border: "1px solid rgba(255, 255, 255, 0.09)",
+    backdropFilter: "blur(25px)",
+    boxShadow: "0 15px 35px rgba(0,0,0,0.4)"
   },
   sectionTitle: {
-    margin: "0 0 16px 0",
-    fontSize: "15px",
+    margin: "0 0 14px 0",
+    fontSize: "14px",
     fontWeight: "700",
-    color: "#94a3b8",
-    letterSpacing: "0.3px"
+    color: "#cbd5e1",
+    letterSpacing: "0.5px"
   },
   inputWrapper: {
     position: "relative",
     display: "flex",
     alignItems: "center",
-    background: "rgba(2, 6, 23, 0.5)",
-    border: "1px solid rgba(255, 255, 255, 0.08)",
-    borderRadius: "18px",
-    padding: "4px 20px"
+    background: "rgba(2, 6, 23, 0.75)",
+    border: "1px solid rgba(255, 255, 255, 0.12)",
+    borderRadius: "16px",
+    padding: "2px 16px"
   },
   currencyPrefix: {
-    fontSize: "28px",
+    fontSize: "24px",
     fontWeight: "700",
-    color: "#475569",
-    marginRight: "8px"
+    color: "#94a3b8",
+    marginRight: "6px"
   },
   input: {
     width: "100%",
-    height: "56px",
+    height: "50px",
     border: "none",
     background: "transparent",
     color: "#ffffff",
-    fontSize: "26px",
+    fontSize: "24px",
     fontWeight: "700",
     outline: "none"
   },
-  /* 📊 NEW STYLES FOR TDS LIVE CALCULATION BOX */
   calculationBox: {
-    marginTop: "14px",
-    padding: "14px 18px",
-    background: "rgba(2, 6, 23, 0.4)",
-    border: "1px solid rgba(255, 255, 255, 0.04)",
-    borderRadius: "16px",
+    marginTop: "12px",
+    padding: "12px 16px",
+    background: "rgba(2, 6, 23, 0.6)",
+    border: "1px solid rgba(255, 255, 255, 0.06)",
+    borderRadius: "14px",
     display: "flex",
     flexDirection: "column",
-    gap: "8px"
+    gap: "6px"
   },
   calcRow: {
     display: "flex",
@@ -430,169 +438,169 @@ const styles = {
     alignItems: "center"
   },
   calcTotalRow: {
-    borderTop: "1px dashed rgba(255, 255, 255, 0.1)",
-    paddingTop: "8px",
-    marginTop: "4px"
+    borderTop: "1px dashed rgba(255, 255, 255, 0.15)",
+    paddingTop: "6px",
+    marginTop: "2px"
   },
   calcLabel: {
-    fontSize: "13px",
-    color: "#94a3b8",
+    fontSize: "12px",
+    color: "#cbd5e1",
     fontWeight: "500"
   },
   calcValue: {
-    fontSize: "13px",
-    color: "#f8fafc",
+    fontSize: "12px",
+    color: "#ffffff",
     fontWeight: "600"
   },
   minNotice: {
-    fontSize: "12px",
-    color: "#64748b",
-    margin: "8px 0 20px 4px"
+    fontSize: "11px",
+    color: "#94a3b8",
+    margin: "8px 0 16px 4px"
   },
   submitBtn: {
     width: "100%",
-    height: "54px",
+    height: "50px",
     border: "none",
-    borderRadius: "16px",
+    borderRadius: "14px",
     background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
     color: "#ffffff",
     fontWeight: "700",
-    fontSize: "15px",
+    fontSize: "14px",
     cursor: "pointer",
-    boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)"
+    boxShadow: "0 4px 12px rgba(59, 130, 246, 0.4)"
   },
   loaderFlex: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "10px"
+    gap: "8px"
   },
   spinner: {
-    width: "16px",
-    height: "16px",
+    width: "14px",
+    height: "14px",
     border: "2px solid rgba(255,255,255,0.3)",
     borderTopColor: "white",
     borderRadius: "50%"
   },
   noteBox: {
     display: "flex",
-    gap: "10px",
-    marginTop: "16px",
-    background: "rgba(255,255,255,0.02)",
-    padding: "12px 16px",
+    gap: "8px",
+    marginTop: "14px",
+    background: "rgba(255,255,255,0.03)",
+    padding: "10px 14px",
     borderRadius: "12px",
-    border: "1px solid rgba(255,255,255,0.04)"
+    border: "1px solid rgba(255,255,255,0.05)"
   },
   noteIcon: {
     color: "#3b82f6",
     fontWeight: "bold",
-    fontSize: "14px"
+    fontSize: "13px"
   },
   noteText: {
     margin: 0,
     fontSize: "11px",
-    color: "#64748b",
-    lineHeight: "1.5"
+    color: "#94a3b8",
+    lineHeight: "1.4"
   },
   noBankView: {
     textAlign: "center",
-    padding: "20px 0"
+    padding: "16px 0"
   },
   noBankText: {
-    color: "#64748b",
-    fontSize: "13px",
-    marginBottom: "16px"
+    color: "#94a3b8",
+    fontSize: "12px",
+    marginBottom: "12px"
   },
   bankSetupBtn: {
-    padding: "10px 20px",
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: "12px",
+    padding: "8px 16px",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "10px",
     color: "#ffffff",
     fontWeight: "600",
-    fontSize: "13px",
+    fontSize: "12px",
     cursor: "pointer"
   },
   bankGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
-    background: "rgba(2, 6, 23, 0.3)",
-    padding: "16px",
-    borderRadius: "20px",
-    border: "1px solid rgba(255,255,255,0.03)"
+    gap: "14px",
+    background: "rgba(2, 6, 23, 0.4)",
+    padding: "14px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255, 255, 255, 0.05)"
   },
   bankMeta: {
     display: "flex",
     flexDirection: "column",
-    gap: "4px"
+    gap: "2px"
   },
   metaLabel: {
     fontSize: "10px",
     fontWeight: "700",
-    color: "#475569",
+    color: "#94a3b8",
     letterSpacing: "0.5px"
   },
   metaValue: {
     fontSize: "13px",
     fontWeight: "600",
-    color: "#cbd5e1"
+    color: "#ffffff" // ব্যাংক ভ্যালুর টেক্সট কালার সাদা করা হয়েছে যাতে ভালোভাবে পড়া যায়
   },
   emptyState: {
     textAlign: "center",
-    color: "#475569",
-    fontSize: "13px",
-    padding: "20px 0"
+    color: "#64748b",
+    fontSize: "12px",
+    padding: "16px 0"
   },
   historyList: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px"
+    gap: "10px"
   },
   historyRow: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "14px 16px",
-    background: "rgba(2, 6, 23, 0.2)",
-    border: "1px solid rgba(255,255,255,0.03)",
-    borderRadius: "16px"
+    padding: "12px 14px",
+    background: "rgba(2, 6, 23, 0.3)",
+    border: "1px solid rgba(255,255,255,0.04)",
+    borderRadius: "14px"
   },
   historyLeft: {
     display: "flex",
     alignItems: "flex-start",
-    gap: "12px"
+    gap: "10px"
   },
   statusDot: {
-    width: "8px",
-    height: "8px",
+    width: "7px",
+    height: "7px",
     borderRadius: "50%",
-    marginTop: "6px",
+    marginTop: "5px",
     flexShrink: 0
   },
   historyAmt: {
     display: "block",
-    fontSize: "15px",
+    fontSize: "14px",
     fontWeight: "700",
     color: "#ffffff"
   },
   historyDate: {
     display: "block",
     fontSize: "11px",
-    color: "#64748b",
+    color: "#94a3b8",
     marginTop: "2px"
   },
   reasonText: {
     display: "block",
     fontSize: "11px",
     color: "#ef4444",
-    marginTop: "4px",
+    marginTop: "2px",
     fontStyle: "italic"
   },
   statusBadge: {
-    padding: "4px 12px",
-    borderRadius: "20px",
-    fontSize: "11px",
+    padding: "3px 10px",
+    borderRadius: "16px",
+    fontSize: "10px",
     fontWeight: "700",
     letterSpacing: "0.3px"
   }
