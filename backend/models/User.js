@@ -1,38 +1,8 @@
 const mongoose = require("mongoose");
 
-// ==========================================
-// ১. ওটিপি কালেকশন স্কিমা (নতুন যুক্ত করা হলো)
-// ==========================================
-const otpSchema = new mongoose.Schema({
-  email: { 
-    type: String, 
-    required: true, 
-    lowercase: true, 
-    trim: true 
-  },
-  otp: { 
-    type: String, 
-    required: true 
-  },
-  isVerified: { 
-    type: Boolean, 
-    default: false 
-  },
-  createdAt: { 
-    type: Date, 
-    default: Date.now, 
-    expires: 600 // ১০ মিনিট পর ডাটাবেজ থেকে অটোমেটিক ডিলিট হয়ে যাবে
-  }
-});
-
-const OtpModel = mongoose.models.Otp || mongoose.model("Otp", otpSchema);
-
-// ==========================================
-// ২. ইউজার কালেকশন স্কিমা
-// ==========================================
 const userSchema = new mongoose.Schema({
 
-  // 🔹 BASIC INFO
+  // ðŸ”¹ BASIC INFO
   name: {
     type: String,
     required: true
@@ -55,152 +25,159 @@ const userSchema = new mongoose.Schema({
   },
 
   walletAddress: {
-    type: String,
-    default: ""
-  },
+  type: String,
+  default: ""
+},
 
-  termsAccepted: {
-    type: Boolean,
-    default: false
-  },
+termsAccepted: {
+  type: Boolean,
+  default: false
+},
   
   role: {
-    type: String,
-    default: "user"
-  },
+  type: String,
+  default: "user"
+},
 
-  refreshToken: {
-    type: String,
-    default: ""
-  },
+refreshToken: {
+  type: String,
+  default: ""
+},
 
-  banned: {
-    type: Boolean,
-    default: false
-  },
+banned: {
+  type: Boolean,
+  default: false
+},
 
-  freezeWallet: {
-    type: Boolean,
-    default: false
-  },
+banned: {
+  type: Boolean,
+  default: false
+},
 
-  disableInvestment: {
-    type: Boolean,
-    default: false
-  },
+freezeWallet: {
+  type: Boolean,
+  default: false
+},
 
-  disableWithdrawal: {
-    type: Boolean,
-    default: false
-  },
+disableInvestment: {
+  type: Boolean,
+  default: false
+},
 
-  disableBonus: {
-    type: Boolean,
-    default: false
-  },
+disableWithdrawal: {
+  type: Boolean,
+  default: false
+},
 
-  banReason: {
-    type: String,
-    default: ""
-  },
+disableBonus: {
+  type: Boolean,
+  default: false
+},
 
-  // 🔹 DOCUMENT INFO
+banReason: {
+  type: String,
+  default: ""
+},
+
+  // ðŸ”¹ DOCUMENT INFO
   aadhaar:{
-    type:String,
-    default:""
-  },
+type:String,
+default:""
+},
 
-  pan:{
-    type:String,
-    default:""
-  },
+pan:{
+type:String,
+default:""
+},
 
-  aadhaarNumber:{
-    type:String,
-    default:""
-  },
+aadhaarNumber:{
+type:String,
+default:""
+},
 
-  panNumber:{
-    type:String,
-    default:""
-  },
+panNumber:{
+type:String,
+default:""
+},
 
   referralIncome: {
-    type: Number,
-    default: 0
-  },
+  type: Number,
+  default: 0
+},
 
-  performanceEnabled:{
-    type:Boolean,
-    default:false
-  },
+performanceEnabled:{
+type:Boolean,
+default:false
+},
 
   performanceActivatedAt: {
-    type: Date,
-    default: null
-  },
+  type: Date,
+  default: null
+},
 
   performanceActivatedBy: {
-    type: String,
-    enum: ["AUTO", "ADMIN", "" ],
-    default: ""
-  },
+  type: String,
+  enum: ["AUTO", "ADMIN", "" ],
+  default: ""
+},
 
   performanceCompleted: {
-    type: Boolean,
-    default: false
-  },
+  type: Boolean,
+  default: false
+},
 
-  performanceStatus:{
-    type:String,
-    default:"Pending"
-  },
+performanceStatus:{
+type:String,
+default:"Pending"
+},
 
-  performanceStartDate:Date,
+performanceStartDate:Date,
 
-  performanceExpireDate:Date,
+performanceExpireDate:Date,
 
-  performanceAdminOverride:{
-    type:Boolean,
-    default:false
-  },
+performanceAdminOverride:{
+type:Boolean,
+default:false
+},
 
-  performanceIncome:{
-    type:Number,
-    default:0
-  },
+performanceIncome:{
+type:Number,
+default:0
+},
 
-  royaltyIncome: {
-    type: Number,
-    default: 0
-  },
+royaltyIncome: {
+  type: Number,
+  default: 0
+},
 
   referCode: {
     type: String,
     default:""
   },
   
-  // 🔹 TEAM / REFERRAL
+
+  // ðŸ”¹ TEAM / REFERRAL
   referredBy: {
     type: String,
     default: ""
   },
 
   accountActive: {
-    type: Boolean,
-    default: false
-  },
+  type: Boolean,
+  default: false
+},
 
-  activeStatus: {
-    type: String,
-    default: "Inactive"
-  },
+activeStatus: {
+  type: String,
+  default: "Inactive"
+},
 
-  // 🔹 WALLET SYSTEM
+  // ðŸ”¹ WALLET SYSTEM
+
   walletId: {
-    type: String,
-    unique: true
-  },
+  type: String,
+  unique: true
+},
 
   wallet: {
     type: Number,
@@ -208,33 +185,33 @@ const userSchema = new mongoose.Schema({
   },
 
   monthlyDirects: {
-    type: Number,
-    default: 0
-  },
+  type: Number,
+  default: 0
+},
 
-  balance: {
-    type: Number,
-    default: 0 
-  },
+balance: {
+  type: Number,
+  default: 0 
+},
 
-  // 🔹 KYC STATUS
+  // ðŸ”¹ KYC STATUS
   kycStatus:{
-    type:String,
-    enum:[
-      "Not Submitted",
-      "reviewing",
-      "approved",
-      "rejected"
-    ],
-    default:"Not Submitted"
-  },
+  type:String,
+  enum:[
+    "Not Submitted",
+    "reviewing",
+    "approved",
+    "rejected"
+  ],
+  default:"Not Submitted"
+},
 
-  kycRejectReason:{
-     type:String,
-     default:""
-  },
+kycRejectReason:{
+   type:String,
+   default:""
+},
 
-  // 🔹 FILE UPLOAD PATHS
+  // ðŸ”¹ FILE UPLOAD PATHS
   aadhaarFile: {
     type: String,
     default: ""
@@ -250,7 +227,7 @@ const userSchema = new mongoose.Schema({
     default: ""
   },
 
-  // 🔹 INVESTMENT SUMMARY
+  // ðŸ”¹ INVESTMENT SUMMARY (optional quick access)
   activeInvestment: {
     amount: Number,
     years: Number,
@@ -264,62 +241,57 @@ const userSchema = new mongoose.Schema({
     default: 0
   },
 
-  // 🔹 ACCOUNT STATUS
+  // ðŸ”¹ ACCOUNT STATUS
   isBlocked: {
     type: Boolean,
     default: false
   },
 
-  // 🔹 CREATED TIME
+  // ðŸ”¹ CREATED TIME
   createdAt: {
     type: Date,
     default: Date.now
   },
 
   rank: {
-    type: String,
-    default: "Starter"
-  },
+  type: String,
+  default: "Starter"
+},
 
-  rankPoints: {
-    type: Number,
-    default: 0
-  },
+rankPoints: {
+  type: Number,
+  default: 0
+},
 
-  totalEarning: {
-    type: Number,
-    default: 0
-  },
+totalEarning: {
+  type: Number,
+  default: 0
+},
 
-  totalDirect: {
-    type: Number,
-    default: 0
-  },
+totalDirect: {
+  type: Number,
+  default: 0
+},
 
-  resetOtp: {
-    type: String,
-    default: null
-  },
+resetOtp: {
+  type: String,
+  default: null
+},
+resetOtpExpire: {
+  type: Date,
+  default: null
+},
 
-  resetOtpExpire: {
-    type: Date,
-    default: null
-  },
+teamBonusEnabled: {
+  type: Boolean,
+  default: true
+},
 
-  teamBonusEnabled: {
-    type: Boolean,
-    default: true
-  },
+royaltyBonusEnabled: {
+  type: Boolean,
+  default: false
+}
 
-  royaltyBonusEnabled: {
-    type: Boolean,
-    default: false
-  }
 });
 
-const User = mongoose.model("User", userSchema);
-
-// ==========================================
-// ৩. দুটি মডেলই অবজেক্ট আকারে এক্সপোর্ট করা হলো
-// ==========================================
-module.exports = { User, OtpModel };
+module.exports = mongoose.model("User", userSchema);
