@@ -83,6 +83,16 @@ export default function Withdraw() {
     }
   };
 
+  // 🔴 লজিক ১: ব্যাংক ডিটেইলস এর অ্যারো ক্লিক ফাংশন
+  const handleBankClick = () => {
+    navigate("/bank-details"); // আপনার রাউট অনুযায়ী এটি পরিবর্তন করতে পারেন
+  };
+
+  // 🔴 লজিক ২: ভিউ অল ক্লিক ফাংশন
+  const handleViewAllClick = () => {
+    navigate("/withdraw-history"); // আপনার উইথড্র হিস্টরি রাউট
+  };
+
   return (
     <div style={styles.page}>
       
@@ -104,7 +114,7 @@ export default function Withdraw() {
         </div>
       </div>
 
-      {/* Wallet Balance Rows (Increased Padding & Zoomed) */}
+      {/* Balance Grid */}
       <section style={styles.balanceGrid}>
         <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #1c1437 0%, #090e1a 100%)", borderColor: "#4c2899" }}>
           <div style={styles.cardHeaderFlex}>
@@ -140,10 +150,9 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Payout Form Container */}
+      {/* Payout Form */}
       <section style={styles.glassContainer}>
         <h3 style={styles.sectionTitle}>Amount to Payout</h3>
-        
         <div style={styles.inputWrapper}>
           <span style={styles.currencyPrefix}>₹</span>
           <input
@@ -173,7 +182,6 @@ export default function Withdraw() {
         )}
 
         <p style={styles.minNotice}>Minimum withdrawal limit is ₹100</p>
-
         <button style={styles.submitBtn} onClick={submitWithdraw} disabled={loading}>
           {loading ? "Processing..." : (
             <span style={styles.btnContent}>
@@ -182,23 +190,17 @@ export default function Withdraw() {
             </span>
           )}
         </button>
-
-        <div style={styles.noteBox}>
-          <span style={styles.noteIcon}>ⓘ</span>
-          <p style={styles.noteText}>
-            Payouts are verified via secure layer. Once submitted, requests usually approve within a few hours.
-          </p>
-        </div>
       </section>
 
-      {/* Settlement Account Box */}
+      {/* Settlement Account (Clickable to Bank Page) */}
       <section style={styles.glassContainer}>
         <div style={styles.sectionHeaderTitle}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M3 22v-4h18v4H3zM12 2L2 7h20L12 2zM4 9v7h3V9H4zm5 0v7h3V9H9zm5 0v7h3V9h-3zm5 0v7h3V9h-3z"/></svg>
           <h3 style={{ ...styles.sectionTitle, margin: 0 }}>Settlement Account</h3>
         </div>
 
-        <div style={styles.bankGrid}>
+        {/* 🔴 অ্যাকশন ট্র্রিগার করার জন্য এখানে onClick সেট করা হলো */}
+        <div style={styles.bankGrid} onClick={handleBankClick}>
           <div style={styles.bankFieldsGroup}>
             <div style={styles.bankMeta}>
               <span style={styles.metaLabel}>HOLDER NAME</span>
@@ -225,68 +227,59 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Audit Statement Block */}
+      {/* Audit Statement (Show Top 5 Records) */}
       <section style={styles.glassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             <h3 style={{ ...styles.sectionTitle, margin: 0 }}>Audit Statement</h3>
           </div>
-          <button style={styles.viewAllBtn}>View All ❯</button>
+          {/* 🔴 ভিউ অল ক্লিক হ্যান্ডলার */}
+          <button style={styles.viewAllBtn} onClick={handleViewAllClick}>View All ❯</button>
         </div>
 
         {history.length === 0 ? (
           <div style={styles.emptyStateContainer}>
-            <div style={styles.emptyIconPlaceholder}>
-              <svg width="90" height="90" viewBox="0 0 64 64" fill="none">
-                <path d="M8 14a4 4 0 0 1 4-4h14l4 6h24a4 4 0 0 1 4 4v26a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V14z" fill="#17143a" stroke="#4f46e5" strokeWidth="2"/>
-                <path d="M12 18h40v24H12z" fill="#1e194f" opacity="0.8"/>
-                <circle cx="42" cy="44" r="8" fill="#080c14" stroke="#e026d9" strokeWidth="2.5"/>
-                <line x1="48" y1="50" x2="54" y2="56" stroke="#e026d9" strokeWidth="3.5"/>
-              </svg>
-            </div>
             <p style={styles.emptyMainText}>No past settlement records found.</p>
-            <p style={styles.emptySubText}>Your settlement history will appear here.</p>
           </div>
         ) : (
           <div style={styles.historyList}>
-            {history.map((x) => (
+            {/* 🔴 লজিক: .slice(0, 5) দিয়ে শুধুমাত্র প্রথম ৫টি ডাটা দেখানো হচ্ছে */}
+            {history.slice(0, 5).map((x) => (
               <div key={x._id} style={styles.historyRow}>
                 <div>
-                  <span style={styles.historyAmt}>{money(x.amount)}</span>
-                  <span style={styles.historyDate}>{new Date(x.createdAt).toLocaleDateString()}</span>
+                  <div style={styles.historyAmt}>{money(x.amount)}</div>
+                  <div style={styles.historyDate}>{new Date(x.createdAt).toLocaleDateString()}</div>
                 </div>
-                <span>{x.status}</span>
+                <span style={{ color: x.status === "Success" ? "#22c55e" : "#eab308", fontWeight: "700" }}>
+                  {x.status}
+                </span>
               </div>
             ))}
           </div>
         )}
       </section>
 
-      {/* 4 Pillars Section (One Single Line & Spaced Perfectly) */}
+      {/* 4 Pillars Grid Section */}
       <section style={styles.singleLineTrustContainer}>
         <div style={styles.trustItemSingle}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           <h4 style={styles.trustTitleSingle}>Secure & Trusted</h4>
-          <p style={styles.trustDescSingle}>100% safe and secure transactions</p>
         </div>
         <div style={styles.dividerLine} />
         <div style={styles.trustItemSingle}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
           <h4 style={styles.trustTitleSingle}>Quick Processing</h4>
-          <p style={styles.trustDescSingle}>Withdrawals processed within few hours</p>
         </div>
         <div style={styles.dividerLine} />
         <div style={styles.trustItemSingle}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path></svg>
           <h4 style={styles.trustTitleSingle}>24/7 Support</h4>
-          <p style={styles.trustDescSingle}>We are here to help you anytime</p>
         </div>
         <div style={styles.dividerLine} />
         <div style={styles.trustItemSingle}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
           <h4 style={styles.trustTitleSingle}>Trusted Platform</h4>
-          <p style={styles.trustDescSingle}>Thousands of users trust us</p>
         </div>
       </section>
 
@@ -294,355 +287,70 @@ export default function Withdraw() {
   );
 }
 
-// 🎨 FULLY ZOMED IN & NO EMPTY BOTTOM SPACE STYLES
+// 🎨 HIGH QUALITY FINTECH BACKGROUND STYLES SHEET
 const styles = {
   page: {
-    height: "auto", // 🔴 FIX: স্ক্রিন হাইট ফিক্সড না করে অটো করা হলো যাতে নিচের ফাঁকা ভাব চলে যায়
-    minHeight: "100%", 
+    minHeight: "100vh", 
     width: "100%",
-    backgroundColor: "#030610",
+    // 🔴 ফিক্স: সাদা ব্যাকগ্রাউন্ড চিরতরে দূর করতে ব্যাংকিং টাইপ টেক্সচার বা ডার্ক গ্রেডিয়েন্ট অ্যাড করা হয়েছে
+    background: "radial-gradient(circle at top right, #0e172e 0%, #030610 60%)",
     color: "#ffffff",
     padding: "24px 16px 40px 16px",
     boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
-    gap: "24px", // 🔴 জুমড লুকের জন্য কার্ডগুলোর গ্যাপ বাড়ানো হলো
-    overflowY: "scroll" 
+    gap: "24px",
+    overflowY: "auto"
   },
-  topNav: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%"
-  },
-  backBtn: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "12px",
-    border: "1px solid #1e293b",
-    background: "#0c1324",
-    color: "#ffffff"
-  },
-  topCenterTitle: {
-    textAlign: "center",
-    flex: 1
-  },
-  titleFlex: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px"
-  },
-  mainHeading: {
-    fontSize: "24px",
-    fontWeight: "700",
-    margin: 0
-  },
-  subHeading: {
-    margin: "4px 0 0 0",
-    fontSize: "14px",
-    color: "#94a3b8"
-  },
-  secureBadge: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    background: "rgba(34, 197, 94, 0.12)",
-    border: "1px solid #22c55e",
-    padding: "8px 14px",
-    borderRadius: "10px",
-    color: "#4ade80"
-  },
-  balanceGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
-    width: "100%"
-  },
-  balanceCard: {
-    position: "relative",
-    padding: "26px 22px", // 🔴 জুমড ও বড় দেখানোর জন্য প্যাডিং বাড়ানো হলো
-    borderRadius: "16px",
-    border: "1.5px solid",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    minHeight: "155px", 
-    boxSizing: "border-box"
-  },
-  cardHeaderFlex: {
-    display: "flex",
-    alignItems: "center",
-    gap: "14px"
-  },
-  walletIconBox: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  cardMeta: {
-    display: "flex",
-    flexDirection: "column"
-  },
-  amountEyeRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    marginTop: "4px"
-  },
-  eyeIcon: {
-    fontSize: "16px",
-    color: "#cbd5e1"
-  },
-  cardTag: {
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#94a3b8"
-  },
-  cardAmount: {
-    fontSize: "26px", 
-    fontWeight: "700",
-    margin: 0
-  },
-  cardDesc: {
-    margin: "18px 0 0 0",
-    fontSize: "13px",
-    color: "#94a3b8"
-  },
-  percentageBadge: {
-    position: "absolute",
-    top: "20px",
-    right: "20px",
-    width: "38px",
-    height: "38px",
-    borderRadius: "50%",
-    background: "rgba(14, 165, 233, 0.15)",
-    border: "1.5px solid #0ea5e9",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "12px",
-    fontWeight: "700",
-    color: "#38bdf8"
-  },
-  glassContainer: {
-    width: "100%",
-    padding: "32px 26px", // 🔴 সব মেইন কন্টেইনারে জুমড ফিল আনার জন্য প্যাডিং ইনক্রিজ করা হয়েছে
-    borderRadius: "20px",
-    background: "#090f1d",
-    border: "1px solid #1e2942",
-    boxSizing: "border-box"
-  },
-  sectionTitle: {
-    margin: "0 0 20px 0",
-    fontSize: "19px",
-    fontWeight: "700"
-  },
-  inputWrapper: {
-    display: "flex",
-    alignItems: "center",
-    background: "#020613",
-    border: "1px solid #334155",
-    borderRadius: "14px",
-    padding: "0 20px"
-  },
-  currencyPrefix: {
-    fontSize: "28px",
-    fontWeight: "600",
-    marginRight: "12px"
-  },
-  input: {
-    width: "100%",
-    height: "64px", 
-    border: "none",
-    background: "transparent",
-    color: "#ffffff",
-    fontSize: "28px",
-    fontWeight: "700",
-    outline: "none"
-  },
-  calculationBox: {
-    marginTop: "20px",
-    padding: "16px 0",
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-    borderBottom: "1px dashed #334155"
-  },
-  calcRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  calcTotalRow: {
-    marginTop: "8px",
-    paddingTop: "16px",
-    borderTop: "1px solid #334155"
-  },
-  calcLabel: {
-    fontSize: "15px",
-    fontWeight: "600",
-    color: "#cbd5e1"
-  },
-  calcValue: {
-    fontSize: "15px",
-    fontWeight: "700"
-  },
-  minNotice: {
-    fontSize: "14px",
-    color: "#94a3b8",
-    margin: "16px 0 24px 2px"
-  },
-  submitBtn: {
-    width: "100%",
-    height: "60px", 
-    border: "none",
-    borderRadius: "14px",
-    background: "linear-gradient(90deg, #4f46e5 0%, #2563eb 100%)",
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: "18px"
-  },
-  btnContent: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "12px"
-  },
-  noteBox: {
-    display: "flex",
-    gap: "12px",
-    marginTop: "20px"
-  },
-  noteIcon: {
-    color: "#3b82f6"
-  },
-  noteText: {
-    margin: 0,
-    fontSize: "14px",
-    color: "#94a3b8",
-    lineHeight: "1.6"
-  },
-  sectionHeaderTitle: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "20px"
-  },
-  bankGrid: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    background: "#020613",
-    padding: "26px",
-    borderRadius: "16px",
-    border: "1px solid #1e2942"
-  },
-  bankFieldsGroup: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "24px 16px",
-    flex: 1
-  },
-  bankMeta: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px"
-  },
-  metaLabel: {
-    fontSize: "13px",
-    fontWeight: "700",
-    color: "#94a3b8"
-  },
-  metaValue: {
-    fontSize: "16px",
-    fontWeight: "700"
-  },
-  bankArrowContainer: {
-    paddingLeft: "16px"
-  },
-  bankActionCircle: {
-    width: "46px",
-    height: "46px",
-    borderRadius: "50%",
-    border: "none",
-    background: "#1e2942",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  historySectionHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "12px"
-  },
-  viewAllBtn: {
-    background: "none",
-    border: "none",
-    color: "#6366f1",
-    fontSize: "15px",
-    fontWeight: "700"
-  },
-  emptyStateContainer: {
-    textAlign: "center",
-    padding: "60px 20px 50px" 
-  },
-  emptyIconPlaceholder: {
-    marginBottom: "20px",
-    display: "flex",
-    justifyContent: "center"
-  },
-  emptyMainText: {
-    fontSize: "19px",
-    fontWeight: "700",
-    margin: "0 0 8px 0"
-  },
-  emptySubText: {
-    fontSize: "14px",
-    color: "#94a3b8",
-    margin: 0
-  },
-  singleLineTrustContainer: {
-    width: "100%",
-    background: "#090f1d",
-    border: "1px solid #1e2942",
-    borderRadius: "20px",
-    padding: "26px 14px", // 🔴 লাস্ট রোর প্যাডিংও জুমড করা হলো
-    display: "flex",
-    alignItems: "stretch",
-    justifyContent: "space-between",
-    boxSizing: "border-box",
-    gap: "6px"
-  },
-  trustItemSingle: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    textAlign: "center",
-    padding: "0 4px"
-  },
-  dividerLine: {
-    width: "1px",
-    backgroundColor: "#1e2942",
-    alignSelf: "stretch",
-    margin: "4px 0"
-  },
-  trustTitleSingle: {
-    fontSize: "13px",
-    fontWeight: "700",
-    margin: "10px 0 6px 0",
-    whiteSpace: "nowrap"
-  },
-  trustDescSingle: {
-    fontSize: "10px",
-    fontWeight: "500",
-    color: "#94a3b8",
-    margin: 0,
-    lineHeight: "1.4"
-  }
+  topNav: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+  backBtn: { width: "48px", height: "48px", borderRadius: "12px", border: "1px solid #1e293b", background: "#0c1324", color: "#ffffff" },
+  topCenterTitle: { textAlign: "center", flex: 1 },
+  titleFlex: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" },
+  mainHeading: { fontSize: "24px", fontWeight: "700", margin: 0 },
+  subHeading: { margin: "4px 0 0 0", fontSize: "14px", color: "#94a3b8" },
+  secureBadge: { display: "flex", alignItems: "center", gap: "6px", background: "rgba(34, 197, 94, 0.12)", border: "1px solid #22c55e", padding: "8px 14px", borderRadius: "10px", color: "#4ade80" },
+  balanceGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" },
+  balanceCard: { position: "relative", padding: "26px 22px", borderRadius: "16px", border: "1.5px solid", display: "flex", flexDirection: "column", minHeight: "155px", boxSizing: "border-box" },
+  cardHeaderFlex: { display: "flex", alignItems: "center", gap: "14px" },
+  walletIconBox: { width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center" },
+  cardMeta: { display: "flex", flexDirection: "column" },
+  amountEyeRow: { display: "flex", alignItems: "center", gap: "8px" },
+  eyeIcon: { fontSize: "16px", color: "#cbd5e1" },
+  cardTag: { fontSize: "14px", fontWeight: "600", color: "#94a3b8" },
+  cardAmount: { fontSize: "26px", fontWeight: "700", margin: 0 },
+  cardDesc: { margin: "18px 0 0 0", fontSize: "13px", color: "#94a3b8" },
+  percentageBadge: { position: "absolute", top: "20px", right: "20px", width: "38px", height: "38px", borderRadius: "50%", background: "rgba(14, 165, 233, 0.15)", border: "1.5px solid #0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700", color: "#38bdf8" },
+  glassContainer: { width: "100%", padding: "32px 26px", borderRadius: "20px", background: "#090f1d", border: "1px solid #1e2942", boxSizing: "border-box" },
+  sectionTitle: { margin: "0 0 20px 0", fontSize: "19px", fontWeight: "700" },
+  inputWrapper: { display: "flex", alignItems: "center", background: "#020613", border: "1px solid #334155", borderRadius: "14px", padding: "0 20px" },
+  currencyPrefix: { fontSize: "28px", fontWeight: "600", marginRight: "12px" },
+  input: { width: "100%", height: "64px", border: "none", background: "transparent", color: "#ffffff", fontSize: "28px", fontWeight: "700", outline: "none" },
+  calculationBox: { marginTop: "20px", padding: "16px 0", display: "flex", flexDirection: "column", gap: "14px", borderBottom: "1px dashed #334155" },
+  calcRow: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  calcTotalRow: { marginTop: "8px", paddingTop: "16px", borderTop: "1px solid #334155" },
+  calcLabel: { fontSize: "15px", fontWeight: "600", color: "#cbd5e1" },
+  calcValue: { fontSize: "15px", fontWeight: "700" },
+  minNotice: { fontSize: "14px", color: "#94a3b8", margin: "16px 0 24px 2px" },
+  submitBtn: { width: "100%", height: "60px", border: "none", borderRadius: "14px", background: "linear-gradient(90deg, #4f46e5 0%, #2563eb 100%)", color: "#ffffff", fontWeight: "700", fontSize: "18px", cursor: "pointer" },
+  btnContent: { display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" },
+  sectionHeaderTitle: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" },
+  bankGrid: { display: "flex", justifyContent: "space-between", alignItems: "center", background: "#020613", padding: "26px", borderRadius: "16px", border: "1px solid #1e2942", cursor: "pointer" },
+  bankFieldsGroup: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 16px", flex: 1 },
+  bankMeta: { display: "flex", flexDirection: "column", gap: "6px" },
+  metaLabel: { fontSize: "13px", fontWeight: "700", color: "#94a3b8" },
+  metaValue: { fontSize: "16px", fontWeight: "700" },
+  bankArrowContainer: { paddingLeft: "16px" },
+  bankActionCircle: { width: "46px", height: "46px", borderRadius: "50%", border: "none", background: "#1e2942", display: "flex", alignItems: "center", justifyContent: "center" },
+  historySectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" },
+  viewAllBtn: { background: "none", border: "none", color: "#6366f1", fontSize: "15px", fontWeight: "700", cursor: "pointer" },
+  emptyStateContainer: { textAlign: "center", padding: "30px" },
+  emptyMainText: { fontSize: "16px", color: "#94a3b8" },
+  historyList: { display: "flex", flexDirection: "column", gap: "12px" },
+  historyRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #1e2942" },
+  historyAmt: { fontSize: "16px", fontWeight: "700" },
+  historyDate: { fontSize: "13px", color: "#94a3b8" },
+  singleLineTrustContainer: { width: "100%", background: "#090f1d", border: "1px solid #1e2942", borderRadius: "20px", padding: "26px 14px", display: "flex", alignItems: "stretch", justifyContent: "space-between", boxSizing: "border-box", gap: "6px" },
+  trustItemSingle: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" },
+  dividerLine: { width: "1px", backgroundColor: "#1e2942", alignSelf: "stretch" },
+  trustTitleSingle: { fontSize: "12px", fontWeight: "700", margin: "10px 0 0 0", whiteSpace: "nowrap" }
 };
