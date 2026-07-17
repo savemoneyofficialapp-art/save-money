@@ -14,6 +14,9 @@ export default function Withdraw() {
   const [bank, setBank] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // 🔴 লজিক: একই পেজে সম্পূর্ণ হিস্ট্রি দেখানোর জন্য স্টেট
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
   useEffect(() => {
     loadInfo();
@@ -83,15 +86,12 @@ export default function Withdraw() {
     }
   };
 
-  // 🔴 লজিক ১: ব্যাংক ডিটেইলস এর অ্যারো ক্লিক ফাংশন
   const handleBankClick = () => {
-    navigate("/bank-details"); // আপনার রাউট অনুযায়ী এটি পরিবর্তন করতে পারেন
+    navigate("/bank-details"); 
   };
 
-  // 🔴 লজিক ২: ভিউ অল ক্লিক ফাংশন
-  const handleViewAllClick = () => {
-    navigate("/withdraw-history"); // আপনার উইথড্র হিস্টরি রাউট
-  };
+  // 🔴 ৫টি রেকর্ড ফিল্টার করার লজিক
+  const visibleHistory = showAllHistory ? history : history.slice(0, 5);
 
   return (
     <div style={styles.page}>
@@ -99,18 +99,18 @@ export default function Withdraw() {
       {/* Top Header */}
       <div style={styles.topNav}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </button>
         <div style={styles.topCenterTitle}>
           <div style={styles.titleFlex}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             <h1 style={styles.mainHeading}>Withdraw Funds</h1>
           </div>
           <p style={styles.subHeading}>Transfer your earnings directly to your bank account</p>
         </div>
         <div style={styles.secureBadge}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          <span style={{ fontSize: "12px", fontWeight: "700" }}>100% Secure</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span style={{ fontSize: "14px", fontWeight: "700" }}>100% Secure</span>
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export default function Withdraw() {
         <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #1c1437 0%, #090e1a 100%)", borderColor: "#4c2899" }}>
           <div style={styles.cardHeaderFlex}>
             <div style={{ ...styles.walletIconBox, background: "linear-gradient(135deg, #5b4bf5 0%, #9333ea 100%)" }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M12 11h10v2H12z"></path></svg>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M12 11h10v2H12z"></path></svg>
             </div>
             <div style={styles.cardMeta}>
               <span style={styles.cardTag}>Today Wallet</span>
@@ -135,7 +135,7 @@ export default function Withdraw() {
         <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #09284b 0%, #090e1a 100%)", borderColor: "#0f6aa3" }}>
           <div style={styles.cardHeaderFlex}>
             <div style={{ ...styles.walletIconBox, background: "linear-gradient(135deg, #0284c7 0%, #0891b2 100%)" }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M12 11h10v2H12z"></path></svg>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M12 11h10v2H12z"></path></svg>
             </div>
             <div style={styles.cardMeta}>
               <span style={styles.cardTag}>Withdrawable Wallet</span>
@@ -175,8 +175,8 @@ export default function Withdraw() {
               <span style={{ ...styles.calcValue, color: "#f87171" }}>- {money(tdsDeduction)}</span>
             </div>
             <div style={{ ...styles.calcRow, ...styles.calcTotalRow }}>
-              <span style={{ ...styles.calcLabel, color: "#4ade80", fontWeight: "600" }}>Net Bank Credit</span>
-              <span style={{ ...styles.calcValue, color: "#4ade80", fontWeight: "700" }}>{money(finalBankCredit)}</span>
+              <span style={{ ...styles.calcLabel, color: "#4ade80", fontWeight: "700" }}>Net Bank Credit</span>
+              <span style={{ ...styles.calcValue, color: "#4ade80", fontWeight: "800" }}>{money(finalBankCredit)}</span>
             </div>
           </div>
         )}
@@ -185,21 +185,20 @@ export default function Withdraw() {
         <button style={styles.submitBtn} onClick={submitWithdraw} disabled={loading}>
           {loading ? "Processing..." : (
             <span style={styles.btnContent}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ transform: "rotate(-45deg)" }}><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style={{ transform: "rotate(-45deg)" }}><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
               Confirm & Withdraw Funds
             </span>
           )}
         </button>
       </section>
 
-      {/* Settlement Account (Clickable to Bank Page) */}
+      {/* Settlement Account */}
       <section style={styles.glassContainer}>
         <div style={styles.sectionHeaderTitle}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M3 22v-4h18v4H3zM12 2L2 7h20L12 2zM4 9v7h3V9H4zm5 0v7h3V9H9zm5 0v7h3V9h-3zm5 0v7h3V9h-3z"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M3 22v-4h18v4H3zM12 2L2 7h20L12 2zM4 9v7h3V9H4zm5 0v7h3V9H9zm5 0v7h3V9h-3zm5 0v7h3V9h-3z"/></svg>
           <h3 style={{ ...styles.sectionTitle, margin: 0 }}>Settlement Account</h3>
         </div>
 
-        {/* 🔴 অ্যাকশন ট্র্রিগার করার জন্য এখানে onClick সেট করা হলো */}
         <div style={styles.bankGrid} onClick={handleBankClick}>
           <div style={styles.bankFieldsGroup}>
             <div style={styles.bankMeta}>
@@ -221,21 +220,28 @@ export default function Withdraw() {
           </div>
           <div style={styles.bankArrowContainer}>
             <button style={styles.bankActionCircle}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
         </div>
       </section>
 
-      {/* Audit Statement (Show Top 5 Records) */}
+      {/* Audit Statement (Fix: One-Page View All Toggle) */}
       <section style={styles.glassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-            <h3 style={{ ...styles.sectionTitle, margin: 0 }}>Audit Statement</h3>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            <h3 style={{ ...styles.sectionTitle, margin: 0 }}>
+              Audit Statement {showAllHistory && "(All Records)"}
+            </h3>
           </div>
-          {/* 🔴 ভিউ অল ক্লিক হ্যান্ডলার */}
-          <button style={styles.viewAllBtn} onClick={handleViewAllClick}>View All ❯</button>
+          
+          {/* 🔴 লজিক: ক্লিক করলে ১ পেজেই পুরো হিস্ট্রি অন/অফ হবে */}
+          {history.length > 5 && (
+            <button style={styles.viewAllBtn} onClick={() => setShowAllHistory(!showAllHistory)}>
+              {showAllHistory ? "Show Less ❮" : "View All ❯"}
+            </button>
+          )}
         </div>
 
         {history.length === 0 ? (
@@ -244,14 +250,17 @@ export default function Withdraw() {
           </div>
         ) : (
           <div style={styles.historyList}>
-            {/* 🔴 লজিক: .slice(0, 5) দিয়ে শুধুমাত্র প্রথম ৫টি ডাটা দেখানো হচ্ছে */}
-            {history.slice(0, 5).map((x) => (
+            {visibleHistory.map((x) => (
               <div key={x._id} style={styles.historyRow}>
                 <div>
                   <div style={styles.historyAmt}>{money(x.amount)}</div>
-                  <div style={styles.historyDate}>{new Date(x.createdAt).toLocaleDateString()}</div>
+                  <div style={styles.historyDate}>{new Date(x.createdAt).toLocaleString()}</div>
                 </div>
-                <span style={{ color: x.status === "Success" ? "#22c55e" : "#eab308", fontWeight: "700" }}>
+                <span style={{ 
+                  color: x.status === "Success" || x.status === "Approved" ? "#22c55e" : "#eab308", 
+                  fontWeight: "800",
+                  fontSize: "16px" 
+                }}>
                   {x.status}
                 </span>
               </div>
@@ -260,26 +269,26 @@ export default function Withdraw() {
         )}
       </section>
 
-      {/* 4 Pillars Grid Section */}
+      {/* 4 Pillars Section */}
       <section style={styles.singleLineTrustContainer}>
         <div style={styles.trustItemSingle}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           <h4 style={styles.trustTitleSingle}>Secure & Trusted</h4>
         </div>
         <div style={styles.dividerLine} />
         <div style={styles.trustItemSingle}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-          <h4 style={styles.trustTitleSingle}>Quick Processing</h4>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <h4 style={styles.trustTitleSingle}>Quick Pay</h4>
         </div>
         <div style={styles.dividerLine} />
         <div style={styles.trustItemSingle}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path></svg>
           <h4 style={styles.trustTitleSingle}>24/7 Support</h4>
         </div>
         <div style={styles.dividerLine} />
         <div style={styles.trustItemSingle}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
-          <h4 style={styles.trustTitleSingle}>Trusted Platform</h4>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
+          <h4 style={styles.trustTitleSingle}>Top Platform</h4>
         </div>
       </section>
 
@@ -287,70 +296,69 @@ export default function Withdraw() {
   );
 }
 
-// 🎨 HIGH QUALITY FINTECH BACKGROUND STYLES SHEET
+// 🎨 100% ডার্ক গ্লোয়িং ব্যাংকিং ব্যাকগ্রাউন্ড এবং বিগ ফন্টস সিএসএস শিট
 const styles = {
   page: {
     minHeight: "100vh", 
     width: "100%",
-    // 🔴 ফিক্স: সাদা ব্যাকগ্রাউন্ড চিরতরে দূর করতে ব্যাংকিং টাইপ টেক্সচার বা ডার্ক গ্রেডিয়েন্ট অ্যাড করা হয়েছে
-    background: "radial-gradient(circle at top right, #0e172e 0%, #030610 60%)",
+    background: "radial-gradient(circle at 50% 10%, #0d1527 0%, #03060f 80%)", 
     color: "#ffffff",
-    padding: "24px 16px 40px 16px",
+    padding: "24px 16px 48px 16px",
     boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
-    gap: "24px",
+    gap: "26px",
     overflowY: "auto"
   },
-  topNav: { display: "flex", alignItems: "center", justifyContent: "space-between" },
-  backBtn: { width: "48px", height: "48px", borderRadius: "12px", border: "1px solid #1e293b", background: "#0c1324", color: "#ffffff" },
+  topNav: { display: "flex", alignItems: "center", justifycontent: "space-between" },
+  backBtn: { width: "52px", height: "52px", borderRadius: "14px", border: "1px solid #1e293b", background: "#0c1324", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" },
   topCenterTitle: { textAlign: "center", flex: 1 },
-  titleFlex: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" },
-  mainHeading: { fontSize: "24px", fontWeight: "700", margin: 0 },
-  subHeading: { margin: "4px 0 0 0", fontSize: "14px", color: "#94a3b8" },
-  secureBadge: { display: "flex", alignItems: "center", gap: "6px", background: "rgba(34, 197, 94, 0.12)", border: "1px solid #22c55e", padding: "8px 14px", borderRadius: "10px", color: "#4ade80" },
+  titleFlex: { display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" },
+  mainHeading: { fontSize: "27px", fontWeight: "800", margin: 0 }, 
+  subHeading: { margin: "6px 0 0 0", fontSize: "15px", color: "#a4b5cf" }, 
+  secureBadge: { display: "flex", alignItems: "center", gap: "8px", background: "rgba(34, 197, 94, 0.15)", border: "1.5px solid #22c55e", padding: "10px 16px", borderRadius: "12px", color: "#4ade80" },
   balanceGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" },
-  balanceCard: { position: "relative", padding: "26px 22px", borderRadius: "16px", border: "1.5px solid", display: "flex", flexDirection: "column", minHeight: "155px", boxSizing: "border-box" },
+  balanceCard: { position: "relative", padding: "28px 24px", borderRadius: "18px", border: "1.5px solid", display: "flex", flexDirection: "column", minHeight: "165px", boxSizing: "border-box" },
   cardHeaderFlex: { display: "flex", alignItems: "center", gap: "14px" },
-  walletIconBox: { width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center" },
+  walletIconBox: { width: "54px", height: "54px", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center" },
   cardMeta: { display: "flex", flexDirection: "column" },
-  amountEyeRow: { display: "flex", alignItems: "center", gap: "8px" },
-  eyeIcon: { fontSize: "16px", color: "#cbd5e1" },
-  cardTag: { fontSize: "14px", fontWeight: "600", color: "#94a3b8" },
-  cardAmount: { fontSize: "26px", fontWeight: "700", margin: 0 },
-  cardDesc: { margin: "18px 0 0 0", fontSize: "13px", color: "#94a3b8" },
-  percentageBadge: { position: "absolute", top: "20px", right: "20px", width: "38px", height: "38px", borderRadius: "50%", background: "rgba(14, 165, 233, 0.15)", border: "1.5px solid #0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700", color: "#38bdf8" },
-  glassContainer: { width: "100%", padding: "32px 26px", borderRadius: "20px", background: "#090f1d", border: "1px solid #1e2942", boxSizing: "border-box" },
-  sectionTitle: { margin: "0 0 20px 0", fontSize: "19px", fontWeight: "700" },
-  inputWrapper: { display: "flex", alignItems: "center", background: "#020613", border: "1px solid #334155", borderRadius: "14px", padding: "0 20px" },
-  currencyPrefix: { fontSize: "28px", fontWeight: "600", marginRight: "12px" },
-  input: { width: "100%", height: "64px", border: "none", background: "transparent", color: "#ffffff", fontSize: "28px", fontWeight: "700", outline: "none" },
-  calculationBox: { marginTop: "20px", padding: "16px 0", display: "flex", flexDirection: "column", gap: "14px", borderBottom: "1px dashed #334155" },
-  calcRow: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  calcTotalRow: { marginTop: "8px", paddingTop: "16px", borderTop: "1px solid #334155" },
-  calcLabel: { fontSize: "15px", fontWeight: "600", color: "#cbd5e1" },
-  calcValue: { fontSize: "15px", fontWeight: "700" },
-  minNotice: { fontSize: "14px", color: "#94a3b8", margin: "16px 0 24px 2px" },
-  submitBtn: { width: "100%", height: "60px", border: "none", borderRadius: "14px", background: "linear-gradient(90deg, #4f46e5 0%, #2563eb 100%)", color: "#ffffff", fontWeight: "700", fontSize: "18px", cursor: "pointer" },
-  btnContent: { display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" },
-  sectionHeaderTitle: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" },
-  bankGrid: { display: "flex", justifyContent: "space-between", alignItems: "center", background: "#020613", padding: "26px", borderRadius: "16px", border: "1px solid #1e2942", cursor: "pointer" },
-  bankFieldsGroup: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 16px", flex: 1 },
+  amountEyeRow: { display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" },
+  eyeIcon: { fontSize: "18px", color: "#cbd5e1" },
+  cardTag: { fontSize: "16px", fontWeight: "700", color: "#94a3b8" }, 
+  cardAmount: { fontSize: "29px", fontWeight: "800", margin: 0 }, 
+  cardDesc: { margin: "20px 0 0 0", fontSize: "14px", color: "#94a3b8" },
+  percentageBadge: { position: "absolute", top: "20px", right: "20px", width: "42px", height: "42px", borderRadius: "50%", background: "rgba(14, 165, 233, 0.15)", border: "1.5px solid #0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#38bdf8" },
+  glassContainer: { width: "100%", padding: "34px 28px", borderRadius: "22px", background: "#090f1d", border: "1px solid #1e2942", boxSizing: "border-box" },
+  sectionTitle: { margin: "0 0 22px 0", fontSize: "22px", fontWeight: "800" }, 
+  inputWrapper: { display: "flex", alignItems: "center", background: "#020613", border: "1.5px solid #475569", borderRadius: "16px", padding: "0 24px" },
+  currencyPrefix: { fontSize: "32px", fontWeight: "700", marginRight: "14px" },
+  input: { width: "100%", height: "70px", border: "none", background: "transparent", color: "#ffffff", fontSize: "32px", fontWeight: "800", outline: "none" },
+  calculationBox: { marginTop: "22px", padding: "18px 0", display: "flex", flexDirection: "column", gap: "16px", borderBottom: "1px dashed #475569" },
+  calcRow: { display: "flex", justifycontent: "space-between", alignItems: "center" },
+  calcTotalRow: { marginTop: "10px", paddingTop: "18px", borderTop: "1.5px solid #334155" },
+  calcLabel: { fontSize: "17px", fontWeight: "600", color: "#e2e8f0" }, 
+  calcValue: { fontSize: "17px", fontWeight: "700" },
+  minNotice: { fontSize: "15px", color: "#94a3b8", margin: "18px 0 26px 2px" },
+  submitBtn: { width: "100%", height: "64px", border: "none", borderRadius: "16px", background: "linear-gradient(90deg, #4f46e5 0%, #2563eb 100%)", color: "#ffffff", fontWeight: "800", fontSize: "20px", cursor: "pointer" },
+  btnContent: { display: "flex", alignItems: "center", justifyContent: "center", gap: "14px" },
+  sectionHeaderTitle: { display: "flex", alignItems: "center", gap: "14px", marginBottom: "22px" },
+  bankGrid: { display: "flex", justifyContent: "space-between", alignItems: "center", background: "#020613", padding: "28px", borderRadius: "18px", border: "1.5px solid #1e2942", cursor: "pointer" },
+  bankFieldsGroup: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "26px 20px", flex: 1 },
   bankMeta: { display: "flex", flexDirection: "column", gap: "6px" },
-  metaLabel: { fontSize: "13px", fontWeight: "700", color: "#94a3b8" },
-  metaValue: { fontSize: "16px", fontWeight: "700" },
-  bankArrowContainer: { paddingLeft: "16px" },
-  bankActionCircle: { width: "46px", height: "46px", borderRadius: "50%", border: "none", background: "#1e2942", display: "flex", alignItems: "center", justifyContent: "center" },
-  historySectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" },
-  viewAllBtn: { background: "none", border: "none", color: "#6366f1", fontSize: "15px", fontWeight: "700", cursor: "pointer" },
-  emptyStateContainer: { textAlign: "center", padding: "30px" },
-  emptyMainText: { fontSize: "16px", color: "#94a3b8" },
-  historyList: { display: "flex", flexDirection: "column", gap: "12px" },
-  historyRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #1e2942" },
-  historyAmt: { fontSize: "16px", fontWeight: "700" },
-  historyDate: { fontSize: "13px", color: "#94a3b8" },
-  singleLineTrustContainer: { width: "100%", background: "#090f1d", border: "1px solid #1e2942", borderRadius: "20px", padding: "26px 14px", display: "flex", alignItems: "stretch", justifyContent: "space-between", boxSizing: "border-box", gap: "6px" },
+  metaLabel: { fontSize: "14px", fontWeight: "800", color: "#94a3b8", letterSpacing: "0.5px" }, 
+  metaValue: { fontSize: "18px", fontWeight: "800" }, 
+  bankArrowContainer: { paddingLeft: "18px" },
+  bankActionCircle: { width: "50px", height: "50px", borderRadius: "50%", border: "none", background: "#1e2942", display: "flex", alignItems: "center", justifyContent: "center" },
+  historySectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" },
+  viewAllBtn: { background: "none", border: "none", color: "#818cf8", fontSize: "17px", fontWeight: "800", cursor: "pointer", padding: "6px 12px" },
+  emptyStateContainer: { textAlign: "center", padding: "34px" },
+  emptyMainText: { fontSize: "18px", color: "#94a3b8", fontWeight: "600" },
+  historyList: { display: "flex", flexDirection: "column", gap: "14px" },
+  historyRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 0", borderBottom: "1px solid #1e2942" },
+  historyAmt: { fontSize: "19px", fontWeight: "800" }, 
+  historyDate: { fontSize: "14px", color: "#94a3b8", marginTop: "4px" },
+  singleLineTrustContainer: { width: "100%", background: "#090f1d", border: "1px solid #1e2942", borderRadius: "22px", padding: "28px 16px", display: "flex", alignItems: "stretch", justifyContent: "space-between", boxSizing: "border-box", gap: "8px" },
   trustItemSingle: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" },
-  dividerLine: { width: "1px", backgroundColor: "#1e2942", alignSelf: "stretch" },
-  trustTitleSingle: { fontSize: "12px", fontWeight: "700", margin: "10px 0 0 0", whiteSpace: "nowrap" }
+  dividerLine: { width: "1.5px", backgroundColor: "#1e2942", alignSelf: "stretch" },
+  trustTitleSingle: { fontSize: "14px", fontWeight: "800", margin: "12px 0 0 0", whiteSpace: "nowrap" }
 };
