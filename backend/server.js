@@ -900,6 +900,10 @@ const createNotification = async (email, message) => {
 };
 
 
+  // 🌟 Nodemailer SMTP পার্টটি রেন্ডারে টাইমআউট এরর তৈরি করছিল। 
+// যেহেতু আপনি নিচে Brevo API ব্যবহার করছেন, তাই SMTP ট্রান্সপোর্টার আর প্রয়োজন নেই।
+// ====================================================================
+/*
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
   port: 587,
@@ -917,6 +921,7 @@ transporter.verify(function (error, success) {
     console.log("SMTP READY");
   }
 });
+*/
 
 
 // ====================================================================
@@ -989,18 +994,24 @@ app.post("/send-email-otp", async (req, res) => {
     // ২. নতুন ওটিপি ডাটাবেজে সেভ করুন
     await OtpModel.create({ email: lowerEmail, otp });
 
-    // ৩. এখানে আপনার ইমেইল পাঠানোর লজিকটি লিখুন (nodemailer বা অন্য কিছু যা ব্যবহার করছেন)
-    // await sendEmail(lowerEmail, "Your OTP Code", `Your OTP is ${otp}`);
+    console.log(`OTP for ${lowerEmail} is: ${otp}`); // কনসোল লগ
 
-    console.log(`OTP for ${lowerEmail} is: ${otp}`); // ডেভেলপমেন্টের সুবিধার্থে কনসোলে প্রিন্ট
+    // 🚀 ৩. Brevo API দিয়ে মেইল পাঠানোর আসল লজিক (যা আগে বন্ধ ছিল)
+    await sendEmail(
+      lowerEmail, 
+      "Your OTP Verification Code", 
+      `Your OTP verification code is: <strong style="font-size: 20px; color: #7c3aed;">${otp}</strong>. It will expire in 10 minutes.`
+    );
 
-    return res.status(200).json({ success: true, msg: "OTP sent successfully" });
+    // মেইল সফলভাবে যাওয়ার পরেই কেবল সাকসেস মেসেজ রেসপন্স যাবে
+    return res.status(200).json({ success: true, msg: "OTP sent successfully to your email" });
 
   } catch (err) {
-    console.log("SEND OTP ERROR:", err);
-    return res.status(500).json({ success: false, msg: "Server error" });
+    console.log("SEND OTP ERROR:", err.message);
+    return res.status(500).json({ success: false, msg: "Failed to send OTP. Please try again." });
   }
 });
+
 
 app.post("/verify-email-otp", async (req, res) => {
   try {
