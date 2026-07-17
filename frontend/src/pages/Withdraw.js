@@ -25,6 +25,11 @@ export default function Withdraw() {
       maximumFractionDigits: 2
     })}`;
 
+  // ৫% TDS এবং ফাইনাল ব্যাংক ক্রেডিট হিসাবের ক্যালকুলেশন
+  const inputAmount = Number(amount) || 0;
+  const tdsDeduction = inputAmount * 0.05;
+  const finalBankCredit = inputAmount > 0 ? inputAmount - tdsDeduction : 0;
+
   const loadInfo = async () => {
     try {
       const res = await fetch(`${API}/withdraw-info`, {
@@ -139,6 +144,24 @@ export default function Withdraw() {
             />
           </div>
           
+          {/* 📊 ৫% TDS এবং ব্যাংক ক্রেডিট এর লাইভ হিসাব */}
+          {inputAmount > 0 && (
+            <div style={styles.calculationBox}>
+              <div style={styles.calcRow}>
+                <span style={styles.calcLabel}>Gross Amount:</span>
+                <span style={styles.calcValue}>{money(inputAmount)}</span>
+              </div>
+              <div style={styles.calcRow}>
+                <span style={{ ...styles.calcLabel, color: "#f87171" }}>TDS Deduction (5%):</span>
+                <span style={{ ...styles.calcValue, color: "#f87171" }}>- {money(tdsDeduction)}</span>
+              </div>
+              <div style={{ ...styles.calcRow, ...styles.calcTotalRow }}>
+                <span style={{ ...styles.calcLabel, color: "#4ade80", fontWeight: "700" }}>Net Bank Credit:</span>
+                <span style={{ ...styles.calcValue, color: "#4ade80", fontWeight: "700" }}>{money(finalBankCredit)}</span>
+              </div>
+            </div>
+          )}
+
           <p style={styles.minNotice}>Minimum withdrawal limit is ₹100</p>
 
           <button style={styles.submitBtn} onClick={submitWithdraw} disabled={loading}>
@@ -181,7 +204,6 @@ export default function Withdraw() {
               <div style={styles.bankMeta}>
                 <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
                 <span style={styles.metaValue}>{bank.accountNumber}</span>
-
               </div>
               <div style={styles.bankMeta}>
                 <span style={styles.metaLabel}>IFSC CODE</span>
@@ -310,7 +332,6 @@ const styles = {
     fontSize: "14px",
     color: "#64748b"
   },
-  /* 💰 GRID OVERVIEWS */
   balanceGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -352,7 +373,6 @@ const styles = {
     fontSize: "11px",
     color: "#475569"
   },
-  /* 📦 GLASS CONTAINERS */
   glassContainer: {
     padding: "24px",
     borderRadius: "28px",
@@ -368,7 +388,6 @@ const styles = {
     color: "#94a3b8",
     letterSpacing: "0.3px"
   },
-  /* 💵 PAYOUT FORM COMPONENTS */
   inputWrapper: {
     position: "relative",
     display: "flex",
@@ -393,6 +412,37 @@ const styles = {
     fontSize: "26px",
     fontWeight: "700",
     outline: "none"
+  },
+  /* 📊 NEW STYLES FOR TDS LIVE CALCULATION BOX */
+  calculationBox: {
+    marginTop: "14px",
+    padding: "14px 18px",
+    background: "rgba(2, 6, 23, 0.4)",
+    border: "1px solid rgba(255, 255, 255, 0.04)",
+    borderRadius: "16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px"
+  },
+  calcRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  calcTotalRow: {
+    borderTop: "1px dashed rgba(255, 255, 255, 0.1)",
+    paddingTop: "8px",
+    marginTop: "4px"
+  },
+  calcLabel: {
+    fontSize: "13px",
+    color: "#94a3b8",
+    fontWeight: "500"
+  },
+  calcValue: {
+    fontSize: "13px",
+    color: "#f8fafc",
+    fontWeight: "600"
   },
   minNotice: {
     fontSize: "12px",
@@ -444,7 +494,6 @@ const styles = {
     color: "#64748b",
     lineHeight: "1.5"
   },
-  /* 🏦 BANK COMPONENT GRID */
   noBankView: {
     textAlign: "center",
     padding: "20px 0"
@@ -489,7 +538,6 @@ const styles = {
     fontWeight: "600",
     color: "#cbd5e1"
   },
-  /* 📜 STATEMENT / AUDIT VIEW LOGS */
   emptyState: {
     textAlign: "center",
     color: "#475569",
