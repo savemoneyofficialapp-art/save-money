@@ -47,7 +47,7 @@ export default function Withdraw() {
         setHistory(data.history || []);
       }
     } catch (err) {
-      console.log("WITHDRAW INFO ERROR:", err);
+      console.log("ERROR:", err);
     }
   };
 
@@ -86,10 +86,10 @@ export default function Withdraw() {
   return (
     <div style={styles.page}>
       
-      {/* Top Header Navigation */}
+      {/* Top Header */}
       <div style={styles.topNav}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         </button>
         <div style={styles.topCenterTitle}>
           <div style={styles.titleFlex}>
@@ -104,7 +104,7 @@ export default function Withdraw() {
         </div>
       </div>
 
-      {/* Wallet Balance Row */}
+      {/* Wallet Balance Rows (Increased Padding & Zoomed) */}
       <section style={styles.balanceGrid}>
         <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #1c1437 0%, #090e1a 100%)", borderColor: "#4c2899" }}>
           <div style={styles.cardHeaderFlex}>
@@ -140,7 +140,7 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Payout Form Component */}
+      {/* Payout Form Container */}
       <section style={styles.glassContainer}>
         <h3 style={styles.sectionTitle}>Amount to Payout</h3>
         
@@ -175,11 +175,7 @@ export default function Withdraw() {
         <p style={styles.minNotice}>Minimum withdrawal limit is ₹100</p>
 
         <button style={styles.submitBtn} onClick={submitWithdraw} disabled={loading}>
-          {loading ? (
-            <span style={styles.loaderFlex}>
-              <span style={styles.spinner}></span> Processing...
-            </span>
-          ) : (
+          {loading ? "Processing..." : (
             <span style={styles.btnContent}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ transform: "rotate(-45deg)" }}><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
               Confirm & Withdraw Funds
@@ -229,7 +225,7 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Audit Statement History Block */}
+      {/* Audit Statement Block */}
       <section style={styles.glassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
@@ -245,10 +241,8 @@ export default function Withdraw() {
               <svg width="90" height="90" viewBox="0 0 64 64" fill="none">
                 <path d="M8 14a4 4 0 0 1 4-4h14l4 6h24a4 4 0 0 1 4 4v26a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V14z" fill="#17143a" stroke="#4f46e5" strokeWidth="2"/>
                 <path d="M12 18h40v24H12z" fill="#1e194f" opacity="0.8"/>
-                <line x1="18" y1="24" x2="46" y2="24" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="18" y1="32" x2="38" y2="32" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round"/>
                 <circle cx="42" cy="44" r="8" fill="#080c14" stroke="#e026d9" strokeWidth="2.5"/>
-                <line x1="48" y1="50" x2="54" y2="56" stroke="#e026d9" strokeWidth="3.5" strokeLinecap="round"/>
+                <line x1="48" y1="50" x2="54" y2="56" stroke="#e026d9" strokeWidth="3.5"/>
               </svg>
             </div>
             <p style={styles.emptyMainText}>No past settlement records found.</p>
@@ -258,73 +252,62 @@ export default function Withdraw() {
           <div style={styles.historyList}>
             {history.map((x) => (
               <div key={x._id} style={styles.historyRow}>
-                <div style={styles.historyLeft}>
-                  <span style={{ ...styles.statusDot, background: x.status === "Success" ? "#22c55e" : "#ef4444" }}></span>
-                  <div>
-                    <span style={styles.historyAmt}>{money(x.amount)}</span>
-                    <span style={styles.historyDate}>{new Date(x.createdAt).toLocaleDateString()}</span>
-                  </div>
+                <div>
+                  <span style={styles.historyAmt}>{money(x.amount)}</span>
+                  <span style={styles.historyDate}>{new Date(x.createdAt).toLocaleDateString()}</span>
                 </div>
-                <span style={styles.statusBadge}>{x.status}</span>
+                <span>{x.status}</span>
               </div>
             ))}
           </div>
         )}
       </section>
 
-      {/* 🔴 FIXED: 4 PILLARS IN EXACTLY ONE SINGLE LINE CONTAINER */}
+      {/* 4 Pillars Section (One Single Line & Spaced Perfectly) */}
       <section style={styles.singleLineTrustContainer}>
-        
         <div style={styles.trustItemSingle}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           <h4 style={styles.trustTitleSingle}>Secure & Trusted</h4>
           <p style={styles.trustDescSingle}>100% safe and secure transactions</p>
         </div>
-        
         <div style={styles.dividerLine} />
-
         <div style={styles.trustItemSingle}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
           <h4 style={styles.trustTitleSingle}>Quick Processing</h4>
           <p style={styles.trustDescSingle}>Withdrawals processed within few hours</p>
         </div>
-
         <div style={styles.dividerLine} />
-
         <div style={styles.trustItemSingle}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
           <h4 style={styles.trustTitleSingle}>24/7 Support</h4>
           <p style={styles.trustDescSingle}>We are here to help you anytime</p>
         </div>
-
         <div style={styles.dividerLine} />
-
         <div style={styles.trustItemSingle}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
           <h4 style={styles.trustTitleSingle}>Trusted Platform</h4>
           <p style={styles.trustDescSingle}>Thousands of users trust us</p>
         </div>
-
       </section>
 
     </div>
   );
 }
 
-// 🎨 HIGH CONTRAST & MAXIMUM CLEARNESS STYLES SHEET
+// 🎨 FULLY ZOMED IN & NO EMPTY BOTTOM SPACE STYLES
 const styles = {
   page: {
-    minHeight: "100vh",
+    height: "auto", // 🔴 FIX: স্ক্রিন হাইট ফিক্সড না করে অটো করা হলো যাতে নিচের ফাঁকা ভাব চলে যায়
+    minHeight: "100%", 
     width: "100%",
     backgroundColor: "#030610",
     color: "#ffffff",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     padding: "24px 16px 40px 16px",
     boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
-    gap: "24px", 
-    overflowX: "hidden"
+    gap: "24px", // 🔴 জুমড লুকের জন্য কার্ডগুলোর গ্যাপ বাড়ানো হলো
+    overflowY: "scroll" 
   },
   topNav: {
     display: "flex",
@@ -338,11 +321,7 @@ const styles = {
     borderRadius: "12px",
     border: "1px solid #1e293b",
     background: "#0c1324",
-    color: "#ffffff",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
+    color: "#ffffff"
   },
   topCenterTitle: {
     textAlign: "center",
@@ -357,8 +336,7 @@ const styles = {
   mainHeading: {
     fontSize: "24px",
     fontWeight: "700",
-    margin: 0,
-    color: "#ffffff"
+    margin: 0
   },
   subHeading: {
     margin: "4px 0 0 0",
@@ -383,13 +361,13 @@ const styles = {
   },
   balanceCard: {
     position: "relative",
-    padding: "24px 20px", 
+    padding: "26px 22px", // 🔴 জুমড ও বড় দেখানোর জন্য প্যাডিং বাড়ানো হলো
     borderRadius: "16px",
     border: "1.5px solid",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    minHeight: "145px", 
+    minHeight: "155px", 
     boxSizing: "border-box"
   },
   cardHeaderFlex: {
@@ -417,8 +395,7 @@ const styles = {
   },
   eyeIcon: {
     fontSize: "16px",
-    color: "#cbd5e1",
-    cursor: "pointer"
+    color: "#cbd5e1"
   },
   cardTag: {
     fontSize: "14px",
@@ -428,8 +405,7 @@ const styles = {
   cardAmount: {
     fontSize: "26px", 
     fontWeight: "700",
-    margin: 0,
-    color: "#ffffff"
+    margin: 0
   },
   cardDesc: {
     margin: "18px 0 0 0",
@@ -454,7 +430,7 @@ const styles = {
   },
   glassContainer: {
     width: "100%",
-    padding: "28px 24px", 
+    padding: "32px 26px", // 🔴 সব মেইন কন্টেইনারে জুমড ফিল আনার জন্য প্যাডিং ইনক্রিজ করা হয়েছে
     borderRadius: "20px",
     background: "#090f1d",
     border: "1px solid #1e2942",
@@ -462,9 +438,8 @@ const styles = {
   },
   sectionTitle: {
     margin: "0 0 20px 0",
-    fontSize: "18px",
-    fontWeight: "700",
-    color: "#ffffff"
+    fontSize: "19px",
+    fontWeight: "700"
   },
   inputWrapper: {
     display: "flex",
@@ -477,7 +452,6 @@ const styles = {
   currencyPrefix: {
     fontSize: "28px",
     fontWeight: "600",
-    color: "#ffffff",
     marginRight: "12px"
   },
   input: {
@@ -515,12 +489,10 @@ const styles = {
   },
   calcValue: {
     fontSize: "15px",
-    fontWeight: "700",
-    color: "#ffffff"
+    fontWeight: "700"
   },
   minNotice: {
     fontSize: "14px",
-    fontWeight: "500",
     color: "#94a3b8",
     margin: "16px 0 24px 2px"
   },
@@ -532,8 +504,7 @@ const styles = {
     background: "linear-gradient(90deg, #4f46e5 0%, #2563eb 100%)",
     color: "#ffffff",
     fontWeight: "700",
-    fontSize: "18px",
-    cursor: "pointer"
+    fontSize: "18px"
   },
   btnContent: {
     display: "flex",
@@ -547,8 +518,7 @@ const styles = {
     marginTop: "20px"
   },
   noteIcon: {
-    color: "#3b82f6",
-    fontSize: "16px"
+    color: "#3b82f6"
   },
   noteText: {
     margin: 0,
@@ -567,7 +537,7 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     background: "#020613",
-    padding: "24px",
+    padding: "26px",
     borderRadius: "16px",
     border: "1px solid #1e2942"
   },
@@ -585,13 +555,11 @@ const styles = {
   metaLabel: {
     fontSize: "13px",
     fontWeight: "700",
-    color: "#94a3b8",
-    letterSpacing: "0.5px"
+    color: "#94a3b8"
   },
   metaValue: {
     fontSize: "16px",
-    fontWeight: "700",
-    color: "#ffffff"
+    fontWeight: "700"
   },
   bankArrowContainer: {
     paddingLeft: "16px"
@@ -604,8 +572,7 @@ const styles = {
     background: "#1e2942",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer"
+    justifyContent: "center"
   },
   historySectionHeader: {
     display: "flex",
@@ -618,12 +585,11 @@ const styles = {
     border: "none",
     color: "#6366f1",
     fontSize: "15px",
-    fontWeight: "700",
-    cursor: "pointer"
+    fontWeight: "700"
   },
   emptyStateContainer: {
     textAlign: "center",
-    padding: "50px 20px 40px" 
+    padding: "60px 20px 50px" 
   },
   emptyIconPlaceholder: {
     marginBottom: "20px",
@@ -631,9 +597,8 @@ const styles = {
     justifyContent: "center"
   },
   emptyMainText: {
-    fontSize: "18px",
+    fontSize: "19px",
     fontWeight: "700",
-    color: "#ffffff",
     margin: "0 0 8px 0"
   },
   emptySubText: {
@@ -641,14 +606,12 @@ const styles = {
     color: "#94a3b8",
     margin: 0
   },
-
-  /* 🔴 FIXED NEW SINGLE LINE STYLE FOR THE 4 PILLARS */
   singleLineTrustContainer: {
     width: "100%",
     background: "#090f1d",
     border: "1px solid #1e2942",
     borderRadius: "20px",
-    padding: "24px 12px",
+    padding: "26px 14px", // 🔴 লাস্ট রোর প্যাডিংও জুমড করা হলো
     display: "flex",
     alignItems: "stretch",
     justifyContent: "space-between",
@@ -672,9 +635,8 @@ const styles = {
   trustTitleSingle: {
     fontSize: "13px",
     fontWeight: "700",
-    color: "#ffffff",
     margin: "10px 0 6px 0",
-    whiteSpace: "nowrap" // টেক্সট ভেঙে নিচের লাইনে যাবে না
+    whiteSpace: "nowrap"
   },
   trustDescSingle: {
     fontSize: "10px",
