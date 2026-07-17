@@ -955,87 +955,70 @@ async function sendEmail(to, subject, message) {
 
 
 app.post("/send-email-otp", async (req, res) => {
-
   try {
-
     const { email } = req.body;
-
     if (!email) {
-      return res.json({
-        success: false,
-        msg: "Email required"
-      });
+      return res.status(400).json({ success: false, msg: "Email is required" });
     }
 
-    const otp = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
+    const lowerEmail = email.trim().toLowerCase();
+    
+    // ৬ ডিজিটের ওটিপি জেনারেট করুন
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    global.otpStore = global.otpStore || {};
+    // ১. আগের কোনো ওটিপি থাকলে ডাটাবেজ থেকে মুছে দিন
+    await OtpModel.deleteMany({ email: lowerEmail });
 
-    global.otpStore[email] = otp;
+    // ২. নতুন ওটিপি ডাটাবেজে সেভ করুন
+    await OtpModel.create({ email: lowerEmail, otp });
 
-    await sendEmail(
-      email,
-      "Save Money OTP Verification",
-      `Your OTP is: ${otp}`
-    );
+    // ৩. এখানে আপনার ইমেইল পাঠানোর লজিকটি লিখুন (nodemailer বা অন্য কিছু যা ব্যবহার করছেন)
+    // await sendEmail(lowerEmail, "Your OTP Code", `Your OTP is ${otp}`);
 
-    res.json({
-      success: true,
-      msg: "OTP sent successfully"
-    });
+    console.log(`OTP for ${lowerEmail} is: ${otp}`); // ডেভেলপমেন্টের সুবিধার্থে কনসোলে প্রিন্ট
+
+    return res.status(200).json({ success: true, msg: "OTP sent successfully" });
 
   } catch (err) {
-
-    console.log(err);
-
-    res.json({
-      success: false,
-      msg: "OTP send failed"
-    });
-
+    console.log("SEND OTP ERROR:", err);
+    return res.status(500).json({ success: false, msg: "Server error" });
   }
-
 });
 
 app.post("/verify-email-otp", async (req, res) => {
-
   try {
-
     const { email, otp } = req.body;
 
-    if (
-      global.otpStore &&
-      global.otpStore[email] === otp
-    ) {
-
-      delete global.otpStore[email];
-
-      return res.json({
-        success: true,
-        msg: "OTP verified"
-      });
-
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, msg: "Email and OTP are required" });
     }
 
-    res.json({
-      success: false,
-      msg: "Invalid OTP"
-    });
+    const lowerEmail = email.trim().toLowerCase();
+
+    // ডাটাবেজে এই ইমেইলের ওটিপি খুঁজুন
+    const otpRecord = await OtpModel.findOne({ email: lowerEmail });
+
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, msg: "OTP expired or not requested. Please try again." });
+    }
+
+    // ওটিপি চেক করুন
+    if (otpRecord.otp !== otp.trim()) {
+      return res.status(400).json({ success: false, msg: "Invalid OTP. Please try again." });
+    }
+
+    // ওটিপি মিলে গেলে ডাটাবেজে ভেরিফাইড ফ্ল্যাগটি ট্রু করে দিন
+    otpRecord.isVerified = true;
+    await otpRecord.save();
+
+    return res.status(200).json({ success: true, msg: "Email verified successfully!" });
 
   } catch (err) {
-
-    console.log(err);
-
-    res.json({
-      success: false,
-      msg: "Verification failed"
-    });
-
+    console.log("VERIFY OTP ERROR:", err);
+    return res.status(500).json({ success: false, msg: "Server error" });
   }
-
 });
+
 
 
 const twilio = require("twilio");
@@ -1132,7 +1115,7 @@ async function generateShortWalletId() {
 
 // ================= REGISTER WITH T&C AND OTP VERIFICATION =================
 
-      app.post("/register", async (req, res) => {
+         app.post("/register", async (req, res) => {
   try {
     console.log("REGISTER BODY:", req.body);
 
@@ -1142,8 +1125,8 @@ async function generateShortWalletId() {
       email,
       password,
       referCode,
-      otp,           // ফ্রন্টএন্ড থেকে ওটিপি আসবে
-      termsAccepted  // ফ্রন্টএন্ড থেকে চেকবক্স ট্রু আসবে
+      otp,
+      termsAccepted
     } = req.body;
 
     // ১. সব রিকোয়ার্ড ফিল্ড ভ্যালিডেশন
@@ -1163,13 +1146,15 @@ async function generateShortWalletId() {
       return res.status(400).json({ msg: "Invalid email" });
     }
 
-    // ৪. ইমেইল ওটিপি দিয়ে আগে ভেরিফাই করা হয়েছে কি না তা চেক (নতুন লজিক)
-    if (!global.otpStore || global.otpStore[lowerEmail] !== "VERIFIED") {
+    // ৪. ডাটাবেজ থেকে ওটিপি স্ট্যাটাস চেক করুন (নতুন ডাটাবেজ লজিক)
+    const otpRecord = await OtpModel.findOne({ email: lowerEmail });
+
+    if (!otpRecord || !otpRecord.isVerified) {
       return res.status(400).json({ msg: "Please verify your email OTP first." });
     }
 
-    // ৫. রেজিস্ট্রেশন সফল হওয়ার পথে, তাই এবার গ্লোবাল স্টোর থেকে ভেরিফিকেশন ডাটা মুছে দিন (ক্লিনআপ)
-    delete global.otpStore[lowerEmail];
+    // ৫. ওটিপি রেকর্ড ডাটাবেজ থেকে ডিলিট করে দিন (ক্লিনআপ)
+    await OtpModel.deleteOne({ email: lowerEmail });
 
     // ৬. পাসওয়ার্ড স্ট্রং কিনা চেক
     if (!validator.isStrongPassword(password, {
@@ -1190,7 +1175,7 @@ async function generateShortWalletId() {
       return res.status(400).json({ msg: "Mobile already registered" });
     }
 
-    // ৯. পাসওয়ার্ড হ্যাশিং এবং অন্যান্য প্রসেস
+    // ৯. পাসওয়ার্ড হ্যাশিং
     const hashedPassword = await bcrypt.hash(password, 10);
     const myReferCode = "SM" + Math.floor(100000 + Math.random() * 900000);
     const walletId = await generateShortWalletId();
