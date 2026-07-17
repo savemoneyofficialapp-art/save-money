@@ -1,180 +1,326 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  PieChart, Pie, Cell, AreaChart, Area 
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; 
+import { toast } from "react-toastify"; 
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid
 } from "recharts";
+import { API } from "../config";
 
-const UserAnalytics = () => {
-  const [analyticsData, setAnalyticsData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+export default function UserAnalytics() {
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const email = localStorage.getItem("email");
+
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        let token = localStorage.getItem("token");
-        if (token && !token.startsWith("Bearer ")) {
-          token = `Bearer ${token}`;
-        }
+    if (!token || !email) {
+      toast.warning("Please login first to view analytics");
+      navigate("/login"); 
+      return;
+    }
+    load();
+  }, [token, email]);
 
-        // ⚠️ আপনার লাইভ ব্যাকএন্ড URL এখানে দিন (যেমন: https://your-backend.onrender.com/api/analytics)
-        // যদি লাইভ ইউআরএল না থাকে তবে সাময়িক এটি লোকালহোস্টে কাজ করবে কিন্তু প্রোডাকশনে এরর দেবে।
-        const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const load = async () => {
+    try {
+      const res = await fetch(`${API}/user-dashboard-chart`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token 
+        },
+        body: JSON.stringify({ email })
+      });
 
-        const response = await axios.get(`${API_URL}/api/analytics`, {
-          headers: { Authorization: token },
-        });
-
-        setAnalyticsData(response.data);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to load analytics data. Please try again later.");
-      } finally {
-        setLoading(false);
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("email");
+        toast.error("Session expired. Please login again.");
+        navigate("/login");
+        return;
       }
-    };
 
-    fetchAnalytics();
-  }, []);
+      const result = await res.json();
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-600"></div>
-        <span className="ml-3 text-lg font-medium text-gray-600">Loading data...</span>
-      </div>
-    );
-  }
+      if (result && result.success !== false) {
+        setData(result);
+      } else {
+        setError(true);
+        toast.error(result.msg || "Failed to load analytics data");
+      }
+    } catch (err) {
+      console.log("ANALYTICS LOAD ERROR:", err);
+      setError(true);
+      toast.error("Server error. Could not load data.");
+    }
+  };
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <div className="bg-red-50 text-red-700 px-6 py-4 rounded-lg shadow-sm border border-red-200 text-center max-w-md mx-4">
-          <p className="font-semibold text-lg">⚠️ Error!</p>
-          <p className="mt-1 text-sm">{error}</p>
+      <div style={styles.loading}>
+        <div style={styles.errorBox}>
+          <span style={{ fontSize: "40px" }}>⚠️</span>
+          <h2 style={{ color: "#ef4444", marginTop: "10px" }}>Error Occurred</h2>
+          <p style={{ color: "#94a3b8" }}>Failed to load charts. Please try refreshing the page.</p>
         </div>
       </div>
     );
   }
 
-  const COLORS = ["#10B981", "#F59E0B", "#EF4444"];
+  if (!data) {
+    return (
+      <div style={styles.loading}>
+        <div style={{ textAlign: "center" }}>
+          <div style={styles.spinner}></div>
+          <h2 style={{ color: "#3b82f6", marginTop: "15px" }}>Loading Analytics...</h2>
+        </div>
+      </div>
+    );
+  }
 
-  const taskStatusData = [
-    { name: "Completed", value: analyticsData?.completedTasks || 0 },
-    { name: "Pending", value: analyticsData?.pendingTasks || 0 },
-  ];
+  const PIE_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6"];
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div style={styles.container}>
+      {/* Header */}
+      <div style={styles.header}>
+        <h1 style={styles.title}>📈 Dashboard Analytics</h1>
+        <p style={styles.subtitle}>Real-time overview of your performance, earnings, and financial growth.</p>
+      </div>
+
+      {/* Stats Cards Grid */}
+      <div style={styles.summaryGrid}>
+        <div style={styles.card}>
+          <p style={styles.cardLabel}>Wallet Balance</p>
+          <h2 style={{ ...styles.cardValue, color: "#3b82f6" }}>
+            ₹{Number(data.wallet || 0).toLocaleString("en-IN")}
+          </h2>
+        </div>
+
+        <div style={styles.card}>
+          <p style={styles.cardLabel}>Total Bonus</p>
+          <h2 style={{ ...styles.cardValue, color: "#8b5cf6" }}>
+            ₹{Number(data.totalBonus || 0).toLocaleString("en-IN")}
+          </h2>
+        </div>
+
+        <div style={styles.card}>
+          <p style={styles.cardLabel}>Account Status</p>
+          <h2 style={{ 
+            ...styles.cardValue, 
+            color: String(data.activeStatus).toLowerCase() === "active" ? "#22c55e" : "#ef4444" 
+          }}>
+            {data.activeStatus || "N/A"}
+          </h2>
+        </div>
+      </div>
+
+      {/* Injecting CSS Media Queries directly into JS for dynamic responsiveness */}
+      <style>{`
+        @media (max-width: 768px) {
+          .charts-layout-grid { grid-template-columns: 1fr !important; }
+          .stats-layout-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+
+      {/* Charts Grid */}
+      <div className="charts-layout-grid" style={styles.chartsGrid}>
         
-        {/* Header Section */}
-        <div className="mb-10 text-center sm:text-left">
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">
-            📊 Your Analytics
-          </h1>
-          <p className="mt-2 text-md text-slate-500">
-            An overview of your task management progress and performance statistics.
-          </p>
+        {/* Chart 1 */}
+        <div style={styles.chartBox}>
+          <h3 style={styles.chartTitle}>Monthly Income Growth</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={data.monthlyData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+              <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
+              <YAxis stroke="#94a3b8" fontSize={12} />
+              <Tooltip contentStyle={styles.customTooltip} />
+              <Line type="monotone" dataKey="income" name="Income" stroke="#22c55e" strokeWidth={3} dot={{ fill: "#22c55e", r: 4 }} activeDot={{ r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-10">
-          {/* Card 1: Total Tasks */}
-          <div className="bg-white overflow-hidden shadow-sm border border-slate-100 rounded-xl p-6 transition-transform hover:scale-[1.02]">
-            <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Tasks</p>
-            <p className="mt-2 text-4xl font-bold text-indigo-600">{analyticsData?.totalTasks || 0}</p>
-          </div>
-          {/* Card 2: Completed Tasks */}
-          <div className="bg-white overflow-hidden shadow-sm border border-slate-100 rounded-xl p-6 transition-transform hover:scale-[1.02]">
-            <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Completed Tasks</p>
-            <p className="mt-2 text-4xl font-bold text-emerald-500">{analyticsData?.completedTasks || 0}</p>
-          </div>
-          {/* Card 3: Pending Tasks */}
-          <div className="bg-white overflow-hidden shadow-sm border border-slate-100 rounded-xl p-6 transition-transform hover:scale-[1.02]">
-            <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Pending Tasks</p>
-            <p className="mt-2 text-4xl font-bold text-amber-500">{analyticsData?.pendingTasks || 0}</p>
-          </div>
+        {/* Chart 2 */}
+        <div style={styles.chartBox}>
+          <h3 style={styles.chartTitle}>Investment Growth</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={data.monthlyData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+              <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
+              <YAxis stroke="#94a3b8" fontSize={12} />
+              <Tooltip contentStyle={styles.customTooltip} />
+              <Bar dataKey="investment" name="Investment" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Chart 1: Bar Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-800 mb-6">📉 Task Overview (Bar Chart)</h3>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={taskStatusData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={13} />
-                  <YAxis stroke="#94a3b8" fontSize={13} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", color: "#fff" }}
-                    itemStyle={{ color: "#38bdf8" }}
-                  />
-                  <Bar dataKey="value" name="Tasks" radius={[8, 8, 0, 0]}>
-                    <Cell fill="#3b82f6" />
-                    <Cell fill="#f59e0b" />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+        {/* Chart 3 */}
+        <div style={styles.chartBox}>
+          <h3 style={styles.chartTitle}>Monthly Referral Growth</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={data.monthlyData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+              <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
+              <YAxis stroke="#94a3b8" fontSize={12} />
+              <Tooltip contentStyle={styles.customTooltip} />
+              <Bar dataKey="referrals" name="Referrals" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-          {/* Chart 2: Area Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-800 mb-6">📈 Progress Trend (Area Chart)</h3>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={taskStatusData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={13} />
-                  <YAxis stroke="#94a3b8" fontSize={13} />
-                  <Tooltip contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", color: "#fff" }} />
-                  <Area type="monotone" dataKey="value" name="Tasks" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Chart 3: Pie Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-2">
-            <h3 className="text-lg font-bold text-slate-800 mb-6 text-center">🍕 Task Distribution (Pie Chart)</h3>
-            <div className="h-80 w-full flex justify-center items-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={taskStatusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {taskStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", color: "#fff" }} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
+        {/* Chart 4: Pie Chart with enhanced layout */}
+        <div style={styles.chartBox}>
+          <h3 style={styles.chartTitle}>Income Breakdown</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie
+                data={data.incomeBreakdown || []}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={60}
+                outerRadius={90}
+                paddingAngle={4}
+              >
+                {(data.incomeBreakdown || []).map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={styles.customTooltip} />
+              <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '13px' }} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
 
       </div>
     </div>
   );
+}
+
+// Modernized Object-based Stylesheet
+const styles = {
+  container: {
+    minHeight: "100vh",
+    background: "linear-gradient(135deg, #020617 0%, #0f172a 100%)",
+    color: "#f8fafc",
+    padding: "30px 20px"
+  },
+  header: {
+    textAlign: "center",
+    marginBottom: "40px"
+  },
+  title: {
+    fontSize: "2.2rem",
+    fontWeight: "800",
+    background: "linear-gradient(to right, #3b82f6, #22c55e)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    marginBottom: "8px"
+  },
+  subtitle: {
+    color: "#94a3b8",
+    fontSize: "0.95rem"
+  },
+  summaryGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gap: "20px",
+    marginBottom: "35px"
+  },
+  card: {
+    background: "rgba(30, 41, 59, 0.7)",
+    backdropFilter: "blur(10px)",
+    padding: "24px",
+    borderRadius: "20px",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    boxShadow: "0 4px 20px -2px rgba(0, 0, 0, 0.3)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  cardLabel: {
+    color: "#94a3b8",
+    fontSize: "0.85rem",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    marginBottom: "6px"
+  },
+  cardValue: {
+    fontSize: "2rem",
+    fontWeight: "700",
+    margin: "0"
+  },
+  chartsGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "25px"
+  },
+  chartBox: {
+    background: "rgba(30, 41, 59, 0.4)",
+    padding: "24px",
+    borderRadius: "24px",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+  },
+  chartTitle: {
+    fontSize: "1.1rem",
+    fontWeight: "600",
+    color: "#f1f5f9",
+    marginBottom: "20px",
+    borderLeft: "4px solid #3b82f6",
+    paddingLeft: "10px"
+  },
+  customTooltip: {
+    background: "#0f172a",
+    borderRadius: "12px",
+    border: "1px solid #334155",
+    color: "#fff",
+    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)"
+  },
+  loading: {
+    minHeight: "100vh",
+    background: "#020617",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  errorBox: {
+    background: "rgba(239, 68, 68, 0.1)",
+    border: "1px solid rgba(239, 68, 68, 0.2)",
+    padding: "30px",
+    borderRadius: "20px",
+    textAlign: "center",
+    maxWidth: "400px"
+  },
+  spinner: {
+    width: "50px",
+    height: "50px",
+    border: "4px solid #1e293b",
+    borderTop: "4px solid #3b82f6",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+    margin: "0 auto"
+  }
 };
 
-export default UserAnalytics;
+// Injection of keyframes logic dynamically via document head
+if (typeof document !== "undefined") {
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
+  document.head.appendChild(styleSheet);
+}
