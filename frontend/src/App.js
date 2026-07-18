@@ -1,4 +1,4 @@
-export default App;import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
 import socket from "./socket";
 
@@ -48,6 +48,7 @@ import InvestNow from "./pages/InvestNow";
 import BankDetails from "./pages/BankDetails";
 import Withdraw from "./pages/Withdraw";
 
+// 🛠️ এখানে 'export default' রিমুভ করে শুধুমাত্র 'function App()' রাখা হলো
 function App() {
   const [popup, setPopup] = useState(null);
 
@@ -91,12 +92,12 @@ function App() {
       )}
 
       <Routes>
-        {/* 🔓 পাবলিক রুটস (সবার জন্য উন্মুক্ত) */}
+        {/* 🔓 পাবলিক রুটস */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* 🔒 প্রটেক্টেড রুটস (শুধুমাত্র লগইন করা ইউজারদের জন্য) */}
+        {/* 🔒 প্রটেক্টেড রুটস (ইউজারদের জন্য) */}
         <Route
           path="/leaderboard"
           element={
@@ -304,8 +305,7 @@ function App() {
           }
         />
 
-
-        {/* 🛠️ অ্যাডমিন রুটস (শুধুমাত্র অ্যাডমিন এক্সেস পাবে) */}
+        {/* 🛠️ অ্যাডমিন রুটস */}
         <Route
           path="/admin"
           element={
@@ -360,7 +360,7 @@ function App() {
           }
         />
 
-        {/* 🔄 ফলব্যাক / ক্যাচ-অল রুট */}
+        {/* 🔄 ফলব্যাক রুট */}
         <Route path="*" element={<Login />} />
 
       </Routes>
@@ -380,4 +380,5 @@ function App() {
   );
 }
 
+// 🎯 এটিই থাকবে একমাত্র অফিসিয়াল ডিফল্ট এক্সপোর্ট
 export default App;
