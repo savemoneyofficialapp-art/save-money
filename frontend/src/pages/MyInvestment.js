@@ -160,14 +160,20 @@ const downloadSlip = (planId, historyId) => {
   window.open(`${API}/investment-slip/${planId}/${historyId}`, "_blank");
 };
 
-  const summary = useMemo(() => {
+    const summary = useMemo(() => {
     const totalInvestment = investments.reduce(
+      (sum, item) => sum + Number(item.totalPlanAmount || item.amount || 0),
+      0
+    );
+
+    // active বা সর্বমোট কত টাকা অলরেডি দেওয়া হয়েছে (হিস্ট্রি অ্যামাউন্টের যোগফল)
+    const investedAmount = investments.reduce(
       (sum, item) => sum + Number(item.amount || 0),
       0
     );
 
     const totalReturn = investments.reduce(
-      (sum, item) => sum + Number(item.totalReturn || 0),
+      (sum, item) => sum + Number(item.totalReturn || item.maturityAmount || 0),
       0
     );
 
@@ -178,18 +184,20 @@ const downloadSlip = (planId, historyId) => {
     const averageReturnRate =
       investments.length > 0
         ? investments.reduce(
-            (sum, item) => sum + Number(item.returnRate || item.interestRate || 0),
+            (sum, item) => sum + Number(item.returnRate || item.interestRate || item.rate || 0),
             0
           ) / investments.length
         : 0;
 
     return {
       totalInvestment,
+      investedAmount, // এটি অ্যাড করা হলো
       totalReturn,
       activeInvestments,
       averageReturnRate
     };
   }, [investments]);
+
 
   const copyId = async (id) => {
     try {
@@ -270,19 +278,24 @@ const renewNow = (inv) => {
             <SummaryHero summary={summary} money={money} />
 
             {investments.map((inv, index) => (
-              <InvestmentCard
-                key={inv._id || inv.investmentId || index}
-                inv={inv}
-                money={money}
-                date={date}
-                copyId={copyId}
-                viewDetails={viewDetails}
-                certificate={certificate}
-                downloadStatement={downloadStatement}
-                renewNow={renewNow}
-                daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
-                isOverdue={isOverdue}            />
-            ))}
+  <InvestmentCard
+    key={inv._id || inv.investmentId || index}
+    inv={inv}
+    money={money}
+    date={date}
+    copyId={copyId}
+    viewDetails={viewDetails}
+    certificate={certificate}
+    downloadStatement={downloadStatement}
+    renewNow={renewNow}
+    daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
+    isOverdue={isOverdue}            
+    // নিচে এই দুটি লাইন অবশ্যই অ্যাড করবেন
+    requiredInvestment={inv.totalPlanAmount || inv.amount}
+    investedAmount={inv.amount} 
+  />
+))}
+
 
             <BottomBanner />
           </>
