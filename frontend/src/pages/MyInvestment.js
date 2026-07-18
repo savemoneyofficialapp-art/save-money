@@ -378,31 +378,38 @@ export default function MyInvestment() {
             </p>
 
             <button
-              style={styles.greenBtn}
-              onClick={async () => {
-                try {
-                  const res = await axios.post(
-                    `${API}/renew-invest`,
-                    {
-                      investmentId: selectedPlan._id
-                    }
-                  );
+  style={styles.greenBtn}
+  onClick={async () => {
+    try {
+      const res = await axios.post(
+        `${API}/renew-invest`,
+        {
+          investmentId: selectedPlan._id
+        }
+      );
 
-                  // ব্রাউজার এলার্ট তুলে দিয়ে কাস্টম এলার্ট ওপেন করা হলো
-                  setCustomAlert({ show: true, message: res.data.msg });
-                  setRenewOpen(false);
-                  loadInvestments(); 
+      // ১. প্রথমে রিনিউ ইনফো মডালটি বন্ধ করব
+      setRenewOpen(false);
 
-                } catch (err) {
-                  toast.error(
-                    err?.response?.data?.msg ||
-                    "Renew failed"
-                  );
-                }
-              }}
-            >
-              Renew Payment
-            </button>
+      // ২. কাস্টম অ্যালার্ট মডালটি ওপেন করব
+      setCustomAlert({ show: true, message: res.data.msg });
+
+      // ৩. পেজ লোড শুধুমাত্র তখনই হবে যদি রিনিউ সফল (success) হয়
+      if (res.data.success) {
+        loadInvestments(); 
+      }
+
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.msg ||
+        "Renew failed"
+      );
+    }
+  }}
+>
+  Renew Payment
+</button>
+
 
             <button style={styles.closeBtn} onClick={() => setRenewOpen(false)}>
               Close
