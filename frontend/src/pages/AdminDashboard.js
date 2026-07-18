@@ -365,18 +365,18 @@ export default function AdminDashboard() {
 
         <div style={{ ...styles.card, gridColumn: "span 2" }}>
           <p style={styles.cardLabel}>Total Disbursed Withdrawals</p>
-          <h2 style={{ ...styles.cardVal, color: "#38bdf8", fontSize: "24px" }}>{money(totalWithdrawAmount)}</h2>
+          <h2 style={{ ...styles.cardVal, color: "#38bdf8", fontSize: "32px" }}>{money(totalWithdrawAmount)}</h2>
         </div>
       </div>
 
-      {/* 📈 রিয়েল-টাইম চার্টবক্স */}
+      {/* 📈 রিয়েল-тайম চার্টবক্স */}
       <div style={styles.chartBox}>
-        <h3 style={{ margin: "0 0 15px 0", color: "#94a3b8", fontSize: "14px", fontWeight: "bold" }}>📈 PLATFORM STATISTICAL CHART</h3>
+        <h3 style={{ margin: "0 0 15px 0", color: "#f1f5f9", fontSize: "16px", fontWeight: "bold" }}>📈 PLATFORM STATISTICAL CHART</h3>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={chartData}>
-            <XAxis dataKey="name" stroke="#64748b" tick={{ fill: '#cbd5e1', fontSize: 12 }} />
-            <YAxis stroke="#64748b" tick={{ fill: '#cbd5e1', fontSize: 12 }} />
-            <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#475569', borderRadius: '10px', color: '#fff' }} />
+            <XAxis dataKey="name" stroke="#cbd5e1" tick={{ fill: '#cbd5e1', fontSize: 13, fontWeight: '600' }} />
+            <YAxis stroke="#cbd5e1" tick={{ fill: '#cbd5e1', fontSize: 13, fontWeight: '600' }} />
+            <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#475569', borderRadius: '10px', color: '#fff', fontSize: '15px' }} />
             <Bar dataKey="value" fill="url(#colorGrad)" radius={[6, 6, 0, 0]}>
               <defs>
                 <linearGradient id="colorGrad" x1="0" y1="0" x2="0" y2="1">
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
           onChange={(e) => setTitle(e.target.value)}
         />
         <textarea
-          style={{ ...styles.input, minHeight: "80px", resize: "vertical" }}
+          style={{ ...styles.input, minHeight: "100px", resize: "vertical" }}
           placeholder="Compose notification body or system alert details here..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
         <div style={styles.sectionTop}>
           <div>
             <h2 style={styles.sectionTitle}>💰 Pending Manual Settlements</h2>
-            <p style={{ color: "#64748b", fontSize: "12px", margin: "2px 0 0 0" }}>Requires administrative wallet dispatch validation.</p>
+            <p style={{ color: "#cbd5e1", fontSize: "14px", margin: "4px 0 0 0", fontWeight: "600" }}>Requires administrative wallet dispatch validation.</p>
           </div>
           <button style={styles.viewTransactionBtn} onClick={() => setTransactionPopup(true)}>
             🧾 Transaction Ledger
@@ -423,12 +423,12 @@ export default function AdminDashboard() {
 
         <div style={styles.withdrawSummary}>
           <div style={styles.summaryMini}>
-            <span style={{ color: "#64748b", fontSize: "12px" }}>Queue Count</span>
-            <h3 style={{ margin: "5px 0 0 0", color: "#f43f5e" }}>{pendingWithdraws.length} Req</h3>
+            <span style={{ color: "#cbd5e1", fontSize: "14px", fontWeight: "600" }}>Queue Count</span>
+            <h3 style={{ margin: "5px 0 0 0", color: "#f43f5e", fontSize: "22px" }}>{pendingWithdraws.length} Req</h3>
           </div>
           <div style={styles.summaryMini}>
-            <span style={{ color: "#64748b", fontSize: "12px" }}>Escrow Volume</span>
-            <h3 style={{ margin: "5px 0 0 0", color: "#22c55e" }}>{money(pendingWithdrawAmount)}</h3>
+            <span style={{ color: "#cbd5e1", fontSize: "14px", fontWeight: "600" }}>Escrow Volume</span>
+            <h3 style={{ margin: "5px 0 0 0", color: "#22c55e", fontSize: "22px" }}>{money(pendingWithdrawAmount)}</h3>
           </div>
         </div>
 
@@ -439,13 +439,13 @@ export default function AdminDashboard() {
             <div key={w._id} style={styles.withdrawMiniCard}>
               <div style={styles.withdrawMiniTop}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "16px" }}>{w.name || "User"}</h3>
-                  <p style={{ margin: "3px 0", color: "#94a3b8", fontSize: "13px" }}>{w.email}</p>
+                  <h3 style={{ margin: 0, fontSize: "20px", color: "#ffffff" }}>{w.name || "User"}</h3>
+                  <p style={{ margin: "5px 0", color: "#cbd5e1", fontSize: "16px", fontWeight: "500" }}>{w.email}</p>
                   <p style={styles.amountText}>{money(w.amount)}</p>
                 </div>
 
                 <div style={{ textAlign: "right" }}>
-                  <span style={{ ...styles.statusPill, background: "rgba(234,179,8,0.15)", color: "#eab308" }}>
+                  <span style={{ ...styles.statusPill, background: "rgba(234,179,8,0.25)", color: "#facc15", fontSize: "14px" }}>
                     Pending Action
                   </span>
                   <br />
@@ -468,12 +468,12 @@ export default function AdminDashboard() {
                   </div>
 
                   <div style={styles.bankBox}>
-                    <h4 style={{ margin: "0 0 10px 0", color: "#38bdf8", fontSize: "14px" }}>🏦 Target Beneficiary Remittance Parameters</h4>
+                    <h4 style={{ margin: "0 0 10px 0", color: "#38bdf8", fontSize: "18px" }}>🏦 Target Beneficiary Remittance Parameters</h4>
                     <p style={styles.bankP}><b>Holder:</b> {w.bankDetails?.accountHolderName || "N/A"}</p>
                     <p style={styles.bankP}><b>Contact:</b> {w.bankDetails?.mobile || "N/A"}</p>
                     <p style={styles.bankP}><b>Institution:</b> {w.bankDetails?.bankName || "N/A"}</p>
-                    <p style={styles.bankP}><b>Account No:</b> <span style={{ color: "#fbbf24", fontFamily: "monospace" }}>{w.bankDetails?.accountNumber || "N/A"}</span></p>
-                    <p style={styles.bankP}><b>IFSC Routing:</b> <span style={{ fontFamily: "monospace" }}>{w.bankDetails?.ifscCode || "N/A"}</span></p>
+                    <p style={styles.bankP}><b>Account No:</b> <span style={{ color: "#fbbf24", fontFamily: "monospace", fontSize: "18px", fontWeight: "bold" }}>{w.bankDetails?.accountNumber || "N/A"}</span></p>
+                    <p style={styles.bankP}><b>IFSC Routing:</b> <span style={{ fontFamily: "monospace", fontSize: "17px", fontWeight: "bold", color: "#fff" }}>{w.bankDetails?.ifscCode || "N/A"}</span></p>
                     <p style={styles.bankP}><b>UPI Virtual Address:</b> {w.bankDetails?.upiId || "N/A"}</p>
                   </div>
 
@@ -502,23 +502,23 @@ export default function AdminDashboard() {
             <div key={item._id} style={styles.withdrawMiniCard}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "15px" }}>{item.name}</h3>
-                  <p style={{ margin: "2px 0", fontSize: "12px", color: "#94a3b8" }}>{item.email}</p>
-                  <b style={{ color: "#22c55e" }}>₹{item.amount}</b>
+                  <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>{item.name}</h3>
+                  <p style={{ margin: "4px 0", fontSize: "15px", color: "#cbd5e1" }}>{item.email}</p>
+                  <b style={{ color: "#22c55e", fontSize: "20px" }}>₹{item.amount}</b>
                 </div>
-                <span style={{ ...styles.statusPill, background: "rgba(56,189,248,0.1)", color: "#38bdf8", fontSize: "11px" }}>
+                <span style={{ ...styles.statusPill, background: "rgba(56,189,248,0.2)", color: "#38bdf8", fontSize: "14px" }}>
                   Status: {item.status}
                 </span>
               </div>
-              <div style={{ ...styles.bankBox, padding: "10px", marginTop: "10px", fontSize: "13px" }}>
+              <div style={{ ...styles.bankBox, padding: "14px", marginTop: "10px", fontSize: "15px" }}>
                 <p style={styles.bankP}><b>Bank:</b> {item.bankDetails?.bankName} | <b>Acc:</b> {item.bankDetails?.accountNumber}</p>
                 <p style={styles.bankP}><b>IFSC:</b> {item.bankDetails?.ifscCode}</p>
               </div>
               <div style={{ ...styles.actionRow, marginTop: "10px" }}>
-                <button style={{ ...styles.approveBtn, padding: "8px" }} onClick={() => autoWithdrawAction(item._id, "Success")}>
+                <button style={{ ...styles.approveBtn, padding: "12px" }} onClick={() => autoWithdrawAction(item._id, "Success")}>
                   Authorize Clear
                 </button>
-                <button style={{ ...styles.rejectBtn, padding: "8px" }} onClick={() => autoWithdrawAction(item._id, "Rejected")}>
+                <button style={{ ...styles.rejectBtn, padding: "12px" }} onClick={() => autoWithdrawAction(item._id, "Rejected")}>
                   Void Request
                 </button>
               </div>
@@ -533,11 +533,11 @@ export default function AdminDashboard() {
         {kyc.length === 0 && <p style={styles.emptyText}>😎 Universal user identities are verified. No pending audits.</p>}
         {kyc.map((u) => (
           <div key={u._id} style={styles.kycCard}>
-            <h3 style={{ margin: 0 }}>{u.name}</h3>
-            <p style={{ margin: "2px 0", color: "#94a3b8", fontSize: "13px" }}>{u.email} | Contact: {u.mobile}</p>
-            <div style={{ margin: "10px 0", fontSize: "14px", background: "#020617", padding: "10px", borderRadius: "8px" }}>
-              <p style={{ margin: "2px 0" }}>💳 <b>Aadhaar Hash:</b> <span style={{ color: "#fbbf24" }}>[Protected Identifier]</span></p>
-              <p style={{ margin: "2px 0" }}>📄 <b>PAN Code:</b> <span style={{ color: "#38bdf8" }}>{u.panNumber || u.pan || "Not Submitted"}</span></p>
+            <h3 style={{ margin: 0, fontSize: "22px", color: "#ffffff", fontWeight: "bold" }}>{u.name}</h3>
+            <p style={{ margin: "5px 0", color: "#cbd5e1", fontSize: "16px", fontWeight: "500" }}>{u.email} | Contact: {u.mobile}</p>
+            <div style={{ margin: "14px 0", fontSize: "17px", background: "#020617", padding: "16px", borderRadius: "12px", border: "1px solid #334155" }}>
+              <p style={{ margin: "6px 0", color: "#ffffff" }}>💳 <b>Aadhaar Hash:</b> <span style={{ color: "#fbbf24", fontWeight: "bold" }}>{u.aadhaarNumber || u.aadhaar || "[Protected Identifier]"}</span></p>
+              <p style={{ margin: "6px 0", color: "#ffffff" }}>📄 <b>PAN Code:</b> <span style={{ color: "#38bdf8", fontWeight: "bold", fontFamily: "monospace", fontSize: "18px" }}>{u.panNumber || u.pan || "Not Submitted"}</span></p>
             </div>
 
             <div style={styles.docGrid}>
@@ -558,7 +558,7 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" }}>
               <button style={styles.greenFull} onClick={() => approveKYC(u._id)}>
                 🪪 Grant Verification Passing
               </button>
@@ -592,7 +592,7 @@ export default function AdminDashboard() {
                 {cash.map((r) => (
                   <tr key={r._id} style={styles.tr}>
                     <td style={styles.td}>{r.email}</td>
-                    <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>{money(r.amount)}</td>
+                    <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold", fontSize: "16px" }}>{money(r.amount)}</td>
                     <td style={styles.td}>
                       <span style={styles.utrBadge}>
                         {r.txnId || r.transactionId || "N/A"}
@@ -603,21 +603,21 @@ export default function AdminDashboard() {
                     </td>
                     <td style={styles.td}>
                       <span style={{
-                        padding: "3px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold",
-                        background: r.status === "approved" ? "rgba(34,197,94,0.15)" : r.status === "rejected" ? "rgba(239,68,68,0.15)" : "rgba(234,179,8,0.15)",
-                        color: r.status === "approved" ? "#22c55e" : r.status === "rejected" ? "#ef4444" : "#eab308",
+                        padding: "5px 10px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold",
+                        background: r.status === "approved" ? "rgba(34,197,94,0.2)" : r.status === "rejected" ? "rgba(239,68,68,0.2)" : "rgba(234,179,8,0.2)",
+                        color: r.status === "approved" ? "#22c55e" : r.status === "rejected" ? "#f87171" : "#facc15",
                       }}>
                         {r.status || "pending"}
                       </span>
                     </td>
                     <td style={styles.td}>
                       {r.status === "pending" || !r.status ? (
-                        <div style={{ display: "flex", gap: "5px" }}>
+                        <div style={{ display: "flex", gap: "8px" }}>
                           <button style={styles.smallGreen} onClick={() => approveCash(r._id)}>Approve</button>
                           <button style={styles.smallRed} onClick={() => rejectCash(r._id)}>Reject</button>
                         </div>
                       ) : (
-                        <span style={{ color: "#64748b", fontSize: "12px" }}>📦 Locked Legacy</span>
+                        <span style={{ color: "#cbd5e1", fontSize: "14px", fontWeight: "600" }}>📦 Locked Legacy</span>
                       )}
                     </td>
                   </tr>
@@ -635,8 +635,8 @@ export default function AdminDashboard() {
         {users.map((u) => (
           <div key={u._id} style={styles.row}>
             <div>
-              <b style={{ fontSize: "15px" }}>{u.name}</b>
-              <p style={{ margin: "2px 0 0 0", color: "#64748b", fontSize: "13px" }}>{u.email} | Tier: <span style={{ color: "#38bdf8" }}>{u.role}</span></p>
+              <b style={{ fontSize: "18px", color: "#fff" }}>{u.name}</b>
+              <p style={{ margin: "4px 0 0 0", color: "#cbd5e1", fontSize: "15px", fontWeight: "500" }}>{u.email} | Tier: <span style={{ color: "#38bdf8", fontWeight: "bold" }}>{u.role}</span></p>
             </div>
             <button style={styles.red} onClick={() => banUser(u._id)}>
               🚫 Terminate Account
@@ -650,7 +650,7 @@ export default function AdminDashboard() {
         <div style={styles.popupOverlay}>
           <div style={styles.popupBox}>
             <div style={styles.popupTop}>
-              <h2 style={{ margin: 0 }}>📜 Comprehensive Remittance Ledger</h2>
+              <h2 style={{ margin: 0, fontSize: "24px" }}>📜 Comprehensive Remittance Ledger</h2>
               <button style={styles.closePopup} onClick={() => setTransactionPopup(false)}>✕ Close</button>
             </div>
 
@@ -674,33 +674,33 @@ export default function AdminDashboard() {
 
             <div style={styles.popupSummary}>
               <div style={styles.summaryMini}>
-                <span style={{ color: "#64748b" }}>Matched Records</span>
-                <h3 style={{ margin: "5px 0 0 0" }}>{transactionWithdraws.length} Units</h3>
+                <span style={{ color: "#cbd5e1", fontSize: "15px" }}>Matched Records</span>
+                <h3 style={{ margin: "5px 0 0 0", fontSize: "20px" }}>{transactionWithdraws.length} Units</h3>
               </div>
               <div style={styles.summaryMini}>
-                <span style={{ color: "#64748b" }}>Aggregated Disbursed</span>
-                <h3 style={{ margin: "5px 0 0 0", color: "#22c55e" }}>{money(transactionTotalAmount)}</h3>
+                <span style={{ color: "#cbd5e1", fontSize: "15px" }}>Aggregated Disbursed</span>
+                <h3 style={{ margin: "5px 0 0 0", color: "#22c55e", fontSize: "20px" }}>{money(transactionTotalAmount)}</h3>
               </div>
             </div>
 
-            <div style={{ marginTop: 15, maxHeight: "40vh", overflowY: "auto", paddingRight: "5px" }}>
+            <div style={{ marginTop: 20, maxHeight: "45vh", overflowY: "auto", paddingRight: "5px" }}>
               {transactionWithdraws.length === 0 ? (
                 <p style={styles.emptyText}>No chronological matching hashes inside database records.</p>
               ) : (
                 transactionWithdraws.map((w) => (
                   <div key={w._id} style={styles.transactionItem}>
                     <div>
-                      <b style={{ fontSize: "14px" }}>{w.name || "User Node"}</b>
-                      <p style={{ margin: "2px 0", color: "#94a3b8", fontSize: "12px" }}>{w.email}</p>
-                      <b style={{ color: "#22c55e", fontSize: "15px" }}>{money(w.amount)}</b>
+                      <b style={{ fontSize: "16px", color: "#fff" }}>{w.name || "User Node"}</b>
+                      <p style={{ margin: "4px 0", color: "#cbd5e1", fontSize: "14px" }}>{w.email}</p>
+                      <b style={{ color: "#22c55e", fontSize: "18px" }}>{money(w.amount)}</b>
                       <br />
-                      <small style={{ color: "#475569" }}>{w.createdAt ? new Date(w.createdAt).toLocaleString("en-IN") : "N/A"}</small>
+                      <small style={{ color: "#94a3b8", fontSize: "12px" }}>{w.createdAt ? new Date(w.createdAt).toLocaleString("en-IN") : "N/A"}</small>
                     </div>
 
                     <span style={{
-                      ...styles.statusPill, fontSize: "11px", padding: "4px 10px",
-                      background: w.status === "Success" ? "rgba(22,163,74,0.15)" : w.status === "Rejected" ? "rgba(225,29,72,0.15)" : "rgba(234,179,8,0.15)",
-                      color: w.status === "Success" ? "#16a34a" : w.status === "Rejected" ? "#e11d48" : "#ca8a04"
+                      ...styles.statusPill, fontSize: "13px", padding: "6px 12px",
+                      background: w.status === "Success" ? "rgba(22,163,74,0.2)" : w.status === "Rejected" ? "rgba(225,29,72,0.2)" : "rgba(234,179,8,0.2)",
+                      color: w.status === "Success" ? "#22c55e" : w.status === "Rejected" ? "#f87171" : "#facc15"
                     }}>
                       {w.status}
                     </span>
@@ -715,15 +715,15 @@ export default function AdminDashboard() {
   );
 }
 
-// 💎 আল্ট্রা-প্রিমিয়াম গ্লোয়িং নিওন ডার্ক থিম স্টাইলশিট 
+// 💎 আল্ট্রা-প্রিমিয়াম গ্লোয়িং নিওন ডার্ক থিম স্টাইলশিট (বড় ফন্ট ও হাই-কন্ট্রাস্ট ক্লিয়ার ভিউ সহ)
 const styles = {
   container: {
     minHeight: "100vh",
     background: "linear-gradient(180deg, #020617 0%, #0b1329 100%)",
-    padding: "24px 16px 80px",
-    color: "#f1f5f9",
+    padding: "30px 20px 100px",
+    color: "#f8fafc",
     fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
-    letterSpacing: "0.2px"
+    letterSpacing: "0.3px"
   },
   loadingPage: {
     minHeight: "100vh",
@@ -735,178 +735,181 @@ const styles = {
   },
   loaderCard: {
     background: "#0f172a",
-    padding: "40px 30px",
+    padding: "50px 40px",
     borderRadius: "28px",
     textAlign: "center",
-    border: "1px solid #1e293b",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
+    border: "1px solid #334155",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.6)"
   },
   loaderLogo: {
     color: "#22c55e",
-    fontSize: "32px",
-    margin: "0 0 20px 0",
+    fontSize: "38px",
+    margin: "0 0 25px 0",
     fontWeight: "800"
   },
   spinner: {
-    width: "45px",
-    height: "45px",
-    border: "4px solid #1e293b",
-    borderTop: "4px solid #22c55e",
+    width: "55px",
+    height: "55px",
+    border: "5px solid #1e293b",
+    borderTop: "5px solid #22c55e",
     borderRadius: "50%",
-    margin: "0 auto 20px",
+    margin: "0 auto 25px",
     animation: "spin 1s linear infinite"
   },
   title: {
     textAlign: "center",
-    fontSize: "26px",
+    fontSize: "34px",
     fontWeight: "800",
-    color: "#f8fafc",
-    margin: "0 0 25px 0"
+    color: "#ffffff",
+    margin: "0 0 35px 0",
+    textShadow: "0 2px 10px rgba(255,255,255,0.1)"
   },
   error: {
-    background: "rgba(239, 68, 68, 0.15)",
-    border: "1px solid #ef4444",
-    color: "#fca5a5",
-    padding: "14px",
-    borderRadius: "14px",
-    marginBottom: "20px",
-    fontSize: "14px",
-    fontWeight: "600"
+    background: "rgba(239, 68, 68, 0.2)",
+    border: "1.5px solid #ef4444",
+    color: "#fee2e2",
+    padding: "16px",
+    borderRadius: "16px",
+    marginBottom: "25px",
+    fontSize: "16px",
+    fontWeight: "700"
   },
   quick: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "10px",
-    marginBottom: "25px"
+    gap: "14px",
+    marginBottom: "35px"
   },
   navBtn: {
     background: "#0f172a",
-    border: "1px solid #1e293b",
-    padding: "14px 10px",
-    borderRadius: "14px",
-    color: "#cbd5e1",
+    border: "1.5px solid #334155",
+    padding: "18px 14px",
+    borderRadius: "16px",
+    color: "#ffffff",
     fontWeight: "700",
-    fontSize: "12px",
+    fontSize: "15px",
     cursor: "pointer",
     transition: "all 0.2s ease"
   },
   grid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginBottom: "25px"
+    gap: "16px",
+    marginBottom: "35px"
   },
   card: {
     background: "linear-gradient(145deg, #0f172a 0%, #1e293b 100%)",
-    padding: "20px 15px",
-    borderRadius: "20px",
+    padding: "24px 20px",
+    borderRadius: "24px",
     textAlign: "center",
-    border: "1px solid #1e293b",
-    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)"
+    border: "1.5px solid #334155",
+    boxShadow: "0 12px 20px -3px rgba(0, 0, 0, 0.4)"
   },
   cardLabel: {
-    margin: "0 0 8px 0",
-    color: "#64748b",
-    fontSize: "12px",
-    fontWeight: "600",
+    margin: "0 0 10px 0",
+    color: "#cbd5e1",
+    fontSize: "15px",
+    fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: "0.5px"
+    letterSpacing: "0.8px"
   },
   cardVal: {
     margin: 0,
-    fontSize: "22px",
+    fontSize: "30px",
     fontWeight: "800"
   },
   chartBox: {
     background: "#0f172a",
-    padding: "20px",
-    borderRadius: "20px",
-    border: "1px solid #1e293b",
-    marginBottom: "25px"
+    padding: "24px",
+    borderRadius: "24px",
+    border: "1.5px solid #334155",
+    marginBottom: "35px"
   },
   section: {
     background: "#0f172a",
-    padding: "20px",
-    borderRadius: "22px",
-    border: "1px solid #1e293b",
-    marginBottom: "25px",
-    boxShadow: "0 15px 25px -5px rgba(0, 0, 0, 0.2)"
+    padding: "26px",
+    borderRadius: "26px",
+    border: "1.5px solid #334155",
+    marginBottom: "35px",
+    boxShadow: "0 18px 30px -5px rgba(0, 0, 0, 0.3)"
   },
   sectionTitle: {
-    margin: "0 0 15px 0",
-    fontSize: "18px",
-    fontWeight: "700",
-    color: "#f1f5f9"
+    margin: "0 0 20px 0",
+    fontSize: "24px",
+    fontWeight: "800",
+    color: "#ffffff",
+    borderBottom: "2px solid #1e293b",
+    paddingBottom: "10px"
   },
   sectionTop: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "15px"
+    marginBottom: "20px"
   },
   input: {
     width: "100%",
-    padding: "14px",
-    borderRadius: "14px",
-    border: "1px solid #1e293b",
+    padding: "16px",
+    borderRadius: "16px",
+    border: "1.5px solid #334155",
     background: "#020617",
     color: "white",
-    marginTop: "12px",
+    marginTop: "14px",
     boxSizing: "border-box",
-    fontSize: "14px"
+    fontSize: "16px"
   },
   greenFull: {
     width: "100%",
     background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
     border: "none",
-    padding: "14px",
-    borderRadius: "14px",
+    padding: "16px",
+    borderRadius: "16px",
     color: "#020617",
     fontWeight: "800",
-    marginTop: "15px",
+    marginTop: "18px",
     cursor: "pointer",
-    fontSize: "14px"
+    fontSize: "16px"
   },
   redFull: {
     width: "100%",
     background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
     border: "none",
-    padding: "14px",
-    borderRadius: "14px",
+    padding: "16px",
+    borderRadius: "16px",
     color: "white",
     fontWeight: "800",
-    marginTop: "15px",
+    marginTop: "18px",
     cursor: "pointer",
-    fontSize: "14px"
+    fontSize: "16px"
   },
   viewTransactionBtn: {
     background: "linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)",
     border: "none",
     color: "white",
-    padding: "10px 16px",
-    borderRadius: "12px",
+    padding: "12px 20px",
+    borderRadius: "14px",
     fontWeight: "700",
-    fontSize: "12px",
+    fontSize: "14px",
     cursor: "pointer"
   },
   withdrawSummary: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginBottom: "15px"
+    gap: "16px",
+    marginBottom: "20px"
   },
   summaryMini: {
     background: "#020617",
-    padding: "14px",
-    borderRadius: "14px",
-    border: "1px solid #1e293b"
+    padding: "16px",
+    borderRadius: "16px",
+    border: "1.5px solid #334155"
   },
   withdrawMiniCard: {
     background: "linear-gradient(180deg, #111827 0%, #0f172a 100%)",
-    border: "1px solid #1e293b",
-    borderRadius: "18px",
-    padding: "16px",
-    marginTop: "12px"
+    border: "1.5px solid #334155",
+    borderRadius: "22px",
+    padding: "20px",
+    marginTop: "15px"
   },
   withdrawMiniTop: {
     display: "flex",
@@ -914,216 +917,217 @@ const styles = {
     alignItems: "flex-start"
   },
   amountText: {
-    fontSize: "22px",
+    fontSize: "26px",
     fontWeight: "800",
     color: "#22c55e",
-    margin: "5px 0 0 0"
+    margin: "6px 0 0 0"
   },
   statusPill: {
-    padding: "5px 12px",
-    borderRadius: "10px",
+    padding: "6px 14px",
+    borderRadius: "12px",
     fontWeight: "700",
-    fontSize: "11px",
     letterSpacing: "0.5px"
   },
   viewDetailsBtn: {
-    marginTop: "12px",
-    background: "rgba(59,130,246,0.1)",
-    border: "1px solid rgba(59,130,246,0.3)",
+    marginTop: "14px",
+    background: "rgba(59,130,246,0.15)",
+    border: "1.5px solid rgba(59,130,246,0.4)",
     color: "#60a5fa",
-    padding: "8px 12px",
-    borderRadius: "10px",
+    padding: "10px 16px",
+    borderRadius: "12px",
     fontWeight: "700",
-    fontSize: "12px",
+    fontSize: "14px",
     cursor: "pointer"
   },
   withdrawDetailsBox: {
-    marginTop: "15px",
-    padding: "16px",
-    borderRadius: "16px",
+    marginTop: "20px",
+    padding: "20px",
+    borderRadius: "20px",
     background: "#020617",
-    border: "1px solid #1e3a8a"
+    border: "1.5px solid #1e3a8a"
   },
   withdrawGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    fontSize: "13px"
+    gap: "14px",
+    fontSize: "15px"
   },
   boxP: {
-    margin: "4px 0 0 0",
-    color: "#cbd5e1",
-    fontWeight: "600"
+    margin: "6px 0 0 0",
+    color: "#f1f5f9",
+    fontWeight: "600",
+    fontSize: "16px"
   },
   bankBox: {
-    background: "rgba(15,23,42,0.6)",
-    padding: "14px",
-    borderRadius: "14px",
-    marginTop: "15px",
-    border: "1px solid #1e293b"
+    background: "rgba(15,23,42,0.8)",
+    padding: "18px",
+    borderRadius: "18px",
+    marginTop: "20px",
+    border: "1.5px solid #334155"
   },
   bankP: {
-    margin: "6px 0",
-    fontSize: "13px",
-    color: "#94a3b8"
+    margin: "8px 0",
+    fontSize: "16px",
+    color: "#e2e8f0"
   },
   actionRow: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "10px",
-    marginTop: "15px"
+    gap: "12px",
+    marginTop: "20px"
   },
   approveBtn: {
     background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
     border: "none",
-    borderRadius: "12px",
-    padding: "12px",
+    borderRadius: "14px",
+    padding: "14px",
     color: "#020617",
     fontWeight: "800",
     cursor: "pointer",
-    fontSize: "13px"
+    fontSize: "15px"
   },
   rejectBtn: {
     background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
     border: "none",
-    borderRadius: "12px",
-    padding: "12px",
+    borderRadius: "14px",
+    padding: "14px",
     color: "white",
     fontWeight: "800",
     cursor: "pointer",
-    fontSize: "13px"
+    fontSize: "15px"
   },
   kycCard: {
     background: "#111827",
-    marginTop: "12px",
-    padding: "16px",
-    borderRadius: "18px",
-    border: "1px solid #1e293b"
+    marginTop: "15px",
+    padding: "20px",
+    borderRadius: "22px",
+    border: "1.5px solid #334155"
   },
   docGrid: {
     display: "grid",
     gridTemplateColumns: "1fr",
-    gap: "8px",
-    marginTop: "12px"
+    gap: "10px",
+    marginTop: "16px"
   },
   docBtn: {
-    background: "rgba(59,130,246,0.1)",
-    border: "1px solid #2563eb",
+    background: "rgba(59,130,246,0.15)",
+    border: "1.5px solid #2563eb",
     color: "#60a5fa",
-    padding: "12px",
-    borderRadius: "12px",
+    padding: "14px",
+    borderRadius: "14px",
     textAlign: "center",
     textDecoration: "none",
-    fontSize: "13px",
+    fontSize: "15px",
     fontWeight: "700"
   },
   tableWrap: {
     overflowX: "auto",
-    marginTop: "15px",
+    marginTop: "20px",
     background: "#020617",
-    borderRadius: "14px",
-    border: "1px solid #1e293b"
+    borderRadius: "16px",
+    border: "1.5px solid #334155"
   },
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: "900px"
+    minWidth: "1000px"
   },
   th: {
     background: "#0f172a",
-    padding: "14px",
-    color: "#94a3b8",
+    padding: "16px",
+    color: "#ffffff",
     textAlign: "left",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: "700",
     textTransform: "uppercase",
-    borderBottom: "1px solid #1e293b"
+    borderBottom: "2px solid #334155"
   },
   tr: {
-    borderBottom: "1px solid #0f172a"
+    borderBottom: "1px solid #1e293b"
   },
   td: {
-    padding: "14px",
-    fontSize: "13px",
-    color: "#cbd5e1"
+    padding: "16px",
+    fontSize: "15px",
+    color: "#f1f5f9"
   },
   utrBadge: {
     background: "#020617",
-    padding: "6px 12px",
-    borderRadius: "8px",
-    border: "1px solid #334155",
+    padding: "8px 14px",
+    borderRadius: "10px",
+    border: "1.5px solid #475569",
     color: "#fbbf24",
     fontFamily: "monospace",
     fontWeight: "bold",
-    fontSize: "13px"
+    fontSize: "15px"
   },
   smallGreen: {
     background: "#22c55e",
     border: "none",
     color: "#020617",
-    padding: "6px 12px",
-    borderRadius: "8px",
+    padding: "8px 14px",
+    borderRadius: "10px",
     fontWeight: "700",
     cursor: "pointer",
-    fontSize: "12px"
+    fontSize: "13px"
   },
   smallRed: {
     background: "#ef4444",
     border: "none",
     color: "white",
-    padding: "6px 12px",
-    borderRadius: "8px",
+    padding: "8px 14px",
+    borderRadius: "10px",
     fontWeight: "700",
     cursor: "pointer",
-    fontSize: "12px"
+    fontSize: "13px"
   },
   row: {
     background: "#111827",
-    marginTop: "10px",
-    padding: "14px",
-    borderRadius: "14px",
+    marginTop: "12px",
+    padding: "18px",
+    borderRadius: "16px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    border: "1px solid #1e293b"
+    border: "1.5px solid #334155"
   },
   red: {
-    background: "rgba(239,68,68,0.1)",
-    border: "1px solid #ef4444",
-    padding: "8px 12px",
-    borderRadius: "10px",
-    color: "#fca5a5",
-    fontSize: "12px",
+    background: "rgba(239,68,68,0.15)",
+    border: "1.5px solid #ef4444",
+    padding: "10px 16px",
+    borderRadius: "12px",
+    color: "#fee2e2",
+    fontSize: "14px",
     fontWeight: "700",
     cursor: "pointer"
   },
   emptyText: {
-    color: "#64748b",
+    color: "#cbd5e1",
     textAlign: "center",
-    fontSize: "14px",
-    margin: "15px 0"
+    fontSize: "16px",
+    margin: "20px 0",
+    fontWeight: "500"
   },
   popupOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(2,6,23,0.85)",
-    backdropFilter: "blur(4px)",
+    background: "rgba(2,6,23,0.9)",
+    backdropFilter: "blur(5px)",
     zIndex: 9999,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: 16
+    padding: 20
   },
   popupBox: {
-    width: "min(860px,100%)",
+    width: "min(900px,100%)",
     maxHeight: "85vh",
     overflowY: "auto",
     background: "#0f172a",
     color: "white",
-    borderRadius: "24px",
-    padding: "24px",
-    border: "1px solid #1e293b",
-    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
+    borderRadius: "28px",
+    padding: "30px",
+    border: "1.5px solid #334155",
+    boxShadow: "0 25px 50px -12 rgba(0,0,0,0.6)"
   },
   popupTop: {
     display: "flex",
@@ -1134,53 +1138,53 @@ const styles = {
     background: "#ef4444",
     border: "none",
     color: "white",
-    borderRadius: "10px",
-    padding: "8px 14px",
+    borderRadius: "12px",
+    padding: "10px 18px",
     fontWeight: "700",
     cursor: "pointer",
-    fontSize: "13px"
+    fontSize: "14px"
   },
   transactionFilterBox: {
     display: "grid",
     gridTemplateColumns: "1.5fr 1fr 1fr auto",
-    gap: "8px",
-    marginTop: "20px"
+    gap: "10px",
+    marginTop: "25px"
   },
   filterInput: {
     width: "100%",
-    padding: "12px",
-    borderRadius: "12px",
-    border: "1px solid #1e293b",
+    padding: "14px",
+    borderRadius: "14px",
+    border: "1.5px solid #334155",
     background: "#020617",
     color: "white",
     boxSizing: "border-box",
-    fontSize: "13px"
+    fontSize: "14px"
   },
   resetBtn: {
     background: "#2563eb",
     border: "none",
     color: "white",
-    padding: "12px 14px",
-    borderRadius: "12px",
+    padding: "14px 18px",
+    borderRadius: "14px",
     fontWeight: "700",
     cursor: "pointer",
-    fontSize: "13px"
+    fontSize: "14px"
   },
   popupSummary: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "10px",
-    marginTop: "15px"
+    gap: "14px",
+    marginTop: "20px"
   },
   transactionItem: {
     background: "#020617",
-    border: "1px solid #1e293b",
-    borderRadius: "14px",
-    padding: "14px",
-    marginTop: "10px",
+    border: "1.5px solid #334155",
+    borderRadius: "16px",
+    padding: "18px",
+    marginTop: "12px",
     display: "flex",
     justifyContent: "space-between",
-    gap: "12px",
+    gap: "14px",
     alignItems: "center"
   }
 };
