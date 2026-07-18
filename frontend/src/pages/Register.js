@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // 🎯 useLocation ইম্পোর্ট করা হলো
 import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function Register() {
   const navigate = useNavigate();
+  const location = useLocation(); // 🎯 ইউআরএল ট্র্যাকিংয়ের জন্য ইনিশিয়েট করা হলো
+
+  // 🔗 ইউআরএল (URL) থেকে 'ref' প্যারামিটারটি খুঁজে বের করার লজিক
+  const queryParams = new URLSearchParams(location.search);
+  const urlReferCode = queryParams.get("ref") || ""; 
 
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [referCode, setReferCode] = useState("");
+  const [referCode, setReferCode] = useState(urlReferCode); // 🎯 ডিফল্ট ভ্যালু হিসেবে লিংকের কোড সেট করা হলো
   const [terms, setTerms] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -285,7 +290,23 @@ export default function Register() {
             </button>
           </div>
 
-          <InputBox color="#f59e0b" icon="🎁" placeholder="Refer Code Optional" value={referCode} setValue={setReferCode} />
+          {/* 🎁 রেফার কোড ইনপুট বক্স (অটো-পেস্ট এবং রিড-অনলি মোড লক লজিক সহ) */}
+          <div style={{ ...styles.inputWrap, borderColor: "#f59e0b", background: urlReferCode ? "#f8fafc" : "transparent" }}>
+            <div style={{ ...styles.iconBox, background: "linear-gradient(135deg,#f59e0b,#7c3aed)" }}>
+              🎁
+            </div>
+            <input
+              style={{
+                ...styles.input,
+                color: urlReferCode ? "#64748b" : "#0f172a",
+                cursor: urlReferCode ? "not-allowed" : "text"
+              }}
+              placeholder="Refer Code Optional"
+              value={referCode}
+              onChange={(e) => !urlReferCode && setReferCode(e.target.value)}
+              readOnly={!!urlReferCode} // যদি লিংক থেকে কোড আসে তবে ফিল্ড লক হয়ে যাবে
+            />
+          </div>
 
           {/* Checkbox triggers T&C verification explicitly */}
           <label style={styles.checkRow}>
@@ -489,6 +510,7 @@ export default function Register() {
   );
 }
 
+// InputBox কম্পোনেন্টটি আগের মতোই থাকবে
 function InputBox({ color, icon, placeholder, value, setValue }) {
   return (
     <div style={{ ...styles.inputWrap, borderColor: color }}>
@@ -519,9 +541,8 @@ function Benefit({ icon, title, text }) {
   );
 }
 
-// styles অবজেক্টের বাকি অংশ অপরিবর্তিত রয়েছে, তবে ইনপুটের কাটা অংশ ঠিক করা হলো
+// স্টাইল অবজেক্ট সম্পূর্ণ অপরিবর্তিত রাখা হয়েছে
 const styles = {
-  // ... (আপনার আগের সব স্টাইল এখানে সেম থাকবে)
   page: {
     minHeight: "100vh",
     background: "linear-gradient(135deg,#ffd18a,#eef3ff,#dff7ff)",
