@@ -1910,306 +1910,128 @@ err
   }
 });
 
+
+
 app.post("/renew-invest", async (req, res) => {
+  try {
+    const { investmentId } = req.body;
 
-try{
+    const investment = await Investment.findById(investmentId);
+    if (!investment) {
+      return res.json({
+        success: false,
+        msg: "Investment not found"
+      });
+    }
 
-const { investmentId } = req.body;
+    const user = await User.findOne({
+      email: String(investment.email).toLowerCase()
+    });
 
+    if (!user) {
+      return res.json({
+        success: false,
+        msg: "User not found"
+      });
+    }
 
-const investment =
-await Investment.findById(investmentId);
+    // ইনভেস্টমেন্ট অলরেডি একটিভ এবং কোনো ডিউ না থাকলে রিনিউ আটকানো
+    if (investment.renewStatus !== "Due" && investment.status === "Active") {
+      return res.json({
+        success: false,
+        msg: "Investment is not due"
+      });
+    }
 
+    // ফ্রন্টএন্ডের সাথে মিল রেখে সঠিক অ্যামাউন্ট ফিল্ড চেক করা (monthlyReturn বা amount)
+    const renewAmount = Number(
+      investment.monthlyAmount || 
+      investment.monthlyReturn || 
+      investment.amount || 
+      0
+    );
 
-if(!investment){
+    // ইউজারের ওয়ালেট ব্যালেন্স চেক (যে কোনো একটি ভেরিয়েবলে ব্যালেন্স থাকলেই যেন কাজ করে)
+    const balance = Number(user.balance || user.wallet || user.walletBalance || 0);
 
-return res.json({
+    if (balance < renewAmount) {
+      return res.json({
+        success: false,
+        msg: `Insufficient Balance! Need ₹${renewAmount.toLocaleString('en-IN')}`
+      });
+    }
 
-success:false,
+    // ইউজারের সবকটি ওয়ালেট ফিল্ড থেকে ব্যালেন্স মাইনাস করা
+    user.balance = Math.max(0, Number(user.balance || 0) - renewAmount);
+    user.wallet = Math.max(0, Number(user.wallet || 0) - renewAmount);
+    user.walletBalance = Math.max(0, Number(user.walletBalance || 0) - renewAmount);
+    
+    user.activeStatus = "Active";
+    user.status = "Active";
+    await user.save();
 
-msg:"Investment not found"
+    // পেমেন্ট স্টেটমেন্ট মডালের জন্য সঠিক ফরম্যাটে হিস্ট্রি পুশ
+    investment.history.push({
+      type: "RENEW",
+      amount: renewAmount,
+      date: new Date(),
+      slipNo: "RN-" + Date.now()
+    });
 
+    investment.monthsPaid = Number(investment.monthsPaid || 1) + 1;
+    investment.renewCount = Number(investment.renewCount || 0) + 1;
+    investment.lastRenewDate = new Date();
+
+    // পরবর্তী রিনিউ ডেট সেট করা (পরের মাসের ১ তারিখ)
+    const nextRenew = new Date();
+    nextRenew.setMonth(nextRenew.getMonth() + 1);
+    nextRenew.setDate(1);
+
+    // ফ্রন্টএন্ডে daysLeft হিসাবের সুবিধার্থে দুটি ফিল্ডই আপডেট রাখা হলো
+    investment.nextRenewDate = nextRenew;
+    investment.renewDate = nextRenew; 
+
+    investment.status = "Active";
+    investment.renewStatus = "Renewed";
+    await investment.save();
+
+    // বোনাস এবং পারফরম্যান্স প্রসেসিং (ট্রাই-ক্যাচ ব্লকে সুরক্ষিত)
+    try {
+      await updatePerformanceStatus(investment.email);
+      await processRenewBonuses(investment.email, investment);
+      await payRoyaltyBonus(investment.email, renewAmount);
+    } catch (err) {
+      console.log("RENEW BONUS ERROR:", err);
+    }
+
+    // ওয়ালেট ট্রানজেকশন হিস্ট্রি তৈরি
+    await WalletHistory.create({
+      email: user.email,
+      amount: renewAmount,
+      type: "Debit",
+      status: "Success",
+      description: "SIP Renew Payment",
+      date: new Date()
+    });
+
+    // ফ্রন্টএন্ডে রেসপন্স পাঠানো
+    res.json({
+      success: true,
+      msg: "Investment renewed successfully",
+      nextRenewDate: investment.nextRenewDate,
+      renewCount: investment.renewCount,
+      monthsPaid: investment.monthsPaid
+    });
+
+  } catch (err) {
+    console.log("RENEW ERROR:", err);
+    res.status(500).json({
+      success: false,
+      msg: "Server error"
+    });
+  }
 });
-
-}
-
-
-const user =
-await User.findOne({
-
-email:
-String(investment.email)
-.toLowerCase()
-
-});
-
-
-if(!user){
-
-return res.json({
-
-success:false,
-
-msg:"User not found"
-
-});
-
-}
-
-
-if(
-
-investment.renewStatus !== "Due"
-
-&&
-
-investment.status==="Active"
-
-){
-
-return res.json({
-
-success:false,
-
-msg:"Investment is not due"
-
-});
-
-}
-
-
-
-const renewAmount =
-Number(
-
-investment.monthlyAmount ||
-
-investment.amount ||
-
-0
-
-);
-
-
-
-const balance =
-Number(
-
-user.balance ||
-
-0
-
-);
-
-
-
-if(
-
-balance < renewAmount
-
-){
-
-return res.json({
-
-success:false,
-
-msg:"Insufficient Balance"
-
-});
-
-}
-
-
-
-user.balance =
-Number(user.balance||0)
--
-renewAmount;
-
-
-user.wallet =
-Number(user.wallet||0)
--
-renewAmount;
-
-
-user.walletBalance =
-Number(user.walletBalance||0)
--
-renewAmount;
-
-
-
-await user.save();
-
-
-
-
-investment.history.push({
-
-type:"RENEW",
-
-amount:renewAmount,
-
-date:new Date(),
-
-slipNo:
-"RN-"+Date.now()
-
-});
-
-
-
-investment.monthsPaid =
-
-Number(
-
-investment.monthsPaid||1
-
-)+1;
-
-
-
-investment.renewCount =
-
-Number(
-
-investment.renewCount||0
-
-)+1;
-
-
-
-
-investment.lastRenewDate =
-new Date();
-
-
-
-
-const nextRenew =
-new Date();
-
-
-
-nextRenew.setMonth(
-
-nextRenew.getMonth()+1
-
-);
-
-
-nextRenew.setDate(1);
-
-
-
-investment.nextRenewDate =
-nextRenew;
-
-user.activeStatus = "Active";
-  
-user.status = "Active";
-
-investment.status =
-"Active";
-
-investment.renewStatus =
-"Renewed";
-  
-await investment.save();
-
-try {
-
-  await updatePerformanceStatus(
-    investment.email
-  );
-
-  await processRenewBonuses(
-    investment.email,
-    investment
-  );
-
-  await payRoyaltyBonus(
-    investment.email,
-    renewAmount
-  );
-
-} catch (err) {
-
-  console.log(
-    "RENEW BONUS ERROR:",
-    err
-  );
-
-}
-
-
-
-
-await WalletHistory.create({
-
-email:user.email,
-
-amount:renewAmount,
-
-type:"Debit",
-
-status:"Success",
-
-description:
-"SIP Renew Payment",
-
-date:new Date()
-
-});
-
-
-
-
-res.json({
-
-success:true,
-
-msg:
-"Investment renewed successfully",
-
-nextRenewDate:
-investment.nextRenewDate,
-
-renewCount:
-investment.renewCount,
-
-monthsPaid:
-investment.monthsPaid
-
-
-});
-
-
-}catch(err){
-
-console.log(
-
-"RENEW ERROR:",
-
-err
-
-);
-
-
-res.status(500).json({
-
-success:false,
-
-msg:"Server error"
-
-});
-
-
-}
-
-
-});
+      
 
 
 app.post("/team-bonus-data", async (req, res) => {
@@ -7397,204 +7219,117 @@ await User.updateMany(
 });
 
 // =============== AUTO RENEW =================
+// প্রতিদিন রাত ১২টায় এই ক্রন জবটি রান হবে
+cron.schedule('0 0 * * *', async () => {
+  console.log('Running Automatic Investment Renewal Cron Job...');
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-cron.schedule(
+    // ১. যে সব ইনভেস্টমেন্ট Active এবং যাদের পরবর্তী রিনিউ ডেট আজ বা আজ পার হয়ে গেছে
+    // (nextRenewDate এবং renewDate দুটিই চেক করা হচ্ছে সেফটির জন্য)
+    const pendingRenewals = await Investment.find({
+      status: 'Active',
+      $or: [
+        { nextRenewDate: { $lte: today } },
+        { renewDate: { $lte: today } }
+      ]
+    });
 
-'0 0 1 * *',
+    for (let investment of pendingRenewals) {
+      // ইউজারকে খুঁজুন
+      const user = await User.findOne({ 
+        email: String(investment.email).toLowerCase() 
+      });
+      
+      if (!user) continue;
 
-async()=>{
+      // সঠিক রিনিউ অ্যামাউন্ট নির্ধারণ
+      const renewAmount = Number(
+        investment.monthlyAmount || 
+        investment.monthlyReturn || 
+        investment.amount || 
+        0
+      );
 
-try{
+      // ইউজারের ওয়ালেট ব্যালেন্স চেক (ম্যানুয়াল এপিআই-এর মতো)
+      const balance = Number(user.balance || user.wallet || user.walletBalance || 0);
 
+      // কন্ডিশন: ওয়ালেটে পর্যাপ্ত টাকা থাকলে অটো-রিনিউ হবে
+      if (balance >= renewAmount) {
+        
+        // সবকটি ওয়ালেট ফিল্ড থেকে ব্যালেন্স মাইনাস করা
+        user.balance = Math.max(0, Number(user.balance || 0) - renewAmount);
+        user.wallet = Math.max(0, Number(user.wallet || 0) - renewAmount);
+        user.walletBalance = Math.max(0, Number(user.walletBalance || 0) - renewAmount);
+        
+        user.activeStatus = "Active";
+        user.status = "Active";
+        await user.save();
 
-const investments =
-await Investment.find({
+        // ইনভেস্টমেন্টের হিস্ট্রিতে পেমেন্ট (Statement) যোগ করুন
+        investment.history.push({
+          type: "AUTO_RENEW",
+          amount: renewAmount,
+          date: new Date(),
+          slipNo: "AR-" + Date.now()
+        });
 
-status:"Active"
+        investment.monthsPaid = Number(investment.monthsPaid || 1) + 1;
+        investment.renewCount = Number(investment.renewCount || 0) + 1;
+        investment.lastRenewDate = new Date();
 
+        // ম্যানুয়াল এপিআই-এর মতো পরবর্তী মাসের ১ তারিখে ডেট সেট করা
+        const nextRenew = new Date();
+        nextRenew.setMonth(nextRenew.getMonth() + 1);
+        nextRenew.setDate(1);
+
+        investment.nextRenewDate = nextRenew;
+        investment.renewDate = nextRenew; 
+
+        investment.status = "Active";
+        investment.renewStatus = "Renewed";
+        await investment.save();
+
+        // অটো রিনিউ সফল হলেও বোনাস ও পারফরম্যান্স ডিস্ট্রিবিউশন রান হবে
+        try {
+          if (typeof updatePerformanceStatus === 'function') await updatePerformanceStatus(investment.email);
+          if (typeof processRenewBonuses === 'function') await processRenewBonuses(investment.email, investment);
+          if (typeof payRoyaltyBonus === 'function') await payRoyaltyBonus(investment.email, renewAmount);
+        } catch (err) {
+          console.log("CRON JOB BONUS ERROR:", err);
+        }
+
+        // ওয়ালেট ট্রানজেকশন হিস্ট্রি (Statement) তৈরি
+        await WalletHistory.create({
+          email: user.email,
+          amount: renewAmount,
+          type: "Debit",
+          status: "Success",
+          description: "SIP Auto Renew Payment",
+          date: new Date()
+        });
+
+        console.log(`Successfully auto-renewed investment for ${investment.email}`);
+
+      } else {
+        // ওয়ালেটে টাকা না থাকলে: ইনভেস্ট Overdue এবং ইউজার ও ইনভেস্ট Inactive/Due মোডে যাবে
+        investment.status = 'Inactive'; 
+        investment.renewStatus = 'Due'; // ফ্রন্টএন্ডে যেন "Renew Now" বা "Due" এলার্ট দেখায়
+        await investment.save();
+
+        user.activeStatus = 'Inactive';
+        user.status = 'Inactive';
+        await user.save();
+        
+        console.log(`Failed auto-renew (Insufficient balance). Account inactivated for ${investment.email}`);
+      }
+    }
+  } catch (err) {
+    console.error('Error in Auto Renew Cron Job:', err);
+  }
 });
 
-
-for(const inv of investments){
-
-
-const user =
-await User.findOne({
-
-email:
-inv.email.toLowerCase()
-
-});
-
-
-if(!user) continue;
-
-
-const amount =
-Number(
-inv.monthlyAmount||0
-);
-
-
-
-const balance =
-Number(
-user.balance||0
-);
-
-
-
-if(balance>=amount){
-
-
-user.balance-=amount;
-
-user.wallet-=amount;
-
-user.walletBalance-=amount;
-
-
-await user.save();
-
-
-
-inv.history.push({
-
-type:"AUTO RENEW",
-
-amount,
-
-date:new Date(),
-
-slipNo:"AR-"+Date.now()
-
-});
-
-
-
-inv.monthsPaid=
-Number(inv.monthsPaid||1)+1;
-
-
-
-inv.renewCount=
-Number(inv.renewCount||0)+1;
-
-
-
-inv.lastRenewDate=
-new Date();
-
-
-
-
-const nextRenew =
-new Date();
-
-
-nextRenew.setMonth(
-nextRenew.getMonth()+1
-);
-
-
-nextRenew.setDate(1);
-
-
-
-inv.nextRenewDate=
-nextRenew;
-
-  user.activeStatus="Active";
-user.status="Active";
-
-await user.save();
-
-
-
-inv.renewStatus=
-"Renewed";
-
-
-inv.status=
-"Active";
-
-
-await inv.save();
-
-
-
-await WalletHistory.create({
-
-email:user.email,
-
-amount,
-
-type:"Debit",
-
-description:
-"SIP Auto Renew",
-
-status:"Success",
-
-date:new Date()
-
-});
-
-
-}else{
-
-
-inv.status=
-"Inactive";
-
-
-inv.renewStatus=
-"Due";
-
-user.activeStatus="Inactive";
-user.status="Inactive";
-
-
-await user.save();
-await inv.save();
-
-
-
-}
-
-
-
-}
-
-
-
-console.log(
-
-"Auto Renew Completed"
-
-);
-
-
-
-}catch(err){
-
-
-console.log(
-
-"AUTO RENEW ERROR",
-
-err
-
-);
-}
-
-},
-{
-timezone:"Asia/Kolkata"
-}
-
-
-);
 
 //================== AUTO INACTIVE CHECK ===================
 
