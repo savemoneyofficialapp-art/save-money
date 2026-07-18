@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+export default App;import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
 import socket from "./socket";
 
@@ -48,10 +48,6 @@ import InvestNow from "./pages/InvestNow";
 import BankDetails from "./pages/BankDetails";
 import Withdraw from "./pages/Withdraw";
 
-
-
-
-
 function App() {
   const [popup, setPopup] = useState(null);
 
@@ -95,20 +91,29 @@ function App() {
       )}
 
       <Routes>
-
+        {/* 🔓 পাবলিক রুটস (সবার জন্য উন্মুক্ত) */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-<Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route
-  path="/leaderboard"
-  element={
-    <ProtectedRoute>
-      <Leaderboard />
-    </ProtectedRoute>
-  }
-/>
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-<Route path="/about" element={<AboutCompany />} />
+        {/* 🔒 প্রটেক্টেড রুটস (শুধুমাত্র লগইন করা ইউজারদের জন্য) */}
+        <Route
+          path="/leaderboard"
+          element={
+            <ProtectedRoute>
+              <Leaderboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route 
+          path="/about" 
+          element={
+            <ProtectedRoute>
+              <AboutCompany />
+            </ProtectedRoute>
+          } 
+        />
 
         <Route
           path="/home"
@@ -119,27 +124,32 @@ function App() {
           }
         />
 
-<Route
-  path="/invest-now"
-  element={
-    <ProtectedRoute>
-      <InvestNow />
-    </ProtectedRoute>
-  }
-/>
+        <Route
+          path="/invest-now"
+          element={
+            <ProtectedRoute>
+              <InvestNow />
+            </ProtectedRoute>
+          }
+        />
 
-<Route 
-  path="/bank-details" 
-  element={
-      <BankDetails />
-  } 
-/>
+        <Route 
+          path="/bank-details" 
+          element={
+            <ProtectedRoute>
+              <BankDetails />
+            </ProtectedRoute>
+          } 
+        />
 
-<Route path="/withdraw"
-       element={   
+        <Route 
+          path="/withdraw"
+          element={   
+            <ProtectedRoute>
               <Withdraw />   
-  }
- />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/wallet"
@@ -169,13 +179,13 @@ function App() {
         />
 
         <Route
-  path="/my-investment"
-  element={
-    <ProtectedRoute>
-      <MyInvestment />
-    </ProtectedRoute>
-  }
-/>
+          path="/my-investment"
+          element={
+            <ProtectedRoute>
+              <MyInvestment />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/invest-history"
@@ -187,13 +197,13 @@ function App() {
         />
 
         <Route
-  path="/bonus-history"
-  element={
-    <ProtectedRoute>
-      <BonusHistory />
-    </ProtectedRoute>
-  }
-/>
+          path="/bonus-history"
+          element={
+            <ProtectedRoute>
+              <BonusHistory />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/kyc"
@@ -214,9 +224,13 @@ function App() {
         />
 
         <Route
-  path="/legal/:type"
-  element={<LegalPages />}
-/>
+          path="/legal/:type"
+          element={
+            <ProtectedRoute>
+              <LegalPages />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/performance-bonus"
@@ -246,23 +260,60 @@ function App() {
         />
 
         <Route
-  path="/referral-tree"
-  element={
-    <ProtectedRoute>
-      <ReferralTree />
-    </ProtectedRoute>
-  }
-/>
+          path="/referral-tree"
+          element={
+            <ProtectedRoute>
+              <ReferralTree />
+            </ProtectedRoute>
+          }
+        />
 
-<Route
-  path="/admin"
-  element={
-    <AdminRoute>
-      <AdminDashboard />
-    </AdminRoute>
-  }
-/>
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <UserAnalytics />
+            </ProtectedRoute>
+          }
+        />
 
+        <Route
+          path="/daily-reward"
+          element={
+            <ProtectedRoute>
+              <DailyReward />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/investment-assistant"
+          element={
+            <ProtectedRoute>
+              <InvestmentAssistant />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/support"
+          element={
+            <ProtectedRoute>
+              <Support />
+            </ProtectedRoute>
+          }
+        />
+
+
+        {/* 🛠️ অ্যাডমিন রুটস (শুধুমাত্র অ্যাডমিন এক্সেস পাবে) */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
 
         <Route
           path="/admin-kyc"
@@ -273,68 +324,32 @@ function App() {
           }
         />
 
-      <Route
-  path="/admin-analytics"
-  element={
-    <AdminRoute>
-      <AdvancedAdminAnalytics />
-    </AdminRoute>
-  }
-/>
-
-<Route
-  path="/analytics"
-  element={
-    <ProtectedRoute>
-      <UserAnalytics />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/admin-user-control"
-  element={
-    <AdminRoute>
-      <AdminUserControl />
-    </AdminRoute>
-  }
-/>
+        <Route
+          path="/admin-analytics"
+          element={
+            <AdminRoute>
+              <AdvancedAdminAnalytics />
+            </AdminRoute>
+          }
+        />
 
         <Route
-  path="/daily-reward"
-  element={
-    <ProtectedRoute>
-      <DailyReward />
-    </ProtectedRoute>
-  }
-/>
+          path="/admin-user-control"
+          element={
+            <AdminRoute>
+              <AdminUserControl />
+            </AdminRoute>
+          }
+        />
 
-<Route
-  path="/investment-assistant"
-  element={
-    <ProtectedRoute>
-      <InvestmentAssistant />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/support"
-  element={
-    <ProtectedRoute>
-      <Support />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/admin-support"
-  element={
-    <AdminRoute>
-      <AdminSupport />
-    </AdminRoute>
-  }
-/>
+        <Route
+          path="/admin-support"
+          element={
+            <AdminRoute>
+              <AdminSupport />
+            </AdminRoute>
+          }
+        />
 
         <Route
           path="/admin-notify"
@@ -345,6 +360,7 @@ function App() {
           }
         />
 
+        {/* 🔄 ফলব্যাক / ক্যাচ-অল রুট */}
         <Route path="*" element={<Login />} />
 
       </Routes>
