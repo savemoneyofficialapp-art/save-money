@@ -27,8 +27,8 @@ export default function MyInvestment() {
   const [renewOpen, setRenewOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
-  // ব্রাউজার অ্যালার্ট রিমুভ করার জন্য নতুন স্টেট
-  const [customAlert, setCustomAlert] = useState({ show: false, message: "" });
+  // কাস্টম অ্যালার্ট ও ডিটেইলস মডালের জন্য ডাইনামিক স্টেট
+  const [customAlert, setCustomAlert] = useState({ show: false, title: "", message: "", type: "info" });
 
   const getDaysLeft = (renewDate) => {
     if (!renewDate) return 0;
@@ -107,41 +107,11 @@ export default function MyInvestment() {
     });
   };
 
-  const daysLeftForRenew = () => {
-    const today = new Date();
-
-    const nextRenew = new Date(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      1
-    );
-
-    const diff = Math.ceil(
-      (nextRenew - today) / (1000 * 60 * 60 * 24)
-    );
-
-    return diff > 0 ? diff : 0;
-  };
-
   const renewDateText = () => {
     if (!selectedPlan?.renewDate && !selectedPlan?.nextRenewDate) return "N/A";
 
     return formatDate(
       selectedPlan.renewDate || selectedPlan.nextRenewDate
-    );
-  };
-
-  const downloadCertificate = (plan) => {
-    const id = plan?._id || plan?.investmentId;
-
-    if (!id) {
-      toast.error("Investment ID not found");
-      return;
-    }
-
-    window.open(
-      `${API}/investment-certificate/${id}`,
-      "_blank"
     );
   };
 
@@ -209,12 +179,23 @@ export default function MyInvestment() {
     }
   };
 
+  // ব্রাউজার অ্যালার্ট রিমুভ করে সুন্দর কাস্টম ডিজাইন পপআপ করা হলো
   const viewDetails = (inv) => {
-    alert(
-      `Plan: ${inv.planName || inv.plan || "Investment"}\nAmount: ${money(
-        inv.amount
-      )}\nStatus: ${inv.status || "Active"}`
+    const detailsContent = (
+      <div style={{ textAlign: "left", marginTop: "10px" }}>
+        <div style={styles.detailRow}><span>📋 Plan Name:</span> <b>{inv.planName || inv.plan || "Investment"}</b></div>
+        <div style={styles.detailRow}><span>💰 Total Amount:</span> <b>{money(inv.totalPlanAmount || inv.amount)}</b></div>
+        <div style={styles.detailRow}><span>🪙 Invested:</span> <b>{money(inv.amount)}</b></div>
+        <div style={styles.detailRow}><span>⚡ Status:</span> <b style={{ color: "#16a34a" }}>{inv.status || "Active"}</b></div>
+      </div>
     );
+
+    setCustomAlert({
+      show: true,
+      title: "Investment Details",
+      message: detailsContent,
+      type: "details"
+    });
   };
 
   const certificate = (inv) => {
@@ -388,13 +369,16 @@ export default function MyInvestment() {
                     }
                   );
 
-                  // ১. প্রথমে রিনিউ ইনফো মডালটি বন্ধ করব
                   setRenewOpen(false);
 
-                  // ২. কাস্টম অ্যালার্ট মডালটি ওপেন করব
-                  setCustomAlert({ show: true, message: res.data.msg });
+                  // রিনিউ রেসপন্স মেসেজ কাস্টম মডালে পাঠানো হলো
+                  setCustomAlert({ 
+                    show: true, 
+                    title: "Notification", 
+                    message: res.data.msg,
+                    type: "info"
+                  });
 
-                  // ৩. পেজ লোড শুধুমাত্র তখনই হবে যদি রিনিউ সফল (success) হয় (ফলে নট-ডিউ এর ক্ষেত্রে স্ক্রিন লোডিং বা ফ্লিকার হবে না)
                   if (res.data.success) {
                     loadInvestments(); 
                   }
@@ -417,14 +401,14 @@ export default function MyInvestment() {
         </div>
       )}
 
-      {/* কাস্টম প্রিমিয়াম অ্যালার্ট মডাল (পপআপ অ্যানিমেশন ও গ্লাস ব্লুর ব্যাকগ্রাউন্ড সহ) */}
+      {/* প্রিমিয়াম ইন্টেলিজেন্ট গ্লাস-ব্লুর কাস্টম পপআপ মডাল */}
       {customAlert.show && (
         <div style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(5, 8, 66, 0.4)", // হালকা ডার্ক ডাইনামিক টিন্ট
-          backdropFilter: "blur(10px)", // প্রিমিয়াম ব্যাকগ্রাউন্ড ব্লুর
-          WebkitBackdropFilter: "blur(10px)", // সাফারী ব্রাউজারের জন্য ব্লুর সাপোর্ট
+          background: "rgba(5, 8, 66, 0.4)",
+          backdropFilter: "blur(12px)", 
+          WebkitBackdropFilter: "blur(12px)",
           zIndex: 99999,
           display: "flex",
           alignItems: "center",
@@ -432,58 +416,55 @@ export default function MyInvestment() {
           padding: "20px"
         }}>
           
-          {/* ইন-লাইন সিএসএস অ্যানিমেশন ইনজেকশন */}
           <style>{`
             @keyframes popupBounceScale {
-              0% { transform: scale(0.7); opacity: 0; }
+              0% { transform: scale(0.75); opacity: 0; }
               100% { transform: scale(1); opacity: 1; }
             }
           `}</style>
 
           <div style={{
             width: "100%",
-            maxWidth: "360px",
+            maxWidth: "380px",
             background: "white",
             borderRadius: "26px",
-            padding: "32px 24px",
+            padding: "30px 24px",
             color: "#071747",
             boxShadow: "0 25px 60px -15px rgba(0,0,0,0.35)",
             textAlign: "center",
             border: "1px solid rgba(255, 255, 255, 0.8)",
-            animation: "popupBounceScale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards" // স্মুথ পপআপ স্প্রিং ইফেক্ট
+            animation: "popupBounceScale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"
           }}>
             
-            {/* বড় চমৎকার আইকন */}
+            {/* টাইপ অনুযায়ী আকর্ষণীয় বড় আইকন */}
             <div style={{ fontSize: "56px", marginBottom: "12px", display: "inline-block" }}>
-              ℹ️
+              {customAlert.type === "details" ? "📊" : "ℹ️"}
             </div>
             
-            {/* মডাল হেডার টাইটেল */}
-            <h2 style={{ fontSize: "22px", fontWeight: "800", marginBottom: "12px", color: "#071747", letterSpacing: "-0.5px" }}>
-              Notification
+            <h2 style={{ fontSize: "22px", fontWeight: "800", marginBottom: "16px", color: "#071747", letterSpacing: "-0.5px" }}>
+              {customAlert.title}
             </h2>
             
-            {/* আপনার রিকোয়েস্ট অনুযায়ী বড় ও স্পষ্ট ফন্ট সাইজ */}
-            <p style={{ fontSize: "18px", fontWeight: "700", color: "#334155", marginBottom: "28px", lineHeight: "1.5" }}>
+            {/* কন্টেন্ট বা ডেসক্রিপশন টেক্সট (খুবই চমৎকার ও বড় সাইজ) */}
+            <div style={{ fontSize: "17px", fontWeight: "700", color: "#334155", marginBottom: "28px", lineHeight: "1.6" }}>
               {customAlert.message}
-            </p>
+            </div>
             
-            {/* প্রিমিয়াম অ্যাকশন বাটন */}
             <button 
               style={{ 
                 width: "100%", 
                 padding: "14px", 
                 fontSize: "16px", 
                 fontWeight: "900", 
-                background: "#16a34a", 
+                background: customAlert.type === "details" ? "#0969ff" : "#16a34a", 
                 color: "white", 
                 border: "none", 
                 borderRadius: "16px", 
                 cursor: "pointer",
-                boxShadow: "0 8px 22px rgba(22, 163, 74, 0.28)",
+                boxShadow: "0 8px 22px rgba(0,0,0,0.15)",
                 transition: "transform 0.1s"
               }} 
-              onClick={() => setCustomAlert({ show: false, message: "" })}
+              onClick={() => setCustomAlert({ show: false, title: "", message: "", type: "info" })}
               onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.97)"}
               onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
             >
@@ -612,11 +593,7 @@ function InvestmentCard({
   const totalReturn = inv.totalReturn || inv.returnAmount || 0;
   const maturityAmount = inv.maturityAmount || Number(amount) + Number(totalReturn);
   const progress = inv.progress || 0;
-  const renewDays = daysLeft || 0;
   const renewDateValue = inv?.renewDate || inv?.nextRenewDate;
-
-  const overdue =
-    renewDateValue && new Date() > new Date(renewDateValue);
 
   return (
     <section style={styles.card}>
@@ -796,10 +773,6 @@ const styles = {
   headerTitle: {
     flex: 1,
     textAlign: "center"
-  },
-
-  headerTitle_h1: {
-    margin: 0
   },
 
   rightTop: {
@@ -1255,5 +1228,13 @@ const styles = {
     color: "#071747",
     fontWeight: "900",
     cursor: "pointer"
+  },
+
+  detailRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "12px 8px",
+    borderBottom: "1px solid #f1f5f9",
+    fontSize: "16px"
   }
 };
