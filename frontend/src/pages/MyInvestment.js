@@ -378,38 +378,37 @@ export default function MyInvestment() {
             </p>
 
             <button
-  style={styles.greenBtn}
-  onClick={async () => {
-    try {
-      const res = await axios.post(
-        `${API}/renew-invest`,
-        {
-          investmentId: selectedPlan._id
-        }
-      );
+              style={styles.greenBtn}
+              onClick={async () => {
+                try {
+                  const res = await axios.post(
+                    `${API}/renew-invest`,
+                    {
+                      investmentId: selectedPlan._id
+                    }
+                  );
 
-      // ১. প্রথমে রিনিউ ইনফো মডালটি বন্ধ করব
-      setRenewOpen(false);
+                  // ১. প্রথমে রিনিউ ইনফো মডালটি বন্ধ করব
+                  setRenewOpen(false);
 
-      // ২. কাস্টম অ্যালার্ট মডালটি ওপেন করব
-      setCustomAlert({ show: true, message: res.data.msg });
+                  // ২. কাস্টম অ্যালার্ট মডালটি ওপেন করব
+                  setCustomAlert({ show: true, message: res.data.msg });
 
-      // ৩. পেজ লোড শুধুমাত্র তখনই হবে যদি রিনিউ সফল (success) হয়
-      if (res.data.success) {
-        loadInvestments(); 
-      }
+                  // ৩. পেজ লোড শুধুমাত্র তখনই হবে যদি রিনিউ সফল (success) হয় (ফলে নট-ডিউ এর ক্ষেত্রে স্ক্রিন লোডিং বা ফ্লিকার হবে না)
+                  if (res.data.success) {
+                    loadInvestments(); 
+                  }
 
-    } catch (err) {
-      toast.error(
-        err?.response?.data?.msg ||
-        "Renew failed"
-      );
-    }
-  }}
->
-  Renew Payment
-</button>
-
+                } catch (err) {
+                  toast.error(
+                    err?.response?.data?.msg ||
+                    "Renew failed"
+                  );
+                }
+              }}
+            >
+              Renew Payment
+            </button>
 
             <button style={styles.closeBtn} onClick={() => setRenewOpen(false)}>
               Close
@@ -418,21 +417,79 @@ export default function MyInvestment() {
         </div>
       )}
 
-      {/* নতুন সুন্দর অফিসিয়াল কাস্টম অ্যালার্ট মডাল */}
+      {/* কাস্টম প্রিমিয়াম অ্যালার্ট মডাল (পপআপ অ্যানিমেশন ও গ্লাস ব্লুর ব্যাকগ্রাউন্ড সহ) */}
       {customAlert.show && (
-        <div style={styles.modalOverlay}>
-          <div style={{ ...styles.modalBox, textAlign: "center", padding: "30px 22px" }}>
-            <div style={{ fontSize: "50px", marginBottom: "10px" }}>ℹ️</div>
-            <h2 style={{ marginBottom: "10px", color: "#071747" }}>Notification</h2>
-            <p style={{ fontSize: "15px", color: "#64748b", marginBottom: "22px", lineHeight: "1.5" }}>
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(5, 8, 66, 0.4)", // হালকা ডার্ক ডাইনামিক টিন্ট
+          backdropFilter: "blur(10px)", // প্রিমিয়াম ব্যাকগ্রাউন্ড ব্লুর
+          WebkitBackdropFilter: "blur(10px)", // সাফারী ব্রাউজারের জন্য ব্লুর সাপোর্ট
+          zIndex: 99999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "20px"
+        }}>
+          
+          {/* ইন-লাইন সিএসএস অ্যানিমেশন ইনজেকশন */}
+          <style>{`
+            @keyframes popupBounceScale {
+              0% { transform: scale(0.7); opacity: 0; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          `}</style>
+
+          <div style={{
+            width: "100%",
+            maxWidth: "360px",
+            background: "white",
+            borderRadius: "26px",
+            padding: "32px 24px",
+            color: "#071747",
+            boxShadow: "0 25px 60px -15px rgba(0,0,0,0.35)",
+            textAlign: "center",
+            border: "1px solid rgba(255, 255, 255, 0.8)",
+            animation: "popupBounceScale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards" // স্মুথ পপআপ স্প্রিং ইফেক্ট
+          }}>
+            
+            {/* বড় চমৎকার আইকন */}
+            <div style={{ fontSize: "56px", marginBottom: "12px", display: "inline-block" }}>
+              ℹ️
+            </div>
+            
+            {/* মডাল হেডার টাইটেল */}
+            <h2 style={{ fontSize: "22px", fontWeight: "800", marginBottom: "12px", color: "#071747", letterSpacing: "-0.5px" }}>
+              Notification
+            </h2>
+            
+            {/* আপনার রিকোয়েস্ট অনুযায়ী বড় ও স্পষ্ট ফন্ট সাইজ */}
+            <p style={{ fontSize: "18px", fontWeight: "700", color: "#334155", marginBottom: "28px", lineHeight: "1.5" }}>
               {customAlert.message}
             </p>
+            
+            {/* প্রিমিয়াম অ্যাকশন বাটন */}
             <button 
-              style={{ ...styles.greenBtn, width: "100%", padding: "13px", fontSize: "16px" }} 
+              style={{ 
+                width: "100%", 
+                padding: "14px", 
+                fontSize: "16px", 
+                fontWeight: "900", 
+                background: "#16a34a", 
+                color: "white", 
+                border: "none", 
+                borderRadius: "16px", 
+                cursor: "pointer",
+                boxShadow: "0 8px 22px rgba(22, 163, 74, 0.28)",
+                transition: "transform 0.1s"
+              }} 
               onClick={() => setCustomAlert({ show: false, message: "" })}
+              onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.97)"}
+              onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
             >
               Okay, Got it
             </button>
+
           </div>
         </div>
       )}
