@@ -160,27 +160,37 @@ const downloadSlip = (planId, historyId) => {
   window.open(`${API}/investment-slip/${planId}/${historyId}`, "_blank");
 };
 
-    const summary = useMemo(() => {
+      const summary = useMemo(() => {
+    // ১. Required Investment: মোট প্ল্যান অ্যামাউন্টের যোগফল
     const totalInvestment = investments.reduce(
       (sum, item) => sum + Number(item.totalPlanAmount || item.amount || 0),
       0
     );
 
-    // active বা সর্বমোট কত টাকা অলরেডি দেওয়া হয়েছে (হিস্ট্রি অ্যামাউন্টের যোগফল)
-    const investedAmount = investments.reduce(
-      (sum, item) => sum + Number(item.amount || 0),
-      0
-    );
+    // ২. Invested Amount: প্রতিটি ইনভেস্টমেন্টের history এর ভেতর যত টাকা রিনিউ বা পে হয়েছে তার যোগফল
+    const investedAmount = investments.reduce((sum, item) => {
+      if (item.history && Array.isArray(item.history) && item.history.length > 0) {
+        // history অ্যারেতে থাকা প্রতিটি ট্রানজেকশনের amount যোগ করা হচ্ছে
+        const historySum = item.history.reduce((hSum, h) => hSum + Number(h.amount || 0), 0);
+        return sum + historySum;
+      } else {
+        // যদি কোনো কারণে history না থাকে, তবে প্রথম মাসের বেসিক কিস্তিটা (amount) ধরা হবে
+        return sum + Number(item.amount || 0);
+      }
+    }, 0);
 
+    // ৩. Total Return
     const totalReturn = investments.reduce(
       (sum, item) => sum + Number(item.totalReturn || item.maturityAmount || 0),
       0
     );
 
+    // ৪. Active Investments
     const activeInvestments = investments.filter(
       (item) => String(item.status || "").toLowerCase() === "active"
     ).length;
 
+    // ৫. Average Return Rate
     const averageReturnRate =
       investments.length > 0
         ? investments.reduce(
@@ -191,12 +201,13 @@ const downloadSlip = (planId, historyId) => {
 
     return {
       totalInvestment,
-      investedAmount, // এটি অ্যাড করা হলো
+      investedAmount, // এখন এটি প্রতি মাসের পেমেন্ট হিস্ট্রির টোটাল দেখাবে
       totalReturn,
       activeInvestments,
       averageReturnRate
     };
   }, [investments]);
+
 
 
   const copyId = async (id) => {
