@@ -186,6 +186,7 @@ export default function SaveMoney() {
         body: JSON.stringify({
           email,
           amount: Number(amount),
+          monthlyReturn: Number(amount),
           years: Number(years),
           rate: Number(rate),
           totalPlanAmount: Number(calc.totalInvestment),
