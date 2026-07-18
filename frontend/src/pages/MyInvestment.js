@@ -288,24 +288,32 @@ const renewNow = (inv) => {
           <>
             <SummaryHero summary={summary} money={money} />
 
-            {investments.map((inv, index) => (
-  <InvestmentCard
-    key={inv._id || inv.investmentId || index}
-    inv={inv}
-    money={money}
-    date={date}
-    copyId={copyId}
-    viewDetails={viewDetails}
-    certificate={certificate}
-    downloadStatement={downloadStatement}
-    renewNow={renewNow}
-    daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
-    isOverdue={isOverdue}            
-    // নিচে এই দুটি লাইন অবশ্যই অ্যাড করবেন
-    requiredInvestment={inv.totalPlanAmount || inv.amount}
-    investedAmount={inv.amount} 
-  />
-))}
+            {investments.map((inv, index) => {
+  // এই নির্দিষ্ট ইনভেস্টমেন্ট কার্ডের জন্য এখন পর্যন্ত কত ইনভেস্ট হয়েছে তা বের করা হচ্ছে
+  const currentCardInvestedAmount = inv.history && Array.isArray(inv.history) && inv.history.length > 0
+    ? inv.history.reduce((hSum, h) => hSum + Number(h.amount || 0), 0)
+    : Number(inv.amount || 0); // হিস্ট্রি না থাকলে প্রথম মাসের কিস্তি
+
+  return (
+    <InvestmentCard
+      key={inv._id || inv.investmentId || index}
+      inv={inv}
+      money={money}
+      date={date}
+      copyId={copyId}
+      viewDetails={viewDetails}
+      certificate={certificate}
+      downloadStatement={downloadStatement}
+      renewNow={renewNow}
+      daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
+      isOverdue={isOverdue}            
+      requiredInvestment={inv.totalPlanAmount || inv.amount}
+      // এই নিচের লাইনটি পরিবর্তন করা হলো যেন কার্ডে সঠিক হিসাব দেখায়:
+      investedAmount={currentCardInvestedAmount} 
+    />
+  );
+})}
+
 
 
             <BottomBanner />
