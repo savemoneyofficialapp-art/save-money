@@ -10,7 +10,7 @@ export default function ReferralTree() {
   const [tree, setTree] = useState(null);
   const [filter, setFilter] = useState("all");
   const [openNodes, setOpenNodes] = useState({});
-  const [selectedUser, setSelectedUser] = useState(null); // পপআপে ইউজার ডিটেইলস দেখানোর জন্য
+  const [selectedUser, setSelectedUser] = useState(null); // কাস্টম প্রিমিয়াম পপআপ স্টেট
   
   const [analytics, setAnalytics] = useState({
     totalUsers: 0,
@@ -24,49 +24,48 @@ export default function ReferralTree() {
   }, [filter]);
 
   const load = async () => {
-  try {
-    setLoading(true);
-    const res = await fetchWithAuth(`${API}/referral-tree`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email }) // 👈 এখান থেকে filter বাদ দিয়ে শুধু email রাখুন
-    });
+    try {
+      setLoading(true);
+      const res = await fetchWithAuth(`${API}/referral-tree`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email }) 
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.msg === "Token expired or invalid") {
-      localStorage.clear();
-      window.location.href = "/login";
-      return;
+      if (data.msg === "Token expired or invalid") {
+        localStorage.clear();
+        window.location.href = "/login";
+        return;
+      }
+
+      if (!res.ok) {
+        alert(data.msg || "Referral tree load failed");
+        setTree(null); 
+        return;
+      }
+
+      setTree(data.tree || null);
+      setAnalytics(data.analytics || {
+        totalUsers: 0,
+        activeUsers: 0,
+        totalBusiness: 0,
+        levels: {}
+      });
+    } catch (err) {
+      console.log("TREE ERROR:", err);
+      alert("Backend error while loading referral tree");
+      setTree(null);
+    } finally {
+      setLoading(false);
     }
-
-    if (!res.ok) {
-      alert(data.msg || "Referral tree load failed");
-      setTree(null); // ফেইল করলে null বা অবজেক্ট রাখুন
-      return;
-    }
-
-    setTree(data.tree || null);
-    setAnalytics(data.analytics || {
-      totalUsers: 0,
-      activeUsers: 0,
-      totalBusiness: 0,
-      levels: {}
-    });
-  } catch (err) {
-    console.log("TREE ERROR:", err);
-    alert("Backend error while loading referral tree");
-    setTree(null);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const toggleNode = (key, e) => {
-    e.stopPropagation(); // কার্ড ক্লিকের সাথে যেন পপআপ বা চিলড্রেন ওপেনিং জ্যাম না হয়
+    e.stopPropagation(); 
     setOpenNodes({
       ...openNodes,
       [key]: !openNodes[key]
@@ -75,20 +74,21 @@ export default function ReferralTree() {
 
   const handleUserClick = (node, parentName, e) => {
     e.stopPropagation();
-    // ইউজারের ওপর ক্লিক করলে তার সমস্ত তথ্য পপআপে সেট হবে
+    
+    // মোবাইল, ইমেইল ও ওয়ালেট ব্যালেন্স সম্পূর্ণ হাইড রেখে বাকি সব ডাটা মডালে পাস করা হচ্ছে
     setSelectedUser({
       name: node.name || "N/A",
-      email: node.email || "N/A",
-      mobile: node.mobile || node.phone || "Not Provided",
       upline: parentName || "Direct / Top Admin",
       level: node.level === 0 ? "Root (You)" : `Level ${node.level}`,
       business: node.business || 0,
-      kycStatus: node.kycStatus || "pending",
-      referCode: node.referCode || "N/A"
+      status: node.kycStatus === "approved" ? "Active" : "Inactive",
+      // ব্যাকএন্ড থেকে renewDate বা nextRenewDate আসলে তা দেখাবে, না থাকলে dynamic input
+      renewStatus: node.isOverdue ? "⚠️ Overdue" : "🔄 Renewed / Safe",
+      renewDate: node.nextRenewDate ? new Date(node.nextRenewDate).toLocaleDateString("en-IN") : "30 Days Cycle"
     });
   };
 
-  // রিকার্সিভ ফাংশন: মাকড়সার জালের মতো নেটওয়ার্ক তৈরি করতে সাহায্য করবে
+  // রিকার্সিভ ফাংশন: ৭ লেভেল পর্যন্ত মাকড়সার জালের মতো নেটওয়ার্ক জেনারেট করে
   const renderNode = (node, indexPath = "root", parentName = "") => {
     if (!node) return null;
     const isOpen = openNodes[indexPath] || indexPath === "root";
@@ -96,7 +96,6 @@ export default function ReferralTree() {
 
     return (
       <div style={styles.nodeWrap} key={indexPath}>
-        {/* কানেক্টিং সোজা লাইন */}
         <div style={styles.verticalLine}></div>
 
         <div
@@ -105,7 +104,7 @@ export default function ReferralTree() {
             borderColor: node.kycStatus === "approved" ? "#22c55e" : "#f59e0b",
             boxShadow: node.kycStatus === "approved" ? "0 0 15px rgba(34,197,94,0.15)" : "0 0 15px rgba(245,158,11,0.15)"
           }}
-          onClick={(e) => handleUserClick(node, parentName, e)} // প্রোফাইল ডিটেইলস পপআপ ট্রিগার
+          onClick={(e) => handleUserClick(node, parentName, e)} 
         >
           <div style={styles.cardLeft}>
             <div style={{
@@ -129,9 +128,11 @@ export default function ReferralTree() {
           <div style={styles.cardRight}>
             <span style={{
               ...styles.statusDot,
-              background: node.kycStatus === "approved" ? "#22c55e" : "#f59e0b"
+              background: node.kycStatus === "approved" ? "rgba(34,197,94,0.2)" : "rgba(245,158,11,0.2)",
+              color: node.kycStatus === "approved" ? "#22c55e" : "#f59e0b",
+              border: `1px solid ${node.kycStatus === "approved" ? "#22c55e" : "#f59e0b"}`
             }}>
-              {node.kycStatus === "approved" ? "Active" : "Pending"}
+              {node.kycStatus === "approved" ? "Active" : "Inactive"}
             </span>
 
             {hasChildren && (
@@ -145,7 +146,6 @@ export default function ReferralTree() {
           </div>
         </div>
 
-        {/* নিচের জালের নেটওয়ার্ক বা চিলড্রেন রাউট */}
         {isOpen && hasChildren && (
           <div style={styles.childrenContainer}>
             {node.children.map((child, i) =>
@@ -169,7 +169,7 @@ export default function ReferralTree() {
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>🕸️ 7 Level Spider Referral Web</h2>
-      <p style={styles.subtitle}>Click on any user node to inspect their full chain parameters.</p>
+      <p style={styles.subtitle}>Click on any user node to inspect their chain parameters safely.</p>
 
       {/* 📊 অ্যানালিটিক্স গ্রিড */}
       <div style={styles.analytics}>
@@ -224,28 +224,62 @@ export default function ReferralTree() {
         {tree ? renderNode(tree) : <p style={{ textAlign: "center", color: "#94a3b8" }}>No network data found.</p>}
       </div>
 
-      {/* 📑 ইন্টারেক্টিভ ইউজার ডিটেইলস পপআপ / মডাল */}
+      {/* 📑 ইন্টারেক্টিভ সিকিউর গ্লাস-ব্লুর ইউজার পপআপ মডাল */}
       {selectedUser && (
         <div style={styles.modalOverlay} onClick={() => setSelectedUser(null)}>
+          
+          {/* স্মুথ বাউন্স অ্যানিমেশন ইনজেকশন */}
+          <style>{`
+            @keyframes popupBounce {
+              0% { transform: scale(0.78); opacity: 0; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          `}</style>
+
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={styles.modalHeader}>
-              <h3>👤 User Node Insight</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "24px" }}>📊</span>
+                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#f8fafc" }}>Node Parameters</h3>
+              </div>
               <button style={styles.closeBtn} onClick={() => setSelectedUser(null)}>✕</button>
             </div>
+            
             <div style={styles.modalBody}>
-              <div style={styles.detailRow}><span>Name:</span> <b>{selectedUser.name}</b></div>
-              <div style={styles.detailRow}><span>Email:</span> <b>{selectedUser.email}</b></div>
-              <div style={styles.detailRow}><span>Mobile:</span> <b>{selectedUser.mobile}</b></div>
-              <div style={styles.detailRow}><span>Position:</span> <b style={{ color: "#38bdf8" }}>{selectedUser.level}</b></div>
-              <div style={styles.detailRow}><span>Immediate Upline:</span> <b style={{ color: "#a855f7" }}>{selectedUser.upline}</b></div>
-              <div style={styles.detailRow}><span>Referral Code:</span> <b>{selectedUser.referCode}</b></div>
-              <div style={styles.detailRow}><span>Personal Business:</span> <b style={{ color: "#22c55e" }}>₹{selectedUser.business}</b></div>
+              <div style={styles.detailRow}><span>👤 Name:</span> <b>{selectedUser.name}</b></div>
+              <div style={styles.detailRow}><span>👑 Upline Name:</span> <b style={{ color: "#a855f7" }}>{selectedUser.upline}</b></div>
+              <div style={styles.detailRow}><span>🎯 Network Level:</span> <b style={{ color: "#38bdf8" }}>{selectedUser.level}</b></div>
+              
               <div style={styles.detailRow}>
-                <span>KYC Status:</span> 
-                <b style={{ color: selectedUser.kycStatus.toLowerCase() === "approved" ? "#22c55e" : "#f59e0b" }}>
-                  {selectedUser.kycStatus.toUpperCase()}
+                <span>⚡ Status:</span> 
+                <b style={{ 
+                  color: selectedUser.status === "Active" ? "#22c55e" : "#ef4444",
+                  background: selectedUser.status === "Active" ? "rgba(34, 197, 94, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                  padding: "2px 8px",
+                  borderRadius: "6px"
+                }}>
+                  {selectedUser.status}
                 </b>
               </div>
+
+              <div style={styles.detailRow}>
+                <span>🔄 Renew State:</span> 
+                <b style={{ color: selectedUser.renewStatus.includes("Overdue") ? "#ef4444" : "#eab308" }}>
+                  {selectedUser.renewStatus}
+                </b>
+              </div>
+
+              <div style={styles.detailRow}><span>📅 Next Renew Date:</span> <b>{selectedUser.renewDate}</b></div>
+              <div style={styles.detailRow}><span>💼 Team Business:</span> <b style={{ color: "#22c55e" }}>₹{selectedUser.business}</b></div>
+            </div>
+
+            <div style={{ padding: "0 20px 20px" }}>
+              <button 
+                style={styles.actionBtnPopup}
+                onClick={() => setSelectedUser(null)}
+              >
+                Done, Close Info
+              </button>
             </div>
           </div>
         </div>
@@ -422,7 +456,6 @@ const styles = {
     padding: "3px 8px",
     borderRadius: "12px",
     fontSize: "10px",
-    color: "#020617",
     fontWeight: "bold"
   },
   expandBtn: {
@@ -440,47 +473,72 @@ const styles = {
     paddingLeft: "15px",
     borderLeft: "2px dashed #475569"
   },
+  
+  // 🔮 গ্লাস-মর্ফিজম পপআপ স্টাইল শিট
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(2, 6, 23, 0.85)",
-    backdropFilter: "blur(5px)",
+    background: "rgba(2, 6, 23, 0.55)",
+    backdropFilter: "blur(14px)",
+    WebkitBackdropFilter: "blur(14px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 9999,
+    zIndex: 99999,
     padding: "20px"
   },
   modalCard: {
-    background: "#1e293b",
-    border: "1px solid #475569",
-    borderRadius: "24px",
+    background: "rgba(30, 41, 59, 0.85)",
+    border: "1px solid rgba(255, 255, 255, 0.12)",
+    borderRadius: "26px",
     width: "100%",
-    maxWidth: "400px",
-    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
+    maxWidth: "390px",
+    boxShadow: "0 30px 60px -15px rgba(0, 0, 0, 0.6)",
+    animation: "popupBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"
   },
   modalHeader: {
-    padding: "16px 20px",
-    borderBottom: "1px solid #334155",
+    padding: "20px 22px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center"
   },
   closeBtn: {
-    background: "none",
+    background: "rgba(255, 255, 255, 0.08)",
     border: "none",
     color: "#94a3b8",
-    fontSize: "18px",
-    cursor: "pointer"
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "14px"
   },
   modalBody: {
-    padding: "20px"
+    padding: "12px 22px 22px"
   },
   detailRow: {
     display: "flex",
     justifyContent: "space-between",
-    padding: "10px 0",
-    borderBottom: "1px dashed #334155",
-    fontSize: "14px"
+    alignItems: "center",
+    padding: "13px 0",
+    borderBottom: "1px dashed rgba(255, 255, 255, 0.08)",
+    fontSize: "14px",
+    color: "#cbd5e1"
+  },
+  actionBtnPopup: {
+    width: "100%",
+    padding: "14px",
+    background: "linear-gradient(135deg, #38bdf8, #0369a1)",
+    border: "none",
+    borderRadius: "16px",
+    color: "#020617",
+    fontWeight: "900",
+    fontSize: "15px",
+    cursor: "pointer",
+    boxShadow: "0 8px 20px rgba(56, 189, 248, 0.2)",
+    transition: "transform 0.1s"
   }
 };
