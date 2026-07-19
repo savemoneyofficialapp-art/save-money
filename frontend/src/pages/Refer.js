@@ -219,8 +219,8 @@ export default function Refer() {
     );
   }
 
-  // পেন্ডিং রেফারাল ফিল্টারিং লজিক
-  const pendingRefers = history.filter((x) => !x.firstInvestmentDone);
+  // পেন্ডিং রেফারাল ফিল্টারিং লজিক (স্ট্যাটাস Active না হলে পেন্ডিং থাকবে)
+  const pendingRefers = history.filter((x) => x.status !== "Active");
 
   return (
     <div style={styles.page}>
@@ -560,7 +560,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- Refer Modal (এখানে নতুন বাটনটি যোগ করা হয়েছে) --- */}
+      {/* --- Refer Modal --- */}
       {bonusModal === "refer" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>🎁 Refer Bonus</h2>
@@ -574,7 +574,8 @@ export default function Refer() {
             ⏳ View Pending Refers ({pendingRefers.length})
           </button>
 
-          <h1>{money(referBonus.balance || 0)}</h1>
+          {/* টোটাল রেফার বোনাসের সঠিক হিসাব প্রদর্শনের আপডেট */}
+          <h1>{money(referBonus.totalBonus || 0)}</h1>
 
           <p>Today's Bonus : <b> {money(referBonus.todayBonus || 0)}</b></p>
           <p>This Month Bonus : <b> {money(referBonus.thisMonthBonus || 0)}</b></p>
