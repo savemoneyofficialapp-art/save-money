@@ -6609,7 +6609,6 @@ app.post("/withdraw-info", async (req, res) => {
       date: { $gte: today, $lt: tomorrow }
     });
 
-    // শুধুমাত্র পজিটিভ বোনাসগুলো যোগ হবে
     const referral = todayHistory.filter(i => i.type === "Referral Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const performance = todayHistory.filter(i => i.type === "Performance Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
@@ -6617,22 +6616,19 @@ app.post("/withdraw-info", async (req, res) => {
 
     const totalBonus = referral + performance + team + royalty;
 
-    // ⚡ টাইটেল দিয়ে ফিল্টার করে আজ কত টাকা উইথড্র রিকোয়েস্ট রেডি হয়েছে তা বের করা
-    const totalDebited = todayHistory
-      .filter(i => i.title === "Withdraw Request Pending Amount")
-      .reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
+    // কত টাকা আজ ডেবিট এবং রিফান্ড হয়েছে
+    const totalDebited = todayHistory.filter(i => i.title === "Withdraw Request Pending Amount").reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
+    const totalRefunded = todayHistory.filter(i => i.title === "Withdraw Rejected Refund").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    const totalRefunded = todayHistory
-      .filter(i => i.title === "Withdraw Rejected Refund")
-      .reduce((a, b) => a + Number(b.amount || 0), 0);
-
-    // ফাইনাল ওয়ালেট ব্যালেন্স ক্যালকুলেশন
+    // ⚡ ফিক্স: মেইন ওয়ালেট ব্যালেন্স থেকে শুধু উইথড্র করা টাকাটাই মাইনাস হবে
     const walletBalance = (totalBonus + totalRefunded) - totalDebited;
-    const withdrawableBalance = Math.floor(walletBalance * 0.8);
+    
+    // Withdrawable ব্যালেন্স হবে মেইন বোনাসের ৮০% মাইনাস অলরেডি উইথড্র করা টাকা
+    let withdrawableBalance = Math.floor(totalBonus * 0.8) + totalRefunded - totalDebited;
 
     return res.json({
       success: true,
-      walletBalance: walletBalance < 0 ? 0 : walletBalance, // নেগেটিভ সেফটি
+      walletBalance: walletBalance < 0 ? 0 : walletBalance, 
       withdrawableBalance: withdrawableBalance < 0 ? 0 : withdrawableBalance,
       bank: bank || null,
       history
@@ -6642,6 +6638,7 @@ app.post("/withdraw-info", async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+
 
 
 
@@ -6667,6 +6664,19 @@ app.post("/withdraw-info", async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // ⚡ নতুন লজিক: চেক করা যে আজ অলরেডি কোনো উইথড্র রিকোয়েস্ট করা হয়েছে কিনা (Pending/Success যাই হোক)
+    const alreadyWithdrawnToday = await WithdrawRequest.findOne({
+      email,
+      createdAt: { $gte: today, $lt: tomorrow }
+    });
+
+    if (alreadyWithdrawnToday) {
+      return res.status(400).json({ 
+        success: false, 
+        msg: "You can only make one withdraw request per day. Please try again tomorrow." 
+      });
+    }
+
     const todayHistory = await WalletHistory.find({
       email,
       date: { $gte: today, $lt: tomorrow }
@@ -6683,7 +6693,7 @@ app.post("/withdraw-info", async (req, res) => {
     const totalRefunded = todayHistory.filter(i => i.title === "Withdraw Rejected Refund").reduce((a, b) => a + Number(b.amount || 0), 0);
 
     const walletBalance = (totalBonus + totalRefunded) - totalDebited;
-    const withdrawableBalance = Math.floor(walletBalance * 0.8);
+    const withdrawableBalance = Math.floor(totalBonus * 0.8) + totalRefunded - totalDebited;
 
     if (amount < 100) {
       return res.status(400).json({ success: false, msg: "Minimum withdraw amount is ₹100" });
@@ -6693,30 +6703,25 @@ app.post("/withdraw-info", async (req, res) => {
       return res.status(400).json({ success: false, msg: "Amount is greater than withdrawable balance" });
     }
 
-    const pending = await WithdrawRequest.findOne({ email, status: "Pending" });
-    if (pending) {
-      return res.status(400).json({ success: false, msg: "You already have a pending withdraw request" });
-    }
-
-    // ⚡ এখানে type-এ আপনার ড্যাশবোর্ডে থাকা ওয়ার্কিং টাইপ (যেমন "Referral Bonus") সাময়িকভাবে রাখলাম 
-    // যাতে enum এরর না আসে, কিন্তু আমরা ট্র্যাক করব অনন্য "title" দিয়ে।
+    // ওয়ালেট হিস্ট্রিতে ডেবিট এন্ট্রি
     await WalletHistory.create({
       email,
       amount: -amount,
-      type: "Referral Bonus", // enum নিরাপদ রাখতে
-      title: "Withdraw Request Pending Amount", // ট্র্যাক করার চাবিকাঠি
+      type: "Referral Bonus", 
+      title: "Withdraw Request Pending Amount", 
       description: `Withdrawal request for ₹${amount}`,
       status: "Pending",
       date: new Date()
     });
 
+    // রিকোয়েস্ট তৈরি করা
     const request = await WithdrawRequest.create({
       email,
       name: user.name || "",
       walletId: user.walletId || "",
       amount,
       walletBalance: walletBalance - amount, 
-      withdrawableBalance: Math.floor((walletBalance - amount) * 0.8),
+      withdrawableBalance: withdrawableBalance - amount,
       bankDetails: {
         accountHolderName: bank.accountHolderName,
         mobile: bank.mobile,
@@ -6738,6 +6743,7 @@ app.post("/withdraw-info", async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+
 
 
 
