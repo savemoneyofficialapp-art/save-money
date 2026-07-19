@@ -6614,11 +6614,10 @@ app.post("/withdraw-info", async (req, res) => {
     const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    // ⚡ আজ পর্যন্ত কত টাকা রিকোয়েস্ট করা হয়েছে এবং কত রিফান্ড হয়েছে তার হিসেব
-    const totalDebited = todayHistory.filter(i => i.type === "Withdrawal Deduct").reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
-    const totalRefunded = todayHistory.filter(i => i.type === "Withdrawal Refund").reduce((a, b) => a + Number(b.amount || 0), 0);
+    // ⚡ ফিক্স: 'Debit' এবং 'Credit' টাইপ দিয়ে ব্যালেন্স হিসাব করা
+    const totalDebited = todayHistory.filter(i => i.type === "Debit").reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
+    const totalRefunded = todayHistory.filter(i => i.type === "Credit").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    // ফাইনাল ওয়ালেট ব্যালেন্স (বোনাসসমূহ - কেটে নেওয়া টাকা + রিফান্ড হওয়া টাকা)
     const walletBalance = (referral + performance + team + royalty + totalRefunded) - totalDebited;
     const withdrawableBalance = Math.floor(walletBalance * 0.8);
 
@@ -6668,8 +6667,8 @@ app.post("/withdraw-info", async (req, res) => {
     const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    const totalDebited = todayHistory.filter(i => i.type === "Withdrawal Deduct").reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
-    const totalRefunded = todayHistory.filter(i => i.type === "Withdrawal Refund").reduce((a, b) => a + Number(b.amount || 0), 0);
+    const totalDebited = todayHistory.filter(i => i.type === "Debit").reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
+    const totalRefunded = todayHistory.filter(i => i.type === "Credit").reduce((a, b) => a + Number(b.amount || 0), 0);
 
     const walletBalance = (referral + performance + team + royalty + totalRefunded) - totalDebited;
     const withdrawableBalance = Math.floor(walletBalance * 0.8);
@@ -6687,12 +6686,14 @@ app.post("/withdraw-info", async (req, res) => {
       return res.status(400).json({ success: false, msg: "You already have a pending withdraw request" });
     }
 
-    // ⚡ মেগা ফিক্স ১: সাথে সাথে ওয়ালেট থেকে টাকা ডেবিট/মাইনাস করার জন্য হিস্ট্রি তৈরি
+    // ⚡ ফিক্স: এখানে type দিলাম "Debit" (এটি আপনার স্কিমাতে অ্যালাউড আছে)
     await WalletHistory.create({
       email,
-      amount: -amount, // মাইনাস ভ্যালু
-      type: "Withdrawal Deduct",
+      amount: -amount,
+      type: "Debit",
+      title: "Withdraw Request",
       description: `Withdrawal request for ₹${amount}`,
+      status: "Pending",
       date: new Date()
     });
 
@@ -6726,8 +6727,6 @@ app.post("/withdraw-info", async (req, res) => {
 });
 
 
-
-
 app.post("/admin/withdraw-action", async (req, res) => {
   try {
     const { id, status, rejectReason } = req.body; 
@@ -6742,7 +6741,7 @@ app.post("/admin/withdraw-action", async (req, res) => {
     }
 
     if (status === "Success") {
-      // ✅ উইথড্র সফল হলে শুধু স্টেটাস আপডেট হবে (টাকা আগেই কাটা হয়েছে)
+      // ✅ টাকা যেহেতু রিকোয়েস্টের সময়ই কাটা হয়েছে, এখন শুধু স্টেটাস 'Success' হবে
       request.status = "Success";
       request.actionDate = new Date();
       await request.save();
@@ -6755,20 +6754,19 @@ app.post("/admin/withdraw-action", async (req, res) => {
     }
 
     if (status === "Rejected") {
-      // ❌ উইথড্র রিজেক্ট হলে স্টেটাস আপডেট হবে
       request.status = "Rejected";
       request.rejectReason = rejectReason || "Rejected by admin";
       request.actionDate = new Date();
       await request.save();
 
-      // ⚡ মেগা ফিক্স ২: ওয়ালেট হিস্ট্রিতে প্লাস এন্ট্রি দিয়ে টাকা রিফান্ড করে দেওয়া
+      // ⚡ ফিক্স: এখানে type দিলাম "Credit" রিফান্ড করার জন্য
       await WalletHistory.create({
         email: request.email,
-        type: "Withdrawal Refund",
-        amount: Number(request.amount), // পজিটিভ ভ্যালু (টাকা যোগ হবে)
+        type: "Credit",
+        amount: Number(request.amount), 
         title: "Withdraw Rejected Refund",
         description: rejectReason || "Withdrawal request rejected by admin",
-        status: "Refunded",
+        status: "Rejected",
         date: new Date()
       });
 
@@ -6779,7 +6777,7 @@ app.post("/admin/withdraw-action", async (req, res) => {
       });
     }
 
-    return res.status(400).json({ success: false, msg: "Invalid status status provided" });
+    return res.status(400).json({ success: false, msg: "Invalid status provided" });
 
   } catch (err) {
     console.log("ADMIN WITHDRAW ACTION ERROR:", err);
