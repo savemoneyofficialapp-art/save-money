@@ -13,7 +13,7 @@ export default function Refer() {
   const [history, setHistory] = useState([]);
   const [bonusHistory, setBonusHistory] = useState([]);
   const [performance, setPerformance] = useState({});
-  const [team, setTeam] = useState({});
+  const [team, setTeam] = useState({}); 
   const [royalty, setRoyalty] = useState({});
   const [treeData, setTreeData] = useState({});
   const [bonusModal, setBonusModal] = useState(null);
@@ -201,7 +201,7 @@ export default function Refer() {
     {
       key: "refer",
       title: "Refer Bonus",
-      amount: referBonus.totalBonus || user.referIncome || 0, // এখানে ব্যালেন্সের জায়গায় সঠিক টোটাল বোনাস দেওয়া হলো
+      amount: referBonus.totalBonus || user.referIncome || 0,
       icon: "🎁",
       color: "#16a34a",
       bg: "#ecfdf5"
@@ -219,13 +219,18 @@ export default function Refer() {
     );
   }
 
-  // পেন্ডিং রেফারাল ফিল্টারিং লজিক (স্ট্যাটাস Active না হলে পেন্ডিং থাকবে)
   const pendingRefers = history.filter((x) => x.status !== "Active");
+
+  // টিম মেম্বারদের লেভেল কাউন্টের সঠিক হিসাব
+  const level1Count = history.length;
+  const level2Count = team.level2Count || team.history?.filter(x => x.level === 2).length || 0;
+  const level3Count = team.level3Count || team.history?.filter(x => x.level === 3).length || 0;
+  const level4Count = team.level4Count || team.history?.filter(x => x.level === 4).length || 0;
+  const level5Count = team.level5Count || team.history?.filter(x => x.level === 5).length || 0;
 
   return (
     <div style={styles.page}>
       
-      {/* স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ ওভারলে UI */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
@@ -459,23 +464,22 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- Team Modal --- */}
+      {/* --- Team Modal (আপডেটেড টিম মেম্বার কাউন্ট এবং এক লাইনের টেবিল হিস্টরি) --- */}
       {bonusModal === "team" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>👥 Team Bonus</h2>
           <h1>{money(team.balance || 0)}</h1>
           <p>Status : <b style={{ color: team.enabled ? "#16a34a" : "#ef4444" }}>{team.enabled ? "Active" : "Inactive"}</b></p>
           <hr />
-          <h3>Today's Report</h3>
-          <p>Today's Income : <b>{money(team.todayBonus)}</b></p>
-          <p>Today's New Joining : <b>{team.todayJoin || 0}</b></p>
+          <h3>Team Members Count</h3>
+          <p>Total Team Members : <b>{(level1Count + level2Count + level3Count + level4Count + level5Count)}</b></p>
 
           <div style={styles.levelGrid}>
-            <div><b>L1</b><br />Join : {team.todayJoinCount?.[1] || 0}</div>
-            <div><b>L2</b><br />Join : {team.todayJoinCount?.[2] || 0}</div>
-            <div><b>L3</b><br />Join : {team.todayJoinCount?.[3] || 0}</div>
-            <div><b>L4</b><br />Join : {team.todayJoinCount?.[4] || 0}</div>
-            <div><b>L5</b><br />Join : {team.todayJoinCount?.[5] || 0}</div>
+            <div><b>L1 (Direct)</b><br />Members : {level1Count}</div>
+            <div><b>L2</b><br />Members : {level2Count}</div>
+            <div><b>L3</b><br />Members : {level3Count}</div>
+            <div><b>L4</b><br />Members : {level4Count}</div>
+            <div><b>L5</b><br />Members : {level5Count}</div>
           </div>
           <hr />
 
@@ -522,16 +526,28 @@ export default function Refer() {
             {getTeamHistory().length === 0 ? (
               <p>No Team Bonus History</p>
             ) : (
-              getTeamHistory().map((item, index) => (
-                <div key={index} style={{ padding: 12, marginBottom: 12, background: "#f8fafc", borderRadius: 12 }}>
-                  <p><b>User :</b> {item.fromName}</p>
-                  <p><b>Upline :</b> {item.uplineName || "-"}</p>
-                  <p><b>Level :</b> {item.level}</p>
-                  <p><b>Bonus :</b> Level {item.level} → {money(item.amount)}</p>
-                  <p><b>You Earned :</b> {money(item.amount)}</p>
-                  <p><b>Date :</b> {new Date(item.date).toLocaleDateString("en-IN")}</p>
-                </div>
-              ))
+              <div style={styles.tableWrap}>
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Upline Name</th>
+                      <th>Level</th>
+                      <th>You Earned</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getTeamHistory().map((item, index) => (
+                      <tr key={index}>
+                        <td><b>{item.fromName || "-"}</b></td>
+                        <td>{item.uplineName || "-"}</td>
+                        <td>L{item.level}</td>
+                        <td style={{ color: "#2563eb", fontWeight: "bold" }}>{money(item.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
           <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
@@ -566,7 +582,6 @@ export default function Refer() {
           <h2>🎁 Refer Bonus</h2>
           <p style={styles.successText}>Congratulations! Every direct user's first investment gives you Refer Bonus.</p>
           
-          {/* নতুন বাটন: পেন্ডিং রেফারাল লিস্ট দেখার জন্য */}
           <button 
             style={styles.pendingToggleBtn}
             onClick={() => setShowPendingModal(true)}
@@ -574,7 +589,6 @@ export default function Refer() {
             ⏳ View Pending Refers ({pendingRefers.length})
           </button>
 
-          {/* টোটাল রেফার বোনাসের সঠিক হিসাব প্রদর্শনের আপডেট */}
           <h1>{money(referBonus.totalBonus || 0)}</h1>
 
           <p>Today's Bonus : <b> {money(referBonus.todayBonus || 0)}</b></p>
@@ -1006,7 +1020,8 @@ const styles = {
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: 700
+    minWidth: 500,
+    textAlign: "left"
   },
   viewMoreBtn: {
     display: "block",
@@ -1098,7 +1113,6 @@ const styles = {
     color: "#16a34a",
     fontWeight: 900
   },
-  // পেন্ডিং বাটনের কাস্টম স্টাইল 
   pendingToggleBtn: {
     display: "block",
     width: "100%",
