@@ -7180,6 +7180,31 @@ daysLeft: diff
 });
 
 
+// ==============today wallet to main wallet=================
+// ⏰ প্রতিদিন রাত ১২:০০ টায় (0 0 * * *) এই লজিকটি নিজে থেকেই রান করবে
+cron.schedule('0 0 * * *', async () => {
+  console.log('Running midnight wallet balance settlement...');
+  try {
+    const users = await User.find({});
+
+    for (let user of users) {
+      if (user.walletBalance > 0) {
+        // Today Wallet এ যা অবশিষ্ট আছে তা Main Wallet এ যোগ হবে
+        user.mainWallet = (user.mainWallet || 0) + user.walletBalance;
+        
+        // পরদিনের জন্য Today Wallet এবং Withdrawable Limit আবার শূন্য (0) হয়ে যাবে
+        user.walletBalance = 0;
+        user.withdrawableBalance = 0; 
+        
+        await user.save();
+      }
+    }
+    console.log('Wallet settlement successfully completed.');
+  } catch (err) {
+    console.error('Error during midnight wallet settlement:', err);
+  }
+});
+
 
 
 // ================= AUTO MONTH RESET =================
