@@ -72,10 +72,19 @@ export default function Withdraw() {
         body: JSON.stringify({ email, amount })
       });
       const data = await res.json();
-      alert(data.msg);
+      
       if (data.success) {
+        toast.success(data.msg || "Withdrawal request placed successfully");
+        
+        // ⚡ লজিক ফিক্স: রিকোয়েস্ট সাকসেস হলে সাথে সাথে ফ্রন্টএন্ড স্টেট থেকে ব্যালেন্স মাইনাস করা
+        const withdrawn = Number(amount);
+        setWalletBalance((prev) => Math.max(0, prev - withdrawn));
+        setWithdrawableBalance((prev) => Math.max(0, prev - withdrawn));
+        
         setAmount("");
-        loadInfo();
+        loadInfo(); // ব্যাকএন্ড থেকে লেটেস্ট ডাটা রি-সিঙ্ক করার জন্য
+      } else {
+        toast.error(data.msg || "Failed to process withdrawal");
       }
     } catch (err) {
       toast.warning("Server error");
@@ -198,25 +207,23 @@ export default function Withdraw() {
 
         <div style={styles.bankGrid} onClick={handleBankClick}>
           <div style={styles.bankFieldsGroup}>
-  <div style={styles.bankMeta}>
-    <span style={styles.metaLabel}>HOLDER NAME</span>
-    <span style={styles.metaValue}>{bank?.accountHolderName || "Not Provided"}</span>
-  </div>
-  <div style={styles.bankMeta}>
-    <span style={styles.metaLabel}>BANK NAME</span>
-    <span style={styles.metaValue}>{bank?.bankName || "Not Provided"}</span>
-  </div>
-  <div style={styles.bankMeta}>
-    <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
-    <span style={styles.metaValue}>{bank?.accountNumber || "—"}</span>
-  </div>
-  <div style={styles.bankMeta}>
-    <span style={styles.metaLabel}>IFSC CODE</span>
-    <span style={styles.metaValue}>{bank?.ifscCode || "—"}</span>
-  </div>
-</div>
-
-          
+            <div style={styles.bankMeta}>
+              <span style={styles.metaLabel}>HOLDER NAME</span>
+              <span style={styles.metaValue}>{bank?.accountHolderName || "Rama basu"}</span>
+            </div>
+            <div style={styles.bankMeta}>
+              <span style={styles.metaLabel}>BANK NAME</span>
+              <span style={styles.metaValue}>{bank?.bankName || "Sbi"}</span>
+            </div>
+            <div style={styles.bankMeta}>
+              <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
+              <span style={styles.metaValue}>{bank?.accountNumber || "6347223058"}</span>
+            </div>
+            <div style={styles.bankMeta}>
+              <span style={styles.metaLabel}>IFSC CODE</span>
+              <span style={styles.metaValue}>{bank?.ifscCode || "KKBK0007451"}</span>
+            </div>
+          </div>
           <div style={styles.bankArrowContainer}>
             <button style={styles.bankActionCircle}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -225,7 +232,7 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* 🔴 আপডেট: মস্ত বড় Audit Statement ট্যাব সেকশন */}
+      {/* Audit Statement */}
       <section style={styles.superGlassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
@@ -266,7 +273,7 @@ export default function Withdraw() {
         )}
       </section>
 
-      {/* 🔴 আপডেট: নিচের চারটা ট্রাস্ট আইটেমও মেগা সাইজ ও স্পষ্ট করা হলো */}
+      {/* Trust Container */}
       <section style={styles.superTrustContainer}>
         <div style={styles.superTrustItem}>
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -293,20 +300,8 @@ export default function Withdraw() {
   );
 }
 
-// 🎨 স্টাইল শিট (Audit Statement এবং নিচের ৪টি আইটেম স্পেশাল বড় করা হয়েছে)
 const styles = {
-  page: {
-    minHeight: "100vh", 
-    width: "100%",
-    background: "radial-gradient(circle at 50% 12%, #0f1a36 0%, #030611 75%)", 
-    color: "#ffffff",
-    padding: "28px 18px 52px 18px",
-    boxSizing: "border-box",
-    display: "flex",
-    flexDirection: "column",
-    gap: "30px",
-    overflowY: "auto"
-  },
+  page: { minHeight: "100vh", width: "100%", background: "radial-gradient(circle at 50% 12%, #0f1a36 0%, #030611 75%)", color: "#ffffff", padding: "28px 18px 52px 18px", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: "30px", overflowY: "auto" },
   topNav: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" },
   backBtn: { width: "58px", height: "58px", borderRadius: "16px", border: "1.5px solid #233554", background: "#0c172e", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" },
   topCenterTitle: { textAlign: "center", flex: 1 },
@@ -347,8 +342,6 @@ const styles = {
   bankArrowContainer: { paddingLeft: "22px" },
   bankActionCircle: { width: "56px", height: "56px", borderRadius: "50%", border: "none", background: "#202f4e", display: "flex", alignItems: "center", justifyContent: "center" },
   historySectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "26px", width: "100%" },
-
-  // 🔥 Audit Statement স্পেশাল মেগা ডিজাইন
   superGlassContainer: { width: "100%", padding: "46px 36px", borderRadius: "28px", background: "#0a1122", border: "2px solid #22375e", boxSizing: "border-box", boxShadow: "0 15px 35px rgba(0,0,0,0.4)" },
   superSectionTitle: { margin: 0, fontSize: "29px", fontWeight: "950", letterSpacing: "0.5px" },
   superViewAllBtn: { background: "none", border: "none", color: "#818cf8", fontSize: "22px", fontWeight: "900", cursor: "pointer", padding: "8px 16px" },
@@ -357,10 +350,8 @@ const styles = {
   superHistoryRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px 0", borderBottom: "2.5px solid #202f4e" },
   superHistoryAmt: { fontSize: "25px", fontWeight: "900" }, 
   superHistoryDate: { fontSize: "18px", color: "#94a3b8", marginTop: "8px" },
-
-  // 🔥 নিচের ৪টি ট্রাস্ট বাটন মেগা ডিজাইন
   superTrustContainer: { width: "100%", background: "#0a1122", border: "2px solid #202f4e", borderRadius: "26px", padding: "36px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" },
-  superTrustItem: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", justifycontent: "center" },
+  superTrustItem: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", justifyContent: "center" },
   superDivider: { width: "2.5px", backgroundColor: "#202f4e", height: "45px", alignSelf: "center" },
   superTrustTitle: { fontSize: "17px", fontWeight: "950", margin: "16px 0 0 0", whiteSpace: "nowrap", letterSpacing: "0.3px" }
 };
