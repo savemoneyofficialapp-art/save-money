@@ -23,9 +23,10 @@ export default function Refer() {
   const [referBonus, setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
   
-  // নতুন অ্যাডভান্সড ফিল্টার স্টেট (Team Modal এর জন্য)
+  // কাস্টম ডেট রেঞ্জ ফিল্টার স্টেট
   const [teamTimeFilter, setTeamTimeFilter] = useState("allTime"); 
-  const [teamCustomDate, setTeamCustomDate] = useState("");
+  const [teamStartDate, setTeamStartDate] = useState("");
+  const [teamEndDate, setTeamEndDate] = useState("");
 
   const [bonusFilter, setBonusFilter] = useState("All");
   const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
@@ -88,7 +89,7 @@ export default function Refer() {
     }
   };
 
-  // টিম হিস্ট্রি ফিল্টার করার মূল লজিক (রিয়েল-টাইম)
+  // টিম হিস্ট্রি ফিল্টার করার মডিফাইড লজিক (ডেট রেঞ্জ সাপোর্ট সহ)
   const getFilteredTeamHistory = () => {
     const teamHistoryList = team.history || [];
     const now = new Date();
@@ -96,6 +97,8 @@ export default function Refer() {
     return teamHistoryList.filter((item) => {
       if (!item.date) return false;
       const d = new Date(item.date);
+      // টাইমস্ট্যাম্প রিমুভ করে শুধু ডেট কম্পেয়ার করার জন্য
+      d.setHours(0, 0, 0, 0);
 
       if (teamTimeFilter === "thisMonth") {
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -104,14 +107,21 @@ export default function Refer() {
         const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
       }
-      if (teamTimeFilter === "customDate" && teamCustomDate) {
-        return d.toDateString() === new Date(teamCustomDate).toDateString();
+      if (teamTimeFilter === "customRange") {
+        const start = teamStartDate ? new Date(teamStartDate) : null;
+        const end = teamEndDate ? new Date(teamEndDate) : null;
+        if (start) start.setHours(0, 0, 0, 0);
+        if (end) end.setHours(23, 59, 59, 999);
+
+        if (start && end) return d >= start && d <= end;
+        if (start) return d >= start;
+        if (end) return d <= end;
       }
       return true; // allTime
     });
   };
 
-  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল মেম্বার কাউন্ট করা
+  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল মেম্বার কাউন্ট (L1 ফিক্স সহ)
   const getDynamicLevelCounts = () => {
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const filteredHistory = getFilteredTeamHistory();
@@ -123,9 +133,12 @@ export default function Refer() {
       }
     });
 
-    // যদি ফিল্টার All Time হয় এবং উপরোক্ত লজিক ০ পায়, তবে এপিআই থেকে আসা বেস কাউন্ট ব্যাকআপ হিসেবে ব্যবহার করবে
+    // All Time ফিল্টারে যদি টিম হিস্ট্রিতে L1 মেম্বার না থাকে, তবে ডিরেক্ট রেফারাল লিস্ট (history) থেকে কাউন্ট ব্যাকআপ নেবে
     if (teamTimeFilter === "allTime") {
-      for (let i = 1; i <= 5; i++) {
+      if (counts[1] === 0) {
+        counts[1] = Array.isArray(history) ? history.length : (team.totalJoinCount?.[1] || 0);
+      }
+      for (let i = 2; i <= 5; i++) {
         if (counts[i] === 0) {
           counts[i] = team.totalJoinCount?.[i] || team.levelCount?.[i] || 0;
         }
@@ -273,7 +286,6 @@ export default function Refer() {
     return itemDate === todayDate;
   });
 
-  // ফিল্টার অনুযায়ী টোটাল ক্যালকুলেশন
   const dynamicCounts = getDynamicLevelCounts();
   const dynamicIncomes = getDynamicLevelIncomes();
   const selectedFilteredHistory = getFilteredTeamHistory();
@@ -515,7 +527,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- Team Modal (সম্পূর্ণ আপগ্রেড করা হয়েছে) --- */}
+      {/* --- Team Modal (Date Range ফিল্টার সহ আপডেট করা হয়েছে) --- */}
       {bonusModal === "team" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>👥 Team Bonus</h2>
@@ -534,36 +546,49 @@ export default function Refer() {
           </button>
           <hr />
 
-          {/* অ্যাডভান্সড ফিল্টার ড্রপডাউন ও ডেট সিলেক্টর */}
+          {/* ডেট রেঞ্জ সিলেক্টর */}
           <div style={{ marginTop: 15, marginBottom: 15 }}>
             <label style={{ fontWeight: "bold", display: "block", marginBottom: 6 }}>⏱ Select Time Frame:</label>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <select
                 value={teamTimeFilter}
                 onChange={(e) => setTeamTimeFilter(e.target.value)}
-                style={{ ...styles.filterSelect, flex: 1, minWidth: "150px" }}
+                style={styles.filterSelect}
               >
                 <option value="allTime">🌐 All Time</option>
                 <option value="thisMonth">📅 This Month</option>
                 <option value="lastMonth">📅 Last Month</option>
-                <option value="customDate">📆 Select Date</option>
+                <option value="customRange">📆 Select Date Range (e.g. 1-15)</option>
               </select>
 
-              {teamTimeFilter === "customDate" && (
-                <input 
-                  type="date" 
-                  value={teamCustomDate}
-                  onChange={(e) => setTeamCustomDate(e.target.value)}
-                  style={{ ...styles.filterSelect, flex: 1, minWidth: "150px" }}
-                />
+              {teamTimeFilter === "customRange" && (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: "140px" }}>
+                    <small style={{ display: "block", color: "#666" }}>Start Date:</small>
+                    <input 
+                      type="date" 
+                      value={teamStartDate}
+                      onChange={(e) => setTeamStartDate(e.target.value)}
+                      style={{ ...styles.filterSelect, width: "100%" }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: "140px" }}>
+                    <small style={{ display: "block", color: "#666" }}>End Date:</small>
+                    <input 
+                      type="date" 
+                      value={teamEndDate}
+                      onChange={(e) => setTeamEndDate(e.target.value)}
+                      style={{ ...styles.filterSelect, width: "100%" }}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
 
-          {/* টোটাল লেভেল মেম্বার্স (ফিল্টার অনুযায়ী পরিবর্তিত হবে) */}
-          <h3>Total Level Members ({teamTimeFilter === "allTime" ? "All Time" : teamTimeFilter === "thisMonth" ? "This Month" : teamTimeFilter === "lastMonth" ? "Last Month" : teamCustomDate || "Selected Date"})</h3>
+          <h3>Total Level Members ({teamTimeFilter === "allTime" ? "All Time" : teamTimeFilter === "thisMonth" ? "This Month" : teamTimeFilter === "lastMonth" ? "Last Month" : "Selected Range"})</h3>
           <div style={styles.levelGrid}>
-            <div><b>L1</b><br />Users: {dynamicCounts[1]}</div>
+            <div style={{ background: "#f0fdf4", padding: "10px", borderRadius: "10px" }}><b>L1</b><br />Users: {dynamicCounts[1]}</div>
             <div><b>L2</b><br />Users: {dynamicCounts[2]}</div>
             <div><b>L3</b><br />Users: {dynamicCounts[3]}</div>
             <div><b>L4</b><br />Users: {dynamicCounts[4]}</div>
@@ -577,8 +602,7 @@ export default function Refer() {
           <p>Last Month Default Income: <b>{money(team.lastMonthBonus)}</b></p>
           <hr />
 
-          {/* লেভেল ইনকাম (টাইম ফিল্টার অনুযায়ী পরিবর্তিত হবে) */}
-          <h3>Level Income ({teamTimeFilter === "allTime" ? "All Time" : teamTimeFilter === "thisMonth" ? "This Month" : teamTimeFilter === "lastMonth" ? "Last Month" : teamCustomDate || "Selected Date"})</h3>
+          <h3>Level Income ({teamTimeFilter === "allTime" ? "All Time" : teamTimeFilter === "thisMonth" ? "This Month" : teamTimeFilter === "lastMonth" ? "Last Month" : "Selected Range"})</h3>
           <div style={styles.levelGrid}>
             <div>Level 1<br />{money(dynamicIncomes[1])}</div>
             <div>Level 2<br />{money(dynamicIncomes[2])}</div>
