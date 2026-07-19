@@ -12,7 +12,7 @@ export default function Withdraw() {
   const [walletBalance, setWalletBalance] = useState(0);
   const [withdrawableBalance, setWithdrawableBalance] = useState(0);
   const [bank, setBank] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState([]); // এই পেজের নিজস্ব কালেকশন থেকে আসা হিস্টরি
   const [loading, setLoading] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
 
@@ -30,6 +30,7 @@ export default function Withdraw() {
   const tdsDeduction = inputAmount * 0.05;
   const finalBankCredit = inputAmount > 0 ? inputAmount - tdsDeduction : 0;
 
+  // ব্যাকএন্ড থেকে আজকের ব্যালেন্স এবং উইথড্রাল হিস্টরি লোড করা
   const loadInfo = async () => {
     try {
       const res = await fetch(`${API}/withdraw-info`, {
@@ -45,23 +46,26 @@ export default function Withdraw() {
         setWalletBalance(data.walletBalance || 0);
         setWithdrawableBalance(data.withdrawableBalance || 0);
         setBank(data.bank || null);
-        setHistory(data.history || []);
+        setHistory(data.history || []); // সাকসেস, পেন্ডিং, রিজেক্ট সব ধরনের হিস্টরি
       }
     } catch (err) {
       console.log("ERROR:", err);
     }
   };
 
+  // উইথড্রাল রিকোয়েস্ট সাবমিট করার লজিক
   const submitWithdraw = async () => {
     if (Number(amount) < 100) {
       toast.info("Minimum withdrawal limit is ₹100");
       return;
     }
     if (Number(amount) > withdrawableBalance) {
-      toast.info("Amount exceeds your withdrawable limit");
+      toast.info("Amount exceeds your withdrawable limit (80% of earnings)");
       return;
     }
 
+    // ⚡ দিনে ১ বার উইথড্র লজিক: আজকে যদি কোনো Pending বা Success রিকোয়েস্ট থাকে তবে ব্লক করবে। 
+    // যদি রিকোয়েস্ট Reject হয় তাহলে ইউজার আবার রিকোয়েস্ট করতে পারবে।
     const todayRequest = history.find((req) => {
       const reqDate = new Date(req.createdAt).toDateString();
       const today = new Date().toDateString();
@@ -87,13 +91,8 @@ export default function Withdraw() {
       
       if (data.success) {
         toast.success(data.msg || "Withdrawal request placed successfully");
-        
-        // ⚡ ম্যানুয়াল ক্যালকুলেশন বাদ দিয়ে সরাসরি ব্যাকএন্ডের পাঠানো নিখুঁত ব্যালেন্স সেট করা হলো
-        setWalletBalance(data.walletBalance);
-        setWithdrawableBalance(data.withdrawableBalance);
-        
         setAmount("");
-        loadInfo(); 
+        loadInfo(); // ব্যাকএন্ড থেকে নতুন ব্যালেন্স এবং হিস্টরি রি-সিঙ্ক করার জন্য
       } else {
         toast.error(data.msg || "Failed to process withdrawal");
       }
@@ -243,7 +242,7 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Audit Statement */}
+      {/* Audit Statement (উইথড্রাল হিস্টরি) */}
       <section style={styles.superGlassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
@@ -266,7 +265,7 @@ export default function Withdraw() {
         ) : (
           <div style={styles.historyList}>
             {visibleHistory.map((x) => (
-              <div key={x._id} style={styles.superHistoryRow}>
+              <div key={x._id || x.createdAt} style={styles.superHistoryRow}>
                 <div>
                   <div style={styles.superHistoryAmt}>{money(x.amount)}</div>
                   <div style={styles.superHistoryDate}>{new Date(x.createdAt).toLocaleString()}</div>
