@@ -6664,16 +6664,18 @@ app.post("/withdraw-info", async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // ⚡ নতুন লজিক: চেক করা যে আজ অলরেডি কোনো উইথড্র রিকোয়েস্ট করা হয়েছে কিনা (Pending/Success যাই হোক)
+    // ⚡ ফিক্স লজিক: চেক করবে আজ অলরেডি কোনো রিকোয়েস্ট Pending বা Success আছে কিনা। 
+    // যদি রিকোয়েস্ট Rejected হয়ে থাকে, তবে এই কন্ডিশনটি তাকে আটকাবে না।
     const alreadyWithdrawnToday = await WithdrawRequest.findOne({
       email,
+      status: { $in: ["Pending", "Success"] }, // শুধু পেন্ডিং বা সাকসেস রিকোয়েস্ট কাউন্ট হবে
       createdAt: { $gte: today, $lt: tomorrow }
     });
 
     if (alreadyWithdrawnToday) {
       return res.status(400).json({ 
         success: false, 
-        msg: "You can only make one withdraw request per day. Please try again tomorrow." 
+        msg: "You can only make one successful or pending withdraw request per day. Please try again tomorrow." 
       });
     }
 
@@ -6714,7 +6716,7 @@ app.post("/withdraw-info", async (req, res) => {
       date: new Date()
     });
 
-    // রিকোয়েস্ট তৈরি করা
+    // নতুন রিকোয়েস্ট তৈরি করা
     const request = await WithdrawRequest.create({
       email,
       name: user.name || "",
@@ -6743,6 +6745,7 @@ app.post("/withdraw-info", async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+
 
 
 
