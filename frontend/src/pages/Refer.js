@@ -13,7 +13,7 @@ export default function Refer() {
   const [history, setHistory] = useState([]);
   const [bonusHistory, setBonusHistory] = useState([]);
   const [performance, setPerformance] = useState({});
-  const [team, setTeam] = useState({}); 
+  const [team, setTeam] = useState({});
   const [royalty, setRoyalty] = useState({});
   const [treeData, setTreeData] = useState({});
   const [bonusModal, setBonusModal] = useState(null);
@@ -30,8 +30,9 @@ export default function Refer() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  // নতুন স্টেট: পেন্ডিং রেফারাল দেখার সাব-মডাল
+  // নতুন স্টেট: পেন্ডিং রেফারাল এবং টুডে জয়েনিং দেখার সাব-মডাল
   const [showPendingModal, setShowPendingModal] = useState(false);
+  const [showTodayJoinModal, setShowTodayJoinModal] = useState(false);
 
   // স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ দেখানোর জন্য স্টেট
   const [statusOverlay, setStatusOverlay] = useState({
@@ -157,7 +158,7 @@ export default function Refer() {
       `https://t.me/share/url?url=${encodeURIComponent(referLink)}&text=${encodeURIComponent(
         "Join SAVE MONEY"
       )}`,
-      "_blank"
+      _blank"
     );
   };
 
@@ -220,17 +221,18 @@ export default function Refer() {
   }
 
   const pendingRefers = history.filter((x) => x.status !== "Active");
-
-  // টিম মেম্বারদের লেভেল কাউন্টের সঠিক হিসাব
-  const level1Count = history.length;
-  const level2Count = team.level2Count || team.history?.filter(x => x.level === 2).length || 0;
-  const level3Count = team.level3Count || team.history?.filter(x => x.level === 3).length || 0;
-  const level4Count = team.level4Count || team.history?.filter(x => x.level === 4).length || 0;
-  const level5Count = team.level5Count || team.history?.filter(x => x.level === 5).length || 0;
+  
+  // ফিল্টার লজিক: আজকে নেটওয়ার্কে যারা জয়েন করেছে (হিস্টরি থেকে)
+  const todayJoinMembers = (team.history || []).filter((item) => {
+    const itemDate = new Date(item.date).toDateString();
+    const todayDate = new Date().toDateString();
+    return itemDate === todayDate;
+  });
 
   return (
     <div style={styles.page}>
       
+      {/* স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ ওভারলে UI */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
@@ -464,29 +466,58 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- Team Modal (আপডেটেড টিম মেম্বার কাউন্ট এবং এক লাইনের টেবিল হিস্টরি) --- */}
+      {/* --- Team Modal --- */}
       {bonusModal === "team" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>👥 Team Bonus</h2>
           <h1>{money(team.balance || 0)}</h1>
           <p>Status : <b style={{ color: team.enabled ? "#16a34a" : "#ef4444" }}>{team.enabled ? "Active" : "Inactive"}</b></p>
           <hr />
-          <h3>Team Members Count</h3>
-          <p>Total Team Members : <b>{(level1Count + level2Count + level3Count + level4Count + level5Count)}</b></p>
+          
+          <h3>Today's Report</h3>
+          <p>Today's Income : <b>{money(team.todayBonus)}</b></p>
+          
+          {/* আজকে মোট কতজন জয়েন করেছে এবং তার উপর ক্লিকযোগ্য সুন্দর বাটন */}
+          <button 
+            style={styles.todayJoinBtn} 
+            onClick={() => setShowTodayJoinModal(true)}
+          >
+            📊 Network Joining Today: <b>{team.todayJoin || 0}</b> (View All)
+          </button>
 
+          {/* লেভেল ভিত্তিক মোট মেম্বার সংখ্যা প্রদর্শনের লেআউট */}
+          <h3>Total Level Members</h3>
           <div style={styles.levelGrid}>
-            <div><b>L1 (Direct)</b><br />Members : {level1Count}</div>
-            <div><b>L2</b><br />Members : {level2Count}</div>
-            <div><b>L3</b><br />Members : {level3Count}</div>
-            <div><b>L4</b><br />Members : {level4Count}</div>
-            <div><b>L5</b><br />Members : {level5Count}</div>
+            <div><b>L1</b><br />Users: {team.totalJoinCount?.[1] || team.levelCount?.[1] || 0}</div>
+            <div><b>L2</b><br />Users: {team.totalJoinCount?.[2] || team.levelCount?.[2] || 0}</div>
+            <div><b>L3</b><br />Users: {team.totalJoinCount?.[3] || team.levelCount?.[3] || 0}</div>
+            <div><b>L4</b><br />Users: {team.totalJoinCount?.[4] || team.levelCount?.[4] || 0}</div>
+            <div><b>L5</b><br />Users: {team.totalJoinCount?.[5] || team.levelCount?.[5] || 0}</div>
           </div>
           <hr />
 
           <div style={{ marginTop: 20, marginBottom: 20 }}>
             <select
               value={teamMonthFilter}
-              onChange={(e) => setTeamMonthFilter(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setTeamMonthFilter(value);
+                
+                let targetMonth = "";
+                let targetYear = new Date().getFullYear();
+
+                if (value === "thisMonth") {
+                  targetMonth = "";
+                } else if (value === "lastMonth") {
+                  const d = new Date();
+                  d.setMonth(d.getMonth() - 1);
+                  targetMonth = String(d.getMonth() + 1);
+                  targetYear = d.getFullYear();
+                } else {
+                  targetMonth = String(Number(value) + 1);
+                }
+                loadReferData(targetMonth, targetYear);
+              }}
               style={styles.filterSelect}
             >
               <option value="thisMonth">This Month</option>
@@ -507,8 +538,8 @@ export default function Refer() {
           </div>
 
           <h3>Income Summary</h3>
-          <p>This Month : <b>{money(team.thisMonthBonus)}</b></p>
-          <p>Last Month : <b>{money(team.lastMonthBonus)}</b></p>
+          <p>Selected Month Income: <b>{money(team.thisMonthBonus)}</b></p>
+          <p>Last Month Income: <b>{money(team.lastMonthBonus)}</b></p>
           <hr />
 
           <h3>Level Income</h3>
@@ -522,33 +553,33 @@ export default function Refer() {
           <hr />
 
           <h3>Team Bonus History</h3>
-          <div style={{ maxHeight: 350, overflowY: "auto" }}>
-            {getTeamHistory().length === 0 ? (
-              <p>No Team Bonus History</p>
-            ) : (
-              <div style={styles.tableWrap}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Upline Name</th>
-                      <th>Level</th>
-                      <th>You Earned</th>
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Upline Name</th>
+                  <th>Level</th>
+                  <th>You Earned</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getTeamHistory().length === 0 ? (
+                  <tr><td colSpan="4" style={{ textAlign: "center", padding: 10 }}>No Team Bonus History</td></tr>
+                ) : (
+                  getTeamHistory().map((item, index) => (
+                    <tr key={index}>
+                      <td>
+                        <b>{item.fromName || "-"}</b>
+                      </td>
+                      <td>{item.uplineName || "-"}</td>
+                      <td>L{item.level || "-"}</td>
+                      <td style={{ fontWeight: "bold", color: "#2563eb" }}>{money(item.amount)}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {getTeamHistory().map((item, index) => (
-                      <tr key={index}>
-                        <td><b>{item.fromName || "-"}</b></td>
-                        <td>{item.uplineName || "-"}</td>
-                        <td>L{item.level}</td>
-                        <td style={{ color: "#2563eb", fontWeight: "bold" }}>{money(item.amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
           <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
         </Modal>
@@ -679,6 +710,40 @@ export default function Refer() {
             onClick={() => setShowPendingModal(false)}
           >
             Back to Refer Bonus
+          </button>
+        </Modal>
+      )}
+
+      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল পপআপ --- */}
+      {showTodayJoinModal && (
+        <Modal onClose={() => setShowTodayJoinModal(false)}>
+          <h2 style={{ color: "#2563eb" }}>📊 Today's Network Joining List</h2>
+          <p style={{ color: "#64748b", fontSize: 14 }}>List of users who joined your team network today.</p>
+          
+          <div style={{ maxHeight: "350px", overflowY: "auto", margin: "20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+            {todayJoinMembers.length === 0 ? (
+              <p style={{ textAlign: "center", color: "#94a3b8", padding: 20 }}>No members joined today yet.</p>
+            ) : (
+              todayJoinMembers.map((item, idx) => (
+                <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "12px 16px", borderRadius: 14, border: "1px solid #e2e8f0" }}>
+                  <div>
+                    <b style={{ color: "#1e293b", fontSize: 15 }}>{item.fromName || "Save Money User"}</b>
+                    <br />
+                    <small style={{ color: "#64748b" }}>Level {item.level || "-"}</small>
+                  </div>
+                  <span style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, background: "#dbeafe", color: "#2563eb", fontWeight: 700 }}>
+                    Today Joined
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+          
+          <button 
+            style={{ ...styles.closeBtn, background: "#2563eb", color: "#fff" }} 
+            onClick={() => setShowTodayJoinModal(false)}
+          >
+            Back to Team Bonus
           </button>
         </Modal>
       )}
@@ -1020,7 +1085,7 @@ const styles = {
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: 500,
+    minWidth: 700,
     textAlign: "left"
   },
   viewMoreBtn: {
@@ -1126,5 +1191,20 @@ const styles = {
     fontSize: "16px",
     cursor: "pointer",
     boxShadow: "0 8px 20px rgba(244,67,54,0.2)"
+  },
+  // টুডে জয়েনিং বাটনের স্টাইল
+  todayJoinBtn: {
+    display: "block",
+    width: "100%",
+    padding: "12px",
+    margin: "12px 0",
+    background: "#f0fdf4",
+    color: "#16a34a",
+    border: "1px solid #bbf7d0",
+    borderRadius: "12px",
+    textAlign: "left",
+    fontSize: "15px",
+    cursor: "pointer",
+    fontWeight: "500"
   }
 };
