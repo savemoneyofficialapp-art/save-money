@@ -62,7 +62,6 @@ export default function Withdraw() {
       return;
     }
 
-    // ⚡ ফ্রন্টএন্ড চেক লজিক: আজকে যদি কোনো Pending বা Success রিকোয়েস্ট থাকে তবেই ব্লক করবে। Rejected হলে আটকাবে না।
     const todayRequest = history.find((req) => {
       const reqDate = new Date(req.createdAt).toDateString();
       const today = new Date().toDateString();
@@ -89,13 +88,12 @@ export default function Withdraw() {
       if (data.success) {
         toast.success(data.msg || "Withdrawal request placed successfully");
         
-        // স্টেট ডাইনামিকালি আপডেট: শুধু উইথড্র করা অ্যামাউন্টটি মাইনাস হবে, ফলে ওয়ালেটে ২০% থেকে যাবে।
-        const withdrawn = Number(amount);
-        setWalletBalance((prev) => Math.max(0, prev - withdrawn));
-        setWithdrawableBalance((prev) => Math.max(0, prev - withdrawn));
+        // ⚡ ম্যানুয়াল ক্যালকুলেশন বাদ দিয়ে সরাসরি ব্যাকএন্ডের পাঠানো নিখুঁত ব্যালেন্স সেট করা হলো
+        setWalletBalance(data.walletBalance);
+        setWithdrawableBalance(data.withdrawableBalance);
         
         setAmount("");
-        loadInfo(); // ব্যাকএন্ড থেকে লেটেস্ট ডাটা রি-সিঙ্ক করার জন্য
+        loadInfo(); 
       } else {
         toast.error(data.msg || "Failed to process withdrawal");
       }
