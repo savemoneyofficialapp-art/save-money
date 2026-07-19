@@ -216,7 +216,7 @@ export default function Withdraw() {
   </div>
 </div>
 
-          </div>
+          
           <div style={styles.bankArrowContainer}>
             <button style={styles.bankActionCircle}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
