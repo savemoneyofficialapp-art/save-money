@@ -6591,46 +6591,49 @@ app.post("/withdraw-info", async (req, res) => {
   try {
     const email = String(req.body.email || "").toLowerCase();
 
-    const user = await User.findOne({ email });
     const bank = await BankDetails.findOne({ email });
-    const history = await WithdrawRequest.find({ email }).sort({ createdAt: -1 });
-
-    if (!user) {
-      return res.status(404).json({ success: false, msg: "User not found" });
-    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // আজকের সব ওয়ালেট হিস্ট্রি নিয়ে আসা
     const todayHistory = await WalletHistory.find({
       email,
       date: { $gte: today, $lt: tomorrow }
     });
 
+    // বোনাসগুলোর যোগফল (100% বোনাস অ্যামাউন্ট)
     const referral = todayHistory.filter(i => i.type === "Referral Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const performance = todayHistory.filter(i => i.type === "Performance Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    const totalBonus = referral + performance + team + royalty;
+    const totalBonus = referral + performance + team + royalty; // যেমন: 1298
 
-    // কত টাকা আজ ডেবিট এবং রিফান্ড হয়েছে
-    const totalDebited = todayHistory.filter(i => i.title === "Withdraw Request Pending Amount").reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
+    // ⚡ নিখুঁত ফিক্স ১: শুধুমাত্র 'Pending' এবং 'Success' রিকোয়েস্টের অ্যামাউন্ট মাইনাস হবে।
+    // অ্যাডমিন যদি কোনো রিকোয়েস্ট 'Rejected' করে দেয়, তবে সেটি আর মাইনাস হবে না (অর্থাৎ ইউজারের ২০% বা পুরো টাকা ফেরত চলে আসবে)।
+    const totalDebited = todayHistory
+      .filter(i => i.title === "Withdraw Request Pending Amount" && (i.status === "Pending" || i.status === "Success"))
+      .reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
+
     const totalRefunded = todayHistory.filter(i => i.title === "Withdraw Rejected Refund").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    // ⚡ ফিক্স: মেইন ওয়ালেট ব্যালেন্স থেকে শুধু উইথড্র করা টাকাটাই মাইনাস হবে
-    const walletBalance = (totalBonus + totalRefunded) - totalDebited;
+    // ⚡ নিখুঁত ফিক্স ২: ওয়ালেট ব্যালেন্স এবং উইথড্রয়েবল ব্যালেন্সের সঠিক হিসাব
+    const walletBalance = (totalBonus + totalRefunded) - totalDebited; 
     
-    // Withdrawable ব্যালেন্স হবে মেইন বোনাসের ৮০% মাইনাস অলরেডি উইথড্র করা টাকা
-    let withdrawableBalance = Math.floor(totalBonus * 0.8) + totalRefunded - totalDebited;
+    // Withdrawable Balance হবে টোটাল বোনাসের ৮০% + রিফান্ড - ডেবিট
+    const withdrawableBalance = Math.floor(totalBonus * 0.8) + totalRefunded - totalDebited;
+
+    // অডিট স্টেটমেন্ট হিস্ট্রি দেখানোর জন্য (উইথড্র রিকোয়েস্ট কালেকশন থেকে ডাটা নেওয়া)
+    const history = await WithdrawRequest.find({ email }).sort({ createdAt: -1 });
 
     return res.json({
       success: true,
-      walletBalance: walletBalance < 0 ? 0 : walletBalance, 
+      walletBalance: walletBalance < 0 ? 0 : walletBalance,
       withdrawableBalance: withdrawableBalance < 0 ? 0 : withdrawableBalance,
-      bank: bank || null,
+      bank,
       history
     });
   } catch (err) {
@@ -6638,8 +6641,6 @@ app.post("/withdraw-info", async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
-
-
 
 
 
