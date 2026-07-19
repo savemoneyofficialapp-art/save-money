@@ -6465,17 +6465,18 @@ app.post("/daily-reward", async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-
     if (!user) {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
 
-    const today = new Date().toLocaleDateString("en-IN", {
+    // আজকের তারিখ (Asia/Kolkata টাইমজোনে স্ট্রিং ফরম্যাট)
+    const todayStr = new Date().toLocaleDateString("en-IN", {
       timeZone: "Asia/Kolkata"
     });
 
     let reward = await DailyReward.findOne({ email });
 
+    // ইউজার যদি একদম প্রথমবার ক্লেইম করে
     if (!reward) {
       reward = new DailyReward({
         email,
@@ -6486,7 +6487,8 @@ app.post("/daily-reward", async (req, res) => {
       });
     }
 
-    if (reward.lastClaimDate === today) {
+    // একই দিনে দুইবার ক্লেইম করার চেষ্টা করলে আটকে দেবে
+    if (reward.lastClaimDate === todayStr) {
       return res.status(400).json({
         success: false,
         msg: "Already claimed today",
@@ -6494,13 +6496,43 @@ app.post("/daily-reward", async (req, res) => {
       });
     }
 
-    const nextClaimCount = Number(reward.claimCount || 0) + 1;
-    const special = nextClaimCount % 10 === 0;
+    // --- 🌟 টানা দিন (Streak) চেক করার লজিক 🌟 ---
+    let nextClaimCount = Number(reward.claimCount || 0) + 1;
+
+    if (reward.lastClaimDate) {
+      // শেষ ক্লেইমের তারিখ এবং আজকের তারিখের মধ্যে দিনের পার্থক্য বের করার নিয়ম
+      const [lastDay, lastMonth, lastYear] = reward.lastClaimDate.split("/").map(Number);
+      const [currDay, currMonth, currYear] = todayStr.split("/").map(Number);
+
+      // দুই তারিখেরই UTC মিডনাইট অবজেক্ট তৈরি (সঠিক পার্থক্যের জন্য)
+      const lastDateObj = new Date(Date.UTC(lastYear, lastMonth - 1, lastDay));
+      const currDateObj = new Date(Date.UTC(currYear, currMonth - 1, currDay));
+
+      const timeDiff = currDateObj - lastDateObj;
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+      if (daysDiff === 1) {
+        // ঠিক পরের দিন এসেছে -> স্ট্রিক বজায় আছে
+        // তবে আগের দিন যদি অলরেডি ১০ নম্বর (স্পেশাল) ক্লেইম হয়ে থাকে, তবে আজ আবার ১ থেকে শুরু হবে
+        if (reward.claimCount >= 10) {
+          nextClaimCount = 1;
+        }
+      } else if (daysDiff > 1) {
+        // ১ দিনের বেশি গ্যাপ হয়েছে -> স্ট্রিক ভেঙে গেছে! আবার ১ম দিন থেকে শুরু
+        nextClaimCount = 1;
+      }
+    }
+
+    // ১০ নম্বর দিন হলে স্পেশাল অফার ট্রু হবে
+    const special = nextClaimCount === 10;
+    
+    // স্পেশাল হলে ৫০ টাকা, নরমাল হলে ১ থেকে ১০ টাকার মধ্যে র্যান্ডম
     const amount = special ? 50 : Math.floor(Math.random() * 10) + 1;
 
+    // ডাটাবেজ মডেল আপডেট
     reward.claimCount = nextClaimCount;
     reward.totalReward = Number(reward.totalReward || 0) + amount;
-    reward.lastClaimDate = today;
+    reward.lastClaimDate = todayStr;
     reward.history.push({
       amount,
       special,
@@ -6509,26 +6541,28 @@ app.post("/daily-reward", async (req, res) => {
 
     await reward.save();
 
+    // ইউজারের ওয়ালেট ব্যালেন্স আপডেট
     user.wallet = Number(user.wallet || 0) + amount;
     user.balance = Number(user.balance || 0) + amount;
     user.totalEarning = Number(user.totalEarning || 0) + amount;
 
     await user.save();
 
+    // ওয়ালেট হিস্ট্রি তৈরি
     const walletHistory = await WalletHistory.create({
       email,
       type: "Credit",
       amount,
       title: special ? "Special Daily Reward" : "Daily Reward",
-      description: "Daily reward added ",
+      description: "Daily reward added",
       status: "Success",
       date: new Date()
     });
 
     return res.json({
       success: true,
-      msg: special
-        ? "Special Reward Claimed Successfully"
+      msg: special 
+        ? "Special Reward Claimed Successfully" 
         : "Reward Claimed Successfully",
       amount,
       special,
@@ -6537,6 +6571,7 @@ app.post("/daily-reward", async (req, res) => {
       walletHistory,
       reward
     });
+
   } catch (err) {
     console.log("DAILY REWARD ERROR:", err);
     return res.status(500).json({
@@ -6546,39 +6581,7 @@ app.post("/daily-reward", async (req, res) => {
     });
   }
 });
-
-// ১. হিস্টরি গেট করার জন্য নতুন এপিআই (GET Route)
-app.get("/daily-reward/:email", async (req, res) => {
-  try {
-    const email = String(req.params.email || "").trim().toLowerCase();
-
-    if (!email) {
-      return res.status(400).json({ success: false, msg: "Email required" });
-    }
-
-    const reward = await DailyReward.findOne({ email });
-
-    if (!reward) {
-      return res.json({
-        success: true,
-        reward: { history: [] }
-      });
-    }
-
-    return res.json({
-      success: true,
-      reward
-    });
-  } catch (err) {
-    console.log("GET DAILY REWARD HISTORY ERROR:", err);
-    return res.status(500).json({
-      success: false,
-      msg: "Server error",
-      error: err.message
-    });
-  }
-});
-
+            
 
 // ১. উইথড্র পেজের ইনফো এবং হিস্টরি লোড করার API
 app.post("/withdraw-info", async (req, res) => {
