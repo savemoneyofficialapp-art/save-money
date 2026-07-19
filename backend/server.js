@@ -2748,7 +2748,7 @@ app.post("/wallet-transfer", async (req, res) => {
       type: "Debit",
       amount: transferAmount,
       title: "Wallet Transfer Sent",
-      description: `Transfer sent to ${receiver.walletId}`,
+      description: ` sent to ${receiver.walletId}`,
       status: "Success",
       date: new Date()
     });
@@ -2758,7 +2758,7 @@ app.post("/wallet-transfer", async (req, res) => {
       type: "Credit",
       amount: transferAmount,
       title: "Wallet Transfer Received",
-      description: `Transfer received from ${sender.walletId}`,
+      description: ` received from ${sender.walletId}`,
       status: "Success",
       date: new Date()
     });
