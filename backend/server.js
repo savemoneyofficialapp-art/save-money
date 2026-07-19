@@ -6590,7 +6590,6 @@ app.get("/daily-reward/:email", async (req, res) => {
 app.post("/withdraw-info", async (req, res) => {
   try {
     const email = String(req.body.email || "").toLowerCase();
-
     const bank = await BankDetails.findOne({ email });
 
     const today = new Date();
@@ -6598,35 +6597,31 @@ app.post("/withdraw-info", async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // আজকের সব ওয়ালেট হিস্ট্রি নিয়ে আসা
     const todayHistory = await WalletHistory.find({
       email,
       date: { $gte: today, $lt: tomorrow }
     });
 
-    // বোনাসগুলোর যোগফল (100% বোনাস অ্যামাউন্ট)
+    // বোনাস অ্যামাউন্ট ক্যালকুলেশন
     const referral = todayHistory.filter(i => i.type === "Referral Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const performance = todayHistory.filter(i => i.type === "Performance Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    const totalBonus = referral + performance + team + royalty; // যেমন: 1298
+    const totalBonus = referral + performance + team + royalty; // মোট বোনাস (যেমন: ১২৯৮)
 
-    // ⚡ নিখুঁত ফিক্স ১: শুধুমাত্র 'Pending' এবং 'Success' রিকোয়েস্টের অ্যামাউন্ট মাইনাস হবে।
-    // অ্যাডমিন যদি কোনো রিকোয়েস্ট 'Rejected' করে দেয়, তবে সেটি আর মাইনাস হবে না (অর্থাৎ ইউজারের ২০% বা পুরো টাকা ফেরত চলে আসবে)।
+    // শুধুমাত্র সফল বা পেন্ডিং থাকা ডেবিট হিসাব হবে
     const totalDebited = todayHistory
       .filter(i => i.title === "Withdraw Request Pending Amount" && (i.status === "Pending" || i.status === "Success"))
       .reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
 
     const totalRefunded = todayHistory.filter(i => i.title === "Withdraw Rejected Refund").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    // ⚡ নিখুঁত ফিক্স ২: ওয়ালেট ব্যালেন্স এবং উইথড্রয়েবল ব্যালেন্সের সঠিক হিসাব
-    const walletBalance = (totalBonus + totalRefunded) - totalDebited; 
-    
-    // Withdrawable Balance হবে টোটাল বোনাসের ৮০% + রিফান্ড - ডেবিট
+    // ⚡ ফিক্স: walletBalance থেকে পুরো টাকা মাইনাস হবে না, কারণ ইউজার শুধু ৮০% তুলছে।
+    // বাকি ২০% ব্যালেন্স ওয়ালেটে দেখানোর জন্য উইথড্র করা অ্যামাউন্টটিই শুধু মাইনাস হবে।
+    const walletBalance = (totalBonus + totalRefunded) - totalDebited;
     const withdrawableBalance = Math.floor(totalBonus * 0.8) + totalRefunded - totalDebited;
 
-    // অডিট স্টেটমেন্ট হিস্ট্রি দেখানোর জন্য (উইথড্র রিকোয়েস্ট কালেকশন থেকে ডাটা নেওয়া)
     const history = await WithdrawRequest.find({ email }).sort({ createdAt: -1 });
 
     return res.json({
@@ -6647,29 +6642,24 @@ app.post("/withdraw-info", async (req, res) => {
     app.post("/withdraw-request", async (req, res) => {
   try {
     const email = String(req.body.email || "").toLowerCase();
-    const amount = Number(req.body.amount || 0); // ইউজার যেটা উইথড্র করতে চাচ্ছেন (যেমন: 1038)
+    const amount = Number(req.body.amount || 0);
 
     const user = await User.findOne({ email });
     const bank = await BankDetails.findOne({ email });
 
-    if (!user) {
-      return res.status(404).json({ success: false, msg: "User not found" });
-    }
-
-    if (!bank) {
-      return res.status(400).json({ success: false, msg: "Please add bank details first" });
-    }
+    if (!user) return res.status(404).json({ success: false, msg: "User not found" });
+    if (!bank) return res.status(400).json({ success: false, msg: "Please add bank details first" });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // ⚡ ফিক্স ১: আজকের দিনে কোনো Pending বা Success রিকোয়েস্ট আছে কিনা চেক। Rejected থাকলে আটকাবে না।
+    // ⚡ ১ দিনে একবারের লজিক: Pending বা Success থাকলে আটকাবে, Rejected হলে আবার সুযোগ পাবে
     const activeRequestToday = await WithdrawRequest.findOne({
       email,
       createdAt: { $gte: today, $lt: tomorrow },
-      status: { $in: ["Pending", "Success"] } 
+      status: { $in: ["Pending", "Success"] }
     });
 
     if (activeRequestToday) {
@@ -6679,53 +6669,40 @@ app.post("/withdraw-info", async (req, res) => {
       });
     }
 
-    // আজকের বোনাস ও ট্রানজেকশন হিস্ট্রি ক্যালকুলেশন
-    const todayHistory = await WalletHistory.find({
-      email,
-      date: { $gte: today, $lt: tomorrow }
-    });
-
+    const todayHistory = await WalletHistory.find({ email, date: { $gte: today, $lt: tomorrow } });
     const referral = todayHistory.filter(i => i.type === "Referral Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const performance = todayHistory.filter(i => i.type === "Performance Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
     const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
+    const totalBonus = referral + performance + team + royalty;
 
-    const totalBonus = referral + performance + team + royalty; // টোটাল বোনাস (যেমন: 1298)
-
-    const totalDebited = todayHistory.filter(i => i.title === "Withdraw Request Pending Amount").reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
+    const totalDebited = todayHistory.filter(i => i.title === "Withdraw Request Pending Amount" && (i.status === "Pending" || i.status === "Success")).reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
     const totalRefunded = todayHistory.filter(i => i.title === "Withdraw Rejected Refund").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    // বর্তমান ব্যালেন্স হিসাব
     const walletBalance = (totalBonus + totalRefunded) - totalDebited;
     const withdrawableBalance = Math.floor(totalBonus * 0.8) + totalRefunded - totalDebited;
 
-    if (amount < 100) {
-      return res.status(400).json({ success: false, msg: "Minimum withdraw amount is ₹100" });
-    }
+    if (amount < 100) return res.status(400).json({ success: false, msg: "Minimum withdraw amount is ₹100" });
+    if (amount > withdrawableBalance) return res.status(400).json({ success: false, msg: "Amount is greater than withdrawable balance" });
 
-    if (amount > withdrawableBalance) {
-      return res.status(400).json({ success: false, msg: "Amount is greater than withdrawable balance" });
-    }
-
-    // ⚡ ফিক্স ২: ওয়ালেটে যাতে ২০% টাকা রয়ে যায়, তার সঠিক ডেবিট এন্ট্রি।
-    // যেহেতু ইউজার পুরো Withdrawable লিমিট (৮০%) তুলছেন, তাই ওয়ালেট হিস্ট্রি থেকে শুধু এই পরিমাণটিই মাইনাস হবে।
+    // ওয়ালেট হিস্ট্রি তৈরি
     await WalletHistory.create({
       email,
-      amount: -amount, 
-      type: "Referral Bonus", 
-      title: "Withdraw Request Pending Amount", 
+      amount: -amount,
+      type: "Referral Bonus",
+      title: "Withdraw Request Pending Amount",
       description: `Withdrawal request for ₹${amount}`,
       status: "Pending",
       date: new Date()
     });
 
-    // নতুন রিকোয়েস্ট ডেটাবেজে সেভ করা
+    // নতুন রিকোয়েস্ট তৈরি ও ডাটাবেজে সেভ
     const request = await WithdrawRequest.create({
       email,
       name: user.name || "",
       walletId: user.walletId || "",
       amount,
-      walletBalance: walletBalance - amount, // 👈 এখানে এখন সঠিক ২০% ব্যালেন্স থাকবে (যেমন: 1298 - 1038 = 260)
+      walletBalance: walletBalance - amount, // 👈 এখানে সঠিকভাবে ২০% ব্যালেন্স থাকবে
       withdrawableBalance: withdrawableBalance - amount,
       bankDetails: {
         accountHolderName: bank.accountHolderName,
@@ -6738,9 +6715,12 @@ app.post("/withdraw-info", async (req, res) => {
       status: "Pending"
     });
 
+    // ⚡ রেসপন্সে নতুন ব্যালেন্স রিটার্ন করা হচ্ছে
     return res.json({
       success: true,
       msg: "Withdraw request submitted successfully",
+      walletBalance: walletBalance - amount,
+      withdrawableBalance: withdrawableBalance - amount,
       request
     });
   } catch (err) {
@@ -6751,33 +6731,26 @@ app.post("/withdraw-info", async (req, res) => {
 
 
 
-
-
-
-
 app.post("/admin/withdraw-action", async (req, res) => {
   try {
-    const { id, status, rejectReason } = req.body; 
-
+    const { id, status, rejectReason } = req.body;
     const request = await WithdrawRequest.findById(id);
-    if (!request) {
-      return res.status(404).json({ success: false, msg: "Request not found" });
-    }
 
-    if (request.status !== "Pending") {
-      return res.status(400).json({ success: false, msg: "This request already processed" });
-    }
+    if (!request) return res.status(404).json({ success: false, msg: "Request not found" });
+    if (request.status !== "Pending") return res.status(400).json({ success: false, msg: "This request already processed" });
 
     if (status === "Success") {
       request.status = "Success";
       request.actionDate = new Date();
       await request.save();
 
-      return res.json({
-        success: true,
-        msg: "Withdraw Success",
-        request
-      });
+      // অরিজিনাল ওয়ালেট হিস্ট্রির স্ট্যাটাসও Success করা
+      await WalletHistory.findOneAndUpdate(
+        { email: request.email, title: "Withdraw Request Pending Amount", status: "Pending" },
+        { status: "Success" }
+      );
+
+      return res.json({ success: true, msg: "Withdraw Success", request });
     }
 
     if (status === "Rejected") {
@@ -6786,26 +6759,27 @@ app.post("/admin/withdraw-action", async (req, res) => {
       request.actionDate = new Date();
       await request.save();
 
-      // ⚡ রিজেক্ট হলে পজিটিভ অ্যামাউন্ট রিফান্ড টাইটেল সহ ইনসার্ট হবে
+      // অরিজিনাল ওয়ালেট হিস্ট্রির স্ট্যাটাস Rejected করা
+      await WalletHistory.findOneAndUpdate(
+        { email: request.email, title: "Withdraw Request Pending Amount", status: "Pending" },
+        { status: "Rejected" }
+      );
+
+      // রিফান্ড এন্ট্রি যোগ করা
       await WalletHistory.create({
         email: request.email,
-        type: "Referral Bonus", // enum নিরাপদ রাখতে
-        amount: Number(request.amount), 
+        type: "Referral Bonus",
+        amount: Number(request.amount),
         title: "Withdraw Rejected Refund",
         description: rejectReason || "Withdrawal request rejected by admin",
         status: "Rejected",
         date: new Date()
       });
 
-      return res.json({
-        success: true,
-        msg: "Withdraw Rejected & Refunded",
-        request
-      });
+      return res.json({ success: true, msg: "Withdraw Rejected & Refunded", request });
     }
 
     return res.status(400).json({ success: false, msg: "Invalid status provided" });
-
   } catch (err) {
     console.log("ADMIN WITHDRAW ACTION ERROR:", err);
     res.status(500).json({ success: false, msg: "Server error" });
