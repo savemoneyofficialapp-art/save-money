@@ -90,7 +90,7 @@ export default function Refer() {
     }
   };
 
-  // টিম হিস্ট্রি ফিল্টার করার মডিফাইড লজিক
+  // টিম হিস্ট্রি ফিল্টার করার লজিক
   const getFilteredTeamHistory = () => {
     const teamHistoryList = team.history || [];
     const now = new Date();
@@ -189,14 +189,14 @@ export default function Refer() {
 
   const referCode = user.referCode || user.referralCode || user.walletId || "SMREF0001";
   
-  // চারটে মেইন কার্ড ভ্যালুর রিয়েল লাইভ ডেটা সোর্স ম্যাপিং
+  // চারটে বোনাস কার্ডের ডেটা সোর্স ম্যাপিং
   const perfAmt = Number(performance.balance || user.performanceIncome || 0);
   const teamAmt = Number(team.balance || user.teamIncome || 0);
   const royAmt = Number(royalty.balance || user.royaltyIncome || 0);
   const refAmt = Number(referBonus.totalBonus || user.referIncome || 0);
 
-  // [FIX] ওয়ালেট ব্যালেন্সের নিখুঁত ও সঠিক গাণিতিক যোগফল ক্যালকুলেশন
-  const totalReferWallet = perfAmt + teamAmt + royAmt + refAmt;
+  // [MODIFIED] বোনাসের সম্পূর্ণ অ্যামাউন্ট এখন Today Wallet (অথবা ডাইনামিক রেফার ওয়ালেট)-এই রিফ্লেক্ট করবে
+  const totalTodayWalletBalance = perfAmt + teamAmt + royAmt + refAmt;
 
   const referLink = `${window.location.origin}/register?ref=${referCode}`;
 
@@ -297,7 +297,7 @@ export default function Refer() {
   return (
     <div style={styles.page}>
       
-      {/* গ্লসি মডার্ন এবং প্রিমিয়াম ইনফো মেসেজ টোস্ট ওভারলে */}
+      {/* প্রিমিয়াম গ্লসি ইনফো মেসেজ টোস্ট ওভারলে */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
@@ -359,10 +359,11 @@ export default function Refer() {
           </div>
         </div>
 
+        {/* [UPDATED DISPLAY] মেইন ওয়ালেটের ঝামেলা ছাড়া বোনাসের ব্যালেন্স সরাসরি Today Wallet হিসেবে হ্যান্ডেল হবে */}
         <div style={styles.heroRight}>
-          <div style={styles.walletRound}>💸</div>
-          <p>Refer Wallet Balance</p>
-          <h1>{money(totalReferWallet)}</h1>
+          <div style={styles.walletRound}>⚡</div>
+          <p>Today Wallet Balance</p>
+          <h1>{money(totalTodayWalletBalance)}</h1>
         </div>
       </section>
 
@@ -561,7 +562,7 @@ export default function Refer() {
                 <option value="allTime">🌐 All Time</option>
                 <option value="thisMonth">📅 This Month</option>
                 <option value="lastMonth">📅 Last Month</option>
-                <option value="customRange">📆 Select Date Range (e.g. 1-15)</option>
+                <option value="customRange">📆 Select Date Range</option>
               </select>
 
               {teamTimeFilter === "customRange" && (
@@ -628,7 +629,7 @@ export default function Refer() {
               </thead>
               <tbody>
                 {selectedFilteredHistory.length === 0 ? (
-                  <tr><td colSpan="4" style={{ textAlign: "center", padding: 10 }}>No Team Bonus History Found For This Filter</td></tr>
+                  <tr><td colSpan="4" style={{ textAlign: "center", padding: 10 }}>No Team Bonus History Found</td></tr>
                 ) : (
                   selectedFilteredHistory.map((item, index) => (
                     <tr key={index}>
@@ -863,7 +864,6 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
-  // প্রিমিয়াম গ্লসি ইনফো মেসেজ স্টাইলস (Glassmorphism & Sharp Borders)
   statusOverlayBg: {
     position: "fixed",
     inset: 0,
@@ -873,7 +873,6 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    animation: "fadeIn 0.3s ease"
   },
   statusOverlayCard: {
     background: "rgba(255, 255, 255, 0.95)",
@@ -887,8 +886,6 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     gap: "16px",
-    transform: "scale(1)",
-    transition: "transform 0.2s ease"
   },
   statusOverlayIcon: {
     width: "60px",
