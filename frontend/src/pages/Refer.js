@@ -201,7 +201,7 @@ export default function Refer() {
     {
       key: "refer",
       title: "Refer Bonus",
-      amount: referBonus.balance || user.referIncome || 0,
+      amount: referBonus.totalBonus || user.referIncome || 0, // এখানে ব্যালেন্সের জায়গায় সঠিক টোটাল বোনাস দেওয়া হলো
       icon: "🎁",
       color: "#16a34a",
       bg: "#ecfdf5"
