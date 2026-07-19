@@ -61,6 +61,20 @@ export default function Withdraw() {
       toast.info("Amount exceeds your withdrawable limit");
       return;
     }
+
+    // ⚡ ফ্রন্টএন্ড ফিক্স: চেক করবে আজ অলরেডি কোনো Pending বা Success রিকোয়েস্ট আছে কিনা।
+    // যদি রিকোয়েস্টের স্ট্যাটাস 'Rejected' হয়, তবে এই চেকটি ইউজারকে নতুন রিকোয়েস্ট করতে আটকাবে না।
+    const todayRequest = history.find((req) => {
+      const reqDate = new Date(req.createdAt).toDateString();
+      const today = new Date().toDateString();
+      return reqDate === today && (req.status === "Pending" || req.status === "Success");
+    });
+
+    if (todayRequest) {
+      toast.error("You can only make one successful or pending withdraw request per day. Please try again tomorrow.");
+      return;
+    }
+
     try {
       setLoading(true);
       const res = await fetch(`${API}/withdraw-request`, {
@@ -76,13 +90,12 @@ export default function Withdraw() {
       if (data.success) {
         toast.success(data.msg || "Withdrawal request placed successfully");
         
-        // ⚡ লজিক ফিক্স: রিকোয়েস্ট সাকসেস হলে সাথে সাথে ফ্রন্টএন্ড স্টেট থেকে ব্যালেন্স মাইনাস করা
         const withdrawn = Number(amount);
         setWalletBalance((prev) => Math.max(0, prev - withdrawn));
         setWithdrawableBalance((prev) => Math.max(0, prev - withdrawn));
         
         setAmount("");
-        loadInfo(); // ব্যাকএন্ড থেকে লেটেস্ট ডাটা রি-সিঙ্ক করার জন্য
+        loadInfo(); 
       } else {
         toast.error(data.msg || "Failed to process withdrawal");
       }
@@ -261,7 +274,7 @@ export default function Withdraw() {
                   <div style={styles.superHistoryDate}>{new Date(x.createdAt).toLocaleString()}</div>
                 </div>
                 <span style={{ 
-                  color: x.status === "Success" || x.status === "Approved" ? "#22c55e" : "#eab308", 
+                  color: x.status === "Success" || x.status === "Approved" ? "#22c55e" : x.status === "Rejected" ? "#ef4444" : "#eab308", 
                   fontWeight: "900",
                   fontSize: "22px" 
                 }}>
