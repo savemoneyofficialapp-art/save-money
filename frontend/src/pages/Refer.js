@@ -22,26 +22,26 @@ export default function Refer() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [referBonus, setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
-  const [teamMonthFilter, setTeamMonthFilter] = useState("thisMonth");
+  
+  // নতুন অ্যাডভান্সড ফিল্টার স্টেট (Team Modal এর জন্য)
+  const [teamTimeFilter, setTeamTimeFilter] = useState("allTime"); 
+  const [teamCustomDate, setTeamCustomDate] = useState("");
+
   const [bonusFilter, setBonusFilter] = useState("All");
   const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
   
-  // ফিল্টারিং স্টেট
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  // নতুন স্টেট: পেন্ডিং রেফারাল এবং টুডে জয়েনিং দেখার সাব-মডাল
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showTodayJoinModal, setShowTodayJoinModal] = useState(false);
 
-  // স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ দেখানোর জন্য স্টেট
   const [statusOverlay, setStatusOverlay] = useState({
     show: false,
     type: "info",
     message: ""
   });
 
-  // মিডল মেসেজ ট্রিগার করার ফাংশন
   const triggerStatusOverlay = (type, message) => {
     setStatusOverlay({ show: true, type, message });
     setTimeout(() => {
@@ -49,13 +49,12 @@ export default function Refer() {
     }, 2000);
   };
 
-  // স্ক্রোল পজিশন ফিক্স করার জন্য useEffect
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }, [bonusModal]);
 
   useEffect(() => {
-    loadReferData(selectedMonth, selectedYear);
+    loadReferData();
   }, []);
 
   const loadReferData = async (month = "", year = new Date().getFullYear()) => {
@@ -67,11 +66,7 @@ export default function Refer() {
           "Content-Type": "application/json",
           authorization: token || ""
         },
-        body: JSON.stringify({
-          email,
-          month,
-          year
-        })
+        body: JSON.stringify({ email, month, year })
       });
 
       const data = await res.json();
@@ -93,6 +88,74 @@ export default function Refer() {
     }
   };
 
+  // টিম হিস্ট্রি ফিল্টার করার মূল লজিক (রিয়েল-টাইম)
+  const getFilteredTeamHistory = () => {
+    const teamHistoryList = team.history || [];
+    const now = new Date();
+
+    return teamHistoryList.filter((item) => {
+      if (!item.date) return false;
+      const d = new Date(item.date);
+
+      if (teamTimeFilter === "thisMonth") {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+      if (teamTimeFilter === "lastMonth") {
+        const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
+      }
+      if (teamTimeFilter === "customDate" && teamCustomDate) {
+        return d.toDateString() === new Date(teamCustomDate).toDateString();
+      }
+      return true; // allTime
+    });
+  };
+
+  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল মেম্বার কাউন্ট করা
+  const getDynamicLevelCounts = () => {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const filteredHistory = getFilteredTeamHistory();
+    
+    filteredHistory.forEach(item => {
+      const lvl = Number(item.level);
+      if (lvl >= 1 && lvl <= 5) {
+        counts[lvl] += 1;
+      }
+    });
+
+    // যদি ফিল্টার All Time হয় এবং উপরোক্ত লজিক ০ পায়, তবে এপিআই থেকে আসা বেস কাউন্ট ব্যাকআপ হিসেবে ব্যবহার করবে
+    if (teamTimeFilter === "allTime") {
+      for (let i = 1; i <= 5; i++) {
+        if (counts[i] === 0) {
+          counts[i] = team.totalJoinCount?.[i] || team.levelCount?.[i] || 0;
+        }
+      }
+    }
+    return counts;
+  };
+
+  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল ইনকাম হিসাব করা
+  const getDynamicLevelIncomes = () => {
+    const incomes = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const filteredHistory = getFilteredTeamHistory();
+
+    filteredHistory.forEach(item => {
+      const lvl = Number(item.level);
+      if (lvl >= 1 && lvl <= 5) {
+        incomes[lvl] += Number(item.amount || 0);
+      }
+    });
+
+    if (teamTimeFilter === "allTime") {
+      if (incomes[1] === 0) incomes[1] = team.level1Income || 0;
+      if (incomes[2] === 0) incomes[2] = team.level2Income || 0;
+      if (incomes[3] === 0) incomes[3] = team.level3Income || 0;
+      if (incomes[4] === 0) incomes[4] = team.level4Income || 0;
+      if (incomes[5] === 0) incomes[5] = team.level5Income || 0;
+    }
+    return incomes;
+  };
+
   const filteredPerformanceHistory = (performance.history || []).filter((item) => {
     const d = new Date(item.date);
     const now = new Date();
@@ -106,22 +169,6 @@ export default function Refer() {
     return true;
   });
 
-  const getTeamHistory = () => {
-    if (!team.history) return [];
-    const now = new Date();
-    return team.history.filter((item) => {
-      const d = new Date(item.date);
-      if (teamMonthFilter === "thisMonth") {
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      }
-      if (teamMonthFilter === "lastMonth") {
-        const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
-      }
-      return d.getMonth() === Number(teamMonthFilter);
-    });
-  };
-
   const money = (n) =>
     `₹ ${Number(n || 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
@@ -129,7 +176,6 @@ export default function Refer() {
     })}`;
 
   const referCode = user.referCode || user.referralCode || user.walletId || "SMREF0001";
-
   const totalReferWallet =
     Number(user.referralIncome || 0) +
     Number(user.performanceIncome || 0) +
@@ -152,7 +198,6 @@ export default function Refer() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  // এখানে ফিক্স করা হয়েছে ("_blank" ঠিক করা হয়েছে)
   const shareTelegram = () => {
     const text = `Join SAVE MONEY using my refer link: ${referLink}`;
     window.open(
@@ -222,18 +267,21 @@ export default function Refer() {
   }
 
   const pendingRefers = history.filter((x) => x.status !== "Active");
-  
-  // ফিল্টার লজিক: আজকে নেটওয়ার্কে যারা জয়েন করেছে (হিস্টরি থেকে)
   const todayJoinMembers = (team.history || []).filter((item) => {
     const itemDate = new Date(item.date).toDateString();
     const todayDate = new Date().toDateString();
     return itemDate === todayDate;
   });
 
+  // ফিল্টার অনুযায়ী টোটাল ক্যালকুলেশন
+  const dynamicCounts = getDynamicLevelCounts();
+  const dynamicIncomes = getDynamicLevelIncomes();
+  const selectedFilteredHistory = getFilteredTeamHistory();
+  const selectedFilteredTotalIncome = selectedFilteredHistory.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
   return (
     <div style={styles.page}>
       
-      {/* স্ক্রিনের মাঝখানে বড় ইনফো মেসেজ ওভারলে UI */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
@@ -467,7 +515,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- Team Modal --- */}
+      {/* --- Team Modal (সম্পূর্ণ আপগ্রেড করা হয়েছে) --- */}
       {bonusModal === "team" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>👥 Team Bonus</h2>
@@ -478,78 +526,65 @@ export default function Refer() {
           <h3>Today's Report</h3>
           <p>Today's Income : <b>{money(team.todayBonus)}</b></p>
           
-          {/* আজকে মোট কতজন জয়েন করেছে এবং তার উপর ক্লিকযোগ্য সুন্দর বাটন */}
           <button 
             style={styles.todayJoinBtn} 
             onClick={() => setShowTodayJoinModal(true)}
           >
             📊 Network Joining Today: <b>{team.todayJoin || 0}</b> (View All)
           </button>
-
-          {/* লেভেল ভিত্তিক মোট মেম্বার সংখ্যা প্রদর্শনের লেআউট */}
-          <h3>Total Level Members</h3>
-          <div style={styles.levelGrid}>
-            <div><b>L1</b><br />Users: {team.totalJoinCount?.[1] || team.levelCount?.[1] || 0}</div>
-            <div><b>L2</b><br />Users: {team.totalJoinCount?.[2] || team.levelCount?.[2] || 0}</div>
-            <div><b>L3</b><br />Users: {team.totalJoinCount?.[3] || team.levelCount?.[3] || 0}</div>
-            <div><b>L4</b><br />Users: {team.totalJoinCount?.[4] || team.levelCount?.[4] || 0}</div>
-            <div><b>L5</b><br />Users: {team.totalJoinCount?.[5] || team.levelCount?.[5] || 0}</div>
-          </div>
           <hr />
 
-          <div style={{ marginTop: 20, marginBottom: 20 }}>
-            <select
-              value={teamMonthFilter}
-              onChange={(e) => {
-                const value = e.target.value;
-                setTeamMonthFilter(value);
-                
-                let targetMonth = "";
-                let targetYear = new Date().getFullYear();
+          {/* অ্যাডভান্সড ফিল্টার ড্রপডাউন ও ডেট সিলেক্টর */}
+          <div style={{ marginTop: 15, marginBottom: 15 }}>
+            <label style={{ fontWeight: "bold", display: "block", marginBottom: 6 }}>⏱ Select Time Frame:</label>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <select
+                value={teamTimeFilter}
+                onChange={(e) => setTeamTimeFilter(e.target.value)}
+                style={{ ...styles.filterSelect, flex: 1, minWidth: "150px" }}
+              >
+                <option value="allTime">🌐 All Time</option>
+                <option value="thisMonth">📅 This Month</option>
+                <option value="lastMonth">📅 Last Month</option>
+                <option value="customDate">📆 Select Date</option>
+              </select>
 
-                if (value === "thisMonth") {
-                  targetMonth = "";
-                } else if (value === "lastMonth") {
-                  const d = new Date();
-                  d.setMonth(d.getMonth() - 1);
-                  targetMonth = String(d.getMonth() + 1);
-                  targetYear = d.getFullYear();
-                } else {
-                  targetMonth = String(Number(value) + 1);
-                }
-                loadReferData(targetMonth, targetYear);
-              }}
-              style={styles.filterSelect}
-            >
-              <option value="thisMonth">This Month</option>
-              <option value="lastMonth">Last Month</option>
-              <option value="0">January</option>
-              <option value="1">February</option>
-              <option value="2">March</option>
-              <option value="3">April</option>
-              <option value="4">May</option>
-              <option value="5">June</option>
-              <option value="6">July</option>
-              <option value="7">August</option>
-              <option value="8">September</option>
-              <option value="9">October</option>
-              <option value="10">November</option>
-              <option value="11">December</option>
-            </select>
+              {teamTimeFilter === "customDate" && (
+                <input 
+                  type="date" 
+                  value={teamCustomDate}
+                  onChange={(e) => setTeamCustomDate(e.target.value)}
+                  style={{ ...styles.filterSelect, flex: 1, minWidth: "150px" }}
+                />
+              )}
+            </div>
           </div>
+
+          {/* টোটাল লেভেল মেম্বার্স (ফিল্টার অনুযায়ী পরিবর্তিত হবে) */}
+          <h3>Total Level Members ({teamTimeFilter === "allTime" ? "All Time" : teamTimeFilter === "thisMonth" ? "This Month" : teamTimeFilter === "lastMonth" ? "Last Month" : teamCustomDate || "Selected Date"})</h3>
+          <div style={styles.levelGrid}>
+            <div><b>L1</b><br />Users: {dynamicCounts[1]}</div>
+            <div><b>L2</b><br />Users: {dynamicCounts[2]}</div>
+            <div><b>L3</b><br />Users: {dynamicCounts[3]}</div>
+            <div><b>L4</b><br />Users: {dynamicCounts[4]}</div>
+            <div><b>L5</b><br />Users: {dynamicCounts[5]}</div>
+          </div>
+          <hr />
 
           <h3>Income Summary</h3>
-          <p>Selected Month Income: <b>{money(team.thisMonthBonus)}</b></p>
-          <p>Last Month Income: <b>{money(team.lastMonthBonus)}</b></p>
+          <p>Selected Filter Total Income: <b style={{ color: "#2563eb" }}>{teamTimeFilter === "allTime" ? money(team.balance) : money(selectedFilteredTotalIncome)}</b></p>
+          <p>This Month Default Income: <b>{money(team.thisMonthBonus)}</b></p>
+          <p>Last Month Default Income: <b>{money(team.lastMonthBonus)}</b></p>
           <hr />
 
-          <h3>Level Income</h3>
+          {/* লেভেল ইনকাম (টাইম ফিল্টার অনুযায়ী পরিবর্তিত হবে) */}
+          <h3>Level Income ({teamTimeFilter === "allTime" ? "All Time" : teamTimeFilter === "thisMonth" ? "This Month" : teamTimeFilter === "lastMonth" ? "Last Month" : teamCustomDate || "Selected Date"})</h3>
           <div style={styles.levelGrid}>
-            <div>Level 1<br />{money(team.level1Income)}</div>
-            <div>Level 2<br />{money(team.level2Income)}</div>
-            <div>Level 3<br />{money(team.level3Income)}</div>
-            <div>Level 4<br />{money(team.level4Income)}</div>
-            <div>Level 5<br />{money(team.level5Income)}</div>
+            <div>Level 1<br />{money(dynamicIncomes[1])}</div>
+            <div>Level 2<br />{money(dynamicIncomes[2])}</div>
+            <div>Level 3<br />{money(dynamicIncomes[3])}</div>
+            <div>Level 4<br />{money(dynamicIncomes[4])}</div>
+            <div>Level 5<br />{money(dynamicIncomes[5])}</div>
           </div>
           <hr />
 
@@ -565,10 +600,10 @@ export default function Refer() {
                 </tr>
               </thead>
               <tbody>
-                {getTeamHistory().length === 0 ? (
-                  <tr><td colSpan="4" style={{ textAlign: "center", padding: 10 }}>No Team Bonus History</td></tr>
+                {selectedFilteredHistory.length === 0 ? (
+                  <tr><td colSpan="4" style={{ textAlign: "center", padding: 10 }}>No Team Bonus History Found For This Filter</td></tr>
                 ) : (
-                  getTeamHistory().map((item, index) => (
+                  selectedFilteredHistory.map((item, index) => (
                     <tr key={index}>
                       <td>
                         <b>{item.fromName || "-"}</b>
@@ -681,7 +716,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- পেন্ডিং রেফারাল সাব-মডাল পপআপ --- */}
+      {/* --- পেন্ডিং রেফারাল সাব-মডাল --- */}
       {showPendingModal && (
         <Modal onClose={() => setShowPendingModal(false)}>
           <h2 style={{ color: "#ea580c" }}>⏳ Pending Refers List</h2>
@@ -715,7 +750,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল পপআপ --- */}
+      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল --- */}
       {showTodayJoinModal && (
         <Modal onClose={() => setShowTodayJoinModal(false)}>
           <h2 style={{ color: "#2563eb" }}>📊 Today's Network Joining List</h2>
@@ -1080,7 +1115,10 @@ const styles = {
   filterSelect: {
     padding: "12px 18px",
     borderRadius: 14,
-    border: "1px solid #ddd"
+    border: "1px solid #ddd",
+    fontSize: "15px",
+    outline: "none",
+    background: "#fff"
   },
   tableWrap: { overflowX: "auto" },
   table: {
