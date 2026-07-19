@@ -198,22 +198,24 @@ export default function Withdraw() {
 
         <div style={styles.bankGrid} onClick={handleBankClick}>
           <div style={styles.bankFieldsGroup}>
-            <div style={styles.bankMeta}>
-              <span style={styles.metaLabel}>HOLDER NAME</span>
-              <span style={styles.metaValue}>{bank?.accountHolderName || "Rama basu"}</span>
-            </div>
-            <div style={styles.bankMeta}>
-              <span style={styles.metaLabel}>BANK NAME</span>
-              <span style={styles.metaValue}>{bank?.bankName || "Sbi"}</span>
-            </div>
-            <div style={styles.bankMeta}>
-              <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
-              <span style={styles.metaValue}>{bank?.accountNumber || "6347223058"}</span>
-            </div>
-            <div style={styles.bankMeta}>
-              <span style={styles.metaLabel}>IFSC CODE</span>
-              <span style={styles.metaValue}>{bank?.ifscCode || "KKBK0007451"}</span>
-            </div>
+  <div style={styles.bankMeta}>
+    <span style={styles.metaLabel}>HOLDER NAME</span>
+    <span style={styles.metaValue}>{bank?.accountHolderName || "Not Provided"}</span>
+  </div>
+  <div style={styles.bankMeta}>
+    <span style={styles.metaLabel}>BANK NAME</span>
+    <span style={styles.metaValue}>{bank?.bankName || "Not Provided"}</span>
+  </div>
+  <div style={styles.bankMeta}>
+    <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
+    <span style={styles.metaValue}>{bank?.accountNumber || "—"}</span>
+  </div>
+  <div style={styles.bankMeta}>
+    <span style={styles.metaLabel}>IFSC CODE</span>
+    <span style={styles.metaValue}>{bank?.ifscCode || "—"}</span>
+  </div>
+</div>
+
           </div>
           <div style={styles.bankArrowContainer}>
             <button style={styles.bankActionCircle}>
