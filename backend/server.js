@@ -563,10 +563,10 @@ async function addBonus({
     const bonusType = type;
 
     const exists = await BonusLedger.findOne({
-  email: String(email).toLowerCase(),
-  bonusType,
-  refId
-});
+      email: String(email).toLowerCase(),
+      bonusType,
+      refId
+    });
 
     if (exists) return;
 
@@ -575,12 +575,10 @@ async function addBonus({
     });
 
     if (!user) return;
-
     if (user.disableBonus) return;
 
-    user.wallet = Number(user.wallet || 0) + bonusAmount;
-    user.balance = Number(user.balance || 0) + bonusAmount;
-    user.walletBalance = Number(user.walletBalance || 0) + bonusAmount;
+    // [MODIFIED] মেইন ওয়ালেটে টাকা অ্যাড হবে না, শুধুমাত্র Today Wallet-এ অ্যাড হবে
+    user.todayBalance = Number(user.todayBalance || 0) + bonusAmount;
     user.totalEarning = Number(user.totalEarning || 0) + bonusAmount;
 
     if (bonusType === "Referral Bonus") {
@@ -601,6 +599,7 @@ async function addBonus({
 
     await user.save();
 
+    // ডুপ্লিকেট বোনাস চেক করার জন্য লেজার ক্রিয়েট সচল রাখা হলো
     await BonusLedger.create({
       email: String(email).toLowerCase(),
       fromEmail,
@@ -616,14 +615,7 @@ async function addBonus({
       date: new Date()
     });
 
-    await WalletHistory.create({
-      email: String(email).toLowerCase(),
-      type: bonusType,
-      amount: bonusAmount,
-      note: note || `${bonusType} received from ${fromName}`,
-      status: "Success",
-      date: new Date()
-    });
+    // [REMOVED] এখান থেকে WalletHistory.create মুছে দেওয়া হয়েছে যাতে মেইন হিস্ট্রি তৈরি না হয়
 
     if (typeof sendNotification === "function") {
       await sendNotification(
@@ -637,6 +629,7 @@ async function addBonus({
     console.log("ADD BONUS ERROR:", err);
   }
 }
+
 
 function referralBonusRate(years) {
 
@@ -7093,42 +7086,35 @@ daysLeft: diff
 
 
 // ==============today wallet to main wallet=================
-// প্রতিদিন রাত ২৩:৫৯ মিনিটে রান হবে
-cron.schedule("59 23 * * *", async () => {
+// প্রতিদিন রাত ১২:০০ টায় (0 0 * * *) রান হবে
+cron.schedule("0 0 * * *", async () => {
   try {
     console.log("Running Midnight Wallet Settlement Cron...");
-    const users = await User.find({});
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
+    // শুধুমাত্র যাদের Today Wallet-এ ব্যালেন্স আছে তাদের খোঁজা হবে
+    const users = await User.find({ todayBalance: { $gt: 0 } });
+    
     for (let user of users) {
-      const todayHistory = await WalletHistory.find({ email: user.email, date: { $gte: today, $lt: tomorrow } });
-      const referral = todayHistory.filter(i => i.type === "Referral Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-      const performance = todayHistory.filter(i => i.type === "Performance Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-      const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-      const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-      const totalTodayEarnings = referral + performance + team + royalty;
-
-      const totalDebitedDocs = await WithdrawRequest.find({ email: user.email, createdAt: { $gte: today, $lt: tomorrow }, status: { $in: ["Pending", "Success"] } });
-      const totalDebited = totalDebitedDocs.reduce((a, b) => a + Number(b.amount || 0), 0);
-
-      // রাত ১২টার আগে ওয়ালেটে অবশিষ্ট থাকা ব্যালেন্স
-      const remainingBalance = totalTodayEarnings - totalDebited;
+      const remainingBalance = Number(user.todayBalance || 0);
 
       if (remainingBalance > 0) {
-        // মেইন ওয়ালেটে যোগ করে দিন
-        user.mainWallet = (user.mainWallet || 0) + remainingBalance;
+        // ১. মেইন ওয়ালেটের সবগুলোতে ব্যালেন্স যোগ করে দিন
+        user.wallet = Number(user.wallet || 0) + remainingBalance;
+        user.balance = Number(user.balance || 0) + remainingBalance;
+        user.walletBalance = Number(user.walletBalance || 0) + remainingBalance;
+        
+        // ২. টুডে ওয়ালেট খালি বা শূন্য করে দিন
+        user.todayBalance = 0;
+        
         await user.save();
         
-        // ট্র্যাকিংয়ের জন্য মেইন ওয়ালেট হিস্টরিতে একটি এন্ট্রি দিতে পারেন
-        await MainWalletHistory.create({
-          email: user.email,
+        // ৩. মেইন ওয়ালেট হিস্ট্রিতে একটি সফল এন্ট্রি তৈরি করুন
+        await WalletHistory.create({
+          email: user.email.toLowerCase(),
+          type: "credit", // অথবা "Daily Settlement" আপনার ওয়ালেট ফিল্টার অনুযায়ী
           amount: remainingBalance,
-          type: "Daily Settlement",
-          description: "From Today wallet ",
+          note: "Daily Today Wallet Settlement Received",
+          status: "Success",
           date: new Date()
         });
       }
@@ -7138,6 +7124,7 @@ cron.schedule("59 23 * * *", async () => {
     console.error("Cron Job Error:", err);
   }
 });
+
 
 
 
