@@ -6600,55 +6600,27 @@ app.post("/withdraw-info", async (req, res) => {
     }
 
     const today = new Date();
-today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-const tomorrow = new Date(today);
-tomorrow.setDate(tomorrow.getDate()+1);
+    const todayHistory = await WalletHistory.find({
+      email,
+      date: { $gte: today, $lt: tomorrow }
+    });
 
+    const referral = todayHistory.filter(i => i.type === "Referral Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
+    const performance = todayHistory.filter(i => i.type === "Performance Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
+    const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
+    const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-const todayHistory = await WalletHistory.find({
+    // ⚡ আজ পর্যন্ত কত টাকা রিকোয়েস্ট করা হয়েছে এবং কত রিফান্ড হয়েছে তার হিসেব
+    const totalDebited = todayHistory.filter(i => i.type === "Withdrawal Deduct").reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
+    const totalRefunded = todayHistory.filter(i => i.type === "Withdrawal Refund").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-email,
-
-date:{
-$gte:today,
-$lt:tomorrow
-}
-
-});
-
-
-const referral = todayHistory
-.filter(i=>i.type==="Referral Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-const performance = todayHistory
-.filter(i=>i.type==="Performance Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-const team = todayHistory
-.filter(i=>i.type==="Team Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-const royalty = todayHistory
-.filter(i=>i.type==="Royalty Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-
-const walletBalance =
-referral+
-performance+
-team+
-royalty;
-
-
-
-const withdrawableBalance=
-Math.floor(walletBalance*0.8);
+    // ফাইনাল ওয়ালেট ব্যালেন্স (বোনাসসমূহ - কেটে নেওয়া টাকা + রিফান্ড হওয়া টাকা)
+    const walletBalance = (referral + performance + team + royalty + totalRefunded) - totalDebited;
+    const withdrawableBalance = Math.floor(walletBalance * 0.8);
 
     return res.json({
       success: true,
@@ -6663,7 +6635,9 @@ Math.floor(walletBalance*0.8);
   }
 });
 
-app.post("/withdraw-request", async (req, res) => {
+
+
+    app.post("/withdraw-request", async (req, res) => {
   try {
     const email = String(req.body.email || "").toLowerCase();
     const amount = Number(req.body.amount || 0);
@@ -6676,108 +6650,59 @@ app.post("/withdraw-request", async (req, res) => {
     }
 
     if (!bank) {
-      return res.status(400).json({
-        success: false,
-        msg: "Please add bank details first"
-      });
+      return res.status(400).json({ success: false, msg: "Please add bank details first" });
     }
 
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-today.setHours(0,0,0,0);
+    const todayHistory = await WalletHistory.find({
+      email,
+      date: { $gte: today, $lt: tomorrow }
+    });
 
+    const referral = todayHistory.filter(i => i.type === "Referral Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
+    const performance = todayHistory.filter(i => i.type === "Performance Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
+    const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
+    const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-const tomorrow = new Date(today);
+    const totalDebited = todayHistory.filter(i => i.type === "Withdrawal Deduct").reduce((a, b) => a + Math.abs(Number(b.amount || 0)), 0);
+    const totalRefunded = todayHistory.filter(i => i.type === "Withdrawal Refund").reduce((a, b) => a + Number(b.amount || 0), 0);
 
-tomorrow.setDate(
-tomorrow.getDate()+1
-);
-
-
-const todayHistory =
-await WalletHistory.find({
-
-email,
-
-date:{
-$gte:today,
-$lt:tomorrow
-}
-
-});
-
-
-
-const referral = todayHistory
-.filter(i=>i.type==="Referral Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-
-const performance = todayHistory
-.filter(i=>i.type==="Performance Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-
-const team = todayHistory
-.filter(i=>i.type==="Team Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-
-const royalty = todayHistory
-.filter(i=>i.type==="Royalty Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-
-const walletBalance=
-referral+
-performance+
-team+
-royalty;
-
-
-
-const withdrawableBalance=
-Math.floor(walletBalance*0.8);
+    const walletBalance = (referral + performance + team + royalty + totalRefunded) - totalDebited;
+    const withdrawableBalance = Math.floor(walletBalance * 0.8);
 
     if (amount < 100) {
-      return res.status(400).json({
-        success: false,
-        msg: "Minimum withdraw amount is ₹100"
-      });
+      return res.status(400).json({ success: false, msg: "Minimum withdraw amount is ₹100" });
     }
 
     if (amount > withdrawableBalance) {
-      return res.status(400).json({
-        success: false,
-        msg: "Amount is greater than withdrawable balance"
-      });
+      return res.status(400).json({ success: false, msg: "Amount is greater than withdrawable balance" });
     }
 
-    const pending = await WithdrawRequest.findOne({
-      email,
-      status: "Pending"
-    });
-
+    const pending = await WithdrawRequest.findOne({ email, status: "Pending" });
     if (pending) {
-      return res.status(400).json({
-        success: false,
-        msg: "You already have a pending withdraw request"
-      });
+      return res.status(400).json({ success: false, msg: "You already have a pending withdraw request" });
     }
 
-    
+    // ⚡ মেগা ফিক্স ১: সাথে সাথে ওয়ালেট থেকে টাকা ডেবিট/মাইনাস করার জন্য হিস্ট্রি তৈরি
+    await WalletHistory.create({
+      email,
+      amount: -amount, // মাইনাস ভ্যালু
+      type: "Withdrawal Deduct",
+      description: `Withdrawal request for ₹${amount}`,
+      date: new Date()
+    });
 
     const request = await WithdrawRequest.create({
       email,
       name: user.name || "",
       walletId: user.walletId || "",
       amount,
-      walletBalance,
-      withdrawableBalance,
+      walletBalance: walletBalance - amount, 
+      withdrawableBalance: Math.floor((walletBalance - amount) * 0.8),
       bankDetails: {
         accountHolderName: bank.accountHolderName,
         mobile: bank.mobile,
@@ -6802,74 +6727,66 @@ Math.floor(walletBalance*0.8);
 
 
 
+
 app.post("/admin/withdraw-action", async (req, res) => {
   try {
-    const { id, status, rejectReason } = req.body;
+    const { id, status, rejectReason } = req.body; 
 
     const request = await WithdrawRequest.findById(id);
-
     if (!request) {
       return res.status(404).json({ success: false, msg: "Request not found" });
     }
 
     if (request.status !== "Pending") {
-      return res.status(400).json({
-        success: false,
-        msg: "This request already processed"
-      });
+      return res.status(400).json({ success: false, msg: "This request already processed" });
     }
 
     if (status === "Success") {
+      // ✅ উইথড্র সফল হলে শুধু স্টেটাস আপডেট হবে (টাকা আগেই কাটা হয়েছে)
       request.status = "Success";
       request.actionDate = new Date();
+      await request.save();
 
-      await WalletHistory.create({
-        email: request.email,
-        type: "Debit",
-        amount: request.amount,
-        title: "Withdraw Success",
-        description: "Withdraw",
-        status: "Success",
-        date: new Date()
+      return res.json({
+        success: true,
+        msg: "Withdraw Success",
+        request
       });
     }
 
     if (status === "Rejected") {
+      // ❌ উইথড্র রিজেক্ট হলে স্টেটাস আপডেট হবে
       request.status = "Rejected";
       request.rejectReason = rejectReason || "Rejected by admin";
       request.actionDate = new Date();
+      await request.save();
 
-      const user = await User.findOne({ email: request.email });
-
-      if (user) {
-        user.wallet = Number(user.wallet || 0) + Number(request.amount || 0);
-        user.balance = Number(user.balance || 0) + Number(request.amount || 0);
-        await user.save();
-      }
-
+      // ⚡ মেগা ফিক্স ২: ওয়ালেট হিস্ট্রিতে প্লাস এন্ট্রি দিয়ে টাকা রিফান্ড করে দেওয়া
       await WalletHistory.create({
         email: request.email,
-        type: "Credit",
-        amount: request.amount,
+        type: "Withdrawal Refund",
+        amount: Number(request.amount), // পজিটিভ ভ্যালু (টাকা যোগ হবে)
         title: "Withdraw Rejected Refund",
-        description: request.rejectReason,
-        status: "Rejected",
+        description: rejectReason || "Withdrawal request rejected by admin",
+        status: "Refunded",
         date: new Date()
+      });
+
+      return res.json({
+        success: true,
+        msg: "Withdraw Rejected & Refunded",
+        request
       });
     }
 
-    await request.save();
+    return res.status(400).json({ success: false, msg: "Invalid status status provided" });
 
-    res.json({
-      success: true,
-      msg: `Withdraw ${status}`,
-      request
-    });
   } catch (err) {
     console.log("ADMIN WITHDRAW ACTION ERROR:", err);
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+
 
 // ================= DOWNLOAD SLIP =================
 app.get("/download-slip/:id", async (req, res) => {
