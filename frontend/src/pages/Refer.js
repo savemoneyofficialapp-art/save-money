@@ -152,13 +152,14 @@ export default function Refer() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
+  // এখানে ফিক্স করা হয়েছে ("_blank" ঠিক করা হয়েছে)
   const shareTelegram = () => {
     const text = `Join SAVE MONEY using my refer link: ${referLink}`;
     window.open(
       `https://t.me/share/url?url=${encodeURIComponent(referLink)}&text=${encodeURIComponent(
         "Join SAVE MONEY"
       )}`,
-      _blank"
+      "_blank"
     );
   };
 
@@ -1192,7 +1193,6 @@ const styles = {
     cursor: "pointer",
     boxShadow: "0 8px 20px rgba(244,67,54,0.2)"
   },
-  // টুডে জয়েনিং বাটনের স্টাইল
   todayJoinBtn: {
     display: "block",
     width: "100%",
