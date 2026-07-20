@@ -5849,9 +5849,11 @@ const referBonus = {
 
 };
 
+    const updatedUser = await User.findOne({ email: String(email || "").toLowerCase() });
+
     return res.json({
       success: true,
-      user,
+      user: updatedUser,
       referCode,
 
       history,
