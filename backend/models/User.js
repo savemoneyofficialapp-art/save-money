@@ -194,6 +194,18 @@ balance: {
   default: 0 
 },
 
+// এই দুটি ফিল্ড নতুন যোগ করুন 
+todayBalance: {
+  type: Number,
+  default: 0
+},
+
+walletBalance: {
+  type: Number,
+  default: 0
+},
+  
+
   // ðŸ”¹ KYC STATUS
   kycStatus:{
   type:String,
