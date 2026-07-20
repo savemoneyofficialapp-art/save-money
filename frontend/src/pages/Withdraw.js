@@ -43,7 +43,9 @@ export default function Withdraw() {
       });
       const data = await res.json();
       if (data.success) {
-        setWalletBalance(data.walletBalance || 0);
+        // ⚡ পরিবর্তনকৃত লাইন: টুডে ওয়ালেটে বোনাস টাকা দেখানোর জন্য todayBalance ম্যাপ করা হলো
+        setWalletBalance(data.todayBalance || 0);
+        
         setWithdrawableBalance(data.withdrawableBalance || 0);
         setBank(data.bank || null);
         setHistory(data.history || []); // সাকসেস, পেন্ডিং, রিজেক্ট সব ধরনের হিস্টরি
