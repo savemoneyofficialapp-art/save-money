@@ -189,14 +189,13 @@ export default function Refer() {
 
   const referCode = user.referCode || user.referralCode || user.walletId || "SMREF0001";
   
-  // চারটে বোনাস কার্ডের ডেটা সোর্স ম্যাপিং
   const perfAmt = Number(performance.balance || user.performanceIncome || 0);
   const teamAmt = Number(team.balance || user.teamIncome || 0);
   const royAmt = Number(royalty.balance || user.royaltyIncome || 0);
   const refAmt = Number(referBonus.totalBonus || user.referIncome || 0);
 
-  // [MODIFIED] বোনাসের সম্পূর্ণ অ্যামাউন্ট এখন Today Wallet (অথবা ডাইনামিক রেফার ওয়ালেট)-এই রিফ্লেক্ট করবে
-  const totalTodayWalletBalance = perfAmt + teamAmt + royAmt + refAmt;
+  // [UPDATED LOGIC] সরাসরি ব্যাকএন্ড থেকে আসা আজমাকৃত টুডে ব্যালেন্স এখানে রিফ্লেক্ট করবে
+  const totalTodayWalletBalance = Number(user.todayBalance || 0);
 
   const referLink = `${window.location.origin}/register?ref=${referCode}`;
 
@@ -359,7 +358,6 @@ export default function Refer() {
           </div>
         </div>
 
-        {/* [UPDATED DISPLAY] মেইন ওয়ালেটের ঝামেলা ছাড়া বোনাসের ব্যালেন্স সরাসরি Today Wallet হিসেবে হ্যান্ডেল হবে */}
         <div style={styles.heroRight}>
           <div style={styles.walletRound}>⚡</div>
           <p>Today Wallet Balance</p>
