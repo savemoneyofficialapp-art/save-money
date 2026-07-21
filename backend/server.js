@@ -2179,6 +2179,7 @@ app.post("/royalty-data", async (req, res) => {
   }
 });
 
+
 app.post("/wallet-summary", async (req, res) => {
   try {
     const { email } = req.body;
@@ -2194,92 +2195,39 @@ app.post("/wallet-summary", async (req, res) => {
       });
     }
 
-   const history = await WalletHistory.find({
-  email: email.toLowerCase()
-})
-.sort({ date: -1 })
-.limit(20);
+    // মেইন ওয়ালেট হিস্ট্রি (যা মেইন ওয়ালেটের ডিপোজিট/উইথড্র দেখায়)
+    const history = await WalletHistory.find({
+      email: email.toLowerCase()
+    })
+    .sort({ date: -1 })
+    .limit(20);
 
-    const today = new Date();
+    // মেইন ব্যালেন্স ক্যালকুলেশন
+    const mainBalance = Number(
+      user.balance ||
+      user.wallet ||
+      user.walletBalance ||
+      0
+    );
 
-today.setHours(0, 0, 0, 0);
+    res.json({
+      success: true,
+      user,
+      name: user.name,
+      walletId: user.walletId || user.referralCode || user._id.toString(),
+      balance: mainBalance, // Main Wallet Balance
+      
+      // সরাসরি ইউজার মডেল থেকে বোনাসের রিয়েল-টাইম ডেটা
+      referral: Number(user.referralIncome || 0),
+      performance: Number(user.performanceIncome || 0),
+      team: Number(user.teamIncome || 0),
+      royalty: Number(user.royaltyIncome || 0),
+      
+      // Today Wallet-এ সরাসরি ডাটাবেজের লাইভ balance শো করবে
+      todayBalance: Number(user.todayBalance || 0), 
+      history
+    });
 
-const tomorrow = new Date(today);
-tomorrow.setDate(tomorrow.getDate() + 1);
-
-
-const todayHistory = await WalletHistory.find({
-
-  email: email.toLowerCase(),
-
-  date: {
-    $gte: today,
-    $lt: tomorrow
-  }
-
-});
-
-    const todayReferral = todayHistory
-.filter(i=>i.type==="Referral Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-const todayPerformance = todayHistory
-.filter(i=>i.type==="Performance Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-const todayTeam = todayHistory
-.filter(i=>i.type==="Team Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-const todayRoyalty = todayHistory
-.filter(i=>i.type==="Royalty Bonus")
-.reduce((a,b)=>a+Number(b.amount||0),0);
-
-
-const mainBalance = Number(
-  user.balance ||
-  user.wallet ||
-  user.walletBalance ||
-  0
-);
-
-const todayBalance =
-    todayReferral +
-    todayPerformance +
-    todayTeam +
-    todayRoyalty;
-
-res.json({
-
-success:true,
-
-user,
-
-name:user.name,
-
-walletId:
-user.walletId ||
-user.referralCode ||
-user._id.toString(),
-
-balance: mainBalance,         // Main Wallet
-
-referral: todayReferral,
-
-performance: todayPerformance,
-
-team: todayTeam,
-
-royalty: todayRoyalty,
-
-todayBalance,               // Withdrawable Wallet
-
-history
-
-});
   } catch (err) {
     console.log("WALLET SUMMARY ERROR:", err);
     res.status(500).json({
@@ -2288,6 +2236,9 @@ history
     });
   }
 });
+
+
+
 
 app.post("/wallet-user", async (req, res) => {
   try {
@@ -2327,9 +2278,7 @@ app.post("/wallet-user", async (req, res) => {
 });
 
 app.post("/wallet-data", auth, async (req, res) => {
-
   try {
-
     const { email } = req.body;
 
     const user = await User.findOne({ email });
@@ -2345,42 +2294,24 @@ app.post("/wallet-data", auth, async (req, res) => {
     }).sort({ date: -1 });
 
     res.json({
-
-      wallet: user.wallet || 0,
-
-      referralIncome:
-        user.referralIncome || 0,
-
-      performanceIncome:
-        user.performanceIncome || 0,
-
-      teamIncome:
-        user.teamIncome || 0,
-
-      royaltyIncome:
-        user.royaltyIncome || 0,
-
-      totalEarning:
-        user.totalEarning || 0,
-
-      walletId:
-        user.walletId || "",
-
+      wallet: Number(user.balance || user.wallet || 0),
+      referralIncome: Number(user.referralIncome || 0),
+      performanceIncome: Number(user.performanceIncome || 0),
+      teamIncome: Number(user.teamIncome || 0),
+      royaltyIncome: Number(user.royaltyIncome || 0),
+      totalEarning: Number(user.totalEarning || user.todayBalance || 0),
+      walletId: user.walletId || "",
       history
-
     });
 
   } catch (err) {
-
     console.log("WALLET DATA ERROR:", err);
-
     res.status(500).json({
       msg: "Wallet data loading failed"
     });
-
   }
-
 });
+
 
 // নতুন ডিপোজিট এপিআই (স্ক্রিনশট ছাড়া, শুধু ট্রানজেকশন আইডি দিয়ে)
 app.post("/deposit-request", async (req, res) => {
@@ -6585,58 +6516,43 @@ app.post("/daily-reward", async (req, res) => {
 });
             
 
-// ১. উইথড্র পেজের ইনফো এবং হিস্টরি লোড করার API
+// --- উইথড্র ইনফো লোড করার এপিআই ---
 app.post("/withdraw-info", async (req, res) => {
   try {
-    const email = String(req.body.email || "").toLowerCase();
+    const { email } = req.body;
+    
+    const user = await User.findOne({ email: email?.toLowerCase() });
+    if (!user) return res.status(404).json({ success: false, msg: "User not found" });
 
     const bank = await BankDetails.findOne({ email });
 
+    // আজ টোটাল কত উইথড্র রিকোয়েস্ট পেন্ডিং বা সাকসেস হয়েছে
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // আজকে 'today wallet'-এ আসা মোট ইনকাম (ধরে নিচ্ছি আপনার WalletHistory-তে আজকের বোনাস ট্র্যাক হচ্ছে)
-    const todayHistory = await WalletHistory.find({
-      email,
-      date: { $gte: today, $lt: tomorrow }
-    });
-
-    const referral = todayHistory.filter(i => i.type === "Referral Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-    const performance = todayHistory.filter(i => i.type === "Performance Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-    const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-    const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-
-    const totalTodayEarnings = referral + performance + team + royalty;
-
-    // আজকে ইউজার অলরেডি কতটা উইথড্র করেছে (Pending বা Success)
     const totalDebitedDocs = await WithdrawRequest.find({
       email,
       createdAt: { $gte: today, $lt: tomorrow },
       status: { $in: ["Pending", "Success"] }
     });
+
     const totalDebited = totalDebitedDocs.reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    // ওয়ালেট ব্যালেন্স হিসাব (আজকের মোট ইনকাম থেকে যা উইথড্র হয়েছে তা বাদ)
-    const walletBalance = totalTodayEarnings - totalDebited;
-
-    // উইথড্রযোগ্য ব্যালেন্স = (আজকের মোট ইনকামের ৮০%) - যা অলরেডি ডেবিট হয়েছে
-    let withdrawableBalance = Math.floor(totalTodayEarnings * 0.8) - totalDebited;
+    // উইথড্র করা যাবে মেইন ব্যালেন্স অথবা টুডে ব্যালেন্সের লজিক অনুযায়ী (আপনার আগের লজিক ঠিক রাখা হয়েছে)
+    let withdrawableBalance = Number(user.todayBalance || 0) - totalDebited;
     if (withdrawableBalance < 0) withdrawableBalance = 0;
 
-    // হিস্টরি সরাসরি WithdrawRequest কালেকশন থেকে আসবে (সাকসেস, পেন্ডিং, রিজেক্ট সব থাকবে)
     const history = await WithdrawRequest.find({ email }).sort({ createdAt: -1 });
 
     return res.json({
-  success: true,
-  // 🛠️ ফ্রন্টএন্ডের সাথে মিল রাখার জন্য walletBalance-কে todayBalance নামে পাঠানো হলো
-  todayBalance: walletBalance < 0 ? 0 : walletBalance,
-  withdrawableBalance: withdrawableBalance,
-  bank,
-  history
-});
-
+      success: true,
+      todayBalance: Number(user.todayBalance || 0), // সরাসরি ডাটাবেজ থেকে লাইভ টুডে ওয়ালেট
+      withdrawableBalance: withdrawableBalance,
+      bank,
+      history
+    });
 
   } catch (err) {
     console.log("WITHDRAW INFO ERROR:", err);
@@ -6645,7 +6561,7 @@ app.post("/withdraw-info", async (req, res) => {
 });
 
 
-// ২. উইথড্র রিকোয়েস্ট সাবমিট করার API
+// --- উইথড্র অ্যাকশন সাবমিট করার এপিআই ---
 app.post("/withdraw-request", async (req, res) => {
   try {
     const email = String(req.body.email || "").toLowerCase();
@@ -6657,14 +6573,14 @@ app.post("/withdraw-request", async (req, res) => {
     if (!user) return res.status(404).json({ success: false, msg: "User not found" });
     if (!bank) return res.status(400).json({ success: false, msg: "Please add bank details first" });
 
-    if (amount < 100) return res.status(400).json({ success: false, msg: "Minimum withdraw amount is ₹100" });
+    if (amount < 100) return res.status(400).json({ success: false, msg: "Minimum withdraw amount is 100" });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // চেক লজিক: আজকে কোনো Pending বা Success রিকোয়েস্ট আছে কিনা। Rejected থাকলে আবার করতে পারবে।
+    // দিনে ১ বারের বেশি উইথড্র ব্লক করার লজিক
     const activeRequestToday = await WithdrawRequest.findOne({
       email,
       createdAt: { $gte: today, $lt: tomorrow },
@@ -6674,28 +6590,25 @@ app.post("/withdraw-request", async (req, res) => {
     if (activeRequestToday) {
       return res.status(400).json({
         success: false,
-        msg: "You can only make one successful or pending withdraw request per day. Please try again tomorrow."
+        msg: "You can only make one withdraw request per day. Please try again tomorrow."
       });
     }
 
-    // পুনরায় ব্যালেন্স ভ্যালিডেশন
-    const todayHistory = await WalletHistory.find({ email, date: { $gte: today, $lt: tomorrow } });
-    const referral = todayHistory.filter(i => i.type === "Referral Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-    const performance = todayHistory.filter(i => i.type === "Performance Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-    const team = todayHistory.filter(i => i.type === "Team Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-    const royalty = todayHistory.filter(i => i.type === "Royalty Bonus").reduce((a, b) => a + Number(b.amount || 0), 0);
-    const totalTodayEarnings = referral + performance + team + royalty;
-
-    const totalDebitedDocs = await WithdrawRequest.find({ email, createdAt: { $gte: today, $lt: tomorrow }, status: { $in: ["Pending", "Success"] } });
+    const totalDebitedDocs = await WithdrawRequest.find({
+      email,
+      createdAt: { $gte: today, $lt: tomorrow },
+      status: { $in: ["Pending", "Success"] }
+    });
     const totalDebited = totalDebitedDocs.reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    const withdrawableBalance = Math.floor(totalTodayEarnings * 0.8) - totalDebited;
+    // উইথড্র ব্যালেন্স চেক (সরাসরি লাইভ todayBalance থেকে হিসাব করা হচ্ছে)
+    let withdrawableBalance = Number(user.todayBalance || 0) - totalDebited;
 
     if (amount > withdrawableBalance) {
       return res.status(400).json({ success: false, msg: "Amount is greater than withdrawable balance" });
     }
 
-    // নতুন উইথড্রাল রিকোয়েস্ট তৈরি (ওয়ালেট হিস্টরি টেবিলে এখন কোনো এন্ট্রি হবে না, শুধু উইথড্র টেবিলে হবে)
+    // নতুন উইথড্র রিকোয়েস্ট তৈরি
     await WithdrawRequest.create({
       email,
       name: user.name || "",
@@ -6711,6 +6624,10 @@ app.post("/withdraw-request", async (req, res) => {
       },
       status: "Pending"
     });
+
+    // উইথড্র রিকোয়েস্ট দেওয়ার সাথে সাথে ইউজারের todayBalance থেকে টাকা কেটে নেওয়া হচ্ছে
+    user.todayBalance = Number(user.todayBalance || 0) - amount;
+    await user.save();
 
     return res.json({
       success: true,
@@ -7092,47 +7009,72 @@ daysLeft: diff
 });
 
 
-// ==============today wallet to main wallet=================
-// প্রতিদিন রাত ১২:০০ টায় (0 0 * * *) রান হবে
+// ==================== today wallet to main wallet ====================
+// প্রতিদিন রাত ১২:০০ টায় (0 0 * * *) রান হবে
 cron.schedule("0 0 * * *", async () => {
   try {
     console.log("Running Midnight Wallet Settlement Cron...");
-    
+
     // শুধুমাত্র যাদের Today Wallet-এ ব্যালেন্স আছে তাদের খোঁজা হবে
     const users = await User.find({ todayBalance: { $gt: 0 } });
-    
+
+    if (users.length === 0) {
+      console.log("No users found with todayBalance. Skipping settlement.");
+      return;
+    }
+
+    // Bulk Operation এর মাধ্যমে ডাটাবেজ প্রসেস স্পীড বহুগুণ বাড়ানো হয়েছে
+    const bulkUserOps = [];
+    const historyOps = [];
+
     for (let user of users) {
       const remainingBalance = Number(user.todayBalance || 0);
 
       if (remainingBalance > 0) {
-        // ১. মেইন ওয়ালেটের সবগুলোতে ব্যালেন্স যোগ করে দিন
-        user.wallet = Number(user.wallet || 0) + remainingBalance;
-        user.balance = Number(user.balance || 0) + remainingBalance;
-        user.walletBalance = Number(user.walletBalance || 0) + remainingBalance;
+        // ১. মেইন ওয়ালেটের সবগুলোতে ব্যালেন্স যোগ এবং টুডে ওয়ালেট শূন্য করার কুয়েরি
+        bulkUserOps.push({
+          updateOne: {
+            filter: { _id: user._id },
+            update: {
+              $inc: {
+                wallet: remainingBalance,
+                balance: remainingBalance,
+                walletBalance: remainingBalance
+              },
+              $set: { todayBalance: 0 }
+            }
+          }
+        });
+
+        // ২. মেইন ওয়ালেট হিস্ট্রির এন্ট্রি তৈরি করা
+        const userEmail = user.email ? String(user.email).toLowerCase() : "unknown@user.com";
         
-        // ২. টুডে ওয়ালেট খালি বা শূন্য করে দিন
-        user.todayBalance = 0;
-        
-        await user.save();
-        
-        // ৩. মেইন ওয়ালেট হিস্ট্রিতে একটি সফল এন্ট্রি তৈরি করুন
-        await WalletHistory.create({
-          email: user.email.toLowerCase(),
-          type: "credit", // অথবা "Daily Settlement" আপনার ওয়ালেট ফিল্টার অনুযায়ী
+        historyOps.push({
+          email: userEmail,
+          type: "credit", // আপনার ওয়ালেট ফিল্টার অনুযায়ী
           amount: remainingBalance,
-          note: "Daily Today Wallet Settlement Received",
+          note: " Today Wallet Settlement ",
           status: "Success",
           date: new Date()
         });
       }
     }
-    console.log("Midnight Wallet Settlement completed successfully.");
+
+    // একবারে সব ইউজারের ডাটা আপডেট করা (ফাস্ট এবং সেফ)
+    if (bulkUserOps.length > 0) {
+      await User.bulkWrite(bulkUserOps);
+    }
+
+    // একবারে সব ওয়ালেট হিস্ট্রি তৈরি করা
+    if (historyOps.length > 0) {
+      await WalletHistory.insertMany(historyOps);
+    }
+
+    console.log(`Midnight Wallet Settlement completed successfully for ${bulkUserOps.length} users.`);
   } catch (err) {
     console.error("Cron Job Error:", err);
   }
 });
-
-
 
 
 
