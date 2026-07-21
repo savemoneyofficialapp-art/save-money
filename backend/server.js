@@ -2184,58 +2184,83 @@ app.post("/wallet-summary", async (req, res) => {
   try {
     const { email } = req.body;
 
-    const user = await User.findOne({
-      email: email?.toLowerCase()
-    });
-
-    if (!user) {
-      return res.json({
-        success: false,
-        msg: "User not found"
-      });
+    if (!email) {
+      return res.status(400).json({ success: false, msg: "Email is required" });
     }
 
-    // মেইন ওয়ালেট হিস্ট্রি (যা মেইন ওয়ালেটের ডিপোজিট/উইথড্র দেখায়)
-    const history = await WalletHistory.find({
-      email: email.toLowerCase()
-    })
-    .sort({ date: -1 })
-    .limit(20);
+    // ১. ইউজার ডাটা খুঁজে বের করা (মেইন ব্যালেন্স ও অন্যান্য ডিটেইলস এর জন্য)
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found" });
+    }
 
-    // মেইন ব্যালেন্স ক্যালকুলেশন
-    const mainBalance = Number(
-      user.balance ||
-      user.wallet ||
-      user.walletBalance ||
-      0
-    );
+    // ২. আজকের দিনের শুরু (রাত ১২:০০ টা বা 00:00:00) নির্ধারণ করা
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-    res.json({
+    // ৩. শুধুমাত্র আজকের দিনের অল ট্রানজেকশন হিস্ট্রি কুয়েরি করা
+    const todayTransactions = await WalletHistory.find({
+      email: String(email).toLowerCase(),
+      status: "Success",
+      createdAt: { $gte: todayStart } // আজকের তারিখ বা তার পরের এন্ট্রি
+    });
+
+    // ৪. আজকের ট্রানজেকশন থেকে আলাদা আলাদা বোনাস ক্যালকুলেট করা
+    let todayReferral = 0;
+    let todayPerformance = 0;
+    let todayTeam = 0;
+    let todayRoyalty = 0;
+
+    todayTransactions.forEach((tx) => {
+      const type = String(tx.type || "").toLowerCase();
+      const note = String(tx.note || "").toLowerCase();
+      const amount = Number(tx.amount || 0);
+
+      // আপনার ডাটাবেজে সেভ হওয়া টেক্সট অনুযায়ী ফিল্টার
+      if (type.includes("referral") || note.includes("referral")) {
+        todayReferral += amount;
+      } else if (type.includes("performance") || note.includes("performance")) {
+        todayPerformance += amount;
+      } else if (type.includes("team") || note.includes("team")) {
+        todayTeam += amount;
+      } else if (type.includes("royalty") || note.includes("royalty")) {
+        todayRoyalty += amount;
+      }
+    });
+
+    // ৫. ইউজারের অল-টাইম ট্রানজেকশন হিস্ট্রি (লিস্টে দেখানোর জন্য)
+    const fullHistory = await WalletHistory.find({ email: String(email).toLowerCase() })
+      .sort({ createdAt: -1 })
+      .limit(50); // পারফরম্যান্সের জন্য সর্বোচ্চ ৫০টি হিস্ট্রি পাঠানো হচ্ছে
+
+    // ৬. ফ্রন্টঅ্যান্ডের চাহিদা অনুযায়ী রেসপন্স পাঠানো
+    return res.status(200).json({
       success: true,
-      user,
-      name: user.name,
-      walletId: user.walletId || user.referralCode || user._id.toString(),
-      balance: mainBalance, // Main Wallet Balance
+      walletId: user.walletId || "N/A",
+      name: user.name || "User",
+      avatar: user.photo || user.photoImage || "",
+      user: user,
       
-      // সরাসরি ইউজার মডেল থেকে বোনাসের রিয়েল-টাইম ডেটা
-      referral: Number(user.referralIncome || 0),
-      performance: Number(user.performanceIncome || 0),
-      team: Number(user.teamIncome || 0),
-      royalty: Number(user.royaltyIncome || 0),
+      // লাইফটাইম মেইন ব্যালেন্স
+      balance: Number(user.balance || 0), 
       
-      // Today Wallet-এ সরাসরি ডাটাবেজের লাইভ balance শো করবে
-      todayBalance: Number(user.todayBalance || 0), 
-      history
+      // আজকের রিয়েল-টাইম ব্যালেন্স ও বোনাস সামারি
+      todayBalance: Number(user.todayBalance || 0),
+      referral: todayReferral,
+      performance: todayPerformance,
+      team: todayTeam,
+      royalty: todayRoyalty,
+      
+      // ফুল হিস্ট্রি অ্যারেই
+      history: fullHistory
     });
 
-  } catch (err) {
-    console.log("WALLET SUMMARY ERROR:", err);
-    res.status(500).json({
-      success: false,
-      msg: "Server error"
-    });
+  } catch (error) {
+    console.error("Wallet Summary API Error:", error);
+    return res.status(500).json({ success: false, msg: "Internal server error" });
   }
 });
+
 
 
 
@@ -7009,21 +7034,20 @@ daysLeft: diff
 });
 
 
-// ==================== today wallet to main wallet ====================
+// ==================== today wallet to main wallet (Updated) ====================
 // প্রতিদিন রাত ১২:০০ টায় (0 0 * * *) রান হবে
 cron.schedule("0 0 * * *", async () => {
   try {
     console.log("Running Midnight Wallet Settlement Cron...");
 
-    // শুধুমাত্র যাদের Today Wallet-এ ব্যালেন্স আছে তাদের খোঁজা হবে
+    // যাদের Today Wallet-এ অবশিষ্টাংশ বা পুরো ব্যালেন্স রয়ে গেছে তাদের খোঁজা হবে
     const users = await User.find({ todayBalance: { $gt: 0 } });
 
     if (users.length === 0) {
-      console.log("No users found with todayBalance. Skipping settlement.");
+      console.log("No users found with remaining todayBalance. Skipping.");
       return;
     }
 
-    // Bulk Operation এর মাধ্যমে ডাটাবেজ প্রসেস স্পীড বহুগুণ বাড়ানো হয়েছে
     const bulkUserOps = [];
     const historyOps = [];
 
@@ -7031,7 +7055,7 @@ cron.schedule("0 0 * * *", async () => {
       const remainingBalance = Number(user.todayBalance || 0);
 
       if (remainingBalance > 0) {
-        // ১. মেইন ওয়ালেটের সবগুলোতে ব্যালেন্স যোগ এবং টুডে ওয়ালেট শূন্য করার কুয়েরি
+        // ১. আজ যা বেঁচে আছে (১০০% অথবা ৮০% উইথড্রর পর বাকি ২০%) তা মেইন ওয়ালেটে যোগ হবে
         bulkUserOps.push({
           updateOne: {
             filter: { _id: user._id },
@@ -7041,40 +7065,40 @@ cron.schedule("0 0 * * *", async () => {
                 balance: remainingBalance,
                 walletBalance: remainingBalance
               },
-              $set: { todayBalance: 0 }
+              $set: { todayBalance: 0 } // টুডে ওয়ালেট ক্লিয়ার হয়ে যাবে
             }
           }
         });
 
-        // ২. মেইন ওয়ালেট হিস্ট্রির এন্ট্রি তৈরি করা
         const userEmail = user.email ? String(user.email).toLowerCase() : "unknown@user.com";
         
+        // ২. ওয়ালেট হিস্ট্রিতে সেটেলমেন্ট ট্র্যাকিং এন্ট্রি
         historyOps.push({
           email: userEmail,
-          type: "credit", // আপনার ওয়ালেট ফিল্টার অনুযায়ী
+          type: "credit",
           amount: remainingBalance,
-          note: " Today Wallet Settlement ",
+          note: "Daily Remaining Today Wallet Settlement Received",
           status: "Success",
           date: new Date()
         });
       }
     }
 
-    // একবারে সব ইউজারের ডাটা আপডেট করা (ফাস্ট এবং সেফ)
+    // ডাটাবেজে বাল্ক রাইট অপারেশন
     if (bulkUserOps.length > 0) {
       await User.bulkWrite(bulkUserOps);
     }
 
-    // একবারে সব ওয়ালেট হিস্ট্রি তৈরি করা
     if (historyOps.length > 0) {
       await WalletHistory.insertMany(historyOps);
     }
 
-    console.log(`Midnight Wallet Settlement completed successfully for ${bulkUserOps.length} users.`);
+    console.log(`Midnight Settlement successfully moved remaining balances for ${bulkUserOps.length} users.`);
   } catch (err) {
     console.error("Cron Job Error:", err);
   }
 });
+
 
 
 
