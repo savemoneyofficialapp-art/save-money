@@ -6629,12 +6629,14 @@ app.post("/withdraw-info", async (req, res) => {
     const history = await WithdrawRequest.find({ email }).sort({ createdAt: -1 });
 
     return res.json({
-      success: true,
-      walletBalance: walletBalance < 0 ? 0 : walletBalance,
-      withdrawableBalance: withdrawableBalance,
-      bank,
-      history
-    });
+  success: true,
+  // 🛠️ ফ্রন্টএন্ডের সাথে মিল রাখার জন্য walletBalance-কে todayBalance নামে পাঠানো হলো
+  todayBalance: walletBalance < 0 ? 0 : walletBalance,
+  withdrawableBalance: withdrawableBalance,
+  bank,
+  history
+});
+
 
   } catch (err) {
     console.log("WITHDRAW INFO ERROR:", err);
