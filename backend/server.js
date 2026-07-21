@@ -6676,33 +6676,31 @@ app.post("/admin/withdraw-action", async (req, res) => {
     if (!request) return res.status(404).json({ success: false, msg: "Request not found" });
     if (request.status !== "Pending") return res.status(400).json({ success: false, msg: "This request already processed" });
 
+    // --- SUCCESS LOGIC ---
     if (status === "Success") {
       request.status = "Success";
       request.actionDate = new Date();
       await request.save();
 
-      // অরিজিনাল ওয়ালেট হিস্ট্রি স্ট্যাটাসও Success করা
-      await WalletHistory.findOneAndUpdate(
-        { email: request.email, title: "Withdraw Request Pending Amount", status: "Pending" },
-        { status: "Success" }
-      );
+      // নোট: আপনার রিকোয়েস্ট অনুযায়ী মেইন ওয়ালেট হিস্ট্রি (WalletHistory) আপডেট সম্পূর্ণ বন্ধ রাখা হলো।
 
       return res.json({ success: true, msg: "Withdraw Success", request });
     }
 
+    // --- REJECTED LOGIC ---
     if (status === "Rejected") {
       request.status = "Rejected";
       request.rejectReason = rejectReason || "Rejected by admin";
       request.actionDate = new Date();
       await request.save();
 
-      // অরিজিনাল ওয়ালেট হিস্ট্রি স্ট্যাটাস Rejected করা
-      await WalletHistory.findOneAndUpdate(
-        { email: request.email, title: "Withdraw Request Pending Amount", status: "Pending" },
-        { status: "Rejected" }
+      // ⚡ নতুন রিফান্ড লজিক: ইউজারের todayBalance-এ উইথড্রাল অ্যামাউন্টটি যোগ করা হলো
+      await User.findOneAndUpdate(
+        { email: request.email },
+        { $inc: { todayBalance: Number(request.amount || 0) } }
       );
 
-      // (নোট: আপনার রিকোয়েস্ট অনুযায়ী এখান থেকে WalletHistory.create পার্টটি সম্পূর্ণ বাদ দেওয়া হয়েছে)
+      // নোট: আপনার রিকোয়েস্ট অনুযায়ী মেইন ওয়ালেট হিস্ট্রি (WalletHistory) আপডেট বা ক্রিয়েট সম্পূর্ণ বন্ধ রাখা হলো।
 
       return res.json({ success: true, msg: "Withdraw Rejected", request });
     }
