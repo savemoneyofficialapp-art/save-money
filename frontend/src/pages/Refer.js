@@ -194,8 +194,8 @@ export default function Refer() {
   const royAmt = Number(royalty.balance || user.royaltyIncome || 0);
   const refAmt = Number(referBonus.totalBonus || user.referIncome || 0);
 
-  // [UPDATED LOGIC] সরাসরি ব্যাকএন্ড থেকে আসা আজমাকৃত টুডে ব্যালেন্স এখানে রিফ্লেক্ট করবে
-  const totalTodayWalletBalance = Number(user.todayBalance || 0);
+  // 🛠️ লজিক চেঞ্জ: সব বোনাসের টোটাল (All Time Balance) বের করার জন্য ৪টি বোনাস যোগ করা হলো
+  const totalAllTimeBalance = perfAmt + teamAmt + royAmt + refAmt;
 
   const referLink = `${window.location.origin}/register?ref=${referCode}`;
 
@@ -358,10 +358,11 @@ export default function Refer() {
           </div>
         </div>
 
+        {/* 🛠️ UI চেঞ্জ: এখানে টেক্সট এবং ভেরিয়েবল পরিবর্তন করে All Time Balance সেট করা হয়েছে */}
         <div style={styles.heroRight}>
           <div style={styles.walletRound}>⚡</div>
-          <p>Today Wallet Balance</p>
-          <h1>{money(totalTodayWalletBalance)}</h1>
+          <p>All Time Balance</p>
+          <h1>{money(totalAllTimeBalance)}</h1>
         </div>
       </section>
 
