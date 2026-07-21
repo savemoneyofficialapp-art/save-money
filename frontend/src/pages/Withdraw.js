@@ -46,7 +46,9 @@ export default function Withdraw() {
         // ⚡ পরিবর্তনকৃত লাইন: টুডে ওয়ালেটে বোনাস টাকা দেখানোর জন্য todayBalance ম্যাপ করা হলো
         setWalletBalance(data.todayBalance || 0);
         
-        setWithdrawableBalance(data.withdrawableBalance || 0);
+        // ⚡ আপডেট: আজকের আর্নিং এর ওপর ৮০% লিমিট ফ্রন্টঅ্যান্ডে অ্যাপ্লাই করা হলো
+        setWithdrawableBalance((data.todayBalance || 0) * 0.8);
+        
         setBank(data.bank || null);
         setHistory(data.history || []); // সাকসেস, পেন্ডিং, রিজেক্ট সব ধরনের হিস্টরি
       }
