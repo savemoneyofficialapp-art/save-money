@@ -437,42 +437,46 @@ export default function Wallet() {
           <WalletIllustration />
         </section>
 
-        <section style={styles.incomePanel}>
-          <IncomeCard
-            icon="👥"
-            title="REFERRAL"
-            amount={wallet.referral}
-            color="#10b981"
-          />
+        
 
-          <IncomeCard
-            icon="📈"
-            title="PERFORMANCE"
-            amount={wallet.performance}
-            color="#f59e0b"
-          />
+<section style={styles.incomePanel}>
+  <IncomeCard
+    icon="👥"
+    title="REFERRAL"
+    amount={wallet.referral}
+    color="#10b981"
+  />
 
-          <IncomeCard
-            icon="👥"
-            title="TEAM"
-            amount={wallet.team}
-            color="#2563eb"
-          />
+  <IncomeCard
+    icon="📈"
+    title="PERFORMANCE"
+    amount={wallet.performance}
+    color="#f59e0b"
+  />
 
-          <IncomeCard
-            icon="👑"
-            title="ROYALTY"
-            amount={wallet.royalty}
-            color="#9333ea"
-          />
+  <IncomeCard
+    icon="👥"
+    title="TEAM"
+    amount={wallet.team}
+    color="#2563eb"
+  />
 
-          <IncomeCard
-            icon="👛"
-            title="TODAY WALLET"
-            amount={wallet.todayBalance}
-            color="#14b8a6"
-          />
-        </section>
+  <IncomeCard
+    icon="👑"
+    title="ROYALTY"
+    amount={wallet.royalty}
+    color="#9333ea"
+  />
+
+  {/* এখানে title পরিবর্তন করে TODAY EARNING করা হলো */}
+  <IncomeCard
+    icon="👛"
+    title="TODAY EARNING"
+    amount={wallet.todayBalance}
+    color="#14b8a6"
+  />
+</section>
+
 
         <section style={styles.middleGrid}>
           <div style={styles.transferCard}>
