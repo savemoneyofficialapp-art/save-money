@@ -43,14 +43,27 @@ export default function Withdraw() {
       });
       const data = await res.json();
       if (data.success) {
-        // ⚡ পরিবর্তনকৃত লাইন: টুডে ওয়ালেটে বোনাস টাকা দেখানোর জন্য todayBalance ম্যাপ করা হলো
         setWalletBalance(data.todayBalance || 0);
         
-        // ⚡ আপডেট: আজকের আর্নিং এর ওপর ৮০% লিমিট ফ্রন্টঅ্যান্ডে অ্যাপ্লাই করা হলো
-        setWithdrawableBalance((data.todayBalance || 0) * 0.8);
-        
+        const historyList = data.history || [];
+        setHistory(historyList);
+
+        // ⚡ আপডেট লজিক: আজকে কোনো Pending বা Success রিকোয়েস্ট থাকলে Withdrawable Balance ০ দেখাবে এবং লক থাকবে।
+        const today = new Date().toDateString();
+        const hasActiveRequest = historyList.some((req) => {
+          const reqDate = new Date(req.createdAt).toDateString();
+          return reqDate === today && (req.status === "Pending" || req.status === "Success");
+        });
+
+        if (hasActiveRequest) {
+          // রিকোয়েস্ট পেন্ডিং বা সাকসেস থাকলে বাকি ২০% লক থাকবে, উইথড্র করা যাবে না
+          setWithdrawableBalance(0);
+        } else {
+          // রিকোয়েস্ট রিজেক্ট হলে বা রিকোয়েস্ট না থাকলে স্বাভাবিক ৮০% ব্যালেন্স দেখাবে
+          setWithdrawableBalance((data.todayBalance || 0) * 0.8);
+        }
+
         setBank(data.bank || null);
-        setHistory(data.history || []); // সাকসেস, পেন্ডিং, রিজেক্ট সব ধরনের হিস্টরি
       }
     } catch (err) {
       console.log("ERROR:", err);
