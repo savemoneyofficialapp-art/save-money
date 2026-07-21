@@ -2188,7 +2188,7 @@ app.post("/wallet-summary", async (req, res) => {
       return res.status(400).json({ success: false, msg: "Email is required" });
     }
 
-    // ১. ইউজার ডাটা খুঁজে বের করা (মেইন ব্যালেন্স ও অন্যান্য ডিটেইলস এর জন্য)
+    // ১. ইউজার ডাটা খুঁজে বের করা
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, msg: "User not found" });
@@ -2202,7 +2202,7 @@ app.post("/wallet-summary", async (req, res) => {
     const todayTransactions = await WalletHistory.find({
       email: String(email).toLowerCase(),
       status: "Success",
-      createdAt: { $gte: todayStart } // আজকের তারিখ বা তার পরের এন্ট্রি
+      createdAt: { $gte: todayStart }
     });
 
     // ৪. আজকের ট্রানজেকশন থেকে আলাদা আলাদা বোনাস ক্যালকুলেট করা
@@ -2216,7 +2216,6 @@ app.post("/wallet-summary", async (req, res) => {
       const note = String(tx.note || "").toLowerCase();
       const amount = Number(tx.amount || 0);
 
-      // আপনার ডাটাবেজে সেভ হওয়া টেক্সট অনুযায়ী ফিল্টার
       if (type.includes("referral") || note.includes("referral")) {
         todayReferral += amount;
       } else if (type.includes("performance") || note.includes("performance")) {
@@ -2228,10 +2227,10 @@ app.post("/wallet-summary", async (req, res) => {
       }
     });
 
-    // ৫. ইউজারের অল-টাইম ট্রানজেকশন হিস্ট্রি (লিস্টে দেখানোর জন্য)
+    // ৫. ইউজারের অল-টাইম ট্রানজেকশন হিস্ট্রি
     const fullHistory = await WalletHistory.find({ email: String(email).toLowerCase() })
       .sort({ createdAt: -1 })
-      .limit(50); // পারফরম্যান্সের জন্য সর্বোচ্চ ৫০টি হিস্ট্রি পাঠানো হচ্ছে
+      .limit(50);
 
     // ৬. ফ্রন্টঅ্যান্ডের চাহিদা অনুযায়ী রেসপন্স পাঠানো
     return res.status(200).json({
@@ -2244,8 +2243,8 @@ app.post("/wallet-summary", async (req, res) => {
       // লাইফটাইম মেইন ব্যালেন্স
       balance: Number(user.balance || 0), 
       
-      // আজকের রিয়েল-টাইম ব্যালেন্স ও বোনাস সামারি
-      todayBalance: Number(user.todayBalance || 0),
+      // [পরিবর্তন] আজকের ৪টি ইনকামের যোগফল পাঠানো হলো (উইথড্র করলেও মাইনাস হবে না)
+      todayBalance: todayReferral + todayPerformance + todayTeam + todayRoyalty,
       referral: todayReferral,
       performance: todayPerformance,
       team: todayTeam,
