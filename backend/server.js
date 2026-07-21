@@ -1904,7 +1904,6 @@ err
 });
 
 
-
 app.post("/renew-invest", async (req, res) => {
   try {
     const { investmentId } = req.body;
@@ -1975,20 +1974,21 @@ app.post("/renew-invest", async (req, res) => {
     investment.renewCount = Number(investment.renewCount || 0) + 1;
     investment.lastRenewDate = new Date();
 
-    // পরবর্তী রিনিউ ডেট সেট করা (পরের মাসের ১ তারিখ)
+    // ================== ফিক্সড ৩০ দিনের লজিক ==================
+    // পরবর্তী রিনিউ ডেট সেট করা (বর্তমান সময় থেকে ঠিক ৩০ দিন পর)
     const nextRenew = new Date();
-    nextRenew.setMonth(nextRenew.getMonth() + 1);
-    nextRenew.setDate(1);
+    nextRenew.setDate(nextRenew.getDate() + 30);
 
     // ফ্রন্টএন্ডে daysLeft হিসাবের সুবিধার্থে দুটি ফিল্ডই আপডেট রাখা হলো
     investment.nextRenewDate = nextRenew;
     investment.renewDate = nextRenew; 
+    // ==========================================================
 
     investment.status = "Active";
     investment.renewStatus = "Renewed";
     await investment.save();
 
-    // বোনাস এবং পারফরম্যান্স প্রসেসিং (ট্রাই-ক্যাচ ব্লকে সুরক্ষিত)
+    // বোনাস এবং পারফরম্যান্স প্রсеসিং (ট্রাই-ক্যাচ ব্লকে সুরক্ষিত)
     try {
       await updatePerformanceStatus(investment.email);
       await processRenewBonuses(investment.email, investment);
@@ -2024,6 +2024,7 @@ app.post("/renew-invest", async (req, res) => {
     });
   }
 });
+
       
 
 
@@ -7129,120 +7130,120 @@ await User.updateMany(
 
 });
 
-// =============== AUTO RENEW =================
+// ==================== AUTO RENEW ====================
 // প্রতিদিন রাত ১২টায় এই ক্রন জবটি কাজ করবে
-cron.schedule('0 0 * * *', async () => {
-    console.log('Running Automatic Investment Renewal Cron Job...');
-    try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+cron.schedule("0 0 * * *", async () => {
+  console.log("Running Automatic Investment Renewal Cron Job...");
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-        // ১. যে সব ইনভেস্টমেন্ট Active এবং যাদের পরবর্তী রিনিউ ডেট আজকের বা আগের (দিন শেষ হয়ে গেছে)
-        const pendingRenewals = await Investment.find({
-            status: 'Active',
-            $or: [
-                { nextRenewDate: { $lte: today } },
-                { renewDate: { $lte: today } }
-            ]
+    // ১. যে সব ইনভেস্টমেন্ট Active এবং তাদের পরবর্তী রিনিউ ডেট আজকের বা আগের (মিস হয়ে গেছে)
+    const pendingRenewals = await Investment.find({
+      status: "Active",
+      $or: [
+        { nextRenewDate: { $lte: today } },
+        { renewDate: { $lte: today } }
+      ]
+    });
+
+    for (let investment of pendingRenewals) {
+      // ইনভেস্টর খুঁজুন
+      const user = await User.findOne({
+        email: String(investment.email).toLowerCase()
+      });
+
+      if (!user) {
+        console.log(`User not found for investment: ${investment.email}`);
+        continue;
+      }
+
+      // সঠিক রিনিউ অ্যামাউন্ট নির্ধারণ
+      const renewAmount = Number(
+        investment.monthlyAmount ||
+        investment.monthlyReturn ||
+        investment.amount ||
+        0
+      );
+
+      // ইউজারের অ্যাকাউন্ট ব্যালেন্স চেক
+      const balance = Number(user.balance || user.wallet || user.walletBalance || 0);
+
+      // ব্যালেন্স পর্যাপ্ত থাকলে অ্যাকাউন্ট ডেবিট হবে
+      if (balance >= renewAmount) {
+        // ইউজারের ওয়ালেট থেকে ব্যালেন্স মাইনাস করা
+        user.balance = Math.max(0, Number(user.balance || 0) - renewAmount);
+        user.wallet = Math.max(0, Number(user.wallet || 0) - renewAmount);
+        user.walletBalance = Math.max(0, Number(user.walletBalance || 0) - renewAmount);
+
+        user.activeStatus = "Active";
+        user.status = "Active";
+        await user.save();
+
+        // ইনভেস্টমেন্টের হিস্ট্রি রেকর্ডে (Statement) যোগ করা
+        investment.history.push({
+          type: "AUTO_RENEW",
+          amount: renewAmount,
+          date: new Date(),
+          slipNo: "RNW-" + Date.now()
         });
 
-        for (let investment of pendingRenewals) {
-            // ইউজারকে খুঁজুন
-            const user = await User.findOne({
-                email: String(investment.email).toLowerCase()
-            });
+        investment.monthsPaid = Number(investment.monthsPaid || 1) + 1;
+        investment.renewCount = Number(investment.renewCount || 0) + 1;
+        investment.lastRenewDate = new Date();
 
-            // FIX: ইউজার না পাওয়া গেলে স্কিপ করবে (আগে ভুল লজিক ছিল)
-            if (!user) {
-                console.log(`User not found for investment: ${investment.email}`);
-                continue; 
-            }
+        // ================== ফিক্সড লজিক ==================
+        // বর্তমান রিনিউ করার দিন থেকে ঠিক ৩০ দিন পরের তারিখ সেট করা
+        const nextRenew = new Date();
+        nextRenew.setDate(nextRenew.getDate() + 30); 
 
-            // সঠিক রিনিউ অ্যামাউন্ট নির্ধারণ
-            const renewAmount = Number(
-                investment.monthlyAmount ||
-                investment.monthlyReturn ||
-                investment.amount ||
-                0
-            );
+        investment.nextRenewDate = nextRenew;
+        investment.renewDate = nextRenew;
+        // =================================================
 
-            // ইউজারের অ্যাকাউন্ট ব্যালেন্স চেক
-            const balance = Number(user.balance || user.wallet || user.walletBalance || 0);
+        investment.status = "Active";
+        investment.renewStatus = "Renewed";
+        await investment.save();
 
-            // ব্যালেন্স পর্যাপ্ত থাকলে অ্যাকাউন্ট অটো-রিনিউ হবে
-            if (balance >= renewAmount) {
-                // ইউজারের অ্যাকাউন্ট থেকে ব্যালেন্স মাইনাস করা
-                user.balance = Math.max(0, Number(user.balance || 0) - renewAmount);
-                user.wallet = Math.max(0, Number(user.wallet || 0) - renewAmount);
-                user.walletBalance = Math.max(0, Number(user.walletBalance || 0) - renewAmount);
-
-                user.activeStatus = "Active";
-                user.status = "Active";
-                await user.save();
-
-                // ইনভেস্টমেন্টের হিস্ট্রি রেকর্ড (Statement) যোগ করা
-                investment.history.push({
-                    type: "AUTO_RENEW",
-                    amount: renewAmount,
-                    date: new Date(),
-                    slipNo: "AR-" + Date.now()
-                });
-
-                investment.monthsPaid = Number(investment.monthsPaid || 1) + 1;
-                investment.renewCount = Number(investment.renewCount || 0) + 1;
-                investment.lastRenewDate = new Date();
-
-                // পরবর্তী রিনিউ তারিখ ১ মাস পিছিয়ে দেওয়া
-                const nextRenew = new Date();
-                nextRenew.setMonth(nextRenew.getMonth() + 1);
-                nextRenew.setDate(1); 
-
-                investment.nextRenewDate = nextRenew;
-                investment.renewDate = nextRenew;
-
-                investment.status = "Active";
-                investment.renewStatus = "Renewed";
-                await investment.save();
-
-                // বোনাস এবং পারফরম্যান্স রিলেটেড ডিস্ট্রিবিউশন
-                try {
-                    if (typeof updatePerformanceStatus === 'function') await updatePerformanceStatus(investment.email);
-                    if (typeof processRenewBonuses === 'function') await processRenewBonuses(investment.email, investment);
-                    if (typeof payRoyaltyBonus === 'function') await payRoyaltyBonus(investment.email, renewAmount);
-                } catch (err) {
-                    console.log("CRON JOB BONUS ERROR:", err);
-                }
-
-                // ওয়ালেট ট্রান্সজেকশন হিস্ট্রি (Statement) তৈরি
-                await WalletHistory.create({
-                    email: user.email,
-                    amount: renewAmount,
-                    type: "Debit",
-                    status: "Success",
-                    description: "SIP Auto Renew Payment",
-                    date: new Date()
-                });
-
-                console.log(`Successfully auto-renewed investment for ${investment.email}`);
-
-            } else {
-                // ব্যালেন্স ঠিক না থাকলে: ইনভেস্টমেন্ট Overdue/Inactive এবং ইউজারকে Inactive করা
-                investment.status = 'Inactive';
-                investment.renewStatus = 'Due'; // (এখানে আপনি চাইলে 'Overdue'ও লিখতে পারেন)
-                await investment.save();
-
-                user.activeStatus = 'Inactive';
-                user.status = 'Inactive';
-                await user.save();
-
-                console.log(`Failed auto-renew (Insufficient balance). Account inactivated for ${investment.email}`);
-            }
+        // বোনাস এবং পারফরম্যান্স রেফারেল ডিস্ট্রিবিউশন
+        try {
+          if (typeof updatePerformanceStatus === 'function') await updatePerformanceStatus(investment.email);
+          if (typeof processRenewBonuses === 'function') await processRenewBonuses(investment.email, investment);
+          if (typeof payRoyaltyBonus === 'function') await payRoyaltyBonus(investment.email, renewAmount);
+        } catch (err) {
+          console.log("CRON JOB BONUS ERROR:", err);
         }
-    } catch (error) {
-        console.error('Error in Auto Renew Cron Job:', error);
-    }
-});
 
+        // ওয়ালেট ট্রানজেকশন হিস্ট্রি তৈরি
+        await WalletHistory.create({
+          email: user.email,
+          amount: renewAmount,
+          type: "Debit",
+          status: "Success",
+          description: "SIP Auto Renew Payment",
+          date: new Date()
+        });
+
+        console.log(`Successfully auto-renewed investment for ${investment.email}`);
+
+      } else {
+        // ব্যালেন্স ঠিক না থাকলে ইনভেস্টমেন্ট Overdue/Inactive এবং ইউজারকে Inactive করা
+        investment.status = "Inactive";
+        investment.renewStatus = "Due"; 
+        await investment.save();
+
+        user.activeStatus = "Inactive";
+        user.status = "Inactive";
+        await user.save();
+
+        console.log(`Failed auto-renew (Insufficient balance). Account inactivated for ${investment.email}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error in Auto Renew Cron Job:', error);
+  }
+});
+          
 
 
 //================== AUTO INACTIVE CHECK ===================
