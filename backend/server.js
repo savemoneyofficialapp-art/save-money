@@ -6680,7 +6680,7 @@ app.post("/admin/withdraw-action", async (req, res) => {
       request.actionDate = new Date();
       await request.save();
 
-      // অরিজিনাল ওয়ালেট হিস্ট্রির স্ট্যাটাসও Success করা
+      // অরিজিনাল ওয়ালেট হিস্ট্রি স্ট্যাটাসও Success করা
       await WalletHistory.findOneAndUpdate(
         { email: request.email, title: "Withdraw Request Pending Amount", status: "Pending" },
         { status: "Success" }
@@ -6695,24 +6695,15 @@ app.post("/admin/withdraw-action", async (req, res) => {
       request.actionDate = new Date();
       await request.save();
 
-      // অরিজিনাল ওয়ালেট হিস্ট্রির স্ট্যাটাস Rejected করা
+      // অরিজিনাল ওয়ালেট হিস্ট্রি স্ট্যাটাস Rejected করা
       await WalletHistory.findOneAndUpdate(
         { email: request.email, title: "Withdraw Request Pending Amount", status: "Pending" },
         { status: "Rejected" }
       );
 
-      // রিফান্ড এন্ট্রি যোগ করা
-      await WalletHistory.create({
-        email: request.email,
-        type: "Referral Bonus",
-        amount: Number(request.amount),
-        title: "Withdraw Rejected Refund",
-        description: rejectReason || "Withdrawal request rejected by admin",
-        status: "Rejected",
-        date: new Date()
-      });
+      // (নোট: আপনার রিকোয়েস্ট অনুযায়ী এখান থেকে WalletHistory.create পার্টটি সম্পূর্ণ বাদ দেওয়া হয়েছে)
 
-      return res.json({ success: true, msg: "Withdraw Rejected & Refunded", request });
+      return res.json({ success: true, msg: "Withdraw Rejected", request });
     }
 
     return res.status(400).json({ success: false, msg: "Invalid status provided" });
@@ -6721,6 +6712,7 @@ app.post("/admin/withdraw-action", async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+
 
 
 
