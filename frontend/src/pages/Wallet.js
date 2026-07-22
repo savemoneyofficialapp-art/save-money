@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
+import html2canvas from "html2canvas";
 import { API } from "../config";
 
 export default function Wallet() {
@@ -40,6 +41,10 @@ export default function Wallet() {
 
   const [historyFilter, setHistoryFilter] = useState("all");
   const [showAllHistory, setShowAllHistory] = useState(false);
+
+  // --- রিসিপ্ট এবং স্ক্রিন ক্যাপচারের জন্য নতুন স্টেট ও রেফারেন্স ---
+  const [selectedTxn, setSelectedTxn] = useState(null);
+  const receiptRef = useRef(null);
 
   // --- স্ক্রিনের মাঝখানে বড় মেসেজ দেখানোর জন্য নতুন স্টেট ---
   const [statusOverlay, setStatusOverlay] = useState({
@@ -216,7 +221,6 @@ export default function Wallet() {
       return triggerStatusOverlay("warning", "Enter valid amount");
     }
 
-    // --- ২০০০ টাকা লক লজিক অ্যালার্ট মডিফাই ---
     const currentBalance = Number(wallet.balance || 0);
 
     if (currentBalance <= 2000) {
@@ -317,6 +321,48 @@ export default function Wallet() {
     } catch {
       toast.error("Copy failed");
     }
+  };
+
+  // --- রিসিপ্ট ইমেজ ডাউনলোড ও শেয়ার হ্যান্ডলার ---
+  const handleShareReceipt = async () => {
+    if (!receiptRef.current) return;
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: "#ffffff"
+      });
+      
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `Receipt-${selectedTxn._id || "Txn"}.png`, { type: "image/png" });
+        
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "Transaction Receipt",
+              text: "Save Money Transaction Proof"
+            });
+          } catch (e) {
+            downloadFallback(canvas);
+          }
+        } else {
+          downloadFallback(canvas);
+        }
+      }, "image/png");
+    } catch (err) {
+      console.error("Receipt Generation Error:", err);
+      toast.error("Failed to generate receipt image");
+    }
+  };
+
+  const downloadFallback = (canvas) => {
+    const link = document.createElement("a");
+    link.download = `Receipt-${selectedTxn?._id || "transaction"}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    toast.success("Receipt Image Saved!");
   };
 
   if (loading) {
@@ -561,6 +607,7 @@ export default function Wallet() {
           </div>
         </section>
 
+        {/* --- রিডিজাইন করা এবং ইন্টারেক্টিভ ওয়ালেট হিস্টোরি সেকশন --- */}
         <section style={styles.historyCard}>
           <div style={styles.historyHeader}>
             <div>
@@ -569,7 +616,7 @@ export default function Wallet() {
               </h2>
 
               <p style={styles.historySub}>
-                Your recent wallet transactions
+                Your recent wallet transactions (Click to view receipt)
               </p>
             </div>
 
@@ -621,16 +668,15 @@ export default function Wallet() {
             return (
               <div
                 key={index}
-                style={styles.historyRow}
+                style={styles.clickableHistoryRow}
+                onClick={() => setSelectedTxn({ ...item, isCredit, desc })}
               >
                 <div>
                   <div
                     style={{
                       ...styles.typeCircle,
-                      background:
-                        item.type === "credit"
-                          ? "#dcfce7"
-                          : "#fee2e2"
+                      background: isCredit ? "#dcfce7" : "#fee2e2",
+                      color: isCredit ? "#16a34a" : "#dc2626"
                     }}
                   >
                     {isCredit ? "↓" : "↑"}
@@ -643,24 +689,18 @@ export default function Wallet() {
                   </div>
 
                   <div style={styles.rowSub}>
-                    {item.note || ""}
+                    {item.note || "Tap to details"}
                   </div>
                 </div>
 
                 <div>
                   <span
                     style={{
-                      color:
-                        isCredit
-                          ? "#16a34a"
-                          : "#dc2626",
+                      color: isCredit ? "#16a34a" : "#dc2626",
                       fontWeight: "700"
                     }}
                   >
-                    {isCredit
-                      ? "+"
-                      : "-"}{" "}
-                    ₹{Number(item.amount).toLocaleString()}
+                    {isCredit ? "+" : "-"} ₹{Number(item.amount).toLocaleString()}
                   </span>
                 </div>
 
@@ -670,7 +710,7 @@ export default function Wallet() {
                   </span>
                 </div>
 
-                <div>
+                <div style={{ fontSize: "13px", color: "#64748b" }}>
                   {item.createdAt || item.date
                     ? new Date(item.createdAt || item.date).toLocaleString("en-IN")
                     : "N/A"}
@@ -714,6 +754,77 @@ export default function Wallet() {
             </div>
           </div>
         </section>
+
+        {/* --- html2canvas সম্বলিত প্রিমিয়াম ডিজিটাল ট্রানজ্যাকশন রিসিপ্ট মডাল --- */}
+        {selectedTxn && (
+          <div style={styles.modalOverlay}>
+            <div style={styles.receiptContainer}>
+              <div ref={receiptRef} style={styles.receiptCard}>
+                <div style={styles.receiptHeader}>
+                  <div style={{...styles.receiptIconCircle, background: selectedTxn.isCredit ? "#e6fcf5" : "#fff5f5"}}>
+                    <span style={{color: selectedTxn.isCredit ? "#0ca678" : "#fa5252", fontSize: "28px"}}>
+                      {selectedTxn.isCredit ? "✓" : "⇱"}
+                    </span>
+                  </div>
+                  <h3 style={styles.receiptStatusText}>Transaction Successful</h3>
+                  <h1 style={{...styles.receiptAmountDisplay, color: selectedTxn.isCredit ? "#0ca678" : "#fa5252"}}>
+                    {selectedTxn.isCredit ? "+" : "-"} ₹{Number(selectedTxn.amount).toLocaleString("en-IN")}.00
+                  </h1>
+                  <p style={styles.receiptTypeTag}>{selectedTxn.desc.toUpperCase()}</p>
+                </div>
+                
+                <div style={styles.receiptDivider}>
+                  <div style={styles.receiptNotchLeft}></div>
+                  <div style={styles.receiptNotchRight}></div>
+                </div>
+
+                <div style={styles.receiptBody}>
+                  <div style={styles.receiptRowItem}>
+                    <span style={styles.receiptLabelText}>Wallet ID</span>
+                    <span style={styles.receiptValueText}>{wallet.walletId}</span>
+                  </div>
+                  <div style={styles.receiptRowItem}>
+                    <span style={styles.receiptLabelText}>User Name</span>
+                    <span style={styles.receiptValueText}>{wallet.name}</span>
+                  </div>
+                  <div style={styles.receiptRowItem}>
+                    <span style={styles.receiptLabelText}>Transaction ID</span>
+                    <span style={{...styles.receiptValueText, color: "#7c3aed"}}>{selectedTxn._id || selectedTxn.txnId || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
+                  </div>
+                  <div style={styles.receiptRowItem}>
+                    <span style={styles.receiptLabelText}>Date & Time</span>
+                    <span style={styles.receiptValueText}>
+                      {selectedTxn.createdAt || selectedTxn.date
+                        ? new Date(selectedTxn.createdAt || selectedTxn.date).toLocaleString("en-IN")
+                        : "N/A"}
+                    </span>
+                  </div>
+                  <div style={styles.receiptRowItem}>
+                    <span style={styles.receiptLabelText}>Remarks</span>
+                    <span style={styles.receiptValueText}>{selectedTxn.note || "Wallet Transaction"}</span>
+                  </div>
+                  <div style={styles.receiptRowItem}>
+                    <span style={styles.receiptLabelText}>Status</span>
+                    <span style={styles.receiptStatusBadge}>COMPLETED</span>
+                  </div>
+                </div>
+
+                <div style={styles.receiptFooter}>
+                  <p style={styles.receiptBrand}>🛡 Powered by SaveMoney Secure</p>
+                </div>
+              </div>
+
+              <div style={styles.receiptActionContainer}>
+                <button style={styles.receiptShareBtn} onClick={handleShareReceipt}>
+                  📸 Share / Save Receipt Image
+                </button>
+                <button style={styles.receiptCloseBtn} onClick={() => setSelectedTxn(null)}>
+                  Close Window
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Add Cash Modal */}
         {addOpen && (
@@ -868,6 +979,187 @@ function IncomeCard({ icon, title, amount, color }) {
 }
 
 const styles = {
+  // --- কাস্টম রিসিপ্ট ও নতুন রো ডিজাইনের চমৎকার স্টাইলশিট ---
+  clickableHistoryRow: {
+    display: "grid",
+    gridTemplateColumns: "70px 1.6fr 1fr 1fr 1.2fr",
+    alignItems: "center",
+    padding: "16px 8px",
+    borderBottom: "1px solid #eef2ff",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    borderRadius: "12px",
+    ":hover": {
+      background: "#f8fafc"
+    }
+  },
+
+  receiptContainer: {
+    width: "100%",
+    maxWidth: "380px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    padding: "10px"
+  },
+
+  receiptCard: {
+    background: "#ffffff",
+    borderRadius: "24px",
+    boxShadow: "0 20px 50px rgba(0,0,0,0.15)",
+    overflow: "hidden",
+    fontFamily: "Arial, sans-serif"
+  },
+
+  receiptHeader: {
+    padding: "30px 20px 20px 20px",
+    textAlign: "center",
+    background: "#ffffff"
+  },
+
+  receiptIconCircle: {
+    width: "60px",
+    height: "60px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 12px auto"
+  },
+
+  receiptStatusText: {
+    fontSize: "15px",
+    color: "#868e96",
+    margin: "0 0 8px 0",
+    fontWeight: "600"
+  },
+
+  receiptAmountDisplay: {
+    fontSize: "34px",
+    fontWeight: "800",
+    margin: "0 0 6px 0"
+  },
+
+  receiptTypeTag: {
+    display: "inline-block",
+    background: "#f1f3f5",
+    color: "#495057",
+    padding: "4px 12px",
+    borderRadius: "20px",
+    fontSize: "11px",
+    fontWeight: "700",
+    letterSpacing: "0.5px",
+    margin: 0
+  },
+
+  receiptDivider: {
+    position: "relative",
+    borderTop: "2px dashed #dee2e6",
+    margin: "0 12px",
+    height: "0"
+  },
+
+  receiptNotchLeft: {
+    position: "absolute",
+    left: "-20px",
+    top: "-10px",
+    width: "20px",
+    height: "20px",
+    borderRadius: "50%",
+    background: "rgba(0,0,0,0.45)" // মডাল ওভারলে ব্যাকগ্রাউন্ড কালার ম্যাচিং
+  },
+
+  receiptNotchRight: {
+    position: "absolute",
+    right: "-20px",
+    top: "-10px",
+    width: "20px",
+    height: "20px",
+    borderRadius: "50%",
+    background: "rgba(0,0,0,0.45)"
+  },
+
+  receiptBody: {
+    padding: "24px 24px 16px 24px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    background: "#ffffff"
+  },
+
+  receiptRowItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+
+  receiptLabelText: {
+    fontSize: "14px",
+    color: "#868e96",
+    fontWeight: "500"
+  },
+
+  receiptValueText: {
+    fontSize: "14px",
+    color: "#212529",
+    fontWeight: "700",
+    textAlign: "right"
+  },
+
+  receiptStatusBadge: {
+    background: "#e6fcf5",
+    color: "#0ca678",
+    padding: "4px 10px",
+    borderRadius: "6px",
+    fontSize: "12px",
+    fontWeight: "700"
+  },
+
+  receiptFooter: {
+    background: "#f8fafc",
+    padding: "16px",
+    textAlign: "center",
+    borderTop: "1px dashed #e9ecef"
+  },
+
+  receiptBrand: {
+    fontSize: "12px",
+    color: "#adb5bd",
+    margin: 0,
+    fontWeight: "600"
+  },
+
+  receiptActionContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px"
+  },
+
+  receiptShareBtn: {
+    width: "100%",
+    height: "52px",
+    border: "none",
+    borderRadius: "16px",
+    background: "linear-gradient(135deg,#7c3aed,#9333ea)",
+    color: "#ffffff",
+    fontWeight: "800",
+    fontSize: "15px",
+    boxShadow: "0 8px 20px rgba(124,58,237,0.3)",
+    cursor: "pointer"
+  },
+
+  receiptCloseBtn: {
+    width: "100%",
+    height: "48px",
+    border: "none",
+    borderRadius: "16px",
+    background: "#ffffff",
+    color: "#495057",
+    fontWeight: "700",
+    fontSize: "14px",
+    cursor: "pointer"
+  },
+
   statusOverlayBg: {
     position: "fixed",
     inset: 0,
