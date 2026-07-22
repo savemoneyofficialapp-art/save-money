@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import html2canvas from "html2canvas"; // ডাইনামিক স্ক্রিনশট শেয়ারিং এর জন্য
+import html2canvas from "html2canvas"; 
 import { API } from "../config";
 
 export default function Refer() {
@@ -97,7 +97,6 @@ export default function Refer() {
     }
   };
 
-  // টিম হিস্ট্রি ফিল্টার করার লজিক
   const getFilteredTeamHistory = () => {
     const teamHistoryList = team.history || [];
     const now = new Date();
@@ -128,7 +127,6 @@ export default function Refer() {
     });
   };
 
-  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল মেম্বার কাউন্ট
   const getDynamicLevelCounts = () => {
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const filteredHistory = getFilteredTeamHistory();
@@ -153,7 +151,6 @@ export default function Refer() {
     return counts;
   };
 
-  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল ইনকাম
   const getDynamicLevelIncomes = () => {
     const incomes = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const filteredHistory = getFilteredTeamHistory();
@@ -229,17 +226,15 @@ export default function Refer() {
     );
   };
 
-  // ডাইনামিক রসিদ ইমেজ আকারে শেয়ার করার অ্যাডভান্সড লজিক
   const handleShareTx = async (tx) => {
     if (!shareAreaRef.current) return;
     try {
       triggerStatusOverlay("info", "Generating receipt image... 📸");
 
-      // মোডাল কার্ডটির ইমেজ ভার্সন তৈরি করা হচ্ছে
       const canvas = await html2canvas(shareAreaRef.current, {
         useCORS: true, 
         backgroundColor: "#ffffff",
-        scale: 2 // হাই রেজোলিউশন ক্লিয়ারিটির জন্য
+        scale: 2 
       });
 
       canvas.toBlob(async (blob) => {
@@ -251,7 +246,6 @@ export default function Refer() {
         const file = new File([blob], `SaveMoney_Receipt_${tx._id || "tx"}.png`, { type: "image/png" });
         const shareText = `💰 Save Money Transaction details:\n\nAmount: ₹${tx.amount}\nFrom: ${tx.fromName || "User"}\nType: ${tx.bonusType}\nStatus: Paid/Success ✅`;
 
-        // ব্রাউজার যদি ইমেজ ফাইল শেয়ারিং সাপোর্ট করে (যেমন মোবাইল ডিভাইস ও আধুনিক ব্রাউজার)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
@@ -259,7 +253,6 @@ export default function Refer() {
             text: shareText
           });
         } else {
-          // পিসি বা নরমাল ব্রাউজারে ব্যাকআপ হিসেবে ইমেজ অটো ডাউনলোড হবে এবং টেক্সট কপি হয়ে যাবে
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
           link.download = `SaveMoney_Receipt_${tx._id || "tx"}.png`;
@@ -368,7 +361,6 @@ export default function Refer() {
   return (
     <div style={styles.page}>
       
-      {/* প্রিমিয়াম গ্লসি ইনফো মেসেজ টোস্ট ওভারলে */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
@@ -555,27 +547,22 @@ export default function Refer() {
         <button style={styles.referNowBtn} onClick={shareWhatsapp}>🔗 Refer Now</button>
       </section>
 
-
       {/* 📸 ডাইনামিক রসিদ ইমেজ আকারে শেয়ারিং মোডাল */}
       {selectedTx && (
         <div style={styles.modalOverlay} onClick={() => setSelectedTx(null)}>
           <div style={styles.txDetailsCard} onClick={(e) => e.stopPropagation()}>
             
-            {/* মোডাল হেডার */}
             <div style={styles.txDetailsHeader}>
               <button style={styles.txBackArrow} onClick={() => setSelectedTx(null)}>←</button>
               <h3 style={{ margin: 0, fontSize: "18px" }}>Money Received</h3>
               <div style={{ display: "flex", gap: "15px" }}>
-                {/* শেয়ার বাটনে ডাইনামিক স্ক্রিনশট ফাংশন যুক্ত করা হয়েছে */}
                 <span style={styles.txHeaderLink} onClick={() => handleShareTx(selectedTx)}>Share</span>
                 <span style={styles.txHeaderLink} onClick={() => alert("Help Center Clicked")}>Help</span>
               </div>
             </div>
 
-            {/* মেইন ক্যাপচার এরিয়া বক্স (এটিই ইমেজ হিসেবে তৈরি হবে) */}
             <div ref={shareAreaRef} style={styles.txDetailsInnerBox}>
               
-              {/* অ্যামাউন্ট সেকশন */}
               <div style={{ textAlign: "center", paddingBottom: "20px", borderBottom: "1px dashed #e2e8f0" }}>
                 <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>Amount</p>
                 <h1 style={styles.txDetailMainAmount}>
@@ -587,7 +574,7 @@ export default function Refer() {
                 </div>
               </div>
 
-              {/* From সেকশন */}
+              {/* From সেকশন - এখানে ইউজার ফটো না থাকলেও এখন সুন্দর গোল্লা ব্যাকগ্রাউন্ডে টেক্সট শো করবে */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0", borderBottom: "1px dashed #e2e8f0" }}>
                 <div>
                   <p style={styles.sectionLabel}>From</p>
@@ -601,13 +588,16 @@ export default function Refer() {
                     alt="Sender Profile" 
                   />
                 ) : (
-                  <div style={{ ...styles.detailAvatarCircle, background: getAvatarBg(selectedTx.fromName), color: getAvatarTextColor(selectedTx.fromName) }}>
+                  <div style={{ 
+                    ...styles.detailAvatarCircle, 
+                    background: getAvatarBg(selectedTx.fromName), 
+                    color: getAvatarTextColor(selectedTx.fromName) 
+                  }}>
                     {getInitials(selectedTx.fromName)}
                   </div>
                 )}
               </div>
 
-              {/* To সেকশন */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0" }}>
                 <div>
                   <p style={styles.sectionLabel}>To</p>
@@ -622,7 +612,6 @@ export default function Refer() {
                 />
               </div>
 
-              {/* ডেট, টাইম এবং রেফারেন্স নম্বর */}
               <div style={styles.txFooterMetaDetails}>
                 <p>Received at {new Date(selectedTx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}, {new Date(selectedTx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 <p style={{ display: "flex", justifyContent: "space-between" }}>
@@ -1203,7 +1192,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    fontSize: "16px"
   },
   detailUserImage: {
     width: "44px",
