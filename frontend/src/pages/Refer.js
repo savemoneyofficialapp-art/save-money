@@ -97,6 +97,7 @@ export default function Refer() {
     }
   };
 
+  // টিম হিস্ট্রি ফিল্টার করার লজিক
   const getFilteredTeamHistory = () => {
     const teamHistoryList = team.history || [];
     const now = new Date();
@@ -127,6 +128,7 @@ export default function Refer() {
     });
   };
 
+  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল মেম্বার কাউন্ট
   const getDynamicLevelCounts = () => {
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const filteredHistory = getFilteredTeamHistory();
@@ -151,6 +153,7 @@ export default function Refer() {
     return counts;
   };
 
+  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল ইনকাম
   const getDynamicLevelIncomes = () => {
     const incomes = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const filteredHistory = getFilteredTeamHistory();
@@ -361,6 +364,7 @@ export default function Refer() {
   return (
     <div style={styles.page}>
       
+      {/* প্রিমিয়াম গ্লসি ইনফো মেসেজ টোস্ট ওভারলে */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
@@ -487,6 +491,8 @@ export default function Refer() {
           ) : (
             visibleBonusHistory.map((item, index) => {
               const isReceived = true;
+              const hasUserPhoto = item.fromPhoto || item.photo;
+
               return (
                 <div 
                   key={index} 
@@ -494,13 +500,22 @@ export default function Refer() {
                   onClick={() => setSelectedTx(item)}
                 >
                   <div style={styles.txLeftSection}>
-                    <div style={{ 
-                      ...styles.txAvatarCircle, 
-                      background: getAvatarBg(item.fromName), 
-                      color: getAvatarTextColor(item.fromName) 
-                    }}>
-                      {getInitials(item.fromName)}
-                    </div>
+                    {/* ফটো কন্ডিশন ফিক্সড: যদি ফটো থাকে তাহলে ফটো দেখাবে, না থাকলে নামের রাউন্ড লেটার দেখাবে */}
+                    {hasUserPhoto ? (
+                      <img 
+                        style={styles.txUserAvatarImage} 
+                        src={item.fromPhoto || item.photo} 
+                        alt={item.fromName || "User"} 
+                      />
+                    ) : (
+                      <div style={{ 
+                        ...styles.txAvatarCircle, 
+                        background: getAvatarBg(item.fromName), 
+                        color: getAvatarTextColor(item.fromName) 
+                      }}>
+                        {getInitials(item.fromName)}
+                      </div>
+                    )}
                     
                     <div style={styles.txMetaDetails}>
                       <h4 style={styles.txSenderName}>{item.fromName || "Save Money User"}</h4>
@@ -547,7 +562,8 @@ export default function Refer() {
         <button style={styles.referNowBtn} onClick={shareWhatsapp}>🔗 Refer Now</button>
       </section>
 
-      {/* 📸 ডাইনামিক রসিদ ইমেজ আকারে শেয়ারিং মোডাল */}
+
+      {/* 📸 রসিদ ইমেজ মোডাল পপআপ */}
       {selectedTx && (
         <div style={styles.modalOverlay} onClick={() => setSelectedTx(null)}>
           <div style={styles.txDetailsCard} onClick={(e) => e.stopPropagation()}>
@@ -561,6 +577,7 @@ export default function Refer() {
               </div>
             </div>
 
+            {/* মেইন ক্যাপচার এরিয়া বক্স */}
             <div ref={shareAreaRef} style={styles.txDetailsInnerBox}>
               
               <div style={{ textAlign: "center", paddingBottom: "20px", borderBottom: "1px dashed #e2e8f0" }}>
@@ -574,7 +591,7 @@ export default function Refer() {
                 </div>
               </div>
 
-              {/* From সেকশন - এখানে ইউজার ফটো না থাকলেও এখন সুন্দর গোল্লা ব্যাকগ্রাউন্ডে টেক্সট শো করবে */}
+              {/* From সেকশন (ফটো ফিক্সড) */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0", borderBottom: "1px dashed #e2e8f0" }}>
                 <div>
                   <p style={styles.sectionLabel}>From</p>
@@ -588,16 +605,13 @@ export default function Refer() {
                     alt="Sender Profile" 
                   />
                 ) : (
-                  <div style={{ 
-                    ...styles.detailAvatarCircle, 
-                    background: getAvatarBg(selectedTx.fromName), 
-                    color: getAvatarTextColor(selectedTx.fromName) 
-                  }}>
+                  <div style={{ ...styles.detailAvatarCircle, background: getAvatarBg(selectedTx.fromName), color: getAvatarTextColor(selectedTx.fromName) }}>
                     {getInitials(selectedTx.fromName)}
                   </div>
                 )}
               </div>
 
+              {/* To সেকশন */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0" }}>
                 <div>
                   <p style={styles.sectionLabel}>To</p>
@@ -988,15 +1002,27 @@ function BonusHistory({ type, data }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((x, i) => (
-                <tr key={i}>
-                  <td><b>{x.fromName}</b><br /><small>{x.fromEmail}</small></td>
-                  <td>{x.date ? new Date(x.date).toLocaleDateString("en-IN") : "-"}</td>
-                  <td>L{x.level || 1}</td>
-                  <td>₹{Number(x.amount || 0).toLocaleString("en-IN")}</td>
-                  <td>{x.note || type}</td>
-                </tr>
-              ))}
+              {rows.map((x, i) => {
+                const hasHistoryPhoto = x.fromPhoto || x.photo;
+                return (
+                  <tr key={i}>
+                    <td style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {hasHistoryPhoto ? (
+                        <img src={x.fromPhoto || x.photo} style={styles.smallTableAvatar} alt="user" />
+                      ) : (
+                        <span style={styles.smallTableInitialBackup}>{x.fromName ? x.fromName[0] : "S"}</span>
+                      )}
+                      <div>
+                        <b>{x.fromName}</b><br /><small>{x.fromEmail}</small>
+                      </div>
+                    </td>
+                    <td>{x.date ? new Date(x.date).toLocaleDateString("en-IN") : "-"}</td>
+                    <td>L{x.level || 1}</td>
+                    <td>₹{Number(x.amount || 0).toLocaleString("en-IN")}</td>
+                    <td>{x.note || type}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1034,6 +1060,13 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "14px"
+  },
+  txUserAvatarImage: {
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "1px solid #e2e8f0"
   },
   txAvatarCircle: {
     width: "48px",
@@ -1192,8 +1225,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "bold",
-    fontSize: "16px"
+    fontWeight: "bold"
   },
   detailUserImage: {
     width: "44px",
@@ -1621,5 +1653,24 @@ const styles = {
     fontSize: "15px",
     cursor: "pointer",
     fontWeight: "500"
+  },
+  smallTableAvatar: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "1px solid #e2e8f0"
+  },
+  smallTableInitialBackup: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    background: "#f1f5f9",
+    color: "#475569",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "bold",
+    fontSize: "14px"
   }
 };
