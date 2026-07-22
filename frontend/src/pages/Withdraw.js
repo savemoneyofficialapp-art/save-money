@@ -21,6 +21,11 @@ export default function Withdraw() {
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
+  // ক্যালকুলেশনের জন্য ভ্যারিয়েবল ডিক্লেয়ার করা হলো (যা আগে মিসিং ছিল)
+  const inputAmount = Number(amount) || 0;
+  const tdsDeduction = inputAmount * 0.05;
+  const finalBankCredit = inputAmount - tdsDeduction;
+
   useEffect(() => {
     loadInfo();
   }, []);
@@ -112,6 +117,11 @@ export default function Withdraw() {
     }
   };
 
+  // ব্যাংক অ্যাকাউন্টে ক্লিক করলে এডিট পেজে যাওয়ার জন্য হ্যান্ডলার
+  const handleBankClick = () => {
+    navigate("/bank-details"); // আপনার রাউট অনুযায়ী চেঞ্জ করতে পারেন
+  };
+
   // html2canvas দিয়ে ইমেজ তৈরি করে সরাসরি WhatsApp এ শেয়ার করার লজিক
   const handleShareToWhatsApp = async () => {
     if (!receiptRef.current) return;
@@ -135,7 +145,7 @@ export default function Withdraw() {
             });
             return;
           } catch (e) {
-            console.log("Web Share target closed or failed, falling back to direct link.");
+            console.log("Web Share failed, falling back to direct link.");
           }
         }
 
