@@ -119,14 +119,13 @@ export default function Withdraw() {
       const canvas = await html2canvas(receiptRef.current, {
         useCORS: true,
         backgroundColor: "#ffffff",
-        scale: 2 // হাই কোয়ালিটি ইমেজের জন্য
+        scale: 2 
       });
       
       canvas.toBlob(async (blob) => {
         if (!blob) return;
         const file = new File([blob], `Receipt_${selectedTx._id || "tx"}.png`, { type: "image/png" });
 
-        // ব্রাউজার যদি ফাইল শেয়ার সাপোর্ট করে (মোবাইলের জন্য বেস্ট)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
@@ -140,7 +139,6 @@ export default function Withdraw() {
           }
         }
 
-        // পিসি বা নরমাল ফলব্যাক: ইমেজ ডাউনলোড হবে এবং সরাসরি ওয়াটসঅ্যাপ চ্যাট ওপেন হবে
         const imageURL = canvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = imageURL;
@@ -304,7 +302,7 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Audit Statement (১ম স্ক্রিনশট অনুযায়ী হিস্টরি) */}
+      {/* Audit Statement */}
       <section style={styles.superGlassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
@@ -368,15 +366,12 @@ export default function Withdraw() {
         )}
       </section>
 
-      {/* ২য় স্ক্রিনশটের হুবহু ম্যাচিং রসিদ উইন্ডো মোডাল */}
+      {/* রসিদ উইন্ডো মোডাল */}
       {selectedTx && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContentWrapper}>
             
-            {/* ডকিং রসিদ কার্ড কন্টেন্ট এরিয়া (html2canvas এর জন্য) */}
             <div ref={receiptRef} style={styles.newReceiptCard}>
-              
-              {/* সাকসেস/গ্রিন টিক এরিয়া */}
               <div style={styles.tickAreaContainer}>
                 <div style={styles.greenTickCircle}>
                   <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#00b074" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -386,10 +381,8 @@ export default function Withdraw() {
                 <div style={styles.badgeRewardLabel}>DAILY REWARD ADDED</div>
               </div>
 
-              {/* ডটেড কাটআউট ডিভাইডার লাইন */}
               <div style={styles.dottedDividerLine} />
 
-              {/* ডাটা ডিটেইলস গ্রিড */}
               <div style={styles.receiptDataGrid}>
                 <div style={styles.gridRow}>
                   <span style={styles.gridLabel}>Wallet ID</span>
@@ -423,22 +416,18 @@ export default function Withdraw() {
                 </div>
               </div>
 
-              {/* রিজেক্ট রিজন অতিরিক্ত হিসেবে নিচে শো করবে */}
               {(selectedTx.status === "Rejected" || selectedTx.status === "Reject") && (
                 <div style={styles.adminRejectReasonBox}>
                   <strong>Refund Reason:</strong> {selectedTx.rejectReason || selectedTx.reason || "Cancelled by manager"}
                 </div>
               )}
 
-              {/* ব্র্যান্ডিং লোগো */}
               <div style={styles.brandingSec}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <span>Powered by SaveMoney Secure</span>
               </div>
-
             </div>
 
-            {/* বটম ফিক্সড বাটনস অ্যাকশন */}
             <div style={styles.actionButtonGroupContainer}>
               <button style={styles.purpleShareBtn} onClick={handleShareToWhatsApp}>
                 📸 Share / Save Receipt Image
@@ -531,7 +520,7 @@ const styles = {
   superDivider: { width: "2.5px", backgroundColor: "#202f4e", height: "45px", alignSelf: "center" },
   superTrustTitle: { fontSize: "17px", fontWeight: "950", margin: "16px 0 0 0", whiteSpace: "nowrap", letterSpacing: "0.3px" },
 
-  // ১ম স্ক্রিনশট ইউআই লিস্ট স্টাইলস
+  // ইউআই লিস্ট স্টাইলস
   historyListContainer: { display: "flex", flexDirection: "column", gap: "2px" },
   historyRowItem: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 14px", borderBottom: "1.5px solid #202f4e", cursor: "pointer", borderRadius: "12px" },
   historyLeftSection: { display: "flex", alignItems: "center", gap: "18px" },
@@ -543,7 +532,7 @@ const styles = {
   historyAmtText: { fontSize: "24px", fontWeight: "900" },
   fromBankText: { fontSize: "14px", color: "#64748b", marginTop: "4px" },
   
-  // ✨ স্ক্রিনশট ২ এর হুবহু রসিদ মোডাল ডিজাইন 
+  // রসিদ মোডাল ডিজাইন 
   modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px", overflowY: "auto" },
   modalContentWrapper: { width: "100%", maxWidth: "450px", display: "flex", flexDirection: "column", gap: "16px" },
   newReceiptCard: { width: "100%", backgroundColor: "#ffffff", borderRadius: "32px", padding: "30px 24px", boxSizing: "border-box", color: "#000000", position: "relative" },
@@ -552,21 +541,14 @@ const styles = {
   txSuccessTitle: { fontSize: "20px", color: "#64748b", fontWeight: "600", margin: "18px 0 0 0" },
   txMainAmountText: { fontSize: "44px", fontWeight: "900", color: "#00b074", margin: "8px 0" },
   badgeRewardLabel: { backgroundColor: "#f1f5f9", padding: "6px 14px", borderRadius: "30px", fontSize: "13px", fontWeight: "800", color: "#334155", letterSpacing: "0.5px" },
-  
-  // ডটেড কাটআউট ডিজাইন
   dottedDividerLine: { borderTop: "2.5px dashed #cbd5e1", margin: "30px 0 20px 0", width: "100%", height: "1px" },
-  
-  // রসিদ গ্রিড রো
   receiptDataGrid: { display: "flex", flexDirection: "column", gap: "18px", padding: "0 6px" },
   gridRow: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
   gridLabel: { fontSize: "17px", color: "#64748b", fontWeight: "500" },
   gridValueBold: { fontSize: "17px", color: "#000000", fontWeight: "700", textAlign: "right", maxWidth: "60%", wordBreak: "break-all" },
   statusCapsuleStyle: { padding: "4px 12px", borderRadius: "6px", fontSize: "14px", fontWeight: "800", letterSpacing: "0.3px" },
-  
   adminRejectReasonBox: { marginTop: "14px", padding: "10px", backgroundColor: "#fef2f2", borderRadius: "8px", borderLeft: "4px solid #ef4444", fontSize: "14px", color: "#991b1b" },
   brandingSec: { display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "14px", color: "#94a3b8", marginTop: "35px", fontWeight: "600" },
-  
-  // নতুন বাটন স্টাইলস
   actionButtonGroupContainer: { display: "flex", flexDirection: "column", gap: "12px", width: "100%" },
   purpleShareBtn: { width: "100%", height: "60px", backgroundColor: "#8b5cf6", color: "#ffffff", border: "none", borderRadius: "20px", fontSize: "19px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 14px rgba(139,92,246,0.4)" },
   whiteCloseBtn: { width: "100%", height: "60px", backgroundColor: "#ffffff", color: "#334155", border: "none", borderRadius: "20px", fontSize: "19px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }
