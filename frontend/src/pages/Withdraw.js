@@ -26,7 +26,7 @@ export default function Withdraw() {
   }, []);
 
   const money = (n) =>
-    `₹ ${Number(n || 0).toLocaleString("en-IN", {
+    `₹${Number(n || 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
@@ -116,13 +116,14 @@ export default function Withdraw() {
     }
   };
 
-  // html2canvas দিয়ে রসিদ ইমেজ আকারে শেয়ার/ডাউনলোড করার ফাংশন
+  // html2canvas দিয়ে পুরো রসিদ ইমেজ আকারে জেনারেট ও ডাউনলোড করার ফাংশন
   const handleShareReceipt = async () => {
     if (!receiptRef.current) return;
     try {
       const canvas = await html2canvas(receiptRef.current, {
         useCORS: true,
-        backgroundColor: "#ffffff"
+        backgroundColor: "transparent",
+        scale: 2 // হাই রেজোলিউশনের জন্য
       });
       const image = canvas.toDataURL("image/png");
       
@@ -130,7 +131,7 @@ export default function Withdraw() {
       link.href = image;
       link.download = `Receipt_${selectedTx._id || "transaction"}.png`;
       link.click();
-      toast.success("Receipt image generated successfully!");
+      toast.success("Receipt image saved successfully!");
     } catch (error) {
       console.error("Oops, something went wrong!", error);
       toast.error("Failed to generate receipt image");
@@ -141,15 +142,15 @@ export default function Withdraw() {
     navigate("/bank-details"); 
   };
 
-  // স্ট্যাটাস টেক্সট এবং কালার ফরম্যাটার
+  // স্ট্যাটাস ফরম্যাটার (রিজেক্ট হলে Refunded দেখাবে)
   const getStatusDetails = (status) => {
     if (status === "Rejected" || status === "Reject") {
-      return { text: "Refunded", color: "#ef4444", bgColor: "rgba(239, 68, 68, 0.15)" };
+      return { text: "REFUNDED", color: "#ef4444", bgColor: "#fef2f2" };
     }
     if (status === "Success" || status === "Approved") {
-      return { text: "Success", color: "#22c55e", bgColor: "#e8f8ef" };
+      return { text: "COMPLETED", color: "#00b074", bgColor: "#e6f7f1" };
     }
-    return { text: "Pending", color: "#eab308", bgColor: "rgba(234, 179, 8, 0.15)" };
+    return { text: "PENDING", color: "#eab308", bgColor: "#fef9c3" };
   };
 
   const visibleHistory = showAllHistory ? history : history.slice(0, 5);
@@ -264,7 +265,7 @@ export default function Withdraw() {
           <div style={styles.bankFieldsGroup}>
             <div style={styles.bankMeta}>
               <span style={styles.metaLabel}>HOLDER NAME</span>
-              <span style={styles.metaValue}>{bank?.accountHolderName || "Rama basu"}</span>
+              <span style={styles.metaValue}>{bank?.accountHolderName || "Rama Basu Biswas"}</span>
             </div>
             <div style={styles.bankMeta}>
               <span style={styles.metaLabel}>BANK NAME</span>
@@ -287,7 +288,7 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Audit Statement (১ম স্ক্রিনশট অনুযায়ী নতুন স্টাইলড হিস্টরি) */}
+      {/* Audit Statement (হিস্টরি লিস্ট) */}
       <section style={styles.superGlassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
@@ -311,7 +312,7 @@ export default function Withdraw() {
           <div style={styles.historyListContainer}>
             {visibleHistory.map((x) => {
               const statusInfo = getStatusDetails(x.status);
-              const holderName = bank?.accountHolderName || "User";
+              const holderName = bank?.accountHolderName || "Rama Basu Biswas";
               const firstLetter = holderName.charAt(0).toUpperCase();
 
               return (
@@ -321,7 +322,6 @@ export default function Withdraw() {
                   onClick={() => setSelectedTx(x)}
                 >
                   <div style={styles.historyLeftSection}>
-                    {/* গোলাকার নেম ব্যাজ */}
                     <div style={styles.avatarCircle}>
                       {firstLetter}
                     </div>
@@ -330,9 +330,8 @@ export default function Withdraw() {
                       <div style={styles.historyDateText}>
                         {new Date(x.createdAt).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })}, {new Date(x.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
-                      {/* ট্যাগ */}
                       <span style={{...styles.tagBadge, backgroundColor: statusInfo.bgColor, color: statusInfo.color}}>
-                        {statusInfo.text === "Success" ? "💸 Money Received" : statusInfo.text === "Refunded" ? "🔄 Refunded" : "⏳ Pending"}
+                        {statusInfo.text === "COMPLETED" ? "💸 Money Received" : statusInfo.text === "REFUNDED" ? "🔄 Refunded" : "⏳ Pending"}
                       </span>
                     </div>
                   </div>
@@ -340,9 +339,9 @@ export default function Withdraw() {
                   <div style={styles.historyRightSection}>
                     <div style={{
                       ...styles.historyAmtText, 
-                      color: statusInfo.text === "Success" ? "#22c55e" : statusInfo.text === "Refunded" ? "#ef4444" : "#eab308"
+                      color: statusInfo.text === "COMPLETED" ? "#00b074" : statusInfo.text === "REFUNDED" ? "#ef4444" : "#eab308"
                     }}>
-                      {statusInfo.text === "Success" ? "+" : ""} {money(x.amount)}
+                      {statusInfo.text === "COMPLETED" ? "+" : ""} {money(x.amount)}
                     </div>
                     <div style={styles.fromBankText}>In 🏦</div>
                   </div>
@@ -353,84 +352,122 @@ export default function Withdraw() {
         )}
       </section>
 
-      {/* ২য় স্ক্রিনশট অনুযায়ী ফুল ট্রানজ্যাকশন রসিদ মোডাল */}
+      {/* ⚡ নতুন স্ক্রিনশট অনুযায়ী ১০০% সেম স্টাইলড টিকিট রসিদ মোডাল */}
       {selectedTx && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContainer}>
-            {/* মোডাল হেডার অ্যাকশন */}
-            <div style={styles.modalHeaderActions}>
-              <button style={styles.closeBtn} onClick={() => setSelectedTx(null)}>✕ Close</button>
-              <button style={styles.shareBtn} onClick={handleShareReceipt}>Share Receipt 📲</button>
-            </div>
-
-            {/* রসিদ কন্টেন্ট এরিয়া যা ক্যাপচার হবে */}
-            <div ref={receiptRef} style={styles.receiptMainBox}>
-              <div style={styles.receiptHeader}>
-                <span style={styles.receiptTopTitle}>Money Received</span>
-              </div>
-
-              {/* Amount Box */}
-              <div style={styles.receiptAmountCard}>
-                <span style={styles.lblText}>Amount</span>
-                <div style={styles.receiptBigAmount}>
-                  {money(selectedTx.amount)} 
-                  <span style={styles.checkVerified}>✓</span>
+            
+            {/* রসিদের মূল বডি এরিয়া (যা ইমেজ ক্যাপচার হবে) */}
+            <div ref={receiptRef} style={styles.receiptTicketWrapper}>
+              
+              {/* ওপরের অংশ */}
+              <div style={styles.receiptTopPart}>
+                {/* গোল গ্রিন টিক মার্ক */}
+                <div style={{
+                  ...styles.ticketSuccessCircle,
+                  backgroundColor: getStatusDetails(selectedTx.status).text === "REFUNDED" ? "#fef2f2" : "#e6f7f1"
+                }}>
+                  {getStatusDetails(selectedTx.status).text === "REFUNDED" ? (
+                    <span style={{color: "#ef4444", fontSize: "28px"}}>✕</span>
+                  ) : (
+                    <span style={{color: "#00b074", fontSize: "28px"}}>✓</span>
+                  )}
                 </div>
-                <div style={styles.amountInWords}>Rupees Processed Formally Only</div>
+                
+                <div style={styles.ticketTxStatusText}>
+                  Transaction {getStatusDetails(selectedTx.status).text === "REFUNDED" ? "Refunded" : selectedTx.status === "Pending" ? "Pending" : "Successful"}
+                </div>
                 
                 <div style={{
-                  ...styles.statusCapsule, 
-                  backgroundColor: getStatusDetails(selectedTx.status).bgColor,
-                  color: getStatusDetails(selectedTx.status).color
+                  ...styles.ticketBigAmountText,
+                  color: getStatusDetails(selectedTx.status).text === "REFUNDED" ? "#ef4444" : selectedTx.status === "Pending" ? "#eab308" : "#00b074"
                 }}>
-                  {getStatusDetails(selectedTx.status).text}
+                  + {money(selectedTx.amount)}
+                </div>
+
+                <div style={styles.ticketDailyBadge}>
+                  DAILY REWARD ADDED
                 </div>
               </div>
 
-              {/* From Section */}
-              <div style={styles.receiptSection}>
-                <span style={styles.sectionSubTitle}>From</span>
-                <div style={styles.flexRowBetween}>
-                  <div>
-                    <div style={styles.boldName}>System Wallet balance</div>
-                    <div style={styles.subTextDetail}>ID: {selectedTx._id || "N/A"}</div>
-                  </div>
-                  <div style={{...styles.avatarCircle, backgroundColor: "#fecdd3", color: "#e11d48"}}>W</div>
-                </div>
+              {/* মাঝখানের টিকিট কাটআউট ও ড্যাশড ডিভাইডার বর্ডার */}
+              <div style={styles.ticketDividerRow}>
+                <div style={{...styles.cutoutCircle, left: "-12px"}} />
+                <div style={styles.dashedDividerLine} />
+                <div style={{...styles.cutoutCircle, right: "-12px"}} />
               </div>
 
-              {/* To Section */}
-              <div style={styles.receiptSection}>
-                <span style={styles.sectionSubTitle}>To</span>
-                <div style={styles.flexRowBetween}>
-                  <div>
-                    <div style={styles.boldName}>{bank?.accountHolderName || "Rama basu"}</div>
-                    <div style={styles.subTextDetail}>A/C: ******{bank?.accountNumber?.slice(-4) || "58"}</div>
-                    <div style={styles.subTextDetail}>Bank: {bank?.bankName || "SBI Bank"}</div>
-                  </div>
-                  <div style={{...styles.avatarCircle, backgroundColor: "#dcfce7", color: "#16a34a"}}>
-                    {(bank?.accountHolderName || "R").charAt(0).toUpperCase()}
-                  </div>
-                </div>
-              </div>
+              {/* নিচের ডাটা টেবিল অংশ */}
+              <div style={styles.receiptBottomPart}>
+                <table style={styles.ticketTable}>
+                  <tbody>
+                    <tr>
+                      <td style={styles.tableLabel}>Wallet ID</td>
+                      <td style={styles.tableValue}>WAL{selectedTx._id?.slice(-6).toUpperCase() || "327865"}</td>
+                    </tr>
+                    <tr>
+                      <td style={styles.tableLabel}>User Name</td>
+                      <td style={styles.tableValue}>{bank?.accountHolderName || "Rama Basu Biswas"}</td>
+                    </tr>
+                    <tr>
+                      <td style={styles.tableLabel}>Transaction ID</td>
+                      <td style={{...styles.tableValue, color: "#7c3aed", wordBreak: "break-all"}}>{selectedTx._id || "6a611c2c9590aef1e987525a"}</td>
+                    </tr>
+                    <tr>
+                      <td style={styles.tableLabel}>Date & Time</td>
+                      <td style={styles.tableValue}>
+                        {new Date(selectedTx.createdAt).toLocaleString("en-IN", {
+                          day: 'numeric',
+                          month: 'numeric',
+                          year: 'numeric',
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          second: 'numeric',
+                          hour12: true
+                        })}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={styles.tableLabel}>Remarks</td>
+                      <td style={styles.tableValue}>Wallet Transaction</td>
+                    </tr>
+                    <tr>
+                      <td style={styles.tableLabel}>Status</td>
+                      <td style={styles.tableValueAlignRight}>
+                        <span style={{
+                          ...styles.tableStatusCapsule,
+                          color: getStatusDetails(selectedTx.status).color,
+                          backgroundColor: getStatusDetails(selectedTx.status).bgColor
+                        }}>
+                          {getStatusDetails(selectedTx.status).text}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
 
-              {/* Time & Ref Id */}
-              <div style={{...styles.receiptSection, borderBottom: "none"}}>
-                <div style={styles.subTextDetail}>
-                  Received at: {new Date(selectedTx.createdAt).toLocaleString()}
-                </div>
-                <div style={styles.subTextDetail}>
-                  Ref No: TXN{selectedTx._id?.slice(-8).toUpperCase() || "98765432"}
-                </div>
-                
-                {/* রিজেক্টেড রিজন সেকশন */}
+                {/* অ্যাডমিন রিজেক্ট রিজন শো */}
                 {(selectedTx.status === "Rejected" || selectedTx.status === "Reject") && (
-                  <div style={styles.reasonBlock}>
-                    <strong>Reason for Refund:</strong> {selectedTx.rejectReason || selectedTx.reason || "Cancelled by Admin"}
+                  <div style={styles.rejectReasonBox}>
+                    <strong>Reason:</strong> {selectedTx.rejectReason || selectedTx.reason || "Cancelled by Admin"}
                   </div>
                 )}
+
+                {/* সিকিউর পার্টনার লোগো টেক্সট */}
+                <div style={styles.poweredByRow}>
+                  <span style={styles.shieldIcon}>🛡️</span> Powered by SaveMoney Secure
+                </div>
               </div>
+
             </div>
+
+            {/* অ্যাকশন বাটন জোড়া */}
+            <button style={styles.ticketShareActionBtn} onClick={handleShareReceipt}>
+              📸 Share / Save Receipt Image
+            </button>
+            <button style={styles.ticketCloseActionBtn} onClick={() => setSelectedTx(null)}>
+              Close Window
+            </button>
 
           </div>
         </div>
@@ -463,9 +500,7 @@ export default function Withdraw() {
   );
 }
 
-// অ্যাডিশনাল এবং আপডেট হওয়া স্টাইলসমূহ
 const styles = {
-  // পুরানো স্টাইলগুলো অপরিবর্তিত রাখা হয়েছে...
   page: { minHeight: "100vh", width: "100%", background: "radial-gradient(circle at 50% 12%, #0f1a36 0%, #030611 75%)", color: "#ffffff", padding: "28px 18px 52px 18px", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: "30px", overflowY: "auto" },
   topNav: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" },
   backBtn: { width: "58px", height: "58px", borderRadius: "16px", border: "1.5px solid #233554", background: "#0c172e", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" },
@@ -517,7 +552,7 @@ const styles = {
   superDivider: { width: "2.5px", backgroundColor: "#202f4e", height: "45px", alignSelf: "center" },
   superTrustTitle: { fontSize: "17px", fontWeight: "950", margin: "16px 0 0 0", whiteSpace: "nowrap", letterSpacing: "0.3px" },
 
-  // ✨ নতুন পেটিএম/ইউপিআই স্টাইলড হিস্টরি ও মোডাল আর্কিটেকচার
+  // প্রথম স্ক্রিনশট অনুযায়ী পেমেন্ট হিস্টরি স্টাইলসমূহ
   historyListContainer: { display: "flex", flexDirection: "column", gap: "2px" },
   historyRowItem: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 14px", borderBottom: "1.5px solid #202f4e", cursor: "pointer", borderRadius: "12px", transition: "background 0.2s" },
   historyLeftSection: { display: "flex", alignItems: "center", gap: "18px" },
@@ -529,25 +564,34 @@ const styles = {
   historyAmtText: { fontSize: "24px", fontWeight: "900" },
   fromBankText: { fontSize: "14px", color: "#64748b", marginTop: "4px" },
   
-  // মোডাল ও রসিদ
-  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.8)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px", overflowY: "auto" },
-  modalContainer: { width: "100%", maxWidth: "480px", display: "flex", flexDirection: "column", gap: "14px" },
-  modalHeaderActions: { display: "flex", justifyContent: "space-between", width: "100%" },
-  closeBtn: { padding: "10px 20px", borderRadius: "10px", border: "none", background: "#334155", color: "#fff", cursor: "pointer", fontWeight: "700" },
-  shareBtn: { padding: "10px 20px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", cursor: "pointer", fontWeight: "700" },
-  receiptMainBox: { width: "100%", backgroundColor: "#ffffff", borderRadius: "24px", padding: "30px 24px", boxSizing: "border-box", color: "#1e293b", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.3)" },
-  receiptHeader: { borderBottom: "1px solid #e2e8f0", paddingBottom: "14px", textAlign: "center" },
-  receiptTopTitle: { fontSize: "22px", fontWeight: "800", color: "#0f172a" },
-  receiptAmountCard: { textAlign: "center", padding: "24px 0", borderBottom: "1px solid #e2e8f0" },
-  lblText: { fontSize: "15px", color: "#64748b", textTransform: "uppercase", fontWeight: "600" },
-  receiptBigAmount: { fontSize: "42px", fontWeight: "900", color: "#0f172a", marginTop: "6px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" },
-  checkVerified: { color: "#22c55e", fontSize: "30px" },
-  amountInWords: { fontSize: "15px", color: "#64748b", marginTop: "6px" },
-  statusCapsule: { display: "inline-block", padding: "6px 16px", borderRadius: "20px", fontSize: "15px", fontWeight: "800", marginTop: "12px" },
-  receiptSection: { padding: "20px 0", borderBottom: "1px solid #e2e8f0" },
-  sectionSubTitle: { fontSize: "14px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" },
-  flexRowBetween: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px" },
-  boldName: { fontSize: "19px", fontWeight: "800", color: "#1e293b" },
-  subTextDetail: { fontSize: "15px", color: "#64748b", marginTop: "4px" },
-  reasonBlock: { marginTop: "16px", padding: "12px", backgroundColor: "#fef2f2", borderLeft: "4px solid #ef4444", borderRadius: "6px", color: "#991b1b", fontSize: "15px" }
+  // 📸 নতুন ২য় স্ক্রিনশট অনুযায়ী মোডাল এবং টিকিট ডিজাইন আর্কিটেকচার
+  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "16px", overflowY: "auto" },
+  modalContainer: { width: "100%", maxWidth: "440px", display: "flex", flexDirection: "column", gap: "16px" },
+  
+  receiptTicketWrapper: { width: "100%", backgroundColor: "#ffffff", borderRadius: "32px", overflow: "hidden", boxSizing: "border-box", display: "flex", flexDirection: "column", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)" },
+  receiptTopPart: { padding: "32px 24px 20px 24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" },
+  ticketSuccessCircle: { width: "76px", height: "76px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" },
+  ticketTxStatusText: { fontSize: "20px", color: "#64748b", fontWeight: "600", marginTop: "18px" },
+  ticketBigAmountText: { fontSize: "46px", fontWeight: "900", marginTop: "6px" },
+  ticketDailyBadge: { display: "inline-block", padding: "6px 16px", backgroundColor: "#f1f5f9", color: "#475569", borderRadius: "20px", fontSize: "13px", fontWeight: "800", letterSpacing: "0.5px", marginTop: "12px" },
+  
+  // ড্যাশড পেপার বর্ডার লেআউট এবং দুই পাশের গোলাকার কাটআউট
+  ticketDividerRow: { display: "flex", alignItems: "center", position: "relative", height: "24px", width: "100%", backgroundColor: "#ffffff" },
+  cutoutCircle: { position: "absolute", width: "24px", height: "24px", borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.95)", top: 0 },
+  dashedDividerLine: { flex: 1, borderTop: "2.5px dashed #cbd5e1", margin: "0 18px", height: 0 },
+  
+  receiptBottomPart: { padding: "10px 28px 24px 28px", backgroundColor: "#ffffff" },
+  ticketTable: { width: "100%", borderCollapse: "collapse" },
+  tableLabel: { padding: "12px 0", fontSize: "17px", color: "#64748b", fontWeight: "500", textAlign: "left", verticalAlign: "top", width: "40%" },
+  tableValue: { padding: "12px 0", fontSize: "17px", color: "#1e293b", fontWeight: "700", textAlign: "right", verticalAlign: "top" },
+  tableValueAlignRight: { padding: "12px 0", display: "flex", justifyContent: "flex-end" },
+  tableStatusCapsule: { display: "inline-block", padding: "6px 14px", borderRadius: "8px", fontSize: "14px", fontWeight: "800", letterSpacing: "0.3px" },
+  
+  rejectReasonBox: { marginTop: "14px", padding: "12px", backgroundColor: "#fef2f2", borderLeft: "4px solid #ef4444", borderRadius: "8px", color: "#991b1b", fontSize: "15px", textAlign: "left" },
+  poweredByRow: { borderTop: "1.5px solid #f1f5f9", marginTop: "24px", paddingTop: "18px", textAlign: "center", color: "#94a3b8", fontSize: "15px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" },
+  shieldIcon: { fontSize: "16px" },
+
+  // নিচে থাকা বেগুনী এবং সাদা ফুল উইডথ অ্যাকশন বাটনসমূহ
+  ticketShareActionBtn: { width: "100%", height: "62px", border: "none", borderRadius: "20px", backgroundColor: "#8b5cf6", color: "#ffffff", fontWeight: "700", fontSize: "19px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", boxShadow: "0 4px 14px rgba(139, 92, 246, 0.4)" },
+  ticketCloseActionBtn: { width: "100%", height: "62px", border: "none", borderRadius: "20px", backgroundColor: "#ffffff", color: "#334155", fontWeight: "700", fontSize: "19px", cursor: "pointer", border: "2px solid #e2e8f0", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }
 };
