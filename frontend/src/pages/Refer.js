@@ -1,380 +1,154 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import html2canvas from "html2canvas"; 
 import { API } from "../config";
 
-export default function Refer() {
+export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
+  const localName = localStorage.getItem("name") || "User";
 
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({});
-  const [history, setHistory] = useState([]);
-  const [bonusHistory, setBonusHistory] = useState([]);
-  const [performance, setPerformance] = useState({});
-  const [team, setTeam] = useState({});
-  const [royalty, setRoyalty] = useState({});
-  const [treeData, setTreeData] = useState({});
-  const [bonusModal, setBonusModal] = useState(null);
-  const [treeOpen, setTreeOpen] = useState(false);
-  const [showAllHistory, setShowAllHistory] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [referBonus, setReferBonus] = useState({});
-  const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
-  
-  // ট্রানসাকশান ডিটেইলস পপআপের জন্য স্টেট
-  const [selectedTx, setSelectedTx] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [latestUpdate, setLatestUpdate] = useState("No new announcement");
+  const [loading, setLoading] = useState(true);
 
-  // মোডাল ক্যাপচার করার জন্য রেফ
-  const shareAreaRef = useRef(null);
-
-  // কাস্টম ডেট রেঞ্জ ফিল্টার স্টেট
-  const [teamTimeFilter, setTeamTimeFilter] = useState("allTime"); 
-  const [teamStartDate, setTeamStartDate] = useState("");
-  const [teamEndDate, setTeamEndDate] = useState("");
-
-  const [bonusFilter, setBonusFilter] = useState("All");
-  const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
-  
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-
-  const [showPendingModal, setShowPendingModal] = useState(false);
-  const [showTodayJoinModal, setShowTodayJoinModal] = useState(false);
-
-  // প্রিমিয়াম ইনফো/স্ট্যাটাস মেসেজ ওভারলে স্টেট
+  // ইনফো/স্ট্যাটাস মেসেজ দেখানোর জন্য স্টেট
   const [statusOverlay, setStatusOverlay] = useState({
     show: false,
     type: "info",
     message: ""
   });
 
+  // সুন্দর মেসেজ বক্স ট্রিগার করার হেল্পার ফাংশন
   const triggerStatusOverlay = (type, message) => {
     setStatusOverlay({ show: true, type, message });
     setTimeout(() => {
       setStatusOverlay({ show: false, type: "info", message: "" });
-    }, 2200);
+    }, 2500);
   };
 
+  // ১. হোম পেজে আসলে পেজ যেন ওপরে উঠে না থাকে (Scroll Fix)
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, [bonusModal]);
-
-  useEffect(() => {
-    loadReferData();
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
 
-  const loadReferData = async (month = "", year = new Date().getFullYear()) => {
+  useEffect(() => {
+    loadHome();
+    loadNotifications();
+  }, []);
+
+  const loadHome = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API}/refer-data`, {
+
+      const res = await fetch(`${API}/dashboard`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          authorization: token || ""
+          authorization: token
         },
-        body: JSON.stringify({ email, month, year })
+        body: JSON.stringify({ email })
       });
 
       const data = await res.json();
 
-      if (data.success) {
-        setUser(data.user || {});
-        setHistory(Array.isArray(data.history) ? data.history : []);
-        setBonusHistory(Array.isArray(data.bonusHistory) ? data.bonusHistory : []);
-        setPerformance(data.performance || {});
-        setTeam(data.team || {}); 
-        setRoyalty(data.royalty || {});
-        setTreeData(data.treeData || {});
-        setReferBonus(data.referBonus || {});
+      if (data?.msg === "Token expired or invalid") {
+        localStorage.clear();
+        navigate("/login");
+        return;
       }
+
+      setUser(data || {});
     } catch (err) {
-      console.log("REFER DATA ERROR:", err);
+      console.log("HOME LOAD ERROR:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // টিম হিস্ট্রি ফিল্টার করার লজিক
-  const getFilteredTeamHistory = () => {
-    const teamHistoryList = team.history || [];
-    const now = new Date();
-
-    return teamHistoryList.filter((item) => {
-      if (!item.date) return false;
-      const d = new Date(item.date);
-      d.setHours(0, 0, 0, 0);
-
-      if (teamTimeFilter === "thisMonth") {
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      }
-      if (teamTimeFilter === "lastMonth") {
-        const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
-      }
-      if (teamTimeFilter === "customRange") {
-        const start = teamStartDate ? new Date(teamStartDate) : null;
-        const end = teamEndDate ? new Date(teamEndDate) : null;
-        if (start) start.setHours(0, 0, 0, 0);
-        if (end) end.setHours(23, 59, 59, 999);
-
-        if (start && end) return d >= start && d <= end;
-        if (start) return d >= start;
-        if (end) return d <= end;
-      }
-      return true;
-    });
-  };
-
-  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল মেম্বার কাউন্ট
-  const getDynamicLevelCounts = () => {
-    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    const filteredHistory = getFilteredTeamHistory();
-    
-    filteredHistory.forEach(item => {
-      const lvl = Number(item.level);
-      if (lvl >= 1 && lvl <= 5) {
-        counts[lvl] += 1;
-      }
-    });
-
-    if (teamTimeFilter === "allTime") {
-      if (counts[1] === 0) {
-        counts[1] = Array.isArray(history) ? history.length : (team.totalJoinCount?.[1] || 0);
-      }
-      for (let i = 2; i <= 5; i++) {
-        if (counts[i] === 0) {
-          counts[i] = team.totalJoinCount?.[i] || team.levelCount?.[i] || 0;
-        }
-      }
-    }
-    return counts;
-  };
-
-  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল ইনকাম
-  const getDynamicLevelIncomes = () => {
-    const incomes = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    const filteredHistory = getFilteredTeamHistory();
-
-    filteredHistory.forEach(item => {
-      const lvl = Number(item.level);
-      if (lvl >= 1 && lvl <= 5) {
-        incomes[lvl] += Number(item.amount || 0);
-      }
-    });
-
-    if (teamTimeFilter === "allTime") {
-      if (incomes[1] === 0) incomes[1] = team.level1Income || 0;
-      if (incomes[2] === 0) incomes[2] = team.level2Income || 0;
-      if (incomes[3] === 0) incomes[3] = team.level3Income || 0;
-      if (incomes[4] === 0) incomes[4] = team.level4Income || 0;
-      if (incomes[5] === 0) incomes[5] = team.level5Income || 0;
-    }
-    return incomes;
-  };
-
-  const filteredPerformanceHistory = (performance.history || []).filter((item) => {
-    const d = new Date(item.date);
-    const now = new Date();
-    if (performanceFilter === "thisMonth") {
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }
-    if (performanceFilter === "lastMonth") {
-      const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
-    }
-    return true;
-  });
-
-  const money = (n) =>
-    `₹${Number(n || 0).toLocaleString("en-IN", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    })}`;
-
-  const referCode = user.referCode || user.referralCode || user.walletId || "SMREF0001";
-  
-  const perfAmt = Number(performance.balance || user.performanceIncome || 0);
-  const teamAmt = Number(team.balance || user.teamIncome || 0);
-  const royAmt = Number(royalty.balance || user.royaltyIncome || 0);
-  const refAmt = Number(referBonus.totalBonus || user.referIncome || 0);
-
-  const totalAllTimeBalance = perfAmt + teamAmt + royAmt + refAmt;
-
-  const referLink = `${window.location.origin}/register?ref=${referCode}`;
-
-  const copyText = async (text) => {
+  const loadNotifications = async () => {
     try {
-      await navigator.clipboard.writeText(text);
-      triggerStatusOverlay("success", "Copied Successfully! 🎉");
-    } catch {
-      triggerStatusOverlay("error", "Copy failed!");
-    }
-  };
-
-  const shareWhatsapp = () => {
-    const text = `Join SAVE MONEY using my refer link: ${referLink}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-  };
-
-  const shareTelegram = () => {
-    const text = `Join SAVE MONEY using my refer link: ${referLink}`;
-    window.open(
-      `https://t.me/share/url?url=${encodeURIComponent(referLink)}&text=${encodeURIComponent(
-        "Join SAVE MONEY"
-      )}`,
-      "_blank"
-    );
-  };
-
-  const handleShareTx = async (tx) => {
-    if (!shareAreaRef.current) return;
-    try {
-      triggerStatusOverlay("info", "Generating receipt image... 📸");
-
-      const canvas = await html2canvas(shareAreaRef.current, {
-        useCORS: true, 
-        backgroundColor: "#ffffff",
-        scale: 2 
+      const res = await fetch(`${API}/get-notifications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token
+        },
+        body: JSON.stringify({ email })
       });
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          triggerStatusOverlay("error", "Failed to generate image");
-          return;
-        }
+      const data = await res.json();
 
-        const file = new File([blob], `SaveMoney_Receipt_${tx._id || "tx"}.png`, { type: "image/png" });
-        const shareText = `💰 Save Money Transaction details:\n\nAmount: ₹${tx.amount}\nFrom: ${tx.fromName || "User"}\nType: ${tx.bonusType}\nStatus: Paid/Success ✅`;
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: "Transaction Receipt",
-            text: shareText
-          });
-        } else {
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = `SaveMoney_Receipt_${tx._id || "tx"}.png`;
-          link.click();
-          
-          copyText(shareText);
-          alert("Receipt Image downloaded & text details copied! You can now send it on WhatsApp.");
-        }
-      }, "image/png");
-
-    } catch (error) {
-      console.error("Share error:", error);
-      triggerStatusOverlay("error", "Sharing failed!");
+      if (Array.isArray(data)) {
+        const unread = data.filter((n) => !n.read).length;
+        setNotificationCount(unread);
+      }
+    } catch (err) {
+      console.log("Notification count error:", err);
     }
   };
 
-  const safeHistory = Array.isArray(history) ? history : [];
-  const safeBonusHistory = Array.isArray(bonusHistory) ? bonusHistory : [];
-
-  const filteredBonusHistory =
-    bonusFilter === "All"
-      ? safeBonusHistory
-      : safeBonusHistory.filter((x) => x.bonusType === bonusFilter);
-
-  const visibleBonusHistory = showAllBonusHistory
-    ? filteredBonusHistory
-    : filteredBonusHistory.slice(0, 5);
-
-  const bonusCards = [
-    {
-      key: "performance",
-      title: "Performance Bonus",
-      amount: perfAmt,
-      icon: "📈",
-      color: "#c026d3",
-      bg: "#fff0ff"
-    },
-    {
-      key: "team",
-      title: "Team Bonus",
-      amount: teamAmt,
-      icon: "👥",
-      color: "#2563eb",
-      bg: "#eff6ff"
-    },
-    {
-      key: "royalty",
-      title: "Royalty Bonus",
-      amount: royAmt,
-      icon: "👑",
-      color: "#f97316",
-      bg: "#fff7ed"
-    },
-    {
-      key: "refer",
-      title: "Refer Bonus",
-      amount: refAmt,
-      icon: "🎁",
-      color: "#16a34a",
-      bg: "#ecfdf5"
-    }
-  ];
-
-  const getInitials = (name) => {
-    if (!name) return "SM";
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  const fileUrl = (file) => {
+    if (!file) return "";
+    if (file.startsWith("http")) return file;
+    return `${API}/uploads/${file}`;
   };
 
-  const getAvatarBg = (name) => {
-    const colors = ["#dcfce7", "#eff6ff", "#fee2e2", "#fff7ed", "#f3e8ff", "#e0f2fe"];
-    if (!name) return colors[0];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
-  };
+  const name = user?.name || localName || "User";
 
-  const getAvatarTextColor = (name) => {
-    const colors = ["#15803d", "#1d4ed8", "#b91c1c", "#c2410c", "#6b21a8", "#0369a1"];
-    if (!name) return colors[0];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
+  const profilePhoto = useMemo(() => {
+    return fileUrl(
+      user?.photo ||
+      user?.profilePhoto ||
+      user?.selfiePhoto ||
+      ""
+    );
+  }, [user]);
+
+  const wallet = Number(user?.wallet || user?.totalWallet || 0);
+  const totalInvestment = Number(user?.totalInvestment || 0);
+  const totalReturn = Number(user?.totalReturn || 0);
+  const totalReferral = Number(user?.totalReferral || user?.referralCount || 0);
+  const totalWithdraw = Number(user?.totalWithdraw || 0);
+
+  const kycApproved =
+    user?.kycStatus === "approved" ||
+    user?.kycStatus === "Approved";
+
+  const go = (path) => {
+    navigate(path);
   };
 
   if (loading) {
     return (
       <div style={styles.loadingPage}>
-        <div style={styles.loadingBox}>
-          <div style={styles.loadingIcon}>🎁</div>
-          <h2>Loading Refer World...</h2>
+        <div style={styles.loadingCard}>
+          <div style={styles.loadingLogo}>💚</div>
+          <h2>Save Money</h2>
+          <p>Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
-  const pendingRefers = history.filter((x) => x.status !== "Active");
-  const todayJoinMembers = (team.history || []).filter((item) => {
-    const itemDate = new Date(item.date).toDateString();
-    const todayDate = new Date().toDateString();
-    return itemDate === todayDate;
-  });
-
-  const dynamicCounts = getDynamicLevelCounts();
-  const dynamicIncomes = getDynamicLevelIncomes();
-  const selectedFilteredHistory = getFilteredTeamHistory();
-  const selectedFilteredTotalIncome = selectedFilteredHistory.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-
   return (
     <div style={styles.page}>
-      
-      {/* প্রিমিয়াম গ্লসি ইনফো মেসেজ টোস্ট ওভারলে */}
+
+      {/* সুন্দর সুন্দর প্রফেশনাল ইনফো মেসেজ ওভারলে UI */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
             ...styles.statusOverlayCard,
-            borderTop: statusOverlay.type === "success" ? "5px solid #10b981" : statusOverlay.type === "error" ? "5px solid #ef4444" : "5px solid #3b82f6"
+            borderTop: statusOverlay.type === "success" ? "6px solid #22c55e" : statusOverlay.type === "error" ? "6px solid #ef4444" : "6px solid #38bdf8"
           }}>
             <div style={{
               ...styles.statusOverlayIcon,
-              background: statusOverlay.type === "success" ? "linear-gradient(135deg, #dcfce7, #bbf7d0)" : statusOverlay.type === "error" ? "linear-gradient(135deg, #fee2e2, #fecaca)" : "linear-gradient(135deg, #dbeafe, #bfdbfe)",
-              color: statusOverlay.type === "success" ? "#16a34a" : statusOverlay.type === "error" ? "#dc2626" : "#2563eb"
+              background: statusOverlay.type === "success" ? "#dcfce7" : statusOverlay.type === "error" ? "#fee2e2" : "#e0f2fe",
+              color: statusOverlay.type === "success" ? "#22c55e" : statusOverlay.type === "error" ? "#ef4444" : "#38bdf8"
             }}>
               {statusOverlay.type === "success" ? "✓" : statusOverlay.type === "error" ? "✕" : "ℹ"}
             </div>
@@ -383,1294 +157,1121 @@ export default function Refer() {
         </div>
       )}
 
-      <button style={styles.backBtn} onClick={() => navigate(-1)}>←</button>
-      <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>🔔</button>
+      {/* TOP HEADER */}
+      <div style={styles.topHeader}>
+        <button style={styles.menuButton}>
+          ☰
+        </button>
 
-      <header style={styles.header}>
-        <p style={styles.welcome}>Welcome to</p>
-        <h1 style={styles.mainTitle}>🎁 SAVE MONEY</h1>
-        <h2 style={styles.referWorld}>Refer World</h2>
-        <p style={styles.tagline}>Refer More, Earn More, Grow Together!</p>
-      </header>
+        <h2 style={styles.headerTitle}>
+          Welcome, {name}
+        </h2>
 
-      <section style={styles.heroCard}>
-        <div style={styles.heroLeft}>
-          <div style={styles.avatarWrap}>
+        <button
+          style={styles.notificationButton}
+          onClick={() => go("/notifications")}
+        >
+          <span>🔔</span>
+
+          {notificationCount > 0 && (
+            <small style={styles.notificationBadge}>
+              {notificationCount}
+            </small>
+          )}
+        </button>
+
+        <button
+          style={styles.logoutBtn}
+          onClick={() => {
+            localStorage.clear();
+            navigate("/login");
+          }}
+        >
+          Logout
+        </button>
+
+      </div>
+
+      {/* HERO PROFILE + WALLET */}
+      <section style={styles.heroWrapper}>
+        <div style={styles.heroGlow}></div>
+
+        <div style={styles.profilePhotoCircle}>
+          {profilePhoto ? (
             <img
-              style={styles.avatar}
-              src={user.photo || "https://i.pravatar.cc/160?img=12"}
-              alt="user"
+              src={profilePhoto}
+              alt="User"
+              style={styles.profilePhoto}
             />
-            <div style={styles.crown}>♛</div>
+          ) : (
+            <span style={styles.defaultProfileIcon}>👤</span>
+          )}
+        </div>
+
+        <div style={styles.heroUserInfo}>
+          <p style={styles.heroWelcome}>
+            Welcome Back 👋
+          </p>
+
+          <div style={styles.heroNameRow}>
+            <h1 style={styles.heroName}>
+              {name}
+            </h1>
+
+            {kycApproved && (
+              <span style={styles.verifiedBadge}>
+                ✔
+              </span>
+            )}
+          </div>
+
+          <p style={styles.heroSubtitle}>
+            Save Money, Secure Future 💚
+          </p>
+        </div>
+
+        <div style={styles.heroWalletCard}>
+          <p>Total Wallet</p>
+
+          <h2>
+            Scale: ₹{wallet.toFixed(2)}
+          </h2>
+
+          <span>
+            👛
+          </span>
+        </div>
+      </section>
+
+      {/* LATEST UPDATE */}
+      <section style={styles.latestCard}>
+        <div style={styles.latestLeft}>
+          <div style={styles.latestIcon}>
+            📢
           </div>
 
           <div>
-            <h2>{user.name || "Save Money User"}</h2>
-            <span style={styles.activeMember}>
-              <span
-                style={{
-                  ...styles.greenDot,
-                  background:
-                    String(user.activeStatus || "Inactive").toLowerCase() === "active"
-                      ? "#22c55e"
-                      : "#ef4444"
-                }}
-              />
-              {user.activeStatus || "Inactive"} Member
-            </span>
-            <p style={styles.smallText}>Refer ID</p>
-            <div style={styles.referIdBox}>
-              <span>{referCode}</span>
-              <button onClick={() => copyText(referCode)}>Copy</button>
-            </div>
+            <h3>Latest Update</h3>
+            <p>{latestUpdate}</p>
           </div>
         </div>
 
-        <div style={styles.heroRight}>
-          <div style={styles.walletRound}>⚡</div>
-          <p>All Time Balance</p>
-          <h1>{money(totalAllTimeBalance)}</h1>
-        </div>
-      </section>
-
-      <section style={styles.linkCard}>
-        <div style={styles.linkIcon}>🔗</div>
-        <div style={styles.linkMiddle}>
-          <h3>Your Refer Link</h3>
-          <div style={styles.copyBox}>
-            <span>{referLink}</span>
-            <button style={styles.copyLinkBtn} onClick={() => copyText(referLink)}>
-              🔗 Copy Link
-            </button>
-          </div>
-        </div>
-        <div style={styles.shareBox}>
-          <h3>Share via</h3>
-          <button style={styles.whatsapp} onClick={shareWhatsapp}>🟢</button>
-          <button style={styles.telegram} onClick={shareTelegram}>⌲</button>
-        </div>
-      </section>
-
-      <section style={styles.bonusGrid}>
-        {bonusCards.map((b) => (
-          <div key={b.key} style={{ ...styles.bonusCard, background: b.bg }}>
-            <div style={{ ...styles.bonusIcon, background: b.color }}>
-              {b.icon}
-            </div>
-            <h3>{b.title}</h3>
-            <h2>{money(b.amount)}</h2>
-            <button
-              style={{ ...styles.detailBtn, color: b.color }}
-              onClick={() => setBonusModal(b.key)}
-            >
-              View Details
-            </button>
-          </div>
-        ))}
-      </section>
-
-      <section style={styles.historyCard}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div><h2 style={{ fontSize: "20px", fontWeight: "700" }}>💰 All Bonus History</h2></div>
-          <select
-            value={bonusFilter}
-            onChange={(e) => setBonusFilter(e.target.value)}
-            style={styles.filterSelect}
-          >
-            <option value="All">All Bonus</option>
-            <option value="Referral Bonus">🎁 Referral</option>
-            <option value="Performance Bonus">📈 Performance</option>
-            <option value="Team Bonus">👥 Team</option>
-            <option value="Royalty Bonus">👑 Royalty</option>
-          </select>
-        </div>
-
-        <div style={styles.txListWrapper}>
-          {filteredBonusHistory.length === 0 ? (
-            <p style={{ textAlign: "center", padding: "20px", color: "#666" }}>No Bonus History Found</p>
-          ) : (
-            visibleBonusHistory.map((item, index) => {
-              const isReceived = true;
-              const hasUserPhoto = item.fromPhoto || item.photo;
-
-              return (
-                <div 
-                  key={index} 
-                  style={styles.txItemRow} 
-                  onClick={() => setSelectedTx(item)}
-                >
-                  <div style={styles.txLeftSection}>
-                    {/* ফটো কন্ডিশন ফিক্সড: যদি ফটো থাকে তাহলে ফটো দেখাবে, না থাকলে নামের রাউন্ড লেটার দেখাবে */}
-                    {hasUserPhoto ? (
-                      <img 
-                        style={styles.txUserAvatarImage} 
-                        src={item.fromPhoto || item.photo} 
-                        alt={item.fromName || "User"} 
-                      />
-                    ) : (
-                      <div style={{ 
-                        ...styles.txAvatarCircle, 
-                        background: getAvatarBg(item.fromName), 
-                        color: getAvatarTextColor(item.fromName) 
-                      }}>
-                        {getInitials(item.fromName)}
-                      </div>
-                    )}
-                    
-                    <div style={styles.txMetaDetails}>
-                      <h4 style={styles.txSenderName}>{item.fromName || "Save Money User"}</h4>
-                      <p style={styles.txTimeStamp}>Received Today, {new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
-                      
-                      <div style={styles.txTagBadge}>
-                        💵 {item.bonusType || "Money Received"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={styles.txRightSection}>
-                    <h3 style={{ ...styles.txAmountText, color: isReceived ? "#16a34a" : "#dc2626" }}>
-                      {isReceived ? "+ " : "- "}{money(item.amount)}
-                    </h3>
-                    <p style={styles.txFromBankText}>In <span style={styles.upiIconSmall}>🌐</span></p>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div style={styles.paytmBrandFooter}>
-          <span style={{ fontWeight: "bold", color: "#7b20ff", textTransform: "uppercase", letterSpacing: "1px" }}>save money</span>
-        </div>
-      </section>
-
-      {filteredBonusHistory.length > 5 && (
-        <button
-          style={styles.viewMoreBtn}
-          onClick={() => setShowAllBonusHistory(!showAllBonusHistory)}
-        >
-          {showAllBonusHistory ? "Show Less ⌃" : "View More ⌄"}
+        <button style={styles.latestArrow}>
+          ›
         </button>
-      )}
-
-      <section style={styles.bottomBanner}>
-        <div style={styles.bottomGift}>🎁</div>
-        <div style={{ flex: 1 }}>
-          <h2>Keep Referring & Earning</h2>
-          <p>Your network is your net worth.</p>
-        </div>
-        <button style={styles.referNowBtn} onClick={shareWhatsapp}>🔗 Refer Now</button>
       </section>
 
+      {/* STATS CARDS */}
+      <section style={styles.statsGrid}>
+        <DashboardStatCard
+          icon="📈"
+          title="Total Investment"
+          value={`₹${totalInvestment.toFixed(2)}`}
+          gradient="blue"
+        />
 
-      {/* 📸 রসিদ ইমেজ মোডাল পপআপ */}
-      {selectedTx && (
-        <div style={styles.modalOverlay} onClick={() => setSelectedTx(null)}>
-          <div style={styles.txDetailsCard} onClick={(e) => e.stopPropagation()}>
-            
-            <div style={styles.txDetailsHeader}>
-              <button style={styles.txBackArrow} onClick={() => setSelectedTx(null)}>←</button>
-              <h3 style={{ margin: 0, fontSize: "18px" }}>Money Received</h3>
-              <div style={{ display: "flex", gap: "15px" }}>
-                <span style={styles.txHeaderLink} onClick={() => handleShareTx(selectedTx)}>Share</span>
-                <span style={styles.txHeaderLink} onClick={() => alert("Help Center Clicked")}>Help</span>
-              </div>
-            </div>
+        <DashboardStatCard
+          icon="📊"
+          title="Total Return"
+          value={`₹${totalReturn.toFixed(2)}`}
+          gradient="green"
+        />
 
-            {/* মেইন ক্যাপচার এরিয়া বক্স */}
-            <div ref={shareAreaRef} style={styles.txDetailsInnerBox}>
-              
-              <div style={{ textAlign: "center", paddingBottom: "20px", borderBottom: "1px dashed #e2e8f0" }}>
-                <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>Amount</p>
-                <h1 style={styles.txDetailMainAmount}>
-                  {money(selectedTx.amount)} <span style={styles.verifiedCheck}>✓</span>
-                </h1>
-                <p style={{ margin: 0, color: "#666", textTransform: "capitalize", fontSize: "13px" }}>Rupees One Thousand Only</p>
-                <div style={styles.moneyReceivedTag}>
-                  💵 Money Received
-                </div>
-              </div>
+        <DashboardStatCard
+          icon="👥"
+          title="Total Referral"
+          value={totalReferral}
+          gradient="purple"
+        />
 
-              {/* From সেকশন (ফটো ফিক্সড) */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0", borderBottom: "1px dashed #e2e8f0" }}>
-                <div>
-                  <p style={styles.sectionLabel}>From</p>
-                  <h4 style={styles.sectionValueName}>{selectedTx.fromName || "Sender User"} <span style={styles.blueTick}>✓</span></h4>
-                  <p style={styles.sectionSubValue}>{selectedTx.fromEmail || "user@axl"}</p>
-                </div>
-                {selectedTx.fromPhoto || selectedTx.photo ? (
-                  <img 
-                    style={styles.detailUserImage} 
-                    src={selectedTx.fromPhoto || selectedTx.photo} 
-                    alt="Sender Profile" 
-                  />
-                ) : (
-                  <div style={{ ...styles.detailAvatarCircle, background: getAvatarBg(selectedTx.fromName), color: getAvatarTextColor(selectedTx.fromName) }}>
-                    {getInitials(selectedTx.fromName)}
-                  </div>
-                )}
-              </div>
+        <DashboardStatCard
+          icon="⬇️"
+          title="Total Withdraw"
+          value={`₹${totalWithdraw.toFixed(2)}`}
+          gradient="orange"
+        />
+      </section>
 
-              {/* To সেকশন */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0" }}>
-                <div>
-                  <p style={styles.sectionLabel}>To</p>
-                  <h4 style={styles.sectionValueName}>{user.name || "Save Money User"}</h4>
-                  <p style={styles.sectionSubValue}>{user.email || "wallet@id"}</p>
-                  <p style={styles.bankNameFooter}>Save Money Wallet - {referCode}</p>
-                </div>
-                <img 
-                  style={styles.detailUserImage} 
-                  src={user.photo || "https://i.pravatar.cc/160?img=12"} 
-                  alt="Receiver Profile" 
-                />
-              </div>
+      {/* MAIN ACTIONS */}
+      <PremiumSectionTitle
+        title="MAIN ACTIONS"
+        color="#38d9ff"
+      />
 
-              <div style={styles.txFooterMetaDetails}>
-                <p>Received at {new Date(selectedTx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}, {new Date(selectedTx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                <p style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>Ref No: TXN{Math.floor(100000000 + Math.random() * 900000000)}</span>
-                  <span style={{ color: "#2563eb", cursor: "pointer", fontWeight: "bold" }} onClick={() => copyText("TXN123456")}>Copy</span>
-                </p>
-              </div>
+      <section style={styles.actionPanel}>
+        <PremiumActionButton
+          icon="💰"
+          title="INVEST NOW"
+          subtitle="Start Investing"
+          gradient="invest"
+          onClick={() => go("/invest-now")}
+        />
 
-            </div>
+        <PremiumActionButton
+          icon="📈"
+          title="My Investment"
+          subtitle="View Details"
+          gradient="myInvestment"
+          onClick={() => go("/my-investment")}
+        />
 
-            <button style={styles.closeBtn} onClick={() => setSelectedTx(null)}>Close</button>
-          </div>
-        </div>
-      )}
+        <PremiumActionButton
+          icon="👛"
+          title="Wallet"
+          subtitle="Add & Manage"
+          gradient="wallet"
+          onClick={() => go("/wallet")}
+        />
 
-      {/* --- Performance Modal --- */}
-      {bonusModal === "performance" && (
-        <Modal onClose={() => setBonusModal(null)}>
-          <h2>📈 Performance Bonus</h2>
-          <h1>{money(performance.balance)}</h1>
-          <p>Status : <b style={{ color: performance.enabled ? "#16a34a" : "#ef4444" }}>{performance.enabled ? "Active" : "Inactive"}</b></p>
+        <PremiumActionButton
+          icon="💸"
+          title="Withdraw"
+          subtitle="Request Payout"
+          gradient="withdraw"
+          onClick={() => navigate("/withdraw")}
+        />
 
-          {!performance.enabled && !performance.adminOverride && !performance.expired && (
-            <div style={styles.infoBox}>
-              <h3>Task Progress</h3>
-              <p>Completed : <b>{performance.directActiveCount}</b> /10</p>
-              <p>Remaining : <b>{performance.remaining}</b></p>
-              <p>Days Left : <b>{performance.daysLeft}</b> Days</p>
-            </div>
-          )}
+        <PremiumActionButton
+          icon="👥"
+          title="Refer & Earn"
+          subtitle="Invite & Earn"
+          gradient="refer"
+          onClick={() => go("/refer")}
+        />
 
-          {performance.expired && !performance.enabled && (
-            <p style={styles.dangerText}>You did not complete your task. Please contact your upline.</p>
-          )}
+        <PremiumActionButton
+          icon="🧾"
+          title="Leaderboard"
+          subtitle="Top Referer"
+          gradient="transaction"
+          onClick={() => go("/leaderboard")}
+        />
+      </section>
 
-          {performance.enabled && (
-            <>
-              <p>This Month Bonus</p>
-              <h3>{money(performance.thisMonthBonus)}</h3>
-              <p>Last Month Bonus</p>
-              <h3>{money(performance.lastMonthBonus)}</h3>
+      {/* MORE FEATURES */}
+      <PremiumSectionTitle
+        title="MORE FEATURES"
+        color="#ffd84d"
+      />
 
-              <select
-                value={performanceFilter}
-                onChange={(e) => setPerformanceFilter(e.target.value)}
-                style={styles.filterSelect}
-              >
-                <option value="thisMonth">This Month</option>
-                <option value="lastMonth">Last Month</option>
-                <option value="all">All</option>
-              </select>
+      <section style={styles.actionPanel}>
+        <PremiumActionButton
+          icon="✅"
+          title="KYC Verification"
+          subtitle="Verify Your Account"
+          gradient="kyc"
+          onClick={() => go("/kyc")}
+        />
 
-              <div style={{ marginTop: 20 }}>
-                <h3>Performance History</h3>
-                {filteredPerformanceHistory.length === 0 ? (
-                  <p>No History</p>
-                ) : (
-                  filteredPerformanceHistory.map((item, index) => (
-                    <div key={index} style={styles.historyItem}>
-                      <b>{item.fromName}</b>
-                      <p>Bonus : {money(item.amount)}</p>
-                      <p>Date : {new Date(item.date).toLocaleDateString("en-IN")}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </>
-          )}
-          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </Modal>
-      )}
+        <PremiumActionButton
+          icon="🎁"
+          title="Daily Reward"
+          subtitle="Claim Reward"
+          gradient="reward"
+          onClick={() => go("/daily-reward")}
+        />
 
-      {/* --- Team Modal --- */}
-      {bonusModal === "team" && (
-        <Modal onClose={() => setBonusModal(null)}>
-          <h2>👥 Team Bonus</h2>
-          <h1>{money(team.balance || 0)}</h1>
-          <p>Status : <b style={{ color: team.enabled ? "#16a34a" : "#ef4444" }}>{team.enabled ? "Active" : "Inactive"}</b></p>
-          <hr />
-          
-          <h3>Today's Report</h3>
-          <p>Today's Income : <b>{money(team.todayBonus)}</b></p>
-          
-          <button 
-            style={styles.todayJoinBtn} 
-            onClick={() => setShowTodayJoinModal(true)}
-          >
-            📊 Network Joining Today: <b>{team.todayJoin || 0}</b> (View All)
-          </button>
-          <hr />
+        <PremiumActionButton
+          icon="🏦"
+          title="Bank Details"
+          subtitle="Manage Bank Info"
+          gradient="bank"
+          onClick={() => navigate("/bank-details")}
+        />
 
-          <div style={{ marginTop: 15, marginBottom: 15 }}>
-            <label style={{ fontWeight: "bold", display: "block", marginBottom: 6 }}>⏱ Select Time Frame:</label>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <select
-                value={teamTimeFilter}
-                onChange={(e) => setTeamTimeFilter(e.target.value)}
-                style={styles.filterSelect}
-              >
-                <option value="allTime">🌐 All Time</option>
-                <option value="thisMonth">📅 This Month</option>
-                <option value="lastMonth">📅 Last Month</option>
-                <option value="customRange">📆 Select Date Range</option>
-              </select>
+        <PremiumActionButton
+          icon="📊"
+          title="Investment Assistant"
+          subtitle="Need You Help"
+          gradient="plan"
+          onClick={() => go("/investment-assistant")}
+        />
 
-              {teamTimeFilter === "customRange" && (
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <div style={{ flex: 1, minWidth: "140px" }}>
-                    <small style={{ display: "block", color: "#666" }}>Start Date:</small>
-                    <input 
-                      type="date" 
-                      value={teamStartDate}
-                      onChange={(e) => setTeamStartDate(e.target.value)}
-                      style={{ ...styles.filterSelect, width: "100%" }}
-                    />
-                  </div>
-                  <div style={{ flex: 1, minWidth: "140px" }}>
-                    <small style={{ display: "block", color: "#666" }}>End Date:</small>
-                    <input 
-                      type="date" 
-                      value={teamEndDate}
-                      onChange={(e) => setTeamEndDate(e.target.value)}
-                      style={{ ...styles.filterSelect, width: "100%" }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+        <PremiumActionButton
+          icon="🕸️"
+          title="Analytics"
+          subtitle="User Analytics"
+          gradient="notification"
+          onClick={() => go("/analytics")}
+        />
 
-          <h3>Total Level Members ({teamTimeFilter === "allTime" ? "All Time" : teamTimeFilter === "thisMonth" ? "This Month" : teamTimeFilter === "lastMonth" ? "Last Month" : "Selected Range"})</h3>
-          <div style={styles.levelGrid}>
-            <div style={{ background: "#f0fdf4", padding: "10px", borderRadius: "10px" }}><b>L1</b><br />Users: {dynamicCounts[1]}</div>
-            <div><b>L2</b><br />Users: {dynamicCounts[2]}</div>
-            <div><b>L3</b><br />Users: {dynamicCounts[3]}</div>
-            <div><b>L4</b><br />Users: {dynamicCounts[4]}</div>
-            <div><b>L5</b><br />Users: {dynamicCounts[5]}</div>
-          </div>
-          <hr />
+        <PremiumActionButton
+          icon="🎧"
+          title="Support"
+          subtitle="Need Help?"
+          gradient="support"
+          onClick={() => go("/support")}
+        />
+      </section>
 
-          <h3>Income Summary</h3>
-          <p>Selected Filter Total Income: <b style={{ color: "#2563eb" }}>{teamTimeFilter === "allTime" ? money(team.balance) : money(selectedFilteredTotalIncome)}</b></p>
-          <p>This Month Default Income: <b>{money(team.thisMonthBonus)}</b></p>
-          <p>Last Month Default Income: <b>{money(team.lastMonthBonus)}</b></p>
-          <hr />
+      {/* PURPLE PROMO BANNER */}
+      <section style={styles.promoBanner}>
+        <div style={styles.promoContent}>
+          <h1>
+            Grow Your Money
+            <br />
+            Build Your Future
+          </h1>
 
-          <h3>Level Income ({teamTimeFilter === "allTime" ? "All Time" : teamTimeFilter === "thisMonth" ? "This Month" : teamTimeFilter === "lastMonth" ? "Last Month" : "Selected Range"})</h3>
-          <div style={styles.levelGrid}>
-            <div>Level 1<br />{money(dynamicIncomes[1])}</div>
-            <div>Level 2<br />{money(dynamicIncomes[2])}</div>
-            <div>Level 3<br />{money(dynamicIncomes[3])}</div>
-            <div>Level 4<br />{money(dynamicIncomes[4])}</div>
-            <div>Level 5<br />{money(dynamicIncomes[5])}</div>
-          </div>
-          <hr />
-
-          <h3>Team Bonus History</h3>
-          <div style={styles.tableWrap}>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Upline Name</th>
-                  <th>Level</th>
-                  <th>You Earned</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedFilteredHistory.length === 0 ? (
-                  <tr><td colSpan="4" style={{ textAlign: "center", padding: 10 }}>No Team Bonus History Found</td></tr>
-                ) : (
-                  selectedFilteredHistory.map((item, index) => (
-                    <tr key={index}>
-                      <td>
-                        <b>{item.fromName || "-"}</b>
-                      </td>
-                      <td>{item.uplineName || "-"}</td>
-                      <td>L{item.level || "-"}</td>
-                      <td style={{ fontWeight: "bold", color: "#2563eb" }}>{money(item.amount)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </Modal>
-      )}
-
-      {/* --- Royalty Modal --- */}
-      {bonusModal === "royalty" && (
-        <Modal onClose={() => setBonusModal(null)}>
-          <h2>👑 Royalty Bonus</h2>
-          <h1>{money(royalty.balance)}</h1>
-          <p>Status: <b>{royalty.enabled ? "Active" : "Inactive"}</b></p>
-          <p>Direct Refer: <b>{royalty.directCount || 0}</b> / 50</p>
-          <p>Remaining: <b>{royalty.remaining || 0}</b></p>
-          <p>This Month Business: <b>{money(royalty.thisMonthBusiness)}</b></p>
-          <p>Last Month Business: <b>{money(royalty.lastMonthBusiness)}</b></p>
-          <p>This Month Royalty: <b>{money(royalty.thisMonthRoyalty)}</b></p>
-          <p>Last Month Royalty: <b>{money(royalty.lastMonthRoyalty)}</b></p>
-
-          <p style={styles.infoBox}>
-            Royalty status will become active once 50 direct referrals are completed. You will receive a 3% royalty bonus on business generated after becoming active.
+          <p>
+            Invest Smart, Earn More
           </p>
 
-          <BonusHistory type="royalty" data={bonusHistory} />
-          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </Modal>
-      )}
-
-      {/* --- Refer Modal --- */}
-      {bonusModal === "refer" && (
-        <Modal onClose={() => setBonusModal(null)}>
-          <h2>🎁 Refer Bonus</h2>
-          <p style={styles.successText}>Congratulations! Every direct user's first investment gives you Refer Bonus.</p>
-          
-          <button 
-            style={styles.pendingToggleBtn}
-            onClick={() => setShowPendingModal(true)}
+          <button
+            style={styles.promoButton}
+            onClick={() => go("/save-money")}
           >
-            ⏳ View Pending Refers ({pendingRefers.length})
+            Invest Now →
           </button>
-
-          <h1>{money(referBonus.totalBonus || 0)}</h1>
-
-          <p>Today's Bonus : <b> {money(referBonus.todayBonus || 0)}</b></p>
-          <p>This Month Bonus : <b> {money(referBonus.thisMonthBonus || 0)}</b></p>
-          <p>Last Month Bonus : <b> {money(referBonus.lastMonthBonus || 0)}</b></p>
-          <p>Total Refer Bonus : <b> {money(referBonus.totalBonus || 0)}</b></p>
-          <p>Eligible Refers : <b> {referBonus.count || 0}</b></p>
-
-          <div style={styles.levelGrid}>
-            <div>Total Direct Refers<br /><b>{history.length}</b></div>
-            <div>Active Refers<br /><b>{history.filter((x) => x.status === "Active").length}</b></div>
-            <div>Inactive Refers<br /><b>{history.filter((x) => x.status === "Inactive").length}</b></div>
-          </div>
-
-          <div style={{ marginTop: 20 }}>
-            <select
-              style={styles.filterSelect}
-              value={selectedMonth}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSelectedMonth(value);
-
-                let targetMonth = "";
-                let targetYear = new Date().getFullYear();
-
-                if (value === "thisMonth") {
-                  targetMonth = "";
-                } else if (value === "lastMonth") {
-                  const d = new Date();
-                  d.setMonth(d.getMonth() - 1);
-                  targetMonth = String(d.getMonth() + 1);
-                  targetYear = d.getFullYear();
-                } else {
-                  targetMonth = value;
-                }
-                loadReferData(targetMonth, targetYear);
-              }}
-            >
-              <option value="thisMonth">This Month</option>
-              <option value="lastMonth">Last Month</option>
-              <option value="1">January</option>
-              <option value="2">February</option>
-              <option value="3">March</option>
-              <option value="4">April</option>
-              <option value="5">May</option>
-              <option value="6">June</option>
-              <option value="7">July</option>
-              <option value="8">August</option>
-              <option value="9">September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
-            </select>
-          </div>
-
-          <BonusHistory type="Referral Bonus" data={referBonus.history || []} />
-          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </Modal>
-      )}
-
-      {/* --- পেন্ডিং রেফারাল সাব-মডাল --- */}
-      {showPendingModal && (
-        <Modal onClose={() => setShowPendingModal(false)}>
-          <h2 style={{ color: "#ea580c" }}>⏳ Pending Refers List</h2>
-          <p style={{ color: "#64748b", fontSize: 14 }}>These users registered but have not made their first investment yet.</p>
-          
-          <div style={{ maxHeight: "350px", overflowY: "auto", margin: "20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
-            {pendingRefers.length === 0 ? (
-              <p style={{ textAlign: "center", color: "#94a3b8", padding: 20 }}>No pending refers available.</p>
-            ) : (
-              pendingRefers.map((item, idx) => (
-                <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "12px 16px", borderRadius: 14, border: "1px solid #e2e8f0" }}>
-                  <div>
-                    <b style={{ color: "#1e293b", fontSize: 15 }}>{item.name || "Save Money User"}</b>
-                    <br />
-                    <small style={{ color: "#64748b" }}>{item.email}</small>
-                  </div>
-                  <span style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, background: "#ffedd5", color: "#ea580c", fontWeight: 700 }}>
-                    {item.kycStatus === "approved" ? "KYC Approved" : "Registered"}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-          
-          <button 
-            style={{ ...styles.closeBtn, background: "#ea580c", color: "#fff" }} 
-            onClick={() => setShowPendingModal(false)}
-          >
-            Back to Refer Bonus
-          </button>
-        </Modal>
-      )}
-
-      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল --- */}
-      {showTodayJoinModal && (
-        <Modal onClose={() => setShowTodayJoinModal(false)}>
-          <h2 style={{ color: "#2563eb" }}>📊 Today's Network Joining List</h2>
-          <p style={{ color: "#64748b", fontSize: 14 }}>List of users who joined your team network today.</p>
-          
-          <div style={{ maxHeight: "350px", overflowY: "auto", margin: "20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
-            {todayJoinMembers.length === 0 ? (
-              <p style={{ textAlign: "center", color: "#94a3b8", padding: 20 }}>No members joined today yet.</p>
-            ) : (
-              todayJoinMembers.map((item, idx) => (
-                <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "12px 16px", borderRadius: 14, border: "1px solid #e2e8f0" }}>
-                  <div>
-                    <b style={{ color: "#1e293b", fontSize: 15 }}>{item.fromName || "Save Money User"}</b>
-                    <br />
-                    <small style={{ color: "#64748b" }}>Level {item.level || "-"}</small>
-                  </div>
-                  <span style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, background: "#dbeafe", color: "#2563eb", fontWeight: 700 }}>
-                    Today Joined
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-          
-          <button 
-            style={{ ...styles.closeBtn, background: "#2563eb", color: "#fff" }} 
-            onClick={() => setShowTodayJoinModal(false)}
-          >
-            Back to Team Bonus
-          </button>
-        </Modal>
-      )}
-
-    </div>
-  );
-}
-
-function BonusHistory({ type, data }) {
-  const rows = (data || []).filter((x) => x.bonusType === type);
-  return (
-    <div style={{ marginTop: 20 }}>
-      <h3>Bonus History</h3>
-      {rows.length === 0 ? (
-        <p>No history found</p>
-      ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Date</th>
-                <th>Level</th>
-                <th>Bonus</th>
-                <th>Type</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((x, i) => {
-                const hasHistoryPhoto = x.fromPhoto || x.photo;
-                return (
-                  <tr key={i}>
-                    <td style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {hasHistoryPhoto ? (
-                        <img src={x.fromPhoto || x.photo} style={styles.smallTableAvatar} alt="user" />
-                      ) : (
-                        <span style={styles.smallTableInitialBackup}>{x.fromName ? x.fromName[0] : "S"}</span>
-                      )}
-                      <div>
-                        <b>{x.fromName}</b><br /><small>{x.fromEmail}</small>
-                      </div>
-                    </td>
-                    <td>{x.date ? new Date(x.date).toLocaleDateString("en-IN") : "-"}</td>
-                    <td>L{x.level || 1}</td>
-                    <td>₹{Number(x.amount || 0).toLocaleString("en-IN")}</td>
-                    <td>{x.note || type}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
-      )}
+
+        <div style={styles.promoIcon}>
+          💰📈
+        </div>
+      </section>
+
+      {/* TRUST CARDS */}
+      <section style={styles.trustPanel}>
+        <TrustMiniCard
+          icon="🔒"
+          title="100% Secure"
+          subtitle="Your money is safe"
+        />
+
+        <TrustMiniCard
+          icon="⚡"
+          title="Fast Payout"
+          subtitle="Quick withdrawals"
+        />
+
+        <TrustMiniCard
+          icon="🛡️"
+          title="Trusted Platform"
+          subtitle="Trusted by users"
+        />
+
+        <TrustMiniCard
+          icon="💬"
+          title="24/7 Support"
+          subtitle="We are here"
+        />
+      </section>
+
+      {/* ABOUT STRIP */}
+      <button
+        style={styles.aboutStrip}
+        onClick={() => go("/about")}
+      >
+        🏢 About Save Money
+      </button>
+
+      {/* HELP TEXT */}
+      <h1 style={styles.helpText}>
+        HELP OTHER FOR EARN MORE 💸
+      </h1>
+
+      {/* FOOTER */}
+      <footer style={styles.footer}>
+        <h2>
+          Save Money
+        </h2>
+
+        <div style={styles.footerLinks}>
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/privacy")}>
+            Privacy Policy
+          </button>
+
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/terms")}>
+            Terms
+          </button>
+
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/refund")}>
+            Refund
+          </button>
+
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/risk")}>
+            Risk Disclosure
+          </button>
+
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/aml")}>
+            AML & KYC
+          </button>
+
+          <button style={styles.footerLinkBtn} onClick={() => go("/legal/disclaimer")}>
+            Disclaimer
+          </button>
+        </div>
+
+        <p>
+          © 2026 Save Money. All Rights Reserved.
+        </p>
+      </footer>
+
+      {/* BOTTOM NAVIGATION */}
+      <nav style={styles.bottomNav}>
+        <BottomNavItem
+          icon="🏠"
+          title="Home"
+          active={location.pathname === "/home"}
+          onClick={() => go("/home")}
+        />
+
+        <BottomNavItem
+          icon="👛"
+          title="Wallet"
+          active={location.pathname === "/wallet"}
+          onClick={() => go("/wallet")}
+        />
+
+        <BottomNavItem
+          icon="👥"
+          title="Refer"
+          active={location.pathname === "/refer"}
+          onClick={() => go("/refer")}
+        />
+
+        <BottomNavItem
+          icon="🌲"
+          title="tree"
+          active={location.pathname === "/profile"}
+          onClick={() => go("/referral-tree")}
+        />
+      </nav>
+
     </div>
   );
 }
 
-function Modal({ children, onClose }) {
+function DashboardStatCard({ icon, title, value, gradient }) {
+  const gradientStyle = {
+    blue: styles.statBlue,
+    green: styles.statGreen,
+    purple: styles.statPurple,
+    orange: styles.statOrange
+  };
+
   return (
-    <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
-        {children}
+    <div style={{ ...styles.statCard, ...gradientStyle[gradient] }}>
+      <div style={styles.statIconWrap}>
+        <span style={styles.statIcon}>{icon}</span>
+      </div>
+
+      <p style={styles.statTitle}>
+        {title}
+      </p>
+
+      <h2 style={styles.statValue}>
+        {value}
+      </h2>
+
+      <div style={styles.statGlow}></div>
+    </div>
+  );
+}
+
+function PremiumActionButton({
+  icon,
+  title,
+  subtitle,
+  gradient,
+  onClick
+}) {
+  const gradientStyle = {
+    invest: styles.actionInvest,
+    myInvestment: styles.actionMyInvestment,
+    wallet: styles.actionWallet,
+    withdraw: styles.actionWithdraw,
+    refer: styles.actionRefer,
+    transaction: styles.actionTransaction,
+    kyc: styles.actionKyc,
+    reward: styles.actionReward,
+    bank: styles.actionBank,
+    plan: styles.actionPlan,
+    notification: styles.actionNotification,
+    support: styles.actionSupport
+  };
+
+  return (
+    <button
+      style={{
+        ...styles.actionButton,
+        ...gradientStyle[gradient]
+      }}
+      onClick={onClick}
+    >
+      <div style={styles.actionIconCircle}>
+        {icon}
+      </div>
+
+      <div style={styles.actionTextBox}>
+        <h3 style={styles.actionTitle}>
+          {title}
+        </h3>
+
+        <p style={styles.actionSubtitle}>
+          {subtitle}
+        </p>
+      </div>
+
+      <div style={styles.actionShine}></div>
+    </button>
+  );
+}
+
+function PremiumSectionTitle({ title, color }) {
+  return (
+    <div style={styles.sectionTitleWrap}>
+      <div style={styles.sectionLine}></div>
+
+      <h2
+        style={{
+          ...styles.sectionTitleText,
+          color
+        }}
+      >
+        {title}
+      </h2>
+
+      <div style={styles.sectionLine}></div>
+    </div>
+  );
+}
+
+function TrustMiniCard({ icon, title, subtitle }) {
+  return (
+    <div style={styles.trustMiniCard}>
+      <div style={styles.trustIconCircle}>
+        {icon}
+      </div>
+
+      <div>
+        <h3 style={styles.trustTitle}>
+          {title}
+        </h3>
+
+        <p style={styles.trustSubtitle}>
+          {subtitle}
+        </p>
       </div>
     </div>
   );
 }
 
+function BottomNavItem({ icon, title, active, onClick }) {
+  return (
+    <button
+      style={{
+        ...styles.bottomNavItem,
+        ...(active ? styles.bottomNavItemActive : {})
+      }}
+      onClick={onClick}
+    >
+      <span style={styles.bottomNavIcon}>
+        {icon}
+      </span>
+
+      <small style={styles.bottomNavText}>
+        {title}
+      </small>
+    </button>
+  );
+}
+
 const styles = {
-  txListWrapper: {
+  // নতুন স্ট্যাটাস ওভারলে UI এর স্টাইলস
+  statusOverlayBg: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(2, 6, 23, 0.65)",
+    backdropFilter: "blur(8px)",
+    zIndex: 100000,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  statusOverlayCard: {
+    background: "#0f172a",
+    padding: "24px 34px",
+    borderRadius: "24px",
+    textAlign: "center",
+    boxShadow: "0 30px 70px rgba(0,0,0,0.5)",
+    border: "1px solid #1e293b",
+    maxWidth: "380px",
+    width: "85%",
     display: "flex",
     flexDirection: "column",
-    gap: "0px"
-  },
-  txItemRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "16px 0",
-    borderBottom: "1px solid #f1f5f9",
-    cursor: "pointer",
-    transition: "background 0.2s",
-  },
-  txLeftSection: {
-    display: "flex",
     alignItems: "center",
     gap: "14px"
   },
-  txUserAvatarImage: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "1px solid #e2e8f0"
-  },
-  txAvatarCircle: {
-    width: "48px",
-    height: "48px",
+  statusOverlayIcon: {
+    width: "58px",
+    height: "58px",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "bold",
-    fontSize: "16px",
-    letterSpacing: "0.5px"
+    fontSize: "28px",
+    fontWeight: "bold"
   },
-  txMetaDetails: {
+  statusOverlayText: {
+    fontSize: "18px",
+    color: "#ffffff",
+    margin: 0,
+    fontWeight: "800",
+    lineHeight: "1.4"
+  },
+
+  page: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(180deg,#020617 0%,#031026 45%,#020617 100%)",
+    color: "white",
+    padding: "0 16px 160px",
+    fontFamily: "Arial, sans-serif"
+  },
+
+  loadingPage: {
+    minHeight: "100vh",
+    background: "#020617",
+    color: "white",
     display: "flex",
-    flexDirection: "column",
-    gap: "2px"
-  },
-  txSenderName: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: "600",
-    color: "#1e293b"
-  },
-  txTimeStamp: {
-    margin: 0,
-    fontSize: "13px",
-    color: "#64748b"
-  },
-  txTagBadge: {
-    display: "inline-flex",
     alignItems: "center",
-    background: "#e8f5e9",
-    color: "#2e7d32",
-    fontSize: "11px",
-    fontWeight: "700",
-    padding: "3px 8px",
-    borderRadius: "20px",
-    marginTop: "4px",
-    width: "fit-content"
+    justifyContent: "center"
   },
-  txRightSection: {
-    textAlign: "right"
-  },
-  txAmountText: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: "700"
-  },
-  txFromBankText: {
-    margin: 0,
-    fontSize: "12px",
-    color: "#64748b",
-    marginTop: "2px"
-  },
-  upiIconSmall: {
-    fontSize: "12px"
-  },
-  paytmBrandFooter: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: "20px",
-    paddingTop: "10px",
-    fontSize: "14px"
-  },
-  txDetailsCard: {
-    width: "100%",
-    maxWidth: "420px",
-    background: "#fff",
+
+  loadingCard: {
+    background: "#0f172a",
+    padding: "30px",
     borderRadius: "24px",
-    padding: "20px",
-    boxShadow: "0 20px 50px rgba(0,0,0,0.15)",
-    fontFamily: "sans-serif"
+    textAlign: "center",
+    border: "1px solid #1e40af",
+    boxShadow: "0 0 35px rgba(34,197,94,0.25)"
   },
-  txDetailsHeader: {
+
+  loadingLogo: {
+    fontSize: "48px"
+  },
+
+  topHeader: {
+    height: "64px",
     display: "flex",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingBottom: "15px",
-    color: "#1e293b",
-    borderBottom: "1px solid #f1f5f9"
+    justifyContent: "space-between"
   },
-  txBackArrow: {
-    background: "none",
+
+  menuButton: {
+    background: "transparent",
     border: "none",
-    fontSize: "22px",
-    cursor: "pointer",
-    color: "#1e293b"
-  },
-  txHeaderLink: {
-    color: "#2563eb",
-    fontWeight: "600",
-    fontSize: "14px",
+    color: "white",
+    fontSize: "30px",
     cursor: "pointer"
   },
-  txDetailsInnerBox: {
-    border: "1px solid #e2e8f0",
-    borderRadius: "20px",
-    padding: "16px",
-    marginTop: "16px",
-    background: "#fff"
+
+  headerTitle: {
+    margin: 0,
+    fontSize: "19px",
+    fontWeight: "800"
   },
-  txDetailMainAmount: {
-    fontSize: "32px",
+
+  logoutBtn: {
+    height: "42px",
+    padding: "0 18px",
+    border: "none",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg,#ef4444,#dc2626)",
+    color: "white",
     fontWeight: "800",
-    margin: "5px 0",
-    color: "#1e293b",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px"
+    fontSize: "14px",
+    boxShadow: "0 4px 14px rgba(239,68,68,0.35)",
+    cursor: "pointer"
   },
-  verifiedCheck: {
-    color: "#10b981",
-    fontSize: "24px"
+
+  notificationButton: {
+    position: "relative",
+    background: "transparent",
+    border: "none",
+    color: "white",
+    fontSize: "25px",
+    cursor: "pointer"
   },
-  moneyReceivedTag: {
-    background: "#e8f5e9",
-    color: "#2e7d32",
-    padding: "6px 14px",
-    borderRadius: "20px",
-    fontWeight: "bold",
-    fontSize: "13px",
-    display: "inline-block",
-    marginTop: "10px"
-  },
-  sectionLabel: {
-    margin: 0,
-    fontSize: "13px",
-    color: "#666",
-    fontWeight: "500"
-  },
-  sectionValueName: {
-    margin: "2px 0 0 0",
-    fontSize: "16px",
-    fontWeight: "700",
-    color: "#1e293b"
-  },
-  blueTick: {
-    color: "#00baf2"
-  },
-  sectionSubValue: {
-    margin: 0,
-    fontSize: "13px",
-    color: "#64748b"
-  },
-  bankNameFooter: {
-    margin: "4px 0 0 0",
-    fontSize: "12px",
-    color: "#94a3b8"
-  },
-  detailAvatarCircle: {
-    width: "44px",
-    height: "44px",
+
+  notificationBadge: {
+    position: "absolute",
+    top: "-6px",
+    right: "-6px",
+    background: "#ff1744",
+    color: "white",
+    width: "21px",
+    height: "21px",
     borderRadius: "50%",
+    fontSize: "11px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontWeight: "bold"
   },
-  detailUserImage: {
-    width: "44px",
-    height: "44px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "1px solid #e2e8f0"
+
+  heroWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: "16px",
+    borderRadius: "24px",
+    overflow: "hidden",
+    background:
+      "radial-gradient(circle at 90% 0%,#22ff88 0%,transparent 34%),linear-gradient(135deg,#06152d,#043858,#08c96b)",
+    border: "1px solid rgba(34,255,136,0.55)",
+    boxShadow: "0 0 38px rgba(34,255,136,0.23)"
   },
-  txFooterMetaDetails: {
-    background: "#f8fafc",
-    padding: "12px",
-    borderRadius: "12px",
-    marginTop: "12px",
-    fontSize: "12px",
-    color: "#64748b",
-    lineHeight: "1.6"
-  },
-  statusOverlayBg: {
-    position: "fixed",
+
+  heroGlow: {
+    position: "absolute",
     inset: 0,
-    background: "rgba(10, 15, 30, 0.45)",
-    backdropFilter: "blur(8px)",
-    zIndex: 100000,
+    background:
+      "linear-gradient(90deg,rgba(255,255,255,0.08),transparent,rgba(255,255,255,0.08))",
+    pointerEvents: "none"
+  },
+
+  profilePhotoCircle: {
+    width: "82px",
+    height: "82px",
+    borderRadius: "50%",
+    background: "#334155",
+    border: "3px solid #e0f2fe",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+    zIndex: 2,
+    boxShadow: "0 0 16px rgba(255,255,255,0.35)"
   },
-  statusOverlayCard: {
-    background: "rgba(255, 255, 255, 0.95)",
-    padding: "30px 40px",
+
+  profilePhoto: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
+  },
+
+  defaultProfileIcon: {
+    fontSize: "43px"
+  },
+
+  heroUserInfo: {
+    flex: 1,
+    zIndex: 2
+  },
+
+  heroWelcome: {
+    margin: 0,
+    fontSize: "15px",
+    fontWeight: "800"
+  },
+
+  heroNameRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "7px"
+  },
+
+  heroName: {
+    margin: "4px 0",
+    fontSize: "25px",
+    fontWeight: "900",
+    lineHeight: "30px"
+  },
+
+  verifiedBadge: {
+    width: "22px",
+    height: "22px",
+    borderRadius: "50%",
+    background: "#2563eb",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "12px",
+    fontWeight: "bold"
+  },
+
+  heroSubtitle: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#dcfce7",
+    fontWeight: "700"
+  },
+
+  heroWalletCard: {
+    minWidth: "105px",
+    borderRadius: "18px",
+    padding: "12px",
+    background: "linear-gradient(135deg,#16ff75,#00b96b)",
+    boxShadow: "0 12px 25px rgba(0,0,0,0.35)",
+    zIndex: 2
+  },
+
+  latestCard: {
+    marginTop: "14px",
     borderRadius: "20px",
-    textAlign: "center",
-    boxShadow: "0 25px 60px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.6)",
-    maxWidth: "360px",
-    width: "85%",
+    padding: "16px",
+    background: "linear-gradient(135deg,#ffb703,#fb8500,#ff006e)",
+    border: "2px solid #ffd166",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: "0 0 25px rgba(255,183,3,0.45)"
+  },
+
+  latestLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px"
+  },
+
+  latestIcon: {
+    fontSize: "30px"
+  },
+
+  latestArrow: {
+    background: "transparent",
+    border: "none",
+    color: "white",
+    fontSize: "40px"
+  },
+
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
+    gap: "12px",
+    marginTop: "16px"
+  },
+
+  statCard: {
+    position: "relative",
+    minHeight: "120px",
+    borderRadius: "20px",
+    padding: "14px",
+    overflow: "hidden",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.45)"
+  },
+
+  statBlue: {
+    background: "linear-gradient(135deg,#2f63ff,#061b91)"
+  },
+
+  statGreen: {
+    background: "linear-gradient(135deg,#00f58a,#006b45)"
+  },
+
+  statPurple: {
+    background: "linear-gradient(135deg,#9b35ff,#4c057a)"
+  },
+
+  statOrange: {
+    background: "linear-gradient(135deg,#ff8a00,#c2410c)"
+  },
+
+  statIconWrap: {
+    fontSize: "29px"
+  },
+
+  statIcon: {
+    fontSize: "29px"
+  },
+
+  statTitle: {
+    margin: "10px 0 4px",
+    color: "rgba(255,255,255,0.9)",
+    fontSize: "13px",
+    fontWeight: "700"
+  },
+
+  statValue: {
+    margin: 0,
+    fontSize: "22px",
+    fontWeight: "900"
+  },
+
+  statGlow: {
+    position: "absolute",
+    right: "-20px",
+    top: "-20px",
+    width: "75px",
+    height: "75px",
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.18)"
+  },
+
+  sectionTitleWrap: {
+    margin: "25px 0 13px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px"
+  },
+
+  sectionLine: {
+    width: "70px",
+    height: "3px",
+    borderRadius: "10px",
+    background: "linear-gradient(90deg,transparent,#38bdf8,#facc15,transparent)"
+  },
+
+  sectionTitleText: {
+    margin: 0,
+    fontSize: "19px",
+    fontWeight: "900",
+    letterSpacing: "1px"
+  },
+
+  actionPanel: {
+    background: "linear-gradient(180deg,#061936,#07101e)",
+    border: "2px solid #1d4ed8",
+    borderRadius: "26px",
+    padding: "14px",
+    display: "grid",
+    gridTemplateColumns: "repeat(3,1fr)",
+    gap: "14px",
+    boxShadow: "inset 0 0 35px rgba(59,130,246,0.25)"
+  },
+
+  actionButton: {
+    position: "relative",
+    border: "none",
+    borderRadius: "20px",
+    minHeight: "120px",
+    color: "white",
+    padding: "14px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "16px",
+    justifyContent: "center",
+    gap: "8px",
+    overflow: "hidden",
+    boxShadow: "0 10px 26px rgba(0,0,0,0.45)",
+    cursor: "pointer"
   },
-  statusOverlayIcon: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
+
+  actionIconCircle: {
+    width: "46px",
+    height: "46px",
+    borderRadius: "16px",
+    background: "rgba(255,255,255,0.28)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "26px",
-    fontWeight: "bold",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.05)"
+    fontSize: "28px",
+    boxShadow: "inset 0 0 12px rgba(255,255,255,0.25)"
   },
-  statusOverlayText: {
-    fontSize: "17px",
-    color: "#1e293b",
-    margin: 0,
-    fontWeight: "700",
-    lineHeight: "1.5",
-    letterSpacing: "-0.3px"
-  },
-  loadingPage: {
-    minHeight: "100vh",
-    background: "#fff7ff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily: "Arial"
-  },
-  loadingBox: {
-    background: "white",
-    padding: 35,
-    borderRadius: 30,
+
+  actionTextBox: {
     textAlign: "center",
-    boxShadow: "0 20px 45px rgba(124,58,237,.18)"
+    zIndex: 2
   },
-  loadingIcon: { fontSize: 70 },
-  page: {
-    minHeight: "100vh",
-    padding: 28,
+
+  actionTitle: {
+    margin: 0,
+    fontSize: "14px",
+    fontWeight: "900"
+  },
+
+  actionSubtitle: {
+    margin: "4px 0 0",
+    fontSize: "11px",
+    color: "rgba(255,255,255,0.92)",
+    fontWeight: "700"
+  },
+
+  actionShine: {
+    position: "absolute",
+    right: "-22px",
+    top: "-22px",
+    width: "70px",
+    height: "70px",
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.17)"
+  },
+
+  actionInvest: {
+    background: "linear-gradient(135deg,#00ff75,#00c853,#008f45)"
+  },
+  actionMyInvestment: {
+    background: "linear-gradient(135deg,#00b4ff,#2563eb,#003cff)"
+  },
+  actionWallet: {
+    background: "linear-gradient(135deg,#a855f7,#d946ef,#ff00d4)"
+  },
+  actionWithdraw: {
+    background: "linear-gradient(135deg,#ff6b00,#ff9f00,#ffd000)"
+  },
+  actionRefer: {
+    background: "linear-gradient(135deg,#ff007a,#ff2bd6,#b000ff)"
+  },
+  actionTransaction: {
+    background: "linear-gradient(135deg,#00e5ff,#00c8ff,#00ffd5)"
+  },
+  actionKyc: {
+    background: "linear-gradient(135deg,#00f5ff,#0284c7,#005eff)"
+  },
+  actionReward: {
+    background: "linear-gradient(135deg,#7c3aed,#a855f7,#e879f9)"
+  },
+  actionBank: {
+    background: "linear-gradient(135deg,#ff8c00,#ffb703,#ffdd00)"
+  },
+  actionPlan: {
+    background: "linear-gradient(135deg,#2979ff,#00b0ff,#00e5ff)"
+  },
+  actionNotification: {
+    background: "linear-gradient(135deg,#ff1744,#ff006e,#ff5c8d)"
+  },
+  actionSupport: {
+    background: "linear-gradient(135deg,#00ff75,#00e676,#00c853)"
+  },
+
+  promoBanner: {
+    marginTop: "18px",
+    borderRadius: "23px",
+    padding: "20px",
     background:
-      "radial-gradient(circle at top left,#fff0ff,transparent 28%),radial-gradient(circle at top right,#ffe8f5,transparent 30%),linear-gradient(135deg,#fffaff,#f8f3ff,#ffffff)",
-    fontFamily: "Arial, sans-serif",
-    color: "#111542",
-    position: "relative"
-  },
-  backBtn: {
-    position: "absolute",
-    top: 24,
-    left: 24,
-    width: 54,
-    height: 54,
-    border: "none",
-    borderRadius: 16,
-    background: "white",
-    boxShadow: "0 12px 30px rgba(137,84,255,.22)",
-    fontSize: 30,
-    cursor: "pointer"
-  },
-  bellBtn: {
-    position: "absolute",
-    top: 24,
-    right: 24,
-    width: 58,
-    height: 58,
-    border: "none",
-    borderRadius: 18,
-    background: "white",
-    boxShadow: "0 12px 30px rgba(137,84,255,.22)",
-    fontSize: 25,
-    cursor: "pointer"
-  },
-  header: { textAlign: "center" },
-  welcome: { margin: 0, fontSize: 22 },
-  mainTitle: {
-    margin: "2px 0 0",
-    fontSize: 58,
-    fontWeight: 900,
-    background: "linear-gradient(90deg,#1463ff,#8b20ff,#ff1685)",
-    WebkitBackgroundClip: "text",
-    color: "transparent"
-  },
-  referWorld: { margin: 0, fontSize: 36 },
-  tagline: { color: "#62678c", fontSize: 18 },
-  heroCard: {
-    width: "min(1050px, 94vw)",
-    margin: "30px auto 18px",
-    padding: 40,
-    borderRadius: 34,
-    background: "linear-gradient(135deg,#3a19d6,#6b08d8,#b616a1)",
-    color: "white",
+      "linear-gradient(135deg,#4c1d95,#8b00ff,#9d00ff)",
     display: "flex",
     justifyContent: "space-between",
-    gap: 30,
-    boxShadow: "0 30px 55px rgba(102,38,190,.35)"
-  },
-  heroLeft: { display: "flex", alignItems: "center", gap: 28 },
-  avatarWrap: { position: "relative" },
-  avatar: {
-    width: 140,
-    height: 140,
-    borderRadius: "50%",
-    border: "8px solid white",
-    objectFit: "cover"
-  },
-  crown: {
-    position: "absolute",
-    right: -4,
-    bottom: 12,
-    width: 48,
-    height: 48,
-    borderRadius: "50%",
-    background: "linear-gradient(135deg,#e11dff,#9f18ff)",
-    display: "grid",
-    placeItems: "center",
-    fontSize: 24,
-    border: "4px solid white"
-  },
-  activeMember: {
-    display: "inline-block",
-    margin: "12px 0",
-    padding: "10px 18px",
-    borderRadius: 12,
-    background: "rgba(255,255,255,.16)",
-    fontWeight: 700
-  },
-  greenDot: {
-    width: 10,
-    height: 10,
-    borderRadius: "50%",
-    display: "inline-block",
-    marginRight: 8
-  },
-  smallText: { margin: "8px 0", opacity: 0.9 },
-  referIdBox: {
-    border: "1px dashed rgba(255,255,255,.85)",
-    borderRadius: 14,
-    padding: "12px 16px",
-    fontSize: 20,
-    fontWeight: 900,
-    display: "flex",
-    gap: 18,
-    justifyContent: "space-between"
-  },
-  heroRight: { minWidth: 270 },
-  walletRound: {
-    width: 76,
-    height: 76,
-    borderRadius: "50%",
-    background: "rgba(255,255,255,.18)",
-    display: "grid",
-    placeItems: "center",
-    fontSize: 38
-  },
-  linkCard: {
-    width: "min(1120px, 94vw)",
-    margin: "20px auto",
-    padding: 28,
-    borderRadius: 26,
-    background: "white",
-    boxShadow: "0 16px 36px rgba(156,105,255,.16)",
-    display: "flex",
     alignItems: "center",
-    gap: 24
+    boxShadow: "0 10px 28px rgba(126,34,206,0.35)"
   },
-  linkIcon: {
-    width: 90,
-    height: 90,
-    borderRadius: 22,
-    background: "#f0e7ff",
-    display: "grid",
-    placeItems: "center",
-    fontSize: 48
+
+  promoContent: {
+    flex: 1
   },
-  linkMiddle: { flex: 1 },
-  copyBox: {
-    border: "1px solid #ddd9ec",
-    borderRadius: 14,
-    padding: 12,
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 10
-  },
-  copyLinkBtn: {
+
+  promoButton: {
+    marginTop: "12px",
     border: "none",
-    borderRadius: 12,
-    padding: "12px 22px",
-    background: "linear-gradient(90deg,#7c3aed,#d946ef)",
-    color: "#fff",
-    fontWeight: 900,
-    cursor: "pointer"
+    borderRadius: "12px",
+    padding: "10px 16px",
+    background: "#facc15",
+    color: "#020617",
+    fontWeight: "900"
   },
-  shareBox: {
-    borderLeft: "1px solid #e7e2f0",
-    paddingLeft: 30,
-    minWidth: 190
+
+  promoIcon: {
+    fontSize: "55px"
   },
-  whatsapp: {
-    width: 58,
-    height: 58,
-    border: "none",
-    borderRadius: "50%",
-    background: "#16c768",
-    color: "white",
-    fontSize: 24,
-    marginRight: 12,
-    cursor: "pointer"
-  },
-  telegram: {
-    width: 58,
-    height: 58,
-    border: "none",
-    borderRadius: "50%",
-    background: "#2196f3",
-    color: "white",
-    fontSize: 30,
-    cursor: "pointer"
-  },
-  bonusGrid: {
-    width: "min(1120px, 94vw)",
-    margin: "26px auto",
+
+  trustPanel: {
     display: "grid",
     gridTemplateColumns: "repeat(4,1fr)",
-    gap: 20
-  },
-  bonusCard: {
-    borderRadius: 24,
-    padding: "34px 18px",
-    textAlign: "center",
-    boxShadow: "0 14px 34px rgba(0,0,0,.08)"
-  },
-  bonusIcon: {
-    width: 78,
-    height: 78,
-    borderRadius: 22,
-    margin: "0 auto 18px",
-    display: "grid",
-    placeItems: "center",
-    color: "white",
-    fontSize: 38
-  },
-  detailBtn: {
-    border: "1px solid currentColor",
-    borderRadius: 12,
-    background: "white",
-    padding: "12px 22px",
-    fontWeight: 900,
-    cursor: "pointer"
-  },
-  historyCard: {
-    width: "min(1120px, 94vw)",
-    margin: "26px auto",
-    background: "white",
-    borderRadius: 26,
-    padding: 28,
-    boxShadow: "0 16px 36px rgba(156,105,255,.16)"
-  },
-  filterSelect: {
-    padding: "12px 18px",
-    borderRadius: 14,
-    border: "1px solid #ddd",
-    fontSize: "15px",
-    outline: "none",
-    background: "#fff"
-  },
-  tableWrap: { overflowX: "auto" },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    minWidth: 700,
-    textAlign: "left"
-  },
-  viewMoreBtn: {
-    display: "block",
-    margin: "22px auto 0",
-    border: "none",
-    background: "white",
-    color: "#7b20e8",
-    fontSize: 18,
-    fontWeight: 900,
-    cursor: "pointer"
-  },
-  bottomBanner: {
-    width: "min(1120px, 94vw)",
-    margin: "26px auto 10px",
-    padding: "26px 34px",
-    borderRadius: 24,
-    background: "linear-gradient(90deg,#fff2ff,#f5eaff)",
-    display: "flex",
-    alignItems: "center",
-    gap: 24
-  },
-  bottomGift: { fontSize: 70 },
-  referNowBtn: {
-    border: "none",
-    borderRadius: 16,
-    padding: "18px 48px",
-    color: "white",
-    background: "linear-gradient(90deg,#7b20ff,#c515e9)",
-    fontSize: 20,
-    fontWeight: 900,
-    cursor: "pointer"
-  },
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15,23,42,.55)",
-    backdropFilter: "blur(8px)",
-    zIndex: 9999,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20
-  },
-  modalBox: {
-    width: "min(760px, 96vw)",
-    maxHeight: "88vh",
-    overflowY: "auto",
-    background: "#fff",
-    borderRadius: 28,
-    padding: 28,
-    boxShadow: "0 30px 90px rgba(0,0,0,.25)"
-  },
-  closeBtn: {
-    marginTop: 20,
-    width: "100%",
-    border: "none",
-    borderRadius: 14,
-    padding: 14,
-    background: "#e5e7eb",
-    fontWeight: 900,
-    cursor: "pointer"
-  },
-  levelGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3,1fr)",
-    gap: 12,
-    margin: "16px 0",
-    fontWeight: 700
-  },
-  infoBox: {
-    background: "#f8fafc",
-    padding: 14,
-    borderRadius: 14,
-    lineHeight: 1.6
-  },
-  historyItem: {
-    padding: 15,
-    marginTop: 10,
-    background: "#f8fafc",
-    borderRadius: 12,
-    border: "1px solid #e5e7eb"
-  },
-  dangerText: {
-    color: "#dc2626",
-    fontWeight: "bold",
-    marginTop: 20
-  },
-  successText: {
-    color: "#16a34a",
-    fontWeight: 900
-  },
-  pendingToggleBtn: {
-    display: "block",
-    width: "100%",
-    padding: "14px",
-    margin: "10px 0 20px 0",
-    background: "linear-gradient(90deg, #ff9800, #f44336)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "14px",
-    fontWeight: "bold",
-    fontSize: "16px",
-    cursor: "pointer",
-    boxShadow: "0 8px 20px rgba(244,67,54,0.2)"
-  },
-  todayJoinBtn: {
-    display: "block",
-    width: "100%",
+    gap: "10px",
+    marginTop: "14px",
+    background: "#071831",
+    borderRadius: "22px",
     padding: "12px",
-    margin: "12px 0",
-    background: "#f0fdf4",
-    color: "#16a34a",
-    border: "1px solid #bbf7d0",
-    borderRadius: "12px",
-    textAlign: "left",
-    fontSize: "15px",
-    cursor: "pointer",
-    fontWeight: "500"
+    border: "2px solid #1e40af"
   },
-  smallTableAvatar: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "1px solid #e2e8f0"
+
+  trustMiniCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: "9px",
+    fontSize: "12px",
+    background: "rgba(15,23,42,0.65)",
+    borderRadius: "15px",
+    padding: "10px"
   },
-  smallTableInitialBackup: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    background: "#f1f5f9",
-    color: "#475569",
-    display: "inline-flex",
+
+  trustIconCircle: {
+    fontSize: "24px"
+  },
+
+  trustTitle: {
+    margin: 0,
+    fontSize: "13px"
+  },
+
+  trustSubtitle: {
+    margin: "3px 0 0",
+    color: "#94a3b8",
+    fontSize: "11px"
+  },
+
+  aboutStrip: {
+    width: "calc(100% + 32px)",
+    marginLeft: "-16px",
+    marginTop: "20px",
+    padding: "15px",
+    border: "none",
+    background: "linear-gradient(90deg,#06b6d4,#14f1c4)",
+    color: "white",
+    fontWeight: "900",
+    fontSize: "15px"
+  },
+
+  helpText: {
+    textAlign: "center",
+    color: "#22ff73",
+    fontSize: "22px",
+    fontWeight: "900",
+    marginTop: "22px"
+  },
+
+  footer: {
+    textAlign: "center",
+    padding: "24px 4px",
+    color: " #87CEEB"
+  },
+
+  footerLinks: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "10px",
+    justifyContent: "center",
+    marginBottom: "12px"
+  },
+
+  footerLinkBtn: {
+    background: "transparent",
+    border: "none",
+    color: "#38bdf8",
+    fontSize: "12px",
+    fontWeight: "700",
+    cursor: "pointer"
+  },
+
+  bottomNav: {
+    position: "fixed",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "62px",
+    background: "#020817",
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
+    borderTop: "1px solid #1e40af",
+    zIndex: 999
+  },
+
+  bottomNavItem: {
+    border: "none",
+    background: "transparent",
+    color: "#94a3b8",
+    display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "bold",
-    fontSize: "14px"
+    fontSize: "12px"
+  },
+
+  bottomNavItemActive: {
+    background: "#0f2a5c",
+    color: "white"
+  },
+
+  bottomNavIcon: {
+    fontSize: "21px"
+  },
+
+  bottomNavText: {
+    fontSize: "10px",
+    marginTop: "3px"
   }
 };
