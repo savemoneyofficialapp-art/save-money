@@ -7065,9 +7065,9 @@ cron.schedule("0 0 * * *", async () => {
         // ২. ওয়ালেট হিস্ট্রিতে সেটেলমেন্ট ট্র্যাকিং এন্ট্রি
         historyOps.push({
           email: userEmail,
-          type: "credit",
+          type: "Credit",
           amount: remainingBalance,
-          note: "Daily Remaining Today Wallet Settlement Received",
+          note: "Today Wallet Settlement",
           status: "Success",
           date: new Date()
         });
