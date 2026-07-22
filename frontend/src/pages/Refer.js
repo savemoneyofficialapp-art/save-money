@@ -225,7 +225,7 @@ export default function Refer() {
     );
   };
 
-  // ডিটেইলস স্ক্রিনশটের মত শেয়ার করার লজিক
+  // ডিটেইলস স্ক্রিনшোটের মত শেয়ার করার লজিক
   const handleShareTx = (tx) => {
     const shareText = `💰 Save Money Transaction details:\n\nAmount: ₹${tx.amount}\nFrom: ${tx.fromName || "User"}\nType: ${tx.bonusType}\nDate: ${new Date(tx.date).toLocaleString("en-IN")}\nStatus: Paid/Success ✅`;
     if (navigator.share) {
@@ -439,7 +439,7 @@ export default function Refer() {
         ))}
       </section>
 
-      {/* 🛠️ স্ক্রিনশট ১ অনুযায়ী তৈরি হিস্ট্রি লিস্ট এরিয়া */}
+      {/* 🛠️ হিস্ট্রি লিস্ট এরিয়া */}
       <section style={styles.historyCard}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div><h2 style={{ fontSize: "20px", fontWeight: "700" }}>💰 All Bonus History</h2></div>
@@ -461,12 +461,12 @@ export default function Refer() {
             <p style={{ textAlign: "center", padding: "20px", color: "#666" }}>No Bonus History Found</p>
           ) : (
             visibleBonusHistory.map((item, index) => {
-              const isReceived = true; // এখানে আপনার লজিক অনুযায়ী ট্রানসাকশান টাইপ কালার কোড হবে
+              const isReceived = true;
               return (
                 <div 
                   key={index} 
                   style={styles.txItemRow} 
-                  onClick={() => setSelectedTx(item)} // ক্লিক করলে ২য় স্ক্রিনশটের ডিটেইলস খুলবে
+                  onClick={() => setSelectedTx(item)}
                 >
                   <div style={styles.txLeftSection}>
                     {/* গোল প্রোফাইল লেটার আইকন */}
@@ -501,11 +501,9 @@ export default function Refer() {
           )}
         </div>
 
-        {/* Paytm UPI Branding Footer */}
+        {/* 🛠️ পরিবর্তন ১: paytm | upi লেখাটি পরিবর্তন করে save money করা হয়েছে */}
         <div style={styles.paytmBrandFooter}>
-          <span style={{ fontWeight: "bold", color: "#00baf2" }}>paytm</span>
-          <span style={{ color: "#666", margin: "0 8px", fontSize: "12px" }}>|</span>
-          <span style={{ fontStyle: "italic", fontWeight: "bold", color: "#2563eb" }}>UPI ⚡</span>
+          <span style={{ fontWeight: "bold", color: "#7b20ff", textTransform: "uppercase", letterSpacing: "1px" }}>save money</span>
         </div>
       </section>
 
@@ -528,7 +526,7 @@ export default function Refer() {
       </section>
 
 
-      {/* 🛠️ স্ক্রিনশট ২ অনুযায়ী তৈরি প্রিমিয়াম ডাইনামিক ট্রানসাকশান ডিটেইলস মোডাল */}
+      {/* 🛠️ প্রিমিয়াম ডাইনামিক ট্রানসাকশান ডিটেইলস মোডাল */}
       {selectedTx && (
         <div style={styles.modalOverlay} onClick={() => setSelectedTx(null)}>
           <div style={styles.txDetailsCard} onClick={(e) => e.stopPropagation()}>
@@ -558,16 +556,24 @@ export default function Refer() {
                 </div>
               </div>
 
-              {/* From সেকশন */}
+              {/* 🛠️ পরিবর্তন ২: From সেকশনে ইউজারের আসল প্রোফাইল ফটো ডাইনামিকালি লোড করা হচ্ছে */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0", borderBottom: "1px dashed #e2e8f0" }}>
                 <div>
                   <p style={styles.sectionLabel}>From</p>
                   <h4 style={styles.sectionValueName}>{selectedTx.fromName || "Sender User"} <span style={styles.blueTick}>✓</span></h4>
                   <p style={styles.sectionSubValue}>{selectedTx.fromEmail || "user@axl"}</p>
                 </div>
-                <div style={{ ...styles.detailAvatarCircle, background: "#fee2e2", color: "#b91c1c" }}>
-                  {getInitials(selectedTx.fromName)}
-                </div>
+                {selectedTx.fromPhoto || selectedTx.photo ? (
+                  <img 
+                    style={styles.detailUserImage} 
+                    src={selectedTx.fromPhoto || selectedTx.photo} 
+                    alt="Sender Profile" 
+                  />
+                ) : (
+                  <div style={{ ...styles.detailAvatarCircle, background: getAvatarBg(selectedTx.fromName), color: getAvatarTextColor(selectedTx.fromName) }}>
+                    {getInitials(selectedTx.fromName)}
+                  </div>
+                )}
               </div>
 
               {/* To সেকশন */}
@@ -989,9 +995,7 @@ function Modal({ children, onClose }) {
   );
 }
 
-// 🛠️ আপনার CSS স্টাইল অবজেক্ট এ নতুন প্রিমিয়াম লিস্ট ও ২য় স্ক্রিনশটের ডিজাইন অ্যাড করা হলো
 const styles = {
-  // স্ক্রিনশট ১ লিস্ট ভিউ স্টাইলস
   txListWrapper: {
     display: "flex",
     flexDirection: "column",
@@ -1075,8 +1079,6 @@ const styles = {
     paddingTop: "10px",
     fontSize: "14px"
   },
-
-  // স্ক্রিনশট ২ ডিটেইলস কার্ড মোডাল স্টাইলস
   txDetailsCard: {
     width: "100%",
     maxWidth: "420px",
@@ -1188,8 +1190,6 @@ const styles = {
     color: "#64748b",
     lineHeight: "1.6"
   },
-
-  // আপনার পূর্বের বাকি স্টাইলসমূহ অপরিবর্তিত রাখা হয়েছে
   statusOverlayBg: {
     position: "fixed",
     inset: 0,
