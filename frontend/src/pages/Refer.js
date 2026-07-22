@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import html2canvas from "html2canvas"; 
@@ -50,6 +50,29 @@ export default function Refer() {
     type: "info",
     message: ""
   });
+
+  // ফাইল URL রিটার্ন করার হেল্পার ফাংশন (প্রয়োজন অনুযায়ী ব্যাকএন্ড/স্টোরেজ URL অ্যাডজাস্ট করে নিতে পারেন)
+  const fileUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    return `${API}/uploads/${path}`; // অথবা আপনার প্রজেক্টের আপলোড ডিরেক্টরি পাথ
+  };
+
+  // মেইন ইউজারের প্রোফাইল ফটো লজিক
+  const profilePhoto = useMemo(() => {
+    return fileUrl(
+      user?.photo ||
+      user?.profilePhoto ||
+      user?.selfiePhoto ||
+      ""
+    );
+  }, [user]);
+
+  // যেকোনো ট্রানসাকশান বা হিস্ট্রি অবজেক্ট থেকে ডাইনামিক ফটো বের করার ফাংশন
+  const getDynamicUserPhoto = (item) => {
+    const rawPath = item?.fromPhoto || item?.photo || item?.profilePhoto || item?.selfiePhoto || "";
+    return fileUrl(rawPath);
+  };
 
   const triggerStatusOverlay = (type, message) => {
     setStatusOverlay({ show: true, type, message });
@@ -398,7 +421,7 @@ export default function Refer() {
           <div style={styles.avatarWrap}>
             <img
               style={styles.avatar}
-              src={user.photo || "https://i.pravatar.cc/160?img=12"}
+              src={profilePhoto || "https://i.pravatar.cc/160?img=12"}
               alt="user"
             />
             <div style={styles.crown}>♛</div>
@@ -491,7 +514,7 @@ export default function Refer() {
           ) : (
             visibleBonusHistory.map((item, index) => {
               const isReceived = true;
-              const hasUserPhoto = item.fromPhoto || item.photo;
+              const userPhotoUrl = getDynamicUserPhoto(item);
 
               return (
                 <div 
@@ -500,11 +523,10 @@ export default function Refer() {
                   onClick={() => setSelectedTx(item)}
                 >
                   <div style={styles.txLeftSection}>
-                    {/* ফটো কন্ডিশন ফিক্সড: যদি ফটো থাকে তাহলে ফটো দেখাবে, না থাকলে নামের রাউন্ড লেটার দেখাবে */}
-                    {hasUserPhoto ? (
+                    {userPhotoUrl ? (
                       <img 
                         style={styles.txUserAvatarImage} 
-                        src={item.fromPhoto || item.photo} 
+                        src={userPhotoUrl} 
                         alt={item.fromName || "User"} 
                       />
                     ) : (
@@ -598,10 +620,10 @@ export default function Refer() {
                   <h4 style={styles.sectionValueName}>{selectedTx.fromName || "Sender User"} <span style={styles.blueTick}>✓</span></h4>
                   <p style={styles.sectionSubValue}>{selectedTx.fromEmail || "user@axl"}</p>
                 </div>
-                {selectedTx.fromPhoto || selectedTx.photo ? (
+                {getDynamicUserPhoto(selectedTx) ? (
                   <img 
                     style={styles.detailUserImage} 
-                    src={selectedTx.fromPhoto || selectedTx.photo} 
+                    src={getDynamicUserPhoto(selectedTx)} 
                     alt="Sender Profile" 
                   />
                 ) : (
@@ -621,7 +643,7 @@ export default function Refer() {
                 </div>
                 <img 
                   style={styles.detailUserImage} 
-                  src={user.photo || "https://i.pravatar.cc/160?img=12"} 
+                  src={profilePhoto || "https://i.pravatar.cc/160?img=12"} 
                   alt="Receiver Profile" 
                 />
               </div>
@@ -832,7 +854,7 @@ export default function Refer() {
             Royalty status will become active once 50 direct referrals are completed. You will receive a 3% royalty bonus on business generated after becoming active.
           </p>
 
-          <BonusHistory type="royalty" data={bonusHistory} />
+          <BonusHistory type="royalty" data={bonusHistory} getDynamicUserPhoto={getDynamicUserPhoto} />
           <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
         </Modal>
       )}
@@ -905,7 +927,7 @@ export default function Refer() {
             </select>
           </div>
 
-          <BonusHistory type="Referral Bonus" data={referBonus.history || []} />
+          <BonusHistory type="Referral Bonus" data={referBonus.history || []} getDynamicUserPhoto={getDynamicUserPhoto} />
           <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
         </Modal>
       )}
@@ -982,7 +1004,7 @@ export default function Refer() {
   );
 }
 
-function BonusHistory({ type, data }) {
+function BonusHistory({ type, data, getDynamicUserPhoto }) {
   const rows = (data || []).filter((x) => x.bonusType === type);
   return (
     <div style={{ marginTop: 20 }}>
@@ -1003,12 +1025,12 @@ function BonusHistory({ type, data }) {
             </thead>
             <tbody>
               {rows.map((x, i) => {
-                const hasHistoryPhoto = x.fromPhoto || x.photo;
+                const historyPhotoUrl = getDynamicUserPhoto(x);
                 return (
                   <tr key={i}>
                     <td style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {hasHistoryPhoto ? (
-                        <img src={x.fromPhoto || x.photo} style={styles.smallTableAvatar} alt="user" />
+                      {historyPhotoUrl ? (
+                        <img src={historyPhotoUrl} style={styles.smallTableAvatar} alt="user" />
                       ) : (
                         <span style={styles.smallTableInitialBackup}>{x.fromName ? x.fromName[0] : "S"}</span>
                       )}
