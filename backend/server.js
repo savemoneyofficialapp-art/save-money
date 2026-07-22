@@ -2195,61 +2195,63 @@ app.post("/wallet-summary", async (req, res) => {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
 
-    // ২. আজকের দিনের শুরু নির্ধারণ করা (রাত ১২:০০ টা বা 00:00:00)
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    // ২. আজকের তারিখের শুরু (আজকের দিন) নির্ধারণ করা
+    const todayStr = new Date().toDateString(); // 'Wed Jul 22 2026' ফরম্যাট
 
-    /**
-     * ==========================================
-     * লজিক চেঞ্জ: বোনাস হিস্ট্রি কালেকশন থেকে আজকের বোনাস ডেটা বের করা
-     * (এখানে আপনার ডাটাবেজের বোনাস স্কিমা অনুযায়ী কোড অ্যাড করা হয়েছে)
-     * ==========================================
-     */
-    
-    // বোনাস হিস্ট্রি বা রেফার ডেটার লজিক থেকে আজকের বোনাস ফিল্টার করা
-    // ধরে নেওয়া হচ্ছে আপনার ডাটাবেজে বোনাসগুলো 'bonusHistory' বা সরাসরি অবজেক্ট মডিউলে থাকে
-    // আমরা সরাসরি আজকের দিনের বোনাসগুলোর টোটাল ক্যালকুলেট করছি
-    
     let todayReferral = 0;
     let todayPerformance = 0;
     let todayTeam = 0;
     let todayRoyalty = 0;
 
-    // যদি আপনার সিস্টেমে অল বোনাস হিস্ট্রির কোনো কালেকশন থাকে (যেমন: BonusHistory)
-    // সেখান থেকে আজকের Paid হওয়া বোনাসগুলো আলাদা করে নেওয়া হচ্ছে
+    /**
+     * ==========================================
+     * বোনাস ট্র্যাকিং লজিক (হিস্ট্রি ক্রিয়েট করা ছাড়া)
+     * ==========================================
+     */
+    
+    // আপনার বোনাস হিস্ট্রি কালেকশন থেকে আজকের বোনাসগুলো রিড করা
     if (mongoose.models.BonusHistory) {
-      const todayBonuses = await mongoose.model("BonusHistory").find({
+      // ইউজারের সব বোনাস নিয়ে আসা
+      const allBonuses = await mongoose.model("BonusHistory").find({
         $or: [
           { email: String(email).toLowerCase() },
-          { toEmail: String(email).toLowerCase() } // আপনার স্কিমা অনুযায়ী ফিল্ডের নাম
-        ],
-        date: { $gte: todayStart }
+          { fromEmail: String(email).toLowerCase() },
+          { toEmail: String(email).toLowerCase() }
+        ]
       });
 
-      todayBonuses.forEach((bx) => {
-        const type = String(bx.bonusType || "").toLowerCase();
-        const amt = Number(bx.amount || 0);
+      // শুধুমাত্র আজকের বোনাসগুলো লুপ চালিয়ে ফিল্টার করা (যেভাবে Refer.js এ করা হয়েছে)
+      allBonuses.forEach((bx) => {
+        if (bx.date) {
+          const bonusDateStr = new Date(bx.date).toDateString();
+          
+          // যদি বোনাসের তারিখ আজকের তারিখের সাথে মিলে যায়
+          if (bonusDateStr === todayStr) {
+            const type = String(bx.bonusType || "").toLowerCase();
+            const amt = Number(bx.amount || 0);
 
-        if (type.includes("referral")) {
-          todayReferral += amt;
-        } else if (type.includes("performance")) {
-          todayPerformance += amt;
-        } else if (type.includes("team")) {
-          todayTeam += amt;
-        } else if (type.includes("royalty")) {
-          todayRoyalty += amt;
+            if (type.includes("referral") || type.includes("refer")) {
+              todayReferral += amt;
+            } else if (type.includes("performance")) {
+              todayPerformance += amt;
+            } else if (type.includes("team")) {
+              todayTeam += amt;
+            } else if (type.includes("royalty")) {
+              todayRoyalty += amt;
+            }
+          }
         }
       });
     }
 
-    // ৩. শুধুমাত্র রিয়েল ওয়ালেট ট্রানজেকশন হিস্ট্রি খোঁজা (বোনাস ছাড়া অন্যান্য ট্রানজেকশন)
+    // ৩. ওয়ালেটের মূল হিস্ট্রি লোড করা (বোনাস ছাড়া সাধারণ ট্রানজেকশন)
     const fullHistory = await WalletHistory.find({ 
       email: String(email).toLowerCase() 
     })
     .sort({ createdAt: -1 })
     .limit(50);
 
-    // ৪. ফ্রন্টএন্ডের চাহিদা অনুযায়ী রেসপন্স পাঠানো
+    // ৪. রেসপন্স পাঠানো
     return res.status(200).json({
       success: true,
       walletId: user.walletId || "N/A",
@@ -2260,16 +2262,16 @@ app.post("/wallet-summary", async (req, res) => {
       // লাইফটাইম মেইন ব্যালেন্স
       balance: Number(user.balance || 0),
 
-      // ৪টি বোনাস কার্ডে আজকের ইনকাম (হিস্ট্রি ক্রিয়েট করা ছাড়াই দেখাবে)
+      // ৪টি কার্ডের আজকের নির্দিষ্ট ইনকাম
       referral: todayReferral,
       performance: todayPerformance,
       team: todayTeam,
       royalty: todayRoyalty,
 
-      // আজকের অল-ওভার টোটাল ইনকাম (৪টি বোনাসের আজকের যোগফল)
+      // সব বোনাসের আজকের ইনকামের মোট যোগফল (Today Income কার্ডের জন্য)
       todayBalance: todayReferral + todayPerformance + todayTeam + todayRoyalty,
 
-      // মূল ট্রানজেকশন হিস্ট্রি (যেখানে কোনো বোনাসের ডেটা থাকবে না)
+      // মেইন ওয়ালেট হিস্ট্রি (এখানে কোনো বোনাস হিস্ট্রি ক্রিয়েট বা শো হবে না)
       history: fullHistory
     });
 
