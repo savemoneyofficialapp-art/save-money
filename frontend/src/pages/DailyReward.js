@@ -17,16 +17,16 @@ export default function DailyReward() {
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(false);
 
-  // 🔍 Filter States
+  // Filter States
   const [filterType, setFilterType] = useState("all"); 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // 📂 Transaction Popup and Ref
+  // Transaction Popup and Ref
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
-  // 🔄 Perfect History Fetch Function (Handles Empty/New Accounts Without Toasting Errors)
+  // 🔄 Fixed Data Extraction Logic for History
   const fetchHistory = useCallback(async () => {
     if (!email) return;
     try {
@@ -39,35 +39,45 @@ export default function DailyReward() {
       const data = await res.json();
       
       if (res.ok && data) {
-        // Checking if server returned a direct reward object or wrapped in data
-        const rewardData = data.reward || data;
-        
         let rawHistory = [];
-        if (rewardData && Array.isArray(rewardData.history)) {
-          rawHistory = [...rewardData.history].reverse();
-        } else if (Array.isArray(data)) {
-          rawHistory = [...data].reverse();
+        
+        // 1. Check if backend sends walletHistory array directly inside root object
+        if (data.walletHistory && Array.isArray(data.walletHistory)) {
+          rawHistory = data.walletHistory;
+        } 
+        // 2. Check if nested inside reward.history
+        else if (data.reward && Array.isArray(data.reward.history)) {
+          rawHistory = data.reward.history;
+        } 
+        // 3. Check if root data object itself has history array
+        else if (data.history && Array.isArray(data.history)) {
+          rawHistory = data.history;
+        } 
+        // 4. Fallback if the array is directly returned
+        else if (Array.isArray(data)) {
+          rawHistory = data;
         }
 
-        // Generating fallback unique ID if backend doesn't supply walletId directly
-        const parsedWalletId = rewardData?.walletId || rewardData?.wallet || rewardData?._id || `WL-${email.split('@')[0].toUpperCase()}`;
+        // Reverse the array to show recent transactions first safely
+        const finalHistory = Array.isArray(rawHistory) ? [...rawHistory].reverse() : [];
+        
+        // Dynamic key extracting for unique wallet identifier
+        const parsedWalletId = data.reward?.walletId || data.reward?.wallet || data.wallet || data._id || `WL-${email.split('@')[0].toUpperCase()}`;
 
-        setHistory(rawHistory);
-        setFilteredHistory(rawHistory);
+        setHistory(finalHistory);
+        setFilteredHistory(finalHistory);
         setWalletId(parsedWalletId);
       }
     } catch (err) {
-      console.error("Fetch history silent catch:", err);
-      // Removed the toast error from here so new users don't see any error popups on page mount
+      console.error("Fetch history internal track:", err);
     }
   }, [email, token]);
 
-  // Runs immediately on component mount
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
 
-  // 📊 Client Side Filter Logic
+  // Client Side Filtering Logic
   useEffect(() => {
     let updatedList = [...history];
     const now = new Date();
@@ -99,7 +109,6 @@ export default function DailyReward() {
     setFilteredHistory(updatedList);
   }, [filterType, startDate, endDate, history]);
 
-  // 🎁 Reward Claim Function
   const claim = async () => {
     try {
       setLoading(true);
@@ -138,7 +147,6 @@ export default function DailyReward() {
     }
   };
 
-  // 🟢 WhatsApp Share Mechanism
   const handleWhatsAppShare = async () => {
     if (!receiptRef.current) return;
     try {
@@ -190,7 +198,6 @@ export default function DailyReward() {
 
   return (
     <div style={styles.container}>
-      {/* SUCCESS POPUP */}
       {popup && (
         <div style={styles.popupOverlay}>
           <div style={styles.popupCard}>
@@ -205,7 +212,6 @@ export default function DailyReward() {
         </div>
       )}
       
-      {/* MAIN BONUS ZONE */}
       <div style={styles.heroCard}>
         <div style={styles.cardGlow}></div>
         <div style={styles.badgeContainer}>
@@ -245,14 +251,13 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* 📜 REWARD LOGS / HISTORY SECTION */}
+      {/* Reward Logs Section */}
       <div style={styles.historySection}>
         <div style={styles.sectionHeader}>
           <h3 style={styles.historyTitle}>📜 Claim Logs</h3>
           <span style={styles.historyCounter}>{filteredHistory.length} Total Logs</span>
         </div>
 
-        {/* 🔍 FILTER TABS */}
         <div style={styles.filterBar}>
           <button style={{...styles.filterTab, ...(filterType === "all" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("all")}>All</button>
           <button style={{...styles.filterTab, ...(filterType === "week" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("week")}>This Week</button>
@@ -261,7 +266,6 @@ export default function DailyReward() {
           <button style={{...styles.filterTab, ...(filterType === "custom" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("custom")}>Date Range</button>
         </div>
 
-        {/* CUSTOM DATE SELECTOR */}
         {filterType === "custom" && (
           <div style={styles.dateSelectorContainer}>
             <div style={styles.dateInputGroup}>
@@ -283,7 +287,8 @@ export default function DailyReward() {
           <div style={styles.logsContainer}>
             {filteredHistory.map((h, i) => {
               const isSpecial = h.special;
-              const rewardAmt = h.amount || h.reward || 0;
+              // Extracting amount based on backend variable names
+              const rewardAmt = h.amount || h.reward || h.rewardAmt || 0;
               return (
                 <div key={i} style={styles.logRow} onClick={() => setSelectedTx({ ...h, rewardAmt })}>
                   <div style={styles.logLeft}>
@@ -299,7 +304,7 @@ export default function DailyReward() {
                         {isSpecial ? "Special Multiplier Box" : "Daily Reward Loot"}
                       </b>
                       <span style={styles.logDate}>
-                        Received, {new Date(h.date).toLocaleDateString([], { month: 'short', day: 'numeric' })} at {new Date(h.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        Received, {new Date(h.date || h.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} at {new Date(h.date || h.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <div style={styles.moneyBadge}>
                         💵 Money Received
@@ -319,11 +324,10 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* 🔮 TRANSACTION DETAIL POPUP MODAL */}
+      {/* Receipt Modal */}
       {selectedTx && (
         <div style={styles.receiptOverlay}>
           <div style={styles.popupModalCard}>
-            
             <div style={styles.receiptHeaderBar}>
               <button style={styles.backBtn} onClick={() => setSelectedTx(null)}>✕ Close</button>
               <button style={styles.whatsappBtn} onClick={handleWhatsAppShare}>
@@ -333,7 +337,6 @@ export default function DailyReward() {
 
             <div style={styles.receiptScrollContainer}>
               <div ref={receiptRef} style={styles.receiptCard}>
-                
                 <div style={styles.receiptSectionBox}>
                   <span style={styles.fieldLabel}>Amount Received</span>
                   <div style={styles.receiptAmountRow}>
@@ -377,19 +380,17 @@ export default function DailyReward() {
                   <div style={styles.divider}></div>
 
                   <p style={styles.timeText}>
-                    <b>Date:</b> {new Date(selectedTx.date).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'})}
+                    <b>Date:</b> {new Date(selectedTx.date || selectedTx.createdAt).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'})}
                   </p>
                   <p style={styles.timeText}>
-                    <b>Time:</b> {new Date(selectedTx.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                    <b>Time:</b> {new Date(selectedTx.date || selectedTx.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
                   </p>
                   <p style={styles.refText}>
-                    <b>Ref No:</b> REF{new Date(selectedTx.date).getTime()}
+                    <b>Ref No:</b> REF{new Date(selectedTx.date || selectedTx.createdAt).getTime()}
                   </p>
                 </div>
-
               </div>
             </div>
-            
           </div>
         </div>
       )}
@@ -397,7 +398,6 @@ export default function DailyReward() {
   );
 }
 
-// 🎨 Styles Sheet 
 const styles = {
   container: { minHeight: "100vh", background: "#f8fafc", color: "#0f172a", padding: "20px 14px 60px", fontFamily: "'Inter', sans-serif", display: "flex", flexDirection: "column", gap: "20px" },
   heroCard: { position: "relative", background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)", borderRadius: "24px", padding: "24px 16px", textAlign: "center", color: "#ffffff", boxShadow: "0 10px 25px rgba(0,0,0,0.1)" },
