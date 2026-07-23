@@ -7,6 +7,7 @@ import { API } from "../config";
 export default function DailyReward() {
   const email = localStorage.getItem("email");
   const token = localStorage.getItem("token");
+  const walletId = localStorage.getItem("walletId") || localStorage.getItem("userId") || "WLT-" + (email ? email.split('@')[0] : "USER");
 
   const [result, setResult] = useState("");
   const [amount, setAmount] = useState(null);
@@ -15,11 +16,11 @@ export default function DailyReward() {
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(false);
 
-  // 📂 ট্রানজেকশন পপআপ এবং রেফ
+  // ট্রানজেকশন পপআপ এবং রেফ
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
-  // হিস্টরি ফেচ করার ফাংশন
+  // হিস্টরি ফেচ করার ফাংশন (ফিক্সড)
   const fetchHistory = useCallback(async () => {
     if (!email) return;
     try {
@@ -30,18 +31,26 @@ export default function DailyReward() {
         },
       });
       const data = await res.json();
-      if (res.ok && data.reward?.history) {
-        setHistory([...data.reward.history].reverse());
+      
+      // ব্যাকএন্ড রেসপন্স চেক করে সরাসরি স্টেট আপডেট
+      if (res.ok && data) {
+        if (data.reward?.history) {
+          setHistory([...data.reward.history].reverse());
+        } else if (data.history) {
+          setHistory([...data.history].reverse());
+        }
       }
     } catch (err) {
       console.log("Fetch history error:", err);
     }
   }, [email, token]);
 
-  // পেজে প্রবেশ করলেই হিস্টরি লোড হবে
+  // পেজে প্রবেশ করলেই যাতে ১০০% হিস্টরি লোড হয়
   useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+    if (email) {
+      fetchHistory();
+    }
+  }, [email, fetchHistory]);
 
   const claim = async () => {
     try {
@@ -62,11 +71,7 @@ export default function DailyReward() {
       
       if (!res.ok) {
         setResult(data.error || data.msg || "Reward claim failed");
-        if (data.reward?.history) {
-          setHistory([...data.reward.history].reverse());
-        } else {
-          fetchHistory(); // fallback fetch
-        }
+        fetchHistory(); 
         return;
       }
 
@@ -75,11 +80,8 @@ export default function DailyReward() {
       setSpecial(data.special || false);
       setPopup(true);
       
-      if (data.reward?.history) {
-        setHistory([...data.reward.history].reverse());
-      } else {
-        fetchHistory(); // fallback fetch
-      }
+      // ক্লেইম করার পর হিস্টরি রিফ্রেশ
+      fetchHistory();
       
       setTimeout(() => setPopup(false), 4000);
     } catch (err) {
@@ -106,7 +108,6 @@ export default function DailyReward() {
         if (!blob) return;
         const file = new File([blob], `Receipt-${selectedTx._id || "Daily"}.png`, { type: "image/png" });
         
-        // ১. যদি ব্রাউজার নেটিভ ফাইল শেয়ার সাপোর্ট করে (মোবাইল ব্রাউজার)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
@@ -114,7 +115,6 @@ export default function DailyReward() {
             text: `Hey! I just earned ₹${selectedTx.rewardAmt} from Daily Loot Box! 🎉`,
           });
         } else {
-          // ২. পিসি/ডেস্কটপ এর জন্য ডিরেক্ট ডাউনলোড করে হোয়াটসঅ্যাপ ওয়েব লিংকে রিডাইরেক্ট করবে
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
           link.download = `Receipt_Earned_₹${selectedTx.rewardAmt}.png`;
@@ -131,7 +131,6 @@ export default function DailyReward() {
     }
   };
 
-  // সংখ্যাকে কথায় রূপান্তর (PhonePe স্টাইল রুপি টেক্সট)
   const inWords = (num) => {
     const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
     const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
@@ -205,7 +204,7 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* 📜 REWARD LOGS / HISTORY (FIXED LIGHT THEME CARD VIEW) */}
+      {/* 📜 REWARD LOGS / HISTORY */}
       <div style={styles.historySection}>
         <div style={styles.sectionHeader}>
           <h3 style={styles.historyTitle}>📜 Claim Logs</h3>
@@ -288,7 +287,7 @@ export default function DailyReward() {
                   </div>
                 </div>
 
-                {/* SENDER INFO (ORIGINAL SYSTEM DATA) */}
+                {/* SENDER INFO */}
                 <div style={styles.receiptSectionBox}>
                   <span style={styles.fieldLabel}>From</span>
                   <div style={styles.profileRow}>
@@ -304,7 +303,7 @@ export default function DailyReward() {
                   </div>
                 </div>
 
-                {/* RECEIVER INFO (YOUR ORIGINAL ACCOUNT DATA) */}
+                {/* RECEIVER INFO (FIXED: SHOWING WALLET ID INSTEAD OF EMAIL) */}
                 <div style={styles.receiptSectionBox}>
                   <span style={styles.fieldLabel}>To (Wallet Account)</span>
                   <div style={styles.profileRow}>
@@ -313,7 +312,7 @@ export default function DailyReward() {
                     </div>
                     <div style={styles.profileDetails}>
                       <h4 style={styles.profileName}>User Account</h4>
-                      <p style={styles.upiId}><b>Wallet ID / Email:</b> {email || "Guest User"}</p>
+                      <p style={styles.upiId}><b>Wallet ID:</b> {selectedTx.walletId || walletId}</p>
                       <p style={styles.bankName}>Status: Credited Successfully</p>
                     </div>
                   </div>
@@ -342,7 +341,7 @@ export default function DailyReward() {
   );
 }
 
-// 🎨 ক্লিন এবং ব্রাইট সিএসএস স্টাইল শিট 
+// 🎨 সিএসএস স্টাইল শিট 
 const styles = {
   container: {
     minHeight: "100vh",
@@ -354,7 +353,6 @@ const styles = {
     flexDirection: "column",
     gap: "20px"
   },
-
   heroCard: {
     position: "relative",
     background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
@@ -364,7 +362,6 @@ const styles = {
     color: "#ffffff",
     boxShadow: "0 10px 25px rgba(0,0,0,0.15)"
   },
-
   cardGlow: {
     position: "absolute",
     top: "-40px",
@@ -376,7 +373,6 @@ const styles = {
     filter: "blur(50px)",
     borderRadius: "50%"
   },
-
   badgeContainer: {
     display: "inline-flex",
     background: "rgba(250, 204, 21, 0.1)",
@@ -385,40 +381,34 @@ const styles = {
     borderRadius: "20px",
     marginBottom: "12px"
   },
-
   badgeText: {
     color: "#facc15",
     fontSize: "10px",
     fontWeight: "800"
   },
-
   mainTitle: {
     fontSize: "26px",
     fontWeight: "800",
     margin: "0 0 6px 0"
   },
-
   subtitle: {
     fontSize: "12px",
     color: "#94a3b8",
     margin: "0 auto 20px",
     maxWidth: "280px"
   },
-
   giftWrapper: {
     position: "relative",
     width: "100px",
     height: "100px",
     margin: "0 auto 20px"
   },
-
   giftPulse: {
     position: "absolute",
     inset: "0px",
     borderRadius: "50%",
     background: "radial-gradient(circle, rgba(234, 179, 8, 0.25) 0%, transparent 70%)"
   },
-
   giftBoxInner: {
     width: "80px",
     height: "80px",
@@ -429,11 +419,9 @@ const styles = {
     justifyContent: "center",
     margin: "10px auto"
   },
-
   giftEmoji: {
     fontSize: "40px"
   },
-
   claimBtn: {
     width: "100%",
     padding: "14px",
@@ -442,16 +430,15 @@ const styles = {
     background: "linear-gradient(135deg, #facc15 0%, #eab308 100%)",
     color: "#0f172a",
     fontWeight: "700",
-    fontSize: "15px"
+    fontSize: "15px",
+    cursor: "pointer"
   },
-
   btnContent: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "6px"
   },
-
   spinner: {
     width: "16px",
     height: "16px",
@@ -459,7 +446,6 @@ const styles = {
     borderTopColor: "transparent",
     borderRadius: "50%"
   },
-
   resultMessage: {
     marginTop: "16px",
     padding: "10px",
@@ -467,37 +453,30 @@ const styles = {
     border: "1px solid",
     fontSize: "12px"
   },
-
   resultAmountText: {
     margin: "2px 0 0",
     fontWeight: "700"
   },
-
-  /* 📜 HISTORY STYLES FIXED (VISIBLE LIGHT BG) */
   historySection: {
     display: "flex",
     flexDirection: "column",
     gap: "10px"
   },
-
   sectionHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center"
   },
-
   historyTitle: {
     margin: 0,
     fontSize: "15px",
     color: "#334155",
     fontWeight: "700"
   },
-
   historyCounter: {
     fontSize: "11px",
     color: "#64748b"
   },
-
   emptyCard: {
     background: "#ffffff",
     padding: "20px",
@@ -506,7 +485,6 @@ const styles = {
     textAlign: "center",
     border: "1px solid #e2e8f0"
   },
-
   logsContainer: {
     display: "flex",
     flexDirection: "column",
@@ -516,7 +494,6 @@ const styles = {
     boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
     border: "1px solid #e2e8f0"
   },
-
   logRow: {
     padding: "14px",
     display: "flex",
@@ -526,13 +503,11 @@ const styles = {
     cursor: "pointer",
     background: "#ffffff"
   },
-
   logLeft: {
     display: "flex",
     alignItems: "center",
     gap: "10px"
   },
-
   logIconCircle: {
     width: "40px",
     height: "40px",
@@ -542,19 +517,16 @@ const styles = {
     justifyContent: "center",
     fontSize: "18px"
   },
-
   logType: {
     display: "block",
     fontSize: "13px",
     color: "#0f172a"
   },
-
   logDate: {
     display: "block",
     fontSize: "11px",
     color: "#64748b"
   },
-
   moneyBadge: {
     display: "inline-block",
     background: "#dcfce7",
@@ -565,24 +537,19 @@ const styles = {
     marginTop: "4px",
     fontWeight: "600"
   },
-
   logRight: {
     textAlign: "right"
   },
-
   logAmount: {
     fontSize: "15px",
     fontWeight: "700",
     color: "#16a34a",
     display: "block"
   },
-
   inText: {
     fontSize: "10px",
     color: "#94a3b8"
   },
-
-  /* SUCCESS CLAIM POPUP */
   popupOverlay: {
     position: "fixed",
     inset: "0",
@@ -593,7 +560,6 @@ const styles = {
     alignItems: "center",
     zIndex: 99999
   },
-
   popupCard: {
     background: "#0f172a",
     border: "2px solid #eab308",
@@ -603,14 +569,12 @@ const styles = {
     width: "280px",
     color: "#ffffff"
   },
-
   popupIcon: { fontSize: "48px" },
   popupTitle: { fontSize: "16px", margin: "6px 0" },
   popupAmount: { color: "#22c55e", fontSize: "36px", margin: "10px 0" },
   popupText: { color: "#94a3b8", fontSize: "12px" },
-  popupCloseBtn: { width: "100%", padding: "10px", background: "#1e293b", color: "#fff", border: "none", borderRadius: "8px", marginTop: "12px" },
-
-  /* 🔮 POPUP MODAL FOR RECEIPT DETAILS */
+  popupCloseBtn: { width: "100%", padding: "10px", background: "#1e293b", color: "#fff", border: "none", borderRadius: "8px", marginTop: "12px", cursor: "pointer" },
+  
   receiptOverlay: {
     position: "fixed",
     inset: "0px",
@@ -622,7 +586,6 @@ const styles = {
     alignItems: "center",
     padding: "12px"
   },
-
   popupModalCard: {
     background: "#f8fafc",
     width: "100%",
@@ -634,7 +597,6 @@ const styles = {
     flexDirection: "column",
     maxHeight: "90vh"
   },
-
   receiptHeaderBar: {
     background: "#ffffff",
     display: "flex",
@@ -643,7 +605,6 @@ const styles = {
     padding: "12px 16px",
     borderBottom: "1px solid #e2e8f0"
   },
-
   backBtn: {
     background: "none",
     border: "none",
@@ -652,63 +613,52 @@ const styles = {
     color: "#ef4444",
     cursor: "pointer"
   },
-
-  rightNavBtn: {
-    display: "flex"
-  },
-
   whatsappBtn: {
     background: "#25D366",
     color: "#ffffff",
     border: "none",
-    padding: "6px 12px",
+    padding: "6px 14px",
     borderRadius: "12px",
     fontWeight: "700",
     fontSize: "13px",
     cursor: "pointer"
   },
-
   receiptScrollContainer: {
     flex: 1,
     overflowY: "auto",
     padding: "12px"
   },
-
   receiptCard: {
-    background: "#f8fafc",
+    background: "#ffffff",
     display: "flex",
     flexDirection: "column",
     gap: "10px",
-    padding: "4px"
+    padding: "12px",
+    borderRadius: "16px"
   },
-
   receiptSectionBox: {
     background: "#ffffff",
     borderRadius: "16px",
     padding: "16px",
     border: "1px solid #e2e8f0"
   },
-
   fieldLabel: {
     fontSize: "11px",
     color: "#64748b",
     fontWeight: "600"
   },
-
   receiptAmountRow: {
     display: "flex",
     alignItems: "center",
     gap: "6px",
     marginTop: "2px"
   },
-
   receiptAmount: {
     fontSize: "30px",
     fontWeight: "800",
     color: "#0f172a",
     margin: 0
   },
-
   verifiedCheck: {
     width: "20px",
     height: "20px",
@@ -721,13 +671,11 @@ const styles = {
     fontSize: "11px",
     fontWeight: "bold"
   },
-
   amountInWords: {
     fontSize: "12px",
     color: "#475569",
     margin: "4px 0 10px"
   },
-
   moneyReceivedTag: {
     display: "inline-block",
     background: "#dcfce7",
@@ -737,14 +685,12 @@ const styles = {
     fontSize: "12px",
     fontWeight: "600"
   },
-
   profileRow: {
     display: "flex",
     alignItems: "center",
     gap: "10px",
     marginTop: "6px"
   },
-
   receiptAvatar: {
     width: "40px",
     height: "40px",
@@ -756,52 +702,50 @@ const styles = {
     justifyContent: "center",
     fontSize: "16px"
   },
-
   profileDetails: {
     flex: 1
   },
-
   profileName: {
     margin: 0,
     fontSize: "14px",
     fontWeight: "700",
     color: "#0f172a"
   },
-
   blueTick: {
     color: "#38bdf8",
     fontSize: "12px"
   },
-
   upiId: {
     margin: "2px 0 0",
     fontSize: "11px",
     color: "#64748b",
     wordBreak: "break-all"
   },
-
   bankName: {
     margin: "2px 0 0",
     fontSize: "11px",
     color: "#16a34a",
     fontWeight: "600"
   },
-
   divider: {
     height: "1px",
     background: "#e2e8f0",
     margin: "12px 0"
   },
-
   timeText: {
     fontSize: "12px",
     color: "#334155",
     margin: "0 0 4px"
   },
-
   refText: {
     fontSize: "12px",
     color: "#334155",
     margin: 0
+  },
+  copyBtn: {
+    color: "#144cc7",
+    fontWeight: "600",
+    marginLeft: "8px",
+    cursor: "pointer"
   }
 };
