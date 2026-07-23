@@ -15,7 +15,7 @@ export default function DailyReward() {
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(false);
 
-  // নতুন স্টেট: সিলেক্টেড ট্রানজেকশন ডিটেইলস এর জন্য
+  // 📂 ট্রানজেকশন পপআপ এবং রেফ
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
@@ -38,6 +38,7 @@ export default function DailyReward() {
     }
   }, [email, token]);
 
+  // পেজে প্রবেশ করলেই হিস্টরি লোড হবে
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
@@ -63,6 +64,8 @@ export default function DailyReward() {
         setResult(data.error || data.msg || "Reward claim failed");
         if (data.reward?.history) {
           setHistory([...data.reward.history].reverse());
+        } else {
+          fetchHistory(); // fallback fetch
         }
         return;
       }
@@ -74,6 +77,8 @@ export default function DailyReward() {
       
       if (data.reward?.history) {
         setHistory([...data.reward.history].reverse());
+      } else {
+        fetchHistory(); // fallback fetch
       }
       
       setTimeout(() => setPopup(false), 4000);
@@ -85,56 +90,57 @@ export default function DailyReward() {
     }
   };
 
-  // 📸 ইমেজ শেয়ারিং ফাংশন (html2canvas)
-  const handleShareReceipt = async () => {
+  // 🟢 DIRECT WHATSAPP IMAGE SHARING FUNCTION
+  const handleWhatsAppShare = async () => {
     if (!receiptRef.current) return;
     try {
+      toast.info("Preparing receipt for WhatsApp...");
+      
       const canvas = await html2canvas(receiptRef.current, {
         useCORS: true,
         backgroundColor: "#ffffff",
-        scale: 2, // ভালো কোয়ালিটির ইমেজের জন্য
+        scale: 2, 
       });
       
       canvas.toBlob(async (blob) => {
         if (!blob) return;
-        const file = new File([blob], `receipt-${selectedTx._id || "tx"}.png`, { type: "image/png" });
+        const file = new File([blob], `Receipt-${selectedTx._id || "Daily"}.png`, { type: "image/png" });
         
-        // যদি ব্রাউজার ফাইল শেয়ার সাপোর্ট করে (যেমন মোবাইল Chrome/Safari)
+        // ১. যদি ব্রাউজার নেটিভ ফাইল শেয়ার সাপোর্ট করে (মোবাইল ব্রাউজার)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: "Transaction Receipt",
-            text: "My Daily Reward Cashback Receipt!",
+            title: "Daily Reward Receipt",
+            text: `Hey! I just earned ₹${selectedTx.rewardAmt} from Daily Loot Box! 🎉`,
           });
         } else {
-          // Fallback: সাপোর্ট না করলে সরাসরি ইমেজ ডাউনলোড হবে
+          // ২. পিসি/ডেস্কটপ এর জন্য ডিরেক্ট ডাউনলোড করে হোয়াটসঅ্যাপ ওয়েব লিংকে রিডাইরেক্ট করবে
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
-          link.download = `Receipt_${selectedTx._id || "DailyReward"}.png`;
+          link.download = `Receipt_Earned_₹${selectedTx.rewardAmt}.png`;
           link.click();
-          toast.success("Receipt downloaded successfully!");
+          
+          const textMessage = encodeURIComponent(`I just claimed my Daily Reward! Earned: ₹${selectedTx.rewardAmt}. Receipt downloaded!`);
+          window.open(`https://api.whatsapp.com/send?text=${textMessage}`, "_blank");
+          toast.success("Receipt downloaded & Opening WhatsApp!");
         }
       }, "image/png");
     } catch (error) {
-      console.error("Error sharing receipt:", error);
-      toast.error("Failed to generate image.");
+      console.error("WhatsApp share error:", error);
+      toast.error("Sharing failed. Try downloading.");
     }
   };
 
-  // সংখ্যাকে কথায় রূপান্তর করার সিম্পল ফাংশন
+  // সংখ্যাকে কথায় রূপান্তর (PhonePe স্টাইল রুপি টেক্সট)
   const inWords = (num) => {
     const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
     const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-    if ((num = num.toString()).length > 9) return 'overflow';
+    if ((num = num.toString()).length > 9) return '';
     let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
     if (!n) return ''; 
     let str = '';
-    str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + ' Crore ' : '';
-    str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + ' Lakh ' : '';
-    str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + ' Thousand ' : '';
-    str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + ' Hundred ' : '';
-    str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + ' ' : '';
-    return str ? str + 'Rupees Only' : 'Zero Rupees Only';
+    str += (n[5] != 0) ? (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + ' ' : '';
+    return str ? str + 'Rupees Only' : 'Rupees Only';
   };
 
   return (
@@ -199,7 +205,7 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* 📜 REWARD LOGS / HISTORY (PAYTM / PHONEPE STYLE LIGHT THEME) */}
+      {/* 📜 REWARD LOGS / HISTORY (FIXED LIGHT THEME CARD VIEW) */}
       <div style={styles.historySection}>
         <div style={styles.sectionHeader}>
           <h3 style={styles.historyTitle}>📜 Claim Logs</h3>
@@ -230,10 +236,10 @@ export default function DailyReward() {
                         {isSpecial ? "Special Multiplier Box" : "Daily Reward Loot"}
                       </b>
                       <span style={styles.logDate}>
-                        Received Today, {new Date(h.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        Received, {new Date(h.date).toLocaleDateString([], { month: 'short', day: 'numeric' })} at {new Date(h.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <div style={styles.moneyBadge}>
-                        💰 Money Received
+                        💵 Money Received
                       </div>
                     </div>
                   </div>
@@ -241,7 +247,7 @@ export default function DailyReward() {
                     <span style={styles.logAmount}>
                       + ₹{rewardAmt}
                     </span>
-                    <span style={styles.inText}>In <span style={styles.appSymbol}>⚙️</span></span>
+                    <span style={styles.inText}>In Wallet ➔</span>
                   </div>
                 </div>
               );
@@ -250,78 +256,85 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* 🖼️ TRANSACTION DETAIL RECEIPT POPUP (PHONEPE STYLED) */}
+      {/* 🔮 TRANSACTION DETAIL POPUP MODAL */}
       {selectedTx && (
         <div style={styles.receiptOverlay}>
-          <div style={styles.receiptHeaderBar}>
-            <button style={styles.backBtn} onClick={() => setSelectedTx(null)}>← Money Received</button>
-            <div style={styles.rightNavBtn}>
-              <button style={styles.navLinkBtn} onClick={handleShareReceipt}>Share</button>
-              <button style={styles.navLinkBtn} onClick={() => setSelectedTx(null)}>Help</button>
+          <div style={styles.popupModalCard}>
+            
+            {/* TOP ACTIONS */}
+            <div style={styles.receiptHeaderBar}>
+              <button style={styles.backBtn} onClick={() => setSelectedTx(null)}>✕ Close</button>
+              <div style={styles.rightNavBtn}>
+                <button style={styles.whatsappBtn} onClick={handleWhatsAppShare}>
+                  🟢 Share WhatsApp
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div style={styles.receiptScrollContainer}>
-            {/* HTML2CANVAS WILL CAPTURE THIS BLOCK */}
-            <div ref={receiptRef} style={styles.receiptCard}>
-              
-              {/* SECTION 1: AMOUNT BOX */}
-              <div style={styles.receiptSectionBox}>
-                <span style={styles.fieldLabel}>Amount</span>
-                <div style={styles.receiptAmountRow}>
-                  <h1 style={styles.receiptAmount}>₹{selectedTx.rewardAmt}</h1>
-                  <span style={styles.verifiedCheck}>✓</span>
+            <div style={styles.receiptScrollContainer}>
+              {/* SCREENSHOT AREA */}
+              <div ref={receiptRef} style={styles.receiptCard}>
+                
+                {/* AMOUNT AREA */}
+                <div style={styles.receiptSectionBox}>
+                  <span style={styles.fieldLabel}>Amount Received</span>
+                  <div style={styles.receiptAmountRow}>
+                    <h1 style={styles.receiptAmount}>₹{selectedTx.rewardAmt}</h1>
+                    <span style={styles.verifiedCheck}>✓</span>
+                  </div>
+                  <p style={styles.amountInWords}>{inWords(selectedTx.rewardAmt)}</p>
+                  <div style={styles.moneyReceivedTag}>
+                    💰 Money Received
+                  </div>
                 </div>
-                <p style={styles.amountInWords}>{inWords(selectedTx.rewardAmt)}</p>
-                <div style={styles.moneyReceivedTag}>
-                  💵 Money Received
+
+                {/* SENDER INFO (ORIGINAL SYSTEM DATA) */}
+                <div style={styles.receiptSectionBox}>
+                  <span style={styles.fieldLabel}>From</span>
+                  <div style={styles.profileRow}>
+                    <div style={styles.receiptAvatar}>
+                      {selectedTx.special ? "🎁" : "⚙️"}
+                    </div>
+                    <div style={styles.profileDetails}>
+                      <h4 style={styles.profileName}>
+                        {selectedTx.special ? "Special Multiplier Reward" : "Daily Check-in System"} <span style={styles.blueTick}>✓</span>
+                      </h4>
+                      <p style={styles.upiId}>TX ID: {selectedTx._id || "N/A"}</p>
+                    </div>
+                  </div>
                 </div>
+
+                {/* RECEIVER INFO (YOUR ORIGINAL ACCOUNT DATA) */}
+                <div style={styles.receiptSectionBox}>
+                  <span style={styles.fieldLabel}>To (Wallet Account)</span>
+                  <div style={styles.profileRow}>
+                    <div style={{...styles.receiptAvatar, backgroundColor: '#f0fdf4', color: '#166534'}}>
+                      👤
+                    </div>
+                    <div style={styles.profileDetails}>
+                      <h4 style={styles.profileName}>User Account</h4>
+                      <p style={styles.upiId}><b>Wallet ID / Email:</b> {email || "Guest User"}</p>
+                      <p style={styles.bankName}>Status: Credited Successfully</p>
+                    </div>
+                  </div>
+
+                  <div style={styles.divider}></div>
+
+                  {/* REAL DATE & TIME FROM BACKEND */}
+                  <p style={styles.timeText}>
+                    <b>Date:</b> {new Date(selectedTx.date).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'})}
+                  </p>
+                  <p style={styles.timeText}>
+                    <b>Time:</b> {new Date(selectedTx.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                  </p>
+                  <p style={styles.refText}>
+                    <b>Ref No:</b> REF{new Date(selectedTx.date).getTime()}
+                  </p>
+                </div>
+
               </div>
-
-              {/* SECTION 2: FROM INFO */}
-              <div style={styles.receiptSectionBox}>
-                <span style={styles.fieldLabel}>From</span>
-                <div style={styles.profileRow}>
-                  <div style={styles.receiptAvatar}>
-                    {selectedTx.special ? "SB" : "DR"}
-                  </div>
-                  <div style={styles.profileDetails}>
-                    <h4 style={styles.profileName}>
-                      {selectedTx.special ? "Special Bonus Loot" : "Daily Bonus System"} <span style={styles.blueTick}>✓</span>
-                    </h4>
-                    <p style={styles.upiId}>UPI ID: rewards@backend on <span style={{color:'#673ab7', fontWeight:'bold'}}>PhonePe</span></p>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: TO INFO */}
-              <div style={styles.receiptSectionBox}>
-                <span style={styles.fieldLabel}>To</span>
-                <div style={styles.profileRow}>
-                  <div style={{...styles.receiptAvatar, backgroundColor: '#e2e8f0', color: '#475569'}}>
-                    U
-                  </div>
-                  <div style={styles.profileDetails}>
-                    <h4 style={styles.profileName}>{email ? email.split('@')[0].toUpperCase() : "User Account"}</h4>
-                    <p style={styles.upiId}>UPI ID: {email || "user@wallet"}</p>
-                    <p style={styles.bankName}>App Wallet Balance - ****</p>
-                  </div>
-                </div>
-
-                <div style={styles.divider}></div>
-
-                <p style={styles.timeText}>
-                  Received at {new Date(selectedTx.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}, {new Date(selectedTx.date).toLocaleDateString([], {day:'numeric', month:'short', year:'numeric'})}
-                </p>
-                <p style={styles.refText}>
-                  Ref No: TXN{new Date(selectedTx.date).getTime()} <span style={styles.copyBtn} onClick={() => {
-                    navigator.clipboard.writeText(`TXN${new Date(selectedTx.date).getTime()}`);
-                    toast.success("Copied to clipboard!");
-                  }}>Copy</span>
-                </p>
-              </div>
-
             </div>
+            
           </div>
         </div>
       )}
@@ -329,483 +342,418 @@ export default function DailyReward() {
   );
 }
 
-// 🎨 স্টাইলস (লাইট-ওয়েট প্রিমিয়াম লুক ফর হিস্টরি অ্যান্ড রিসিট)
+// 🎨 ক্লিন এবং ব্রাইট সিএসএস স্টাইল শিট 
 const styles = {
   container: {
     minHeight: "100vh",
-    background: "#f4f6f9",
-    color: "#1e293b",
-    padding: "24px 16px 60px",
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    background: "#f8fafc",
+    color: "#0f172a",
+    padding: "20px 14px 60px",
+    fontFamily: "'Inter', sans-serif",
     display: "flex",
     flexDirection: "column",
-    gap: "24px"
+    gap: "20px"
   },
 
   heroCard: {
     position: "relative",
-    background: "linear-gradient(145deg, #0f172a, #1e293b)",
-    border: "1px solid rgba(250, 204, 21, 0.25)",
-    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
-    borderRadius: "32px",
-    padding: "30px 20px",
+    background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+    borderRadius: "24px",
+    padding: "24px 16px",
     textAlign: "center",
-    overflow: "hidden",
-    color: "#ffffff"
+    color: "#ffffff",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.15)"
   },
 
   cardGlow: {
     position: "absolute",
-    top: "-50px",
+    top: "-40px",
     left: "50%",
     transform: "translateX(-50%)",
-    width: "200px",
-    height: "200px",
-    background: "rgba(250, 204, 21, 0.15)",
-    filter: "blur(60px)",
-    pointerEvents: "none",
+    width: "160px",
+    height: "160px",
+    background: "rgba(250, 204, 21, 0.12)",
+    filter: "blur(50px)",
     borderRadius: "50%"
   },
 
   badgeContainer: {
     display: "inline-flex",
-    alignItems: "center",
-    background: "rgba(250, 204, 21, 0.08)",
+    background: "rgba(250, 204, 21, 0.1)",
     border: "1px solid rgba(250, 204, 21, 0.2)",
-    padding: "6px 14px",
-    borderRadius: "30px",
-    marginBottom: "16px"
+    padding: "4px 12px",
+    borderRadius: "20px",
+    marginBottom: "12px"
   },
 
   badgeText: {
-    color: "#eab308",
-    fontSize: "11px",
-    fontWeight: "800",
-    letterSpacing: "1px"
+    color: "#facc15",
+    fontSize: "10px",
+    fontWeight: "800"
   },
 
   mainTitle: {
-    fontSize: "30px",
-    fontWeight: "900",
-    color: "#ffffff",
-    margin: "0 0 10px 0",
-    letterSpacing: "-0.5px"
+    fontSize: "26px",
+    fontWeight: "800",
+    margin: "0 0 6px 0"
   },
 
   subtitle: {
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#94a3b8",
-    lineHeight: "1.6",
-    maxWidth: "310px",
-    margin: "0 auto 24px"
+    margin: "0 auto 20px",
+    maxWidth: "280px"
   },
 
   giftWrapper: {
     position: "relative",
-    width: "140px",
-    height: "140px",
-    margin: "0 auto 30px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
+    width: "100px",
+    height: "100px",
+    margin: "0 auto 20px"
   },
 
   giftPulse: {
     position: "absolute",
     inset: "0px",
     borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(234, 179, 8, 0.3) 0%, transparent 70%)",
-    filter: "blur(4px)"
+    background: "radial-gradient(circle, rgba(234, 179, 8, 0.25) 0%, transparent 70%)"
   },
 
   giftBoxInner: {
-    width: "100px",
-    height: "100px",
+    width: "80px",
+    height: "80px",
     borderRadius: "50%",
     background: "linear-gradient(135deg, #facc15 0%, #ca8a04 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 10px 25px rgba(234, 179, 8, 0.4)"
+    margin: "10px auto"
   },
 
   giftEmoji: {
-    fontSize: "52px"
+    fontSize: "40px"
   },
 
   claimBtn: {
     width: "100%",
-    padding: "16px",
+    padding: "14px",
     border: "none",
-    borderRadius: "18px",
-    background: "linear-gradient(135deg, #facc15 0%, #eab308 50%, #ca8a04 100%)",
-    color: "#020617",
-    fontWeight: "800",
-    fontSize: "16px",
-    letterSpacing: "0.5px",
-    boxShadow: "0 6px 20px rgba(234, 179, 8, 0.3)"
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #facc15 0%, #eab308 100%)",
+    color: "#0f172a",
+    fontWeight: "700",
+    fontSize: "15px"
   },
 
   btnContent: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "8px"
+    gap: "6px"
   },
 
   spinner: {
-    width: "18px",
-    height: "18px",
-    border: "2px solid rgba(2,6,23,0.3)",
-    borderTopColor: "#020617",
+    width: "16px",
+    height: "16px",
+    border: "2px solid #0f172a",
+    borderTopColor: "transparent",
     borderRadius: "50%"
   },
 
   resultMessage: {
-    marginTop: "20px",
-    padding: "12px",
-    borderRadius: "14px",
+    marginTop: "16px",
+    padding: "10px",
+    borderRadius: "12px",
     border: "1px solid",
-    fontSize: "13px"
+    fontSize: "12px"
   },
 
   resultAmountText: {
-    margin: "4px 0 0", 
-    fontWeight: "800", 
-    fontSize: "15px"
+    margin: "2px 0 0",
+    fontWeight: "700"
   },
 
-  /* 📜 CLAIMS LOGS WHITE BACKGROUND STYLE (PAYTM / PHONEPE LOOK) */
+  /* 📜 HISTORY STYLES FIXED (VISIBLE LIGHT BG) */
   historySection: {
     display: "flex",
     flexDirection: "column",
-    gap: "14px"
+    gap: "10px"
   },
 
   sectionHeader: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    padding: "0 4px"
+    alignItems: "center"
   },
 
   historyTitle: {
     margin: 0,
-    fontSize: "16px",
-    fontWeight: "700",
-    color: "#475569"
+    fontSize: "15px",
+    color: "#334155",
+    fontWeight: "700"
   },
 
   historyCounter: {
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#64748b"
   },
 
   emptyCard: {
     background: "#ffffff",
     padding: "20px",
-    borderRadius: "18px",
+    borderRadius: "16px",
     color: "#64748b",
     textAlign: "center",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-    fontSize: "13px"
+    border: "1px solid #e2e8f0"
   },
 
   logsContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: "0px",
     background: "#ffffff",
-    borderRadius: "24px",
+    borderRadius: "18px",
     overflow: "hidden",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.05)"
+    boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+    border: "1px solid #e2e8f0"
   },
 
   logRow: {
-    padding: "16px",
+    padding: "14px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     borderBottom: "1px solid #f1f5f9",
     cursor: "pointer",
-    transition: "background 0.2s",
-    ":last-child": { borderBottom: "none" }
+    background: "#ffffff"
   },
 
   logLeft: {
     display: "flex",
     alignItems: "center",
-    gap: "14px"
+    gap: "10px"
   },
 
   logIconCircle: {
-    width: "44px",
-    height: "44px",
+    width: "40px",
+    height: "40px",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "20px"
+    fontSize: "18px"
   },
 
   logType: {
     display: "block",
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#1e293b"
+    fontSize: "13px",
+    color: "#0f172a"
   },
 
   logDate: {
     display: "block",
     fontSize: "11px",
-    color: "#64748b",
-    marginTop: "2px"
+    color: "#64748b"
   },
 
   moneyBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    background: "#e8f5e9",
-    color: "#2e7d32",
-    fontSize: "11px",
-    fontWeight: "600",
-    padding: "2px 8px",
-    borderRadius: "12px",
-    marginTop: "6px"
+    display: "inline-block",
+    background: "#dcfce7",
+    color: "#15803d",
+    fontSize: "10px",
+    padding: "2px 6px",
+    borderRadius: "8px",
+    marginTop: "4px",
+    fontWeight: "600"
   },
 
   logRight: {
-    textAlign: "right",
-    display: "flex",
-    flexDirection: "column"
+    textAlign: "right"
   },
 
   logAmount: {
-    fontSize: "16px",
+    fontSize: "15px",
     fontWeight: "700",
-    color: "#2e7d32"
+    color: "#16a34a",
+    display: "block"
   },
 
   inText: {
-    fontSize: "11px",
+    fontSize: "10px",
     color: "#94a3b8"
   },
 
-  appSymbol: {
-    color: "#0284c7"
-  },
-
-  /* 🔮 CELEBRATION MODAL OVERLAY */
+  /* SUCCESS CLAIM POPUP */
   popupOverlay: {
     position: "fixed",
-    inset: "0px",
-    background: "rgba(2, 6, 23, 0.85)",
-    backdropFilter: "blur(8px)",
+    inset: "0",
+    background: "rgba(15, 23, 42, 0.6)",
+    backdropFilter: "blur(4px)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 99999,
-    padding: "20px"
+    zIndex: 99999
   },
 
   popupCard: {
-    position: "relative",
-    background: "linear-gradient(145deg, #0f172a, #020617)",
+    background: "#0f172a",
     border: "2px solid #eab308",
-    borderRadius: "28px",
-    padding: "30px 24px",
-    width: "100%",
-    maxWidth: "320px",
+    borderRadius: "24px",
+    padding: "24px",
     textAlign: "center",
-    boxShadow: "0 25px 50px rgba(0,0,0,0.6)",
-    overflow: "hidden"
+    width: "280px",
+    color: "#ffffff"
   },
 
-  popupGlow: {
-    position: "absolute",
-    width: "140px",
-    height: "140px",
-    background: "#eab308",
-    filter: "blur(50px)",
-    top: "-30px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    opacity: 0.2,
-    borderRadius: "50%"
-  },
+  popupIcon: { fontSize: "48px" },
+  popupTitle: { fontSize: "16px", margin: "6px 0" },
+  popupAmount: { color: "#22c55e", fontSize: "36px", margin: "10px 0" },
+  popupText: { color: "#94a3b8", fontSize: "12px" },
+  popupCloseBtn: { width: "100%", padding: "10px", background: "#1e293b", color: "#fff", border: "none", borderRadius: "8px", marginTop: "12px" },
 
-  popupIcon: {
-    fontSize: "64px",
-    marginBottom: "10px"
-  },
-
-  popupTitle: {
-    color: "#ffffff",
-    fontSize: "18px",
-    fontWeight: "800",
-    margin: "0 0 6px 0"
-  },
-
-  popupAmount: {
-    color: "#10b981",
-    fontSize: "44px",
-    fontWeight: "900",
-    margin: "12px 0"
-  },
-
-  popupText: {
-    color: "#94a3b8",
-    fontSize: "12px",
-    margin: "0 0 24px 0"
-  },
-
-  popupCloseBtn: {
-    width: "100%",
-    padding: "12px",
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    color: "#f1f5f9",
-    borderRadius: "12px",
-    fontWeight: "700",
-    cursor: "pointer"
-  },
-
-  /* 📱 FULL PHONEPE STYLE SLIDE POPUP */
+  /* 🔮 POPUP MODAL FOR RECEIPT DETAILS */
   receiptOverlay: {
     position: "fixed",
     inset: "0px",
-    background: "#f4f6f9",
+    background: "rgba(15, 23, 42, 0.7)",
+    backdropFilter: "blur(6px)",
     zIndex: 999999,
     display: "flex",
-    flexDirection: "column"
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "12px"
+  },
+
+  popupModalCard: {
+    background: "#f8fafc",
+    width: "100%",
+    maxWidth: "400px",
+    borderRadius: "24px",
+    overflow: "hidden",
+    boxShadow: "0 20px 25px -5px rgba(0,0,0,0.3)",
+    display: "flex",
+    flexDirection: "column",
+    maxHeight: "90vh"
   },
 
   receiptHeaderBar: {
-    height: "56px",
     background: "#ffffff",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "0 16px",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.04)"
+    padding: "12px 16px",
+    borderBottom: "1px solid #e2e8f0"
   },
 
   backBtn: {
     background: "none",
     border: "none",
-    fontSize: "17px",
+    fontSize: "15px",
     fontWeight: "600",
-    color: "#1e293b",
+    color: "#ef4444",
     cursor: "pointer"
   },
 
   rightNavBtn: {
-    display: "flex",
-    gap: "16px"
+    display: "flex"
   },
 
-  navLinkBtn: {
-    background: "none",
+  whatsappBtn: {
+    background: "#25D366",
+    color: "#ffffff",
     border: "none",
-    color: "#144cc7",
-    fontWeight: "600",
-    fontSize: "15px",
+    padding: "6px 12px",
+    borderRadius: "12px",
+    fontWeight: "700",
+    fontSize: "13px",
     cursor: "pointer"
   },
 
   receiptScrollContainer: {
     flex: 1,
     overflowY: "auto",
-    padding: "16px"
+    padding: "12px"
   },
 
   receiptCard: {
-    background: "#f4f6f9",
+    background: "#f8fafc",
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
-    maxWidth: "480px",
-    margin: "0 auto",
+    gap: "10px",
     padding: "4px"
   },
 
   receiptSectionBox: {
     background: "#ffffff",
-    borderRadius: "20px",
-    padding: "20px 16px",
-    border: "1px solid #e2e8f0",
-    position: "relative"
+    borderRadius: "16px",
+    padding: "16px",
+    border: "1px solid #e2e8f0"
   },
 
   fieldLabel: {
-    fontSize: "13px",
+    fontSize: "11px",
     color: "#64748b",
-    fontWeight: "500",
-    display: "block",
-    marginBottom: "4px"
+    fontWeight: "600"
   },
 
   receiptAmountRow: {
     display: "flex",
     alignItems: "center",
-    gap: "8px"
+    gap: "6px",
+    marginTop: "2px"
   },
 
   receiptAmount: {
-    fontSize: "36px",
+    fontSize: "30px",
     fontWeight: "800",
-    color: "#1e293b",
+    color: "#0f172a",
     margin: 0
   },
 
   verifiedCheck: {
-    width: "24px",
-    height: "24px",
-    background: "#00c853",
+    width: "20px",
+    height: "20px",
+    background: "#22c55e",
     color: "#ffffff",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "bold",
-    fontSize: "14px"
+    fontSize: "11px",
+    fontWeight: "bold"
   },
 
   amountInWords: {
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#475569",
-    margin: "4px 0 12px"
+    margin: "4px 0 10px"
   },
 
   moneyReceivedTag: {
-    display: "inline-flex",
-    alignItems: "center",
-    background: "#e8f5e9",
-    border: "1px solid #c8e6c9",
-    color: "#2e7d32",
-    padding: "6px 14px",
-    borderRadius: "20px",
-    fontSize: "13px",
+    display: "inline-block",
+    background: "#dcfce7",
+    color: "#16a34a",
+    padding: "4px 10px",
+    borderRadius: "12px",
+    fontSize: "12px",
     fontWeight: "600"
   },
 
   profileRow: {
     display: "flex",
     alignItems: "center",
-    gap: "12px",
-    marginTop: "8px"
+    gap: "10px",
+    marginTop: "6px"
   },
 
   receiptAvatar: {
-    width: "48px",
-    height: "48px",
+    width: "40px",
+    height: "40px",
     borderRadius: "50%",
-    background: "#ffcdd2",
-    color: "#c62828",
+    background: "#fee2e2",
+    color: "#991b1b",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "700",
     fontSize: "16px"
   },
 
@@ -815,50 +763,45 @@ const styles = {
 
   profileName: {
     margin: 0,
-    fontSize: "16px",
+    fontSize: "14px",
     fontWeight: "700",
-    color: "#1e293b"
+    color: "#0f172a"
   },
 
   blueTick: {
-    color: "#03a9f4",
-    fontSize: "14px"
+    color: "#38bdf8",
+    fontSize: "12px"
   },
 
   upiId: {
     margin: "2px 0 0",
-    fontSize: "12px",
-    color: "#64748b"
+    fontSize: "11px",
+    color: "#64748b",
+    wordBreak: "break-all"
   },
 
   bankName: {
     margin: "2px 0 0",
-    fontSize: "12px",
-    color: "#64748b"
+    fontSize: "11px",
+    color: "#16a34a",
+    fontWeight: "600"
   },
 
   divider: {
     height: "1px",
     background: "#e2e8f0",
-    margin: "16px 0"
+    margin: "12px 0"
   },
 
   timeText: {
     fontSize: "12px",
-    color: "#475569",
+    color: "#334155",
     margin: "0 0 4px"
   },
 
   refText: {
     fontSize: "12px",
-    color: "#475569",
+    color: "#334155",
     margin: 0
-  },
-
-  copyBtn: {
-    color: "#144cc7",
-    fontWeight: "600",
-    marginLeft: "8px",
-    cursor: "pointer"
   }
 };
