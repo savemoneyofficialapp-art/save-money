@@ -17,16 +17,16 @@ export default function DailyReward() {
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(false);
 
-  // 🔍 ফিল্টার স্টেটসমূহ
-  const [filterType, setFilterType] = useState("all"); // all, week, thisMonth, lastMonth, custom
+  // 🔍 Filter States
+  const [filterType, setFilterType] = useState("all"); 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // 📂 ট্রানজেকশন পপআপ এবং রেফ
+  // 📂 Transaction Popup and Ref
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
-  // 🔄 ব্যাকএন্ড ফরম্যাট অনুযায়ী নিখুঁত হিস্টরি ফেচ ফাংশন
+  // 🔄 Perfect History Fetch Function (Handles Empty/New Accounts Without Toasting Errors)
   const fetchHistory = useCallback(async () => {
     if (!email) return;
     try {
@@ -39,36 +39,35 @@ export default function DailyReward() {
       const data = await res.json();
       
       if (res.ok && data) {
-        // ব্যাকএন্ড অবজেক্ট থেকে মেইন রিওয়ার্ড ও ওয়ালেট ডেটা বের করা
+        // Checking if server returned a direct reward object or wrapped in data
         const rewardData = data.reward || data;
         
-        // ব্যাকএন্ডে হিস্টরি অ্যারেটি 'history' নামে সংরক্ষিত আছে
         let rawHistory = [];
         if (rewardData && Array.isArray(rewardData.history)) {
-          rawHistory = [...rewardData.history].reverse(); // নতুন ট্রানজেকশন উপরে দেখানোর জন্য
+          rawHistory = [...rewardData.history].reverse();
         } else if (Array.isArray(data)) {
           rawHistory = [...data].reverse();
         }
 
-        // ইউজার ওয়ালেট আইডি সেট করা (ইমেইল আইডি ছাড়া অন্য ইউনিক আইডি)
-        const parsedWalletId = rewardData.walletId || rewardData.wallet || rewardData._id || `WL-${email.split('@')[0].toUpperCase()}`;
+        // Generating fallback unique ID if backend doesn't supply walletId directly
+        const parsedWalletId = rewardData?.walletId || rewardData?.wallet || rewardData?._id || `WL-${email.split('@')[0].toUpperCase()}`;
 
         setHistory(rawHistory);
         setFilteredHistory(rawHistory);
         setWalletId(parsedWalletId);
       }
     } catch (err) {
-      console.error("Fetch history critical error:", err);
-      toast.error("হিস্টরি ডেটা লোড করতে সমস্যা হয়েছে।");
+      console.error("Fetch history silent catch:", err);
+      // Removed the toast error from here so new users don't see any error popups on page mount
     }
   }, [email, token]);
 
-  // পেজে প্রবেশ করার সাথে সাথে কোনো প্রকার বিলম্ব ছাড়াই হিস্টরি লোড হবে
+  // Runs immediately on component mount
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
 
-  // 📊 ইনস্ট্যান্ট ক্লায়েন্ট-সাইড ফিল্টারিং লজিক 
+  // 📊 Client Side Filter Logic
   useEffect(() => {
     let updatedList = [...history];
     const now = new Date();
@@ -100,7 +99,7 @@ export default function DailyReward() {
     setFilteredHistory(updatedList);
   }, [filterType, startDate, endDate, history]);
 
-  // 🎁 রিওয়ার্ড ক্লেইম করার ফাংশন
+  // 🎁 Reward Claim Function
   const claim = async () => {
     try {
       setLoading(true);
@@ -129,22 +128,21 @@ export default function DailyReward() {
       setSpecial(data.special || false);
       setPopup(true);
       
-      // ক্লেইম সফল হওয়ার সাথে সাথেই হিস্টরি লিস্ট রিফ্রেশ হবে
       fetchHistory();
       setTimeout(() => setPopup(false), 4000);
     } catch (err) {
       console.log("Daily reward fetch error:", err);
-      toast.error("সিস্টেমের সাথে সংযোগ বিচ্ছিন্ন হয়েছে।");
+      toast.error("Connection failed.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🟢 হোয়াটসঅ্যাপে ইমেজ শেয়ারিং মেথড
+  // 🟢 WhatsApp Share Mechanism
   const handleWhatsAppShare = async () => {
     if (!receiptRef.current) return;
     try {
-      toast.info("রসিদ তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...");
+      toast.info("Preparing receipt...");
       
       const canvas = await html2canvas(receiptRef.current, {
         useCORS: true,
@@ -170,12 +168,12 @@ export default function DailyReward() {
           
           const textMessage = encodeURIComponent(`I just claimed my Daily Reward! Earned: ₹${selectedTx.rewardAmt}. Receipt downloaded!`);
           window.open(`https://api.whatsapp.com/send?text=${textMessage}`, "_blank");
-          toast.success("রসিদ ডাউনলোড হয়েছে ও হোয়াটসঅ্যাপ ওপেন হচ্ছে!");
+          toast.success("Receipt downloaded!");
         }
       }, "image/png");
     } catch (error) {
       console.error("WhatsApp share error:", error);
-      toast.error("শেয়ার করা সম্ভব হয়নি।");
+      toast.error("Sharing failed.");
     }
   };
 
@@ -321,7 +319,7 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* 🔮 TRANSACTION DETAIL POPUP MODAL (SHOWING UNIQUE WALLET ID) */}
+      {/* 🔮 TRANSACTION DETAIL POPUP MODAL */}
       {selectedTx && (
         <div style={styles.receiptOverlay}>
           <div style={styles.popupModalCard}>
@@ -363,7 +361,6 @@ export default function DailyReward() {
                   </div>
                 </div>
 
-                {/* 🔒 ইউজার ওয়ালেট আইডি এখানে স্পষ্টভাবে প্রদর্শিত হবে */}
                 <div style={styles.receiptSectionBox}>
                   <span style={styles.fieldLabel}>To (Wallet Account)</span>
                   <div style={styles.profileRow}>
@@ -400,7 +397,7 @@ export default function DailyReward() {
   );
 }
 
-// 🎨 ক্লিন সিএসএস স্টাইল শিট 
+// 🎨 Styles Sheet 
 const styles = {
   container: { minHeight: "100vh", background: "#f8fafc", color: "#0f172a", padding: "20px 14px 60px", fontFamily: "'Inter', sans-serif", display: "flex", flexDirection: "column", gap: "20px" },
   heroCard: { position: "relative", background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)", borderRadius: "24px", padding: "24px 16px", textAlign: "center", color: "#ffffff", boxShadow: "0 10px 25px rgba(0,0,0,0.1)" },
@@ -411,7 +408,7 @@ const styles = {
   subtitle: { fontSize: "12px", color: "#94a3b8", margin: "0 auto 20px", maxWidth: "280px" },
   giftWrapper: { position: "relative", width: "100px", height: "100px", margin: "0 auto 20px" },
   giftPulse: { position: "absolute", inset: "0px", borderRadius: "50%", background: "radial-gradient(circle, rgba(234, 179, 8, 0.25) 0%, transparent 70%)" },
-  giftBoxInner: { width: "80px", height: "80px", borderRadius: "50%", background: "linear-gradient(135deg, #facc15 0%, #ca8a04 100%)", display: "flex", alignItems: "center", justifyIn: "center", margin: "10px auto" },
+  giftBoxInner: { width: "80px", height: "80px", borderRadius: "50%", background: "linear-gradient(135deg, #facc15 0%, #ca8a04 100%)", display: "flex", alignItems: "center", justifyContent: "center", margin: "10px auto" },
   giftEmoji: { fontSize: "40px" },
   claimBtn: { width: "100%", padding: "14px", border: "none", borderRadius: "14px", background: "linear-gradient(135deg, #facc15 0%, #eab308 100%)", color: "#0f172a", fontWeight: "700", fontSize: "15px" },
   resultMessage: { marginTop: "16px", padding: "10px", borderRadius: "12px", border: "1px solid", fontSize: "12px" },
@@ -460,7 +457,7 @@ const styles = {
   amountInWords: { fontSize: "12px", color: "#475569", margin: "4px 0 10px" },
   moneyReceivedTag: { display: "inline-block", background: "#dcfce7", color: "#16a34a", padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "600" },
   profileRow: { display: "flex", alignItems: "center", gap: "10px", marginTop: "6px" },
-  receiptAvatar: { width: "40px", height: "40px", borderRadius: "50%", background: "#fee2e2", color: "#991b1b", display: "flex", alignItems: "center", justifyIn: "center", fontSize: "16px" },
+  receiptAvatar: { width: "40px", height: "40px", borderRadius: "50%", background: "#fee2e2", color: "#991b1b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" },
   profileDetails: { flex: 1 },
   profileName: { margin: 0, fontSize: "14px", fontWeight: "700", color: "#0f172a" },
   blueTick: { color: "#38bdf8", fontSize: "12px" },
