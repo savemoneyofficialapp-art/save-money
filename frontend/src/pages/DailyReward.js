@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import html2canvas from "html2canvas";
 import { API } from "../config";
@@ -42,7 +41,7 @@ export default function DailyReward() {
       if (res.ok && data) {
         let rawHistory = [];
         
-        // অল টোটাল হিস্ট্রি অবজেক্ট ট্র্যাকিং (যাতে আগের কোনো ক্লেইম মিস না হয়)
+        // ব্যাকএন্ডের রেসপন্স অনুযায়ী ডাটা ট্র্যাকিং
         if (data.reward && Array.isArray(data.reward.history)) {
           rawHistory = data.reward.history;
         } else if (data.history && Array.isArray(data.history)) {
@@ -65,7 +64,7 @@ export default function DailyReward() {
     }
   };
 
-  // 🚀 পেজ লোড ও ক্লেম সাকসেস হলে হিস্ট্রি রেন্ডার
+  // 🚀 পেজ লোড হলে হিস্ট্রি রেন্ডার
   useEffect(() => {
     fetchHistory();
   }, []); 
@@ -99,7 +98,7 @@ export default function DailyReward() {
       setSpecial(data.special || false);
       setPopup(true);
       
-      // নতুন ক্লেমের সাথে সাথে আগের অল টোটাল হিস্ট্রি রিফ্রেশ
+      // নতুন ক্লেমের সাথে সাথে নিচে হিস্ট্রি লিস্ট ইনস্ট্যান্ট রিফ্রেশ হবে
       fetchHistory(); 
       setTimeout(() => setPopup(false), 4000);
     } catch (err) {
@@ -215,7 +214,7 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* Reward Logs Section (এখানে অল টোটাল হিস্ট্রি রেন্ডার হচ্ছে) */}
+      {/* 📜 Reward Logs Section (এখানে সব হিস্ট্রি ডেট-টাইমসহ শো করছে) */}
       <div style={styles.historySection}>
         <div style={styles.sectionHeader}>
           <h3 style={styles.historyTitle}>📜 Claim Logs</h3>
@@ -248,7 +247,7 @@ export default function DailyReward() {
                         {isSpecial ? "Special Multiplier Box" : "Daily Reward Loot"}
                       </b>
                       <span style={styles.logDate}>
-                        Received, {logDate ? new Date(logDate).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'N/A'} at {logDate ? new Date(logDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                        Received: {logDate ? new Date(logDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'} at {logDate ? new Date(logDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                       </span>
                       <div style={styles.moneyBadge}>
                         💵 Money Received
