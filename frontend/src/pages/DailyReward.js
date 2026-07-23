@@ -41,28 +41,26 @@ export default function DailyReward() {
       if (res.ok && data) {
         let rawHistory = [];
         
-        // 1. Check if backend sends walletHistory array directly inside root object
-        if (data.walletHistory && Array.isArray(data.walletHistory)) {
-          rawHistory = data.walletHistory;
-        } 
-        // 2. Check if nested inside reward.history
-        else if (data.reward && Array.isArray(data.reward.history)) {
+        // 1. ব্যাকএন্ডের স্ক্রিনশট অনুযায়ী ডেটা reward.history এর ভেতরেই মূল হিস্ট্রি থাকে
+        if (data.reward && Array.isArray(data.reward.history)) {
           rawHistory = data.reward.history;
         } 
-        // 3. Check if root data object itself has history array
+        // 2. সেফটি ব্যাকআপ (অন্যান্য সম্ভাব্য ব্যাকএন্ড কী)
+        else if (data.walletHistory && Array.isArray(data.walletHistory)) {
+          rawHistory = data.walletHistory;
+        } 
         else if (data.history && Array.isArray(data.history)) {
           rawHistory = data.history;
         } 
-        // 4. Fallback if the array is directly returned
         else if (Array.isArray(data)) {
           rawHistory = data;
         }
 
-        // Reverse the array to show recent transactions first safely
+        // নতুন ট্রানজেকশন সবার উপরে দেখানোর জন্য রিভার্স করা হলো
         const finalHistory = Array.isArray(rawHistory) ? [...rawHistory].reverse() : [];
         
-        // Dynamic key extracting for unique wallet identifier
-        const parsedWalletId = data.reward?.walletId || data.reward?.wallet || data.wallet || data._id || `WL-${email.split('@')[0].toUpperCase()}`;
+        // ওয়ালেট আইডি এক্সট্রাকশন
+        const parsedWalletId = data.reward?.walletId || data.reward?._id || data.wallet || `WL-${email.split('@')[0].toUpperCase()}`;
 
         setHistory(finalHistory);
         setFilteredHistory(finalHistory);
@@ -77,34 +75,50 @@ export default function DailyReward() {
     fetchHistory();
   }, [fetchHistory]);
 
-  // Client Side Filtering Logic
+  // 🔍 Client Side Filtering Logic (Fixed Date Parsing)
   useEffect(() => {
     let updatedList = [...history];
     const now = new Date();
 
-    if (filterType === "week") {
-      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      updatedList = updatedList.filter(h => new Date(h.date) >= oneWeekAgo);
-    } else if (filterType === "thisMonth") {
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      updatedList = updatedList.filter(h => new Date(h.date) >= startOfMonth);
-    } else if (filterType === "lastMonth") {
-      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-      updatedList = updatedList.filter(h => {
-        const d = new Date(h.date);
-        return d >= startOfLastMonth && d <= endOfLastMonth;
-      });
-    } else if (filterType === "custom" && startDate && endDate) {
-      const start = new Date(startDate);
-      start.setHours(0,0,0,0);
-      const end = new Date(endDate);
-      end.setHours(23,59,59,999);
-      updatedList = updatedList.filter(h => {
-        const d = new Date(h.date);
-        return d >= start && d <= end;
-      });
+    if (filterType === "all") {
+      setFilteredHistory(updatedList);
+      return;
     }
+
+    updatedList = updatedList.filter(h => {
+      // ব্যাকএন্ড থেকে date অথবা createdAt যেটাই আসুক, সেটাকে ভ্যালিড ডেট-এ রূপান্তর করা
+      const logDateStr = h.date || h.createdAt;
+      if (!logDateStr) return false; 
+      
+      const d = new Date(logDateStr);
+      if (isNaN(d.getTime())) return false; // ইনভ্যালিড ডেট হলে স্কিপ করবে
+
+      if (filterType === "week") {
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return d >= oneWeekAgo;
+      } 
+      
+      if (filterType === "thisMonth") {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        return d >= startOfMonth;
+      } 
+      
+      if (filterType === "lastMonth") {
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        return d >= startOfLastMonth && d <= endOfLastMonth;
+      } 
+      
+      if (filterType === "custom" && startDate && endDate) {
+        const start = new Date(startDate);
+        start.setHours(0,0,0,0);
+        const end = new Date(endDate);
+        end.setHours(23,59,59,999);
+        return d >= start && d <= end;
+      }
+
+      return true;
+    });
 
     setFilteredHistory(updatedList);
   }, [filterType, startDate, endDate, history]);
@@ -287,8 +301,10 @@ export default function DailyReward() {
           <div style={styles.logsContainer}>
             {filteredHistory.map((h, i) => {
               const isSpecial = h.special;
-              // Extracting amount based on backend variable names
+              // ব্যাকএন্ড ভেরিয়েবল ম্যাপিং
               const rewardAmt = h.amount || h.reward || h.rewardAmt || 0;
+              const logDate = h.date || h.createdAt;
+              
               return (
                 <div key={i} style={styles.logRow} onClick={() => setSelectedTx({ ...h, rewardAmt })}>
                   <div style={styles.logLeft}>
@@ -304,7 +320,7 @@ export default function DailyReward() {
                         {isSpecial ? "Special Multiplier Box" : "Daily Reward Loot"}
                       </b>
                       <span style={styles.logDate}>
-                        Received, {new Date(h.date || h.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} at {new Date(h.date || h.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        Received, {logDate ? new Date(logDate).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'N/A'} at {logDate ? new Date(logDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                       </span>
                       <div style={styles.moneyBadge}>
                         💵 Money Received
@@ -380,13 +396,13 @@ export default function DailyReward() {
                   <div style={styles.divider}></div>
 
                   <p style={styles.timeText}>
-                    <b>Date:</b> {new Date(selectedTx.date || selectedTx.createdAt).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'})}
+                    <b>Date:</b> {(selectedTx.date || selectedTx.createdAt) ? new Date(selectedTx.date || selectedTx.createdAt).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'}) : 'N/A'}
                   </p>
                   <p style={styles.timeText}>
-                    <b>Time:</b> {new Date(selectedTx.date || selectedTx.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                    <b>Time:</b> {(selectedTx.date || selectedTx.createdAt) ? new Date(selectedTx.date || selectedTx.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : 'N/A'}
                   </p>
                   <p style={styles.refText}>
-                    <b>Ref No:</b> REF{new Date(selectedTx.date || selectedTx.createdAt).getTime()}
+                    <b>Ref No:</b> REF{(selectedTx.date || selectedTx.createdAt) ? new Date(selectedTx.date || selectedTx.createdAt).getTime() : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -466,4 +482,4 @@ const styles = {
   divider: { height: "1px", background: "#e2e8f0", margin: "12px 0" },
   timeText: { fontSize: "12px", color: "#334155", margin: "0 0 4px" },
   refText: { fontSize: "12px", color: "#334155", margin: 0 }
-};
+}; 
