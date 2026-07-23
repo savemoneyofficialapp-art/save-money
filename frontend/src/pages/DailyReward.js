@@ -20,7 +20,7 @@ export default function DailyReward() {
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
-  // 🔄 Fetch History Function (নরমাল ফাংশন, কোনো useCallback লুপের ভয় নেই)
+  // 🔄 All Total History Fetch Function
   const fetchHistory = async () => {
     const currentEmail = localStorage.getItem("email");
     const currentToken = localStorage.getItem("token");
@@ -42,15 +42,18 @@ export default function DailyReward() {
       if (res.ok && data) {
         let rawHistory = [];
         
-        // ব্যাকএন্ডের স্ট্রাকচার অনুযায়ী চেক
+        // অল টোটাল হিস্ট্রি অবজেক্ট ট্র্যাকিং (যাতে আগের কোনো ক্লেইম মিস না হয়)
         if (data.reward && Array.isArray(data.reward.history)) {
           rawHistory = data.reward.history;
         } else if (data.history && Array.isArray(data.history)) {
           rawHistory = data.history;
+        } else if (Array.isArray(data.reward)) {
+          rawHistory = data.reward;
         } else if (Array.isArray(data)) {
           rawHistory = data;
         }
 
+        // নতুন ক্লেইম সবার উপরে দেখানোর জন্য রিভার্স করা হলো
         const finalHistory = Array.isArray(rawHistory) ? [...rawHistory].reverse() : [];
         const parsedWalletId = data.walletId || `WL-${currentEmail.split('@')[0].toUpperCase()}`;
 
@@ -58,11 +61,11 @@ export default function DailyReward() {
         setWalletId(parsedWalletId);
       }
     } catch (err) {
-      console.error("Fetch history internal track:", err);
+      console.error("Fetch history internal track error:", err);
     }
   };
 
-  // 🚀 পেজ ওপেন হওয়া মাত্রই হিস্ট্রি মাত্র ১ বার কল হবে (১০০% সেফ)
+  // 🚀 পেজ লোড ও ক্লেম সাকসেস হলে হিস্ট্রি রেন্ডার
   useEffect(() => {
     fetchHistory();
   }, []); 
@@ -96,7 +99,8 @@ export default function DailyReward() {
       setSpecial(data.special || false);
       setPopup(true);
       
-      fetchHistory(); // ক্লেম সফল হলে হিস্ট্রি রিফ্রেশ করবে
+      // নতুন ক্লেমের সাথে সাথে আগের অল টোটাল হিস্ট্রি রিফ্রেশ
+      fetchHistory(); 
       setTimeout(() => setPopup(false), 4000);
     } catch (err) {
       console.log("Daily reward fetch error:", err);
@@ -211,7 +215,7 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* Reward Logs Section */}
+      {/* Reward Logs Section (এখানে অল টোটাল হিস্ট্রি রেন্ডার হচ্ছে) */}
       <div style={styles.historySection}>
         <div style={styles.sectionHeader}>
           <h3 style={styles.historyTitle}>📜 Claim Logs</h3>
