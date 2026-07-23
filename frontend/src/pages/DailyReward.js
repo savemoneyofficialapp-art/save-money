@@ -7,20 +7,26 @@ import { API } from "../config";
 export default function DailyReward() {
   const email = localStorage.getItem("email");
   const token = localStorage.getItem("token");
-  const walletId = localStorage.getItem("walletId") || localStorage.getItem("userId") || "WLT-" + (email ? email.split('@')[0] : "USER");
 
   const [result, setResult] = useState("");
   const [amount, setAmount] = useState(null);
   const [special, setSpecial] = useState(false);
   const [history, setHistory] = useState([]);
+  const [filteredHistory, setFilteredHistory] = useState([]);
+  const [walletId, setWalletId] = useState("");
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(false);
 
-  // ট্রানজেকশন পপআপ এবং রেফ
+  // 🔍 ফিল্টার স্টেটসমূহ
+  const [filterType, setFilterType] = useState("all"); // all, week, thisMonth, lastMonth, custom
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // 📂 ট্রানজেকশন পপআপ এবং রেফ
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
-  // হিস্টরি ফেচ করার ফাংশন (ফিক্সড)
+  // হিস্টরি ও ওয়ালেট ডাটা ফেচ করার ফাংশন
   const fetchHistory = useCallback(async () => {
     if (!email) return;
     try {
@@ -31,26 +37,53 @@ export default function DailyReward() {
         },
       });
       const data = await res.json();
-      
-      // ব্যাকএন্ড রেসপন্স চেক করে সরাসরি স্টেট আপডেট
-      if (res.ok && data) {
-        if (data.reward?.history) {
-          setHistory([...data.reward.history].reverse());
-        } else if (data.history) {
-          setHistory([...data.history].reverse());
-        }
+      if (res.ok && data.reward) {
+        const rawHistory = data.reward.history ? [...data.reward.history].reverse() : [];
+        setHistory(rawHistory);
+        setFilteredHistory(rawHistory);
+        setWalletId(data.reward.walletId || data.reward._id || `WL-${email.split('@')[0].toUpperCase()}`);
       }
     } catch (err) {
       console.log("Fetch history error:", err);
     }
   }, [email, token]);
 
-  // পেজে প্রবেশ করলেই যাতে ১০০% হিস্টরি লোড হয়
+  // পেজে প্রবেশ করলেই রান হবে
   useEffect(() => {
-    if (email) {
-      fetchHistory();
+    fetchHistory();
+  }, [fetchHistory]);
+
+  // 📊 ফিল্টারিং লজিক (Client Side Filter for instant response)
+  useEffect(() => {
+    let updatedList = [...history];
+    const now = new Date();
+
+    if (filterType === "week") {
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      updatedList = updatedList.filter(h => new Date(h.date) >= oneWeekAgo);
+    } else if (filterType === "thisMonth") {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      updatedList = updatedList.filter(h => new Date(h.date) >= startOfMonth);
+    } else if (filterType === "lastMonth") {
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+      updatedList = updatedList.filter(h => {
+        const d = new Date(h.date);
+        return d >= startOfLastMonth && d <= endOfLastMonth;
+      });
+    } else if (filterType === "custom" && startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0,0,0,0);
+      const end = new Date(endDate);
+      end.setHours(23,59,59,999);
+      updatedList = updatedList.filter(h => {
+        const d = new Date(h.date);
+        return d >= start && d <= end;
+      });
     }
-  }, [email, fetchHistory]);
+
+    setFilteredHistory(updatedList);
+  }, [filterType, startDate, endDate, history]);
 
   const claim = async () => {
     try {
@@ -71,7 +104,7 @@ export default function DailyReward() {
       
       if (!res.ok) {
         setResult(data.error || data.msg || "Reward claim failed");
-        fetchHistory(); 
+        fetchHistory();
         return;
       }
 
@@ -80,9 +113,7 @@ export default function DailyReward() {
       setSpecial(data.special || false);
       setPopup(true);
       
-      // ক্লেইম করার পর হিস্টরি রিফ্রেশ
       fetchHistory();
-      
       setTimeout(() => setPopup(false), 4000);
     } catch (err) {
       console.log("Daily reward fetch error:", err);
@@ -127,7 +158,7 @@ export default function DailyReward() {
       }, "image/png");
     } catch (error) {
       console.error("WhatsApp share error:", error);
-      toast.error("Sharing failed. Try downloading.");
+      toast.error("Sharing failed.");
     }
   };
 
@@ -204,20 +235,43 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* 📜 REWARD LOGS / HISTORY */}
+      {/* 📜 REWARD LOGS / HISTORY SECTION */}
       <div style={styles.historySection}>
         <div style={styles.sectionHeader}>
           <h3 style={styles.historyTitle}>📜 Claim Logs</h3>
-          <span style={styles.historyCounter}>{history.length} Claims total</span>
+          <span style={styles.historyCounter}>{filteredHistory.length} Total Logs</span>
         </div>
 
-        {history.length === 0 ? (
+        {/* 🔍 FILTER BUTTONS OPTIONS */}
+        <div style={styles.filterBar}>
+          <button style={{...styles.filterTab, ...(filterType === "all" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("all")}>All</button>
+          <button style={{...styles.filterTab, ...(filterType === "week" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("week")}>This Week</button>
+          <button style={{...styles.filterTab, ...(filterType === "thisMonth" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("thisMonth")}>This Month</button>
+          <button style={{...styles.filterTab, ...(filterType === "lastMonth" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("lastMonth")}>Last Month</button>
+          <button style={{...styles.filterTab, ...(filterType === "custom" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("custom")}>Date Range</button>
+        </div>
+
+        {/* CUSTOM DATE SELECTOR SHOWS IF CUSTOM FILTER SELECTED */}
+        {filterType === "custom" && (
+          <div style={styles.dateSelectorContainer}>
+            <div style={styles.dateInputGroup}>
+              <label style={styles.dateLabel}>From:</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={styles.dateInput} />
+            </div>
+            <div style={styles.dateInputGroup}>
+              <label style={styles.dateLabel}>To:</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={styles.dateInput} />
+            </div>
+          </div>
+        )}
+
+        {filteredHistory.length === 0 ? (
           <div style={styles.emptyCard}>
-            <p style={{ margin: 0 }}>You haven't claimed any daily rewards yet.</p>
+            <p style={{ margin: 0 }}>No transactions found for the selected filter.</p>
           </div>
         ) : (
           <div style={styles.logsContainer}>
-            {history.map((h, i) => {
+            {filteredHistory.map((h, i) => {
               const isSpecial = h.special;
               const rewardAmt = h.amount || h.reward || 0;
               return (
@@ -255,26 +309,21 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* 🔮 TRANSACTION DETAIL POPUP MODAL */}
+      {/* 🔮 TRANSACTION DETAIL POPUP MODAL (FIXED WITH ORIGINAL WALLET ID) */}
       {selectedTx && (
         <div style={styles.receiptOverlay}>
           <div style={styles.popupModalCard}>
             
-            {/* TOP ACTIONS */}
             <div style={styles.receiptHeaderBar}>
               <button style={styles.backBtn} onClick={() => setSelectedTx(null)}>✕ Close</button>
-              <div style={styles.rightNavBtn}>
-                <button style={styles.whatsappBtn} onClick={handleWhatsAppShare}>
-                  🟢 Share WhatsApp
-                </button>
-              </div>
+              <button style={styles.whatsappBtn} onClick={handleWhatsAppShare}>
+                🟢 Share WhatsApp
+              </button>
             </div>
 
             <div style={styles.receiptScrollContainer}>
-              {/* SCREENSHOT AREA */}
               <div ref={receiptRef} style={styles.receiptCard}>
                 
-                {/* AMOUNT AREA */}
                 <div style={styles.receiptSectionBox}>
                   <span style={styles.fieldLabel}>Amount Received</span>
                   <div style={styles.receiptAmountRow}>
@@ -287,7 +336,6 @@ export default function DailyReward() {
                   </div>
                 </div>
 
-                {/* SENDER INFO */}
                 <div style={styles.receiptSectionBox}>
                   <span style={styles.fieldLabel}>From</span>
                   <div style={styles.profileRow}>
@@ -303,7 +351,7 @@ export default function DailyReward() {
                   </div>
                 </div>
 
-                {/* RECEIVER INFO (FIXED: SHOWING WALLET ID INSTEAD OF EMAIL) */}
+                {/* 🔒 ORIGINAL WALLET ID SHOWN HERE */}
                 <div style={styles.receiptSectionBox}>
                   <span style={styles.fieldLabel}>To (Wallet Account)</span>
                   <div style={styles.profileRow}>
@@ -312,14 +360,13 @@ export default function DailyReward() {
                     </div>
                     <div style={styles.profileDetails}>
                       <h4 style={styles.profileName}>User Account</h4>
-                      <p style={styles.upiId}><b>Wallet ID:</b> {selectedTx.walletId || walletId}</p>
+                      <p style={styles.upiId}><b>Wallet ID:</b> {walletId}</p>
                       <p style={styles.bankName}>Status: Credited Successfully</p>
                     </div>
                   </div>
 
                   <div style={styles.divider}></div>
 
-                  {/* REAL DATE & TIME FROM BACKEND */}
                   <p style={styles.timeText}>
                     <b>Date:</b> {new Date(selectedTx.date).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'})}
                   </p>
@@ -341,7 +388,7 @@ export default function DailyReward() {
   );
 }
 
-// 🎨 সিএসএস স্টাইল শিট 
+// 🎨 ক্লিন এবং ব্রাইট সিএসএস স্টাইল শিট 
 const styles = {
   container: {
     minHeight: "100vh",
@@ -353,6 +400,7 @@ const styles = {
     flexDirection: "column",
     gap: "20px"
   },
+
   heroCard: {
     position: "relative",
     background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
@@ -360,8 +408,9 @@ const styles = {
     padding: "24px 16px",
     textAlign: "center",
     color: "#ffffff",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.15)"
+    boxShadow: "0 10px 25px rgba(0,0,0,0.1)"
   },
+
   cardGlow: {
     position: "absolute",
     top: "-40px",
@@ -373,6 +422,7 @@ const styles = {
     filter: "blur(50px)",
     borderRadius: "50%"
   },
+
   badgeContainer: {
     display: "inline-flex",
     background: "rgba(250, 204, 21, 0.1)",
@@ -381,34 +431,40 @@ const styles = {
     borderRadius: "20px",
     marginBottom: "12px"
   },
+
   badgeText: {
     color: "#facc15",
     fontSize: "10px",
     fontWeight: "800"
   },
+
   mainTitle: {
     fontSize: "26px",
     fontWeight: "800",
     margin: "0 0 6px 0"
   },
+
   subtitle: {
     fontSize: "12px",
     color: "#94a3b8",
     margin: "0 auto 20px",
     maxWidth: "280px"
   },
+
   giftWrapper: {
     position: "relative",
     width: "100px",
     height: "100px",
     margin: "0 auto 20px"
   },
+
   giftPulse: {
     position: "absolute",
     inset: "0px",
     borderRadius: "50%",
     background: "radial-gradient(circle, rgba(234, 179, 8, 0.25) 0%, transparent 70%)"
   },
+
   giftBoxInner: {
     width: "80px",
     height: "80px",
@@ -419,9 +475,11 @@ const styles = {
     justifyContent: "center",
     margin: "10px auto"
   },
+
   giftEmoji: {
     fontSize: "40px"
   },
+
   claimBtn: {
     width: "100%",
     padding: "14px",
@@ -430,15 +488,16 @@ const styles = {
     background: "linear-gradient(135deg, #facc15 0%, #eab308 100%)",
     color: "#0f172a",
     fontWeight: "700",
-    fontSize: "15px",
-    cursor: "pointer"
+    fontSize: "15px"
   },
+
   btnContent: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "6px"
   },
+
   spinner: {
     width: "16px",
     height: "16px",
@@ -446,6 +505,7 @@ const styles = {
     borderTopColor: "transparent",
     borderRadius: "50%"
   },
+
   resultMessage: {
     marginTop: "16px",
     padding: "10px",
@@ -453,30 +513,94 @@ const styles = {
     border: "1px solid",
     fontSize: "12px"
   },
+
   resultAmountText: {
     margin: "2px 0 0",
     fontWeight: "700"
   },
+
+  /* 📜 HISTORY & FILTERS */
   historySection: {
     display: "flex",
     flexDirection: "column",
     gap: "10px"
   },
+
   sectionHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center"
   },
+
   historyTitle: {
     margin: 0,
     fontSize: "15px",
     color: "#334155",
     fontWeight: "700"
   },
+
   historyCounter: {
     fontSize: "11px",
     color: "#64748b"
   },
+
+  filterBar: {
+    display: "flex",
+    gap: "6px",
+    overflowX: "auto",
+    paddingBottom: "6px",
+    scrollbarWidth: "none"
+  },
+
+  filterTab: {
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    padding: "6px 14px",
+    borderRadius: "10px",
+    fontSize: "12px",
+    fontWeight: "600",
+    color: "#64748b",
+    whiteSpace: "nowrap",
+    cursor: "pointer"
+  },
+
+  activeFilterTab: {
+    background: "#0f172a",
+    color: "#ffffff",
+    borderColor: "#0f172a"
+  },
+
+  dateSelectorContainer: {
+    display: "flex",
+    gap: "10px",
+    background: "#ffffff",
+    padding: "10px",
+    borderRadius: "12px",
+    border: "1px solid #e2e8f0"
+  },
+
+  dateInputGroup: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px"
+  },
+
+  dateLabel: {
+    fontSize: "11px",
+    color: "#64748b",
+    fontWeight: "600"
+  },
+
+  dateInput: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    padding: "6px",
+    fontSize: "12px",
+    color: "#334155",
+    outline: "none"
+  },
+
   emptyCard: {
     background: "#ffffff",
     padding: "20px",
@@ -485,15 +609,17 @@ const styles = {
     textAlign: "center",
     border: "1px solid #e2e8f0"
   },
+
   logsContainer: {
     display: "flex",
     flexDirection: "column",
     background: "#ffffff",
     borderRadius: "18px",
     overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
     border: "1px solid #e2e8f0"
   },
+
   logRow: {
     padding: "14px",
     display: "flex",
@@ -503,11 +629,13 @@ const styles = {
     cursor: "pointer",
     background: "#ffffff"
   },
+
   logLeft: {
     display: "flex",
     alignItems: "center",
     gap: "10px"
   },
+
   logIconCircle: {
     width: "40px",
     height: "40px",
@@ -517,16 +645,19 @@ const styles = {
     justifyContent: "center",
     fontSize: "18px"
   },
+
   logType: {
     display: "block",
     fontSize: "13px",
     color: "#0f172a"
   },
+
   logDate: {
     display: "block",
     fontSize: "11px",
     color: "#64748b"
   },
+
   moneyBadge: {
     display: "inline-block",
     background: "#dcfce7",
@@ -537,19 +668,24 @@ const styles = {
     marginTop: "4px",
     fontWeight: "600"
   },
+
   logRight: {
     textAlign: "right"
   },
+
   logAmount: {
     fontSize: "15px",
     fontWeight: "700",
     color: "#16a34a",
     display: "block"
   },
+
   inText: {
     fontSize: "10px",
     color: "#94a3b8"
   },
+
+  /* SUCCESS CLAIM POPUP */
   popupOverlay: {
     position: "fixed",
     inset: "0",
@@ -560,6 +696,7 @@ const styles = {
     alignItems: "center",
     zIndex: 99999
   },
+
   popupCard: {
     background: "#0f172a",
     border: "2px solid #eab308",
@@ -569,12 +706,14 @@ const styles = {
     width: "280px",
     color: "#ffffff"
   },
+
   popupIcon: { fontSize: "48px" },
   popupTitle: { fontSize: "16px", margin: "6px 0" },
   popupAmount: { color: "#22c55e", fontSize: "36px", margin: "10px 0" },
   popupText: { color: "#94a3b8", fontSize: "12px" },
-  popupCloseBtn: { width: "100%", padding: "10px", background: "#1e293b", color: "#fff", border: "none", borderRadius: "8px", marginTop: "12px", cursor: "pointer" },
-  
+  popupCloseBtn: { width: "100%", padding: "10px", background: "#1e293b", color: "#fff", border: "none", borderRadius: "8px", marginTop: "12px" },
+
+  /* 🔮 POPUP MODAL FOR RECEIPT DETAILS */
   receiptOverlay: {
     position: "fixed",
     inset: "0px",
@@ -586,6 +725,7 @@ const styles = {
     alignItems: "center",
     padding: "12px"
   },
+
   popupModalCard: {
     background: "#f8fafc",
     width: "100%",
@@ -597,6 +737,7 @@ const styles = {
     flexDirection: "column",
     maxHeight: "90vh"
   },
+
   receiptHeaderBar: {
     background: "#ffffff",
     display: "flex",
@@ -605,6 +746,7 @@ const styles = {
     padding: "12px 16px",
     borderBottom: "1px solid #e2e8f0"
   },
+
   backBtn: {
     background: "none",
     border: "none",
@@ -613,52 +755,59 @@ const styles = {
     color: "#ef4444",
     cursor: "pointer"
   },
+
   whatsappBtn: {
     background: "#25D366",
     color: "#ffffff",
     border: "none",
-    padding: "6px 14px",
+    padding: "6px 12px",
     borderRadius: "12px",
     fontWeight: "700",
     fontSize: "13px",
     cursor: "pointer"
   },
+
   receiptScrollContainer: {
     flex: 1,
     overflowY: "auto",
     padding: "12px"
   },
+
   receiptCard: {
-    background: "#ffffff",
+    background: "#f8fafc",
     display: "flex",
     flexDirection: "column",
     gap: "10px",
-    padding: "12px",
-    borderRadius: "16px"
+    padding: "4px"
   },
+
   receiptSectionBox: {
     background: "#ffffff",
     borderRadius: "16px",
     padding: "16px",
     border: "1px solid #e2e8f0"
   },
+
   fieldLabel: {
     fontSize: "11px",
     color: "#64748b",
     fontWeight: "600"
   },
+
   receiptAmountRow: {
     display: "flex",
     alignItems: "center",
     gap: "6px",
     marginTop: "2px"
   },
+
   receiptAmount: {
     fontSize: "30px",
     fontWeight: "800",
     color: "#0f172a",
     margin: 0
   },
+
   verifiedCheck: {
     width: "20px",
     height: "20px",
@@ -671,11 +820,13 @@ const styles = {
     fontSize: "11px",
     fontWeight: "bold"
   },
+
   amountInWords: {
     fontSize: "12px",
     color: "#475569",
     margin: "4px 0 10px"
   },
+
   moneyReceivedTag: {
     display: "inline-block",
     background: "#dcfce7",
@@ -685,12 +836,14 @@ const styles = {
     fontSize: "12px",
     fontWeight: "600"
   },
+
   profileRow: {
     display: "flex",
     alignItems: "center",
     gap: "10px",
     marginTop: "6px"
   },
+
   receiptAvatar: {
     width: "40px",
     height: "40px",
@@ -702,50 +855,52 @@ const styles = {
     justifyContent: "center",
     fontSize: "16px"
   },
+
   profileDetails: {
     flex: 1
   },
+
   profileName: {
     margin: 0,
     fontSize: "14px",
     fontWeight: "700",
     color: "#0f172a"
   },
+
   blueTick: {
     color: "#38bdf8",
     fontSize: "12px"
   },
+
   upiId: {
     margin: "2px 0 0",
     fontSize: "11px",
     color: "#64748b",
     wordBreak: "break-all"
   },
+
   bankName: {
     margin: "2px 0 0",
     fontSize: "11px",
     color: "#16a34a",
     fontWeight: "600"
   },
+
   divider: {
     height: "1px",
     background: "#e2e8f0",
     margin: "12px 0"
   },
+
   timeText: {
     fontSize: "12px",
     color: "#334155",
     margin: "0 0 4px"
   },
+
   refText: {
     fontSize: "12px",
     color: "#334155",
     margin: 0
-  },
-  copyBtn: {
-    color: "#144cc7",
-    fontWeight: "600",
-    marginLeft: "8px",
-    cursor: "pointer"
   }
 };
