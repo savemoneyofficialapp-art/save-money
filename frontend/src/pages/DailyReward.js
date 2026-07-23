@@ -17,7 +17,7 @@ export default function DailyReward() {
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(false);
 
-  // Filter States
+  // Filter States (ডিজাইন ঠিক রাখার জন্য রাখা হয়েছে, কিন্তু ডেট ফিল্টার করবে না)
   const [filterType, setFilterType] = useState("all"); 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -26,14 +26,10 @@ export default function DailyReward() {
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
-  // 🔄 Completely Re-written Data Extraction Logic
+  // 🔄 Fixed Data Extraction Logic for History
   const fetchHistory = useCallback(async () => {
-    if (!email) {
-      console.error("Email not found in localStorage");
-      return;
-    }
+    if (!email) return;
     try {
-      console.log("Fetching history for:", email);
       const res = await fetch(`${API}/daily-reward/${email}`, {
         method: "GET",
         headers: {
@@ -42,13 +38,10 @@ export default function DailyReward() {
       });
       const data = await res.json();
       
-      // 🛑 ব্রাউজারের Inspect Element -> Console ট্যাবে এই লগটি দেখবে আসল ডেটা কী আসছে
-      console.log("Backend Raw Response Data:", data);
-      
       if (res.ok && data) {
         let rawHistory = [];
         
-        // ব্যাকএন্ডের সম্ভাব্য সব ধরনের রেসপন্স স্ট্রাকচার হ্যান্ডেল করা হলো:
+        // ব্যাকএন্ডের স্ক্রিনশট অনুযায়ী ডেটা এক্সট্রাকশন পাথ
         if (data.reward && Array.isArray(data.reward.history)) {
           rawHistory = data.reward.history;
         } else if (data.history && Array.isArray(data.history)) {
@@ -57,24 +50,19 @@ export default function DailyReward() {
           rawHistory = data.walletHistory;
         } else if (Array.isArray(data)) {
           rawHistory = data;
-        } else if (data.reward && Array.isArray(data.reward.walletHistory)) {
-          rawHistory = data.reward.walletHistory;
         }
 
         // রিভার্স করে নতুন ডেটা উপরে দেখানো
         const finalHistory = Array.isArray(rawHistory) ? [...rawHistory].reverse() : [];
         
-        // ওয়ালেট আইডি বের করা
         const parsedWalletId = data.reward?.walletId || data.reward?._id || data.wallet || `WL-${email.split('@')[0].toUpperCase()}`;
 
-        console.log("Processed Final History Array:", finalHistory);
-
         setHistory(finalHistory);
-        setFilteredHistory(finalHistory); // প্রাথমিকভাবে সব ডেটা সেট হবে
+        setFilteredHistory(finalHistory); // পেজ ওপেন হলেই সরাসরি সব ডেটা দেখাবে
         setWalletId(parsedWalletId);
       }
     } catch (err) {
-      console.error("Fetch history internal error:", err);
+      console.error("Fetch history internal track:", err);
     }
   }, [email, token]);
 
@@ -82,55 +70,10 @@ export default function DailyReward() {
     fetchHistory();
   }, [fetchHistory]);
 
-  // 🔍 Simplified & Bulletproof Filtering Logic
+  // 🔍 ডেট ফিল্টার বাদ দিয়ে সরাসরি হিস্ট্রি সেট করার লজিক
   useEffect(() => {
-    if (!history || history.length === 0) {
-      setFilteredHistory([]);
-      return;
-    }
-
-    if (filterType === "all") {
-      setFilteredHistory(history);
-      return;
-    }
-
-    const now = new Date();
-    let updatedList = history.filter(h => {
-      const logDateStr = h.date || h.createdAt;
-      if (!logDateStr) return false; 
-      
-      const d = new Date(logDateStr);
-      if (isNaN(d.getTime())) return false; // ইনভ্যালিড ডেট হলে বাদ যাবে
-
-      if (filterType === "week") {
-        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        return d >= oneWeekAgo;
-      } 
-      
-      if (filterType === "thisMonth") {
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        return d >= startOfMonth;
-      } 
-      
-      if (filterType === "lastMonth") {
-        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-        return d >= startOfLastMonth && d <= endOfLastMonth;
-      } 
-      
-      if (filterType === "custom" && startDate && endDate) {
-        const start = new Date(startDate);
-        start.setHours(0,0,0,0);
-        const end = new Date(endDate);
-        end.setHours(23,59,59,999);
-        return d >= start && d <= end;
-      }
-
-      return true;
-    });
-
-    setFilteredHistory(updatedList);
-  }, [filterType, startDate, endDate, history]);
+    setFilteredHistory(history);
+  }, [history]);
 
   const claim = async () => {
     try {
@@ -304,7 +247,7 @@ export default function DailyReward() {
 
         {filteredHistory.length === 0 ? (
           <div style={styles.emptyCard}>
-            <p style={{ margin: 0 }}>No transactions found for the selected filter.</p>
+            <p style={{ margin: 0 }}>No transactions found.</p>
           </div>
         ) : (
           <div style={styles.logsContainer}>
@@ -490,4 +433,4 @@ const styles = {
   divider: { height: "1px", background: "#e2e8f0", margin: "12px 0" },
   timeText: { fontSize: "12px", color: "#334155", margin: "0 0 4px" },
   refText: { fontSize: "12px", color: "#334155", margin: 0 }
-}; 
+};
