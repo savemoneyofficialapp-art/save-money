@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import html2canvas from "html2canvas";
 import { API } from "../config";
 
 export default function DailyReward() {
@@ -13,6 +14,10 @@ export default function DailyReward() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(false);
+
+  // নতুন স্টেট: সিলেক্টেড ট্রানজেকশন ডিটেইলস এর জন্য
+  const [selectedTx, setSelectedTx] = useState(null);
+  const receiptRef = useRef(null);
 
   // হিস্টরি ফেচ করার ফাংশন
   const fetchHistory = useCallback(async () => {
@@ -33,7 +38,6 @@ export default function DailyReward() {
     }
   }, [email, token]);
 
-  // পেজে প্রবেশ করলেই হিস্টরি লোড হবে
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
@@ -77,9 +81,60 @@ export default function DailyReward() {
       console.log("Daily reward fetch error:", err);
       toast.error("Backend connection failed.");
     } finally {
-      // ফিক্সড: জাস্ট সেট স্টেটে ব্যাক করা হলো
       setLoading(false);
     }
+  };
+
+  // 📸 ইমেজ শেয়ারিং ফাংশন (html2canvas)
+  const handleShareReceipt = async () => {
+    if (!receiptRef.current) return;
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        scale: 2, // ভালো কোয়ালিটির ইমেজের জন্য
+      });
+      
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `receipt-${selectedTx._id || "tx"}.png`, { type: "image/png" });
+        
+        // যদি ব্রাউজার ফাইল শেয়ার সাপোর্ট করে (যেমন মোবাইল Chrome/Safari)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: "Transaction Receipt",
+            text: "My Daily Reward Cashback Receipt!",
+          });
+        } else {
+          // Fallback: সাপোর্ট না করলে সরাসরি ইমেজ ডাউনলোড হবে
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = `Receipt_${selectedTx._id || "DailyReward"}.png`;
+          link.click();
+          toast.success("Receipt downloaded successfully!");
+        }
+      }, "image/png");
+    } catch (error) {
+      console.error("Error sharing receipt:", error);
+      toast.error("Failed to generate image.");
+    }
+  };
+
+  // সংখ্যাকে কথায় রূপান্তর করার সিম্পল ফাংশন
+  const inWords = (num) => {
+    const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    if ((num = num.toString()).length > 9) return 'overflow';
+    let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+    if (!n) return ''; 
+    let str = '';
+    str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + ' Crore ' : '';
+    str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + ' Lakh ' : '';
+    str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + ' Thousand ' : '';
+    str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + ' Hundred ' : '';
+    str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + ' ' : '';
+    return str ? str + 'Rupees Only' : 'Zero Rupees Only';
   };
 
   return (
@@ -103,24 +158,19 @@ export default function DailyReward() {
       {/* MAIN BONUS ZONE */}
       <div style={styles.heroCard}>
         <div style={styles.cardGlow}></div>
-        
         <div style={styles.badgeContainer}>
           <span style={styles.badgeText}>✨ STREAK BONUS AVAILABLE</span>
         </div>
-        
         <h1 style={styles.mainTitle}>Daily Loot Box</h1>
         <p style={styles.subtitle}>
           Claim your free mystery credits every 24 hours. Get huge multipliers on every <span style={{color: "#ffd700", fontWeight: "bold"}}>10th streak</span> claim!
         </p>
-        
-        {/* ANIMATED PREMIUM GIFT BOX CONTAINER */}
         <div style={styles.giftWrapper}>
           <div style={styles.giftPulse}></div>
           <div style={styles.giftBoxInner}>
             <span style={styles.giftEmoji}>🎁</span>
           </div>
         </div>
-        
         <button
           style={{ 
             ...styles.claimBtn, 
@@ -136,8 +186,6 @@ export default function DailyReward() {
             </span>
           ) : "Unlock Daily Reward"}
         </button>
-        
-        {/* BANNER RESULT FROM BACKEND */}
         {result && (
           <div style={{
             ...styles.resultMessage,
@@ -151,7 +199,7 @@ export default function DailyReward() {
         )}
       </div>
 
-      {/* REWARD LOGS / HISTORY */}
+      {/* 📜 REWARD LOGS / HISTORY (PAYTM / PHONEPE STYLE LIGHT THEME) */}
       <div style={styles.historySection}>
         <div style={styles.sectionHeader}>
           <h3 style={styles.historyTitle}>📜 Claim Logs</h3>
@@ -166,34 +214,34 @@ export default function DailyReward() {
           <div style={styles.logsContainer}>
             {history.map((h, i) => {
               const isSpecial = h.special;
+              const rewardAmt = h.amount || h.reward || 0;
               return (
-                <div key={i} style={styles.logRow}>
+                <div key={i} style={styles.logRow} onClick={() => setSelectedTx({ ...h, rewardAmt })}>
                   <div style={styles.logLeft}>
                     <div style={{
                       ...styles.logIconCircle,
-                      background: isSpecial ? "linear-gradient(135deg, #7c3aed, #c084fc)" : "rgba(255,255,255,0.05)"
+                      background: isSpecial ? "#ede9fe" : "#e0f2fe",
+                      color: isSpecial ? "#7c3aed" : "#0284c7"
                     }}>
-                      {isSpecial ? "⭐" : "💎"}
+                      {isSpecial ? "⭐" : "🎁"}
                     </div>
                     <div>
-                      <b style={{
-                        ...styles.logType,
-                        color: isSpecial ? "#c084fc" : "#f1f5f9"
-                      }}>
-                        {isSpecial ? "Special Multiplier" : "Standard Daily Claim"}
+                      <b style={styles.logType}>
+                        {isSpecial ? "Special Multiplier Box" : "Daily Reward Loot"}
                       </b>
                       <span style={styles.logDate}>
-                        {new Date(h.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                        Received Today, {new Date(h.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
+                      <div style={styles.moneyBadge}>
+                        💰 Money Received
+                      </div>
                     </div>
                   </div>
                   <div style={styles.logRight}>
-                    <span style={{
-                      ...styles.logAmount,
-                      color: isSpecial ? "#a78bfa" : "#34d399"
-                    }}>
-                      +₹{h.amount || h.reward || 0}
+                    <span style={styles.logAmount}>
+                      + ₹{rewardAmt}
                     </span>
+                    <span style={styles.inText}>In <span style={styles.appSymbol}>⚙️</span></span>
                   </div>
                 </div>
               );
@@ -201,16 +249,92 @@ export default function DailyReward() {
           </div>
         )}
       </div>
+
+      {/* 🖼️ TRANSACTION DETAIL RECEIPT POPUP (PHONEPE STYLED) */}
+      {selectedTx && (
+        <div style={styles.receiptOverlay}>
+          <div style={styles.receiptHeaderBar}>
+            <button style={styles.backBtn} onClick={() => setSelectedTx(null)}>← Money Received</button>
+            <div style={styles.rightNavBtn}>
+              <button style={styles.navLinkBtn} onClick={handleShareReceipt}>Share</button>
+              <button style={styles.navLinkBtn} onClick={() => setSelectedTx(null)}>Help</button>
+            </div>
+          </div>
+
+          <div style={styles.receiptScrollContainer}>
+            {/* HTML2CANVAS WILL CAPTURE THIS BLOCK */}
+            <div ref={receiptRef} style={styles.receiptCard}>
+              
+              {/* SECTION 1: AMOUNT BOX */}
+              <div style={styles.receiptSectionBox}>
+                <span style={styles.fieldLabel}>Amount</span>
+                <div style={styles.receiptAmountRow}>
+                  <h1 style={styles.receiptAmount}>₹{selectedTx.rewardAmt}</h1>
+                  <span style={styles.verifiedCheck}>✓</span>
+                </div>
+                <p style={styles.amountInWords}>{inWords(selectedTx.rewardAmt)}</p>
+                <div style={styles.moneyReceivedTag}>
+                  💵 Money Received
+                </div>
+              </div>
+
+              {/* SECTION 2: FROM INFO */}
+              <div style={styles.receiptSectionBox}>
+                <span style={styles.fieldLabel}>From</span>
+                <div style={styles.profileRow}>
+                  <div style={styles.receiptAvatar}>
+                    {selectedTx.special ? "SB" : "DR"}
+                  </div>
+                  <div style={styles.profileDetails}>
+                    <h4 style={styles.profileName}>
+                      {selectedTx.special ? "Special Bonus Loot" : "Daily Bonus System"} <span style={styles.blueTick}>✓</span>
+                    </h4>
+                    <p style={styles.upiId}>UPI ID: rewards@backend on <span style={{color:'#673ab7', fontWeight:'bold'}}>PhonePe</span></p>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: TO INFO */}
+              <div style={styles.receiptSectionBox}>
+                <span style={styles.fieldLabel}>To</span>
+                <div style={styles.profileRow}>
+                  <div style={{...styles.receiptAvatar, backgroundColor: '#e2e8f0', color: '#475569'}}>
+                    U
+                  </div>
+                  <div style={styles.profileDetails}>
+                    <h4 style={styles.profileName}>{email ? email.split('@')[0].toUpperCase() : "User Account"}</h4>
+                    <p style={styles.upiId}>UPI ID: {email || "user@wallet"}</p>
+                    <p style={styles.bankName}>App Wallet Balance - ****</p>
+                  </div>
+                </div>
+
+                <div style={styles.divider}></div>
+
+                <p style={styles.timeText}>
+                  Received at {new Date(selectedTx.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}, {new Date(selectedTx.date).toLocaleDateString([], {day:'numeric', month:'short', year:'numeric'})}
+                </p>
+                <p style={styles.refText}>
+                  Ref No: TXN{new Date(selectedTx.date).getTime()} <span style={styles.copyBtn} onClick={() => {
+                    navigator.clipboard.writeText(`TXN${new Date(selectedTx.date).getTime()}`);
+                    toast.success("Copied to clipboard!");
+                  }}>Copy</span>
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// 💎 প্রিমিয়াম ডার্ক নিওন স্টাইলস
+// 🎨 স্টাইলস (লাইট-ওয়েট প্রিমিয়াম লুক ফর হিস্টরি অ্যান্ড রিসিট)
 const styles = {
   container: {
     minHeight: "100vh",
-    background: "linear-gradient(180deg, #020617 0%, #090d1f 50%, #020617 100%)",
-    color: "#f8fafc",
+    background: "#f4f6f9",
+    color: "#1e293b",
     padding: "24px 16px 60px",
     fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
     display: "flex",
@@ -218,16 +342,16 @@ const styles = {
     gap: "24px"
   },
 
-  /* 🌟 PREMIUM DASHBOARD HERO CARD */
   heroCard: {
     position: "relative",
-    background: "linear-gradient(145deg, rgba(22, 32, 61, 0.7), rgba(11, 17, 36, 0.9))",
+    background: "linear-gradient(145deg, #0f172a, #1e293b)",
     border: "1px solid rgba(250, 204, 21, 0.25)",
-    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255,255,255,0.05)",
+    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
     borderRadius: "32px",
     padding: "30px 20px",
     textAlign: "center",
-    overflow: "hidden"
+    overflow: "hidden",
+    color: "#ffffff"
   },
 
   cardGlow: {
@@ -276,7 +400,6 @@ const styles = {
     margin: "0 auto 24px"
   },
 
-  /* 📦 3D-EFFECT BOX DESIGN */
   giftWrapper: {
     position: "relative",
     width: "140px",
@@ -303,7 +426,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 10px 25px rgba(234, 179, 8, 0.4), inset 0 -4px 10px rgba(0,0,0,0.2)"
+    boxShadow: "0 10px 25px rgba(234, 179, 8, 0.4)"
   },
 
   giftEmoji: {
@@ -320,8 +443,7 @@ const styles = {
     fontWeight: "800",
     fontSize: "16px",
     letterSpacing: "0.5px",
-    boxShadow: "0 6px 20px rgba(234, 179, 8, 0.3)",
-    transition: "transform 0.1s ease"
+    boxShadow: "0 6px 20px rgba(234, 179, 8, 0.3)"
   },
 
   btnContent: {
@@ -353,7 +475,7 @@ const styles = {
     fontSize: "15px"
   },
 
-  /* 📜 CLAIMS LOGS LOGIC VIEW */
+  /* 📜 CLAIMS LOGS WHITE BACKGROUND STYLE (PAYTM / PHONEPE LOOK) */
   historySection: {
     display: "flex",
     flexDirection: "column",
@@ -371,60 +493,66 @@ const styles = {
     margin: 0,
     fontSize: "16px",
     fontWeight: "700",
-    color: "#94a3b8"
+    color: "#475569"
   },
 
   historyCounter: {
     fontSize: "12px",
-    color: "#475569"
+    color: "#64748b"
   },
 
   emptyCard: {
-    background: "rgba(15, 23, 42, 0.4)",
+    background: "#ffffff",
     padding: "20px",
     borderRadius: "18px",
     color: "#64748b",
     textAlign: "center",
-    border: "1px solid rgba(255,255,255,0.03)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
     fontSize: "13px"
   },
 
   logsContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: "10px"
+    gap: "0px",
+    background: "#ffffff",
+    borderRadius: "24px",
+    overflow: "hidden",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.05)"
   },
 
   logRow: {
-    background: "rgba(30, 41, 59, 0.4)",
-    border: "1px solid rgba(255,255,255,0.05)",
-    padding: "14px 16px",
-    borderRadius: "18px",
+    padding: "16px",
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
+    borderBottom: "1px solid #f1f5f9",
+    cursor: "pointer",
+    transition: "background 0.2s",
+    ":last-child": { borderBottom: "none" }
   },
 
   logLeft: {
     display: "flex",
     alignItems: "center",
-    gap: "12px"
+    gap: "14px"
   },
 
   logIconCircle: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "12px",
+    width: "44px",
+    height: "44px",
+    borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "16px"
+    fontSize: "20px"
   },
 
   logType: {
     display: "block",
-    fontSize: "13px",
-    fontWeight: "600"
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#1e293b"
   },
 
   logDate: {
@@ -434,9 +562,37 @@ const styles = {
     marginTop: "2px"
   },
 
+  moneyBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    background: "#e8f5e9",
+    color: "#2e7d32",
+    fontSize: "11px",
+    fontWeight: "600",
+    padding: "2px 8px",
+    borderRadius: "12px",
+    marginTop: "6px"
+  },
+
+  logRight: {
+    textAlign: "right",
+    display: "flex",
+    flexDirection: "column"
+  },
+
   logAmount: {
-    fontSize: "15px",
-    fontWeight: "800"
+    fontSize: "16px",
+    fontWeight: "700",
+    color: "#2e7d32"
+  },
+
+  inText: {
+    fontSize: "11px",
+    color: "#94a3b8"
+  },
+
+  appSymbol: {
+    color: "#0284c7"
   },
 
   /* 🔮 CELEBRATION MODAL OVERLAY */
@@ -461,7 +617,7 @@ const styles = {
     width: "100%",
     maxWidth: "320px",
     textAlign: "center",
-    boxShadow: "0 25px 50px rgba(0,0,0,0.6), 0 0 40px rgba(234,179,8,0.25)",
+    boxShadow: "0 25px 50px rgba(0,0,0,0.6)",
     overflow: "hidden"
   },
 
@@ -494,14 +650,12 @@ const styles = {
     color: "#10b981",
     fontSize: "44px",
     fontWeight: "900",
-    margin: "12px 0",
-    letterSpacing: "-1px"
+    margin: "12px 0"
   },
 
   popupText: {
     color: "#94a3b8",
     fontSize: "12px",
-    lineHeight: "1.5",
     margin: "0 0 24px 0"
   },
 
@@ -513,9 +667,198 @@ const styles = {
     color: "#f1f5f9",
     borderRadius: "12px",
     fontWeight: "700",
-    fontSize: "14px",
+    cursor: "pointer"
+  },
+
+  /* 📱 FULL PHONEPE STYLE SLIDE POPUP */
+  receiptOverlay: {
+    position: "fixed",
+    inset: "0px",
+    background: "#f4f6f9",
+    zIndex: 999999,
+    display: "flex",
+    flexDirection: "column"
+  },
+
+  receiptHeaderBar: {
+    height: "56px",
+    background: "#ffffff",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 16px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.04)"
+  },
+
+  backBtn: {
+    background: "none",
+    border: "none",
+    fontSize: "17px",
+    fontWeight: "600",
+    color: "#1e293b",
+    cursor: "pointer"
+  },
+
+  rightNavBtn: {
+    display: "flex",
+    gap: "16px"
+  },
+
+  navLinkBtn: {
+    background: "none",
+    border: "none",
+    color: "#144cc7",
+    fontWeight: "600",
+    fontSize: "15px",
+    cursor: "pointer"
+  },
+
+  receiptScrollContainer: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "16px"
+  },
+
+  receiptCard: {
+    background: "#f4f6f9",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    maxWidth: "480px",
+    margin: "0 auto",
+    padding: "4px"
+  },
+
+  receiptSectionBox: {
+    background: "#ffffff",
+    borderRadius: "20px",
+    padding: "20px 16px",
+    border: "1px solid #e2e8f0",
+    position: "relative"
+  },
+
+  fieldLabel: {
+    fontSize: "13px",
+    color: "#64748b",
+    fontWeight: "500",
+    display: "block",
+    marginBottom: "4px"
+  },
+
+  receiptAmountRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px"
+  },
+
+  receiptAmount: {
+    fontSize: "36px",
+    fontWeight: "800",
+    color: "#1e293b",
+    margin: 0
+  },
+
+  verifiedCheck: {
+    width: "24px",
+    height: "24px",
+    background: "#00c853",
+    color: "#ffffff",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "bold",
+    fontSize: "14px"
+  },
+
+  amountInWords: {
+    fontSize: "13px",
+    color: "#475569",
+    margin: "4px 0 12px"
+  },
+
+  moneyReceivedTag: {
+    display: "inline-flex",
+    alignItems: "center",
+    background: "#e8f5e9",
+    border: "1px solid #c8e6c9",
+    color: "#2e7d32",
+    padding: "6px 14px",
+    borderRadius: "20px",
+    fontSize: "13px",
+    fontWeight: "600"
+  },
+
+  profileRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginTop: "8px"
+  },
+
+  receiptAvatar: {
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    background: "#ffcdd2",
+    color: "#c62828",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "700",
+    fontSize: "16px"
+  },
+
+  profileDetails: {
+    flex: 1
+  },
+
+  profileName: {
+    margin: 0,
+    fontSize: "16px",
+    fontWeight: "700",
+    color: "#1e293b"
+  },
+
+  blueTick: {
+    color: "#03a9f4",
+    fontSize: "14px"
+  },
+
+  upiId: {
+    margin: "2px 0 0",
+    fontSize: "12px",
+    color: "#64748b"
+  },
+
+  bankName: {
+    margin: "2px 0 0",
+    fontSize: "12px",
+    color: "#64748b"
+  },
+
+  divider: {
+    height: "1px",
+    background: "#e2e8f0",
+    margin: "16px 0"
+  },
+
+  timeText: {
+    fontSize: "12px",
+    color: "#475569",
+    margin: "0 0 4px"
+  },
+
+  refText: {
+    fontSize: "12px",
+    color: "#475569",
+    margin: 0
+  },
+
+  copyBtn: {
+    color: "#144cc7",
+    fontWeight: "600",
+    marginLeft: "8px",
     cursor: "pointer"
   }
 };
-
-
