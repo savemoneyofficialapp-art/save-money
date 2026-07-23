@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import html2canvas from "html2canvas";
@@ -12,28 +12,29 @@ export default function DailyReward() {
   const [amount, setAmount] = useState(null);
   const [special, setSpecial] = useState(false);
   const [history, setHistory] = useState([]);
-  const [filteredHistory, setFilteredHistory] = useState([]);
   const [walletId, setWalletId] = useState("");
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(false);
-
-  // Filter States (ডিজাইন ঠিক রাখার জন্য রাখা হয়েছে, কিন্তু ডেট ফিল্টার করবে না)
-  const [filterType, setFilterType] = useState("all"); 
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
 
   // Transaction Popup and Ref
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
-  // 🔄 Fixed Data Extraction Logic for History
-  const fetchHistory = useCallback(async () => {
-    if (!email) return;
+  // 🔄 Fetch History Function (নরমাল ফাংশন, কোনো useCallback লুপের ভয় নেই)
+  const fetchHistory = async () => {
+    const currentEmail = localStorage.getItem("email");
+    const currentToken = localStorage.getItem("token");
+
+    if (!currentEmail) {
+      console.error("Email not found in localStorage");
+      return;
+    }
+
     try {
-      const res = await fetch(`${API}/daily-reward/${email}`, {
+      const res = await fetch(`${API}/daily-reward/${currentEmail}`, {
         method: "GET",
         headers: {
-          authorization: token || "",
+          authorization: currentToken || "",
         },
       });
       const data = await res.json();
@@ -41,40 +42,32 @@ export default function DailyReward() {
       if (res.ok && data) {
         let rawHistory = [];
         
-        // ব্যাকএন্ডের স্ক্রিনশট অনুযায়ী ডেটা এক্সট্রাকশন পাথ
+        // ব্যাকএন্ডের স্ট্রাকচার অনুযায়ী চেক
         if (data.reward && Array.isArray(data.reward.history)) {
           rawHistory = data.reward.history;
         } else if (data.history && Array.isArray(data.history)) {
           rawHistory = data.history;
-        } else if (data.walletHistory && Array.isArray(data.walletHistory)) {
-          rawHistory = data.walletHistory;
         } else if (Array.isArray(data)) {
           rawHistory = data;
         }
 
-        // রিভার্স করে নতুন ডেটা উপরে দেখানো
         const finalHistory = Array.isArray(rawHistory) ? [...rawHistory].reverse() : [];
-        
-        const parsedWalletId = data.reward?.walletId || data.reward?._id || data.wallet || `WL-${email.split('@')[0].toUpperCase()}`;
+        const parsedWalletId = data.walletId || `WL-${currentEmail.split('@')[0].toUpperCase()}`;
 
         setHistory(finalHistory);
-        setFilteredHistory(finalHistory); // পেজ ওপেন হলেই সরাসরি সব ডেটা দেখাবে
         setWalletId(parsedWalletId);
       }
     } catch (err) {
       console.error("Fetch history internal track:", err);
     }
-  }, [email, token]);
+  };
 
+  // 🚀 পেজ ওপেন হওয়া মাত্রই হিস্ট্রি মাত্র ১ বার কল হবে (১০০% সেফ)
   useEffect(() => {
     fetchHistory();
-  }, [fetchHistory]);
+  }, []); 
 
-  // 🔍 ডেট ফিল্টার বাদ দিয়ে সরাসরি হিস্ট্রি সেট করার লজিক
-  useEffect(() => {
-    setFilteredHistory(history);
-  }, [history]);
-
+  // 🎁 Reward Claim Function
   const claim = async () => {
     try {
       setLoading(true);
@@ -92,18 +85,18 @@ export default function DailyReward() {
       
       const data = await res.json();
       
-      if (!res.ok) {
-        setResult(data.error || data.msg || "Reward claim failed");
+      if (!res.ok || data.success === false) {
+        setResult(data.msg || data.error || "Reward claim failed");
         fetchHistory();
         return;
       }
 
       setResult(data.msg || "Reward Claimed Successfully");
-      setAmount(data.amount || data.rewardAmount || 0);
+      setAmount(data.amount || 0);
       setSpecial(data.special || false);
       setPopup(true);
       
-      fetchHistory();
+      fetchHistory(); // ক্লেম সফল হলে হিস্ট্রি রিফ্রেশ করবে
       setTimeout(() => setPopup(false), 4000);
     } catch (err) {
       console.log("Daily reward fetch error:", err);
@@ -126,7 +119,8 @@ export default function DailyReward() {
       
       canvas.toBlob(async (blob) => {
         if (!blob) return;
-        const file = new File([blob], `Receipt-${selectedTx._id || "Daily"}.png`, { type: "image/png" });
+        const txRef = selectedTx.date ? new Date(selectedTx.date).getTime() : "Daily";
+        const file = new File([blob], `Receipt-${txRef}.png`, { type: "image/png" });
         
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
@@ -221,40 +215,19 @@ export default function DailyReward() {
       <div style={styles.historySection}>
         <div style={styles.sectionHeader}>
           <h3 style={styles.historyTitle}>📜 Claim Logs</h3>
-          <span style={styles.historyCounter}>{filteredHistory.length} Total Logs</span>
+          <span style={styles.historyCounter}>{history.length} Total Logs</span>
         </div>
 
-        <div style={styles.filterBar}>
-          <button style={{...styles.filterTab, ...(filterType === "all" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("all")}>All</button>
-          <button style={{...styles.filterTab, ...(filterType === "week" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("week")}>This Week</button>
-          <button style={{...styles.filterTab, ...(filterType === "thisMonth" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("thisMonth")}>This Month</button>
-          <button style={{...styles.filterTab, ...(filterType === "lastMonth" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("lastMonth")}>Last Month</button>
-          <button style={{...styles.filterTab, ...(filterType === "custom" ? styles.activeFilterTab : {})}} onClick={() => setFilterType("custom")}>Date Range</button>
-        </div>
-
-        {filterType === "custom" && (
-          <div style={styles.dateSelectorContainer}>
-            <div style={styles.dateInputGroup}>
-              <label style={styles.dateLabel}>From:</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={styles.dateInput} />
-            </div>
-            <div style={styles.dateInputGroup}>
-              <label style={styles.dateLabel}>To:</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={styles.dateInput} />
-            </div>
-          </div>
-        )}
-
-        {filteredHistory.length === 0 ? (
+        {history.length === 0 ? (
           <div style={styles.emptyCard}>
             <p style={{ margin: 0 }}>No transactions found.</p>
           </div>
         ) : (
           <div style={styles.logsContainer}>
-            {filteredHistory.map((h, i) => {
+            {history.map((h, i) => {
               const isSpecial = h.special;
-              const rewardAmt = h.amount || h.reward || h.rewardAmt || 0;
-              const logDate = h.date || h.createdAt;
+              const rewardAmt = h.amount || 0;
+              const logDate = h.date;
               
               return (
                 <div key={i} style={styles.logRow} onClick={() => setSelectedTx({ ...h, rewardAmt })}>
@@ -326,7 +299,7 @@ export default function DailyReward() {
                       <h4 style={styles.profileName}>
                         {selectedTx.special ? "Special Multiplier Reward" : "Daily Check-in System"} <span style={styles.blueTick}>✓</span>
                       </h4>
-                      <p style={styles.upiId}>TX ID: {selectedTx._id || "N/A"}</p>
+                      <p style={styles.upiId}>REF ID: REF{selectedTx.date ? new Date(selectedTx.date).getTime() : 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -347,13 +320,13 @@ export default function DailyReward() {
                   <div style={styles.divider}></div>
 
                   <p style={styles.timeText}>
-                    <b>Date:</b> {(selectedTx.date || selectedTx.createdAt) ? new Date(selectedTx.date || selectedTx.createdAt).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'}) : 'N/A'}
+                    <b>Date:</b> {selectedTx.date ? new Date(selectedTx.date).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'}) : 'N/A'}
                   </p>
                   <p style={styles.timeText}>
-                    <b>Time:</b> {(selectedTx.date || selectedTx.createdAt) ? new Date(selectedTx.date || selectedTx.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : 'N/A'}
+                    <b>Time:</b> {selectedTx.date ? new Date(selectedTx.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : 'N/A'}
                   </p>
                   <p style={styles.refText}>
-                    <b>Ref No:</b> REF{(selectedTx.date || selectedTx.createdAt) ? new Date(selectedTx.date || selectedTx.createdAt).getTime() : 'N/A'}
+                    <b>Ref No:</b> REF{selectedTx.date ? new Date(selectedTx.date).getTime() : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -384,13 +357,6 @@ const styles = {
   sectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   historyTitle: { margin: 0, fontSize: "15px", color: "#334155", fontWeight: "700" },
   historyCounter: { fontSize: "11px", color: "#64748b" },
-  filterBar: { display: "flex", gap: "6px", overflowX: "auto", paddingBottom: "6px", scrollbarWidth: "none" },
-  filterTab: { background: "#ffffff", border: "1px solid #e2e8f0", padding: "6px 14px", borderRadius: "10px", fontSize: "12px", fontWeight: "600", color: "#64748b", whiteSpace: "nowrap", cursor: "pointer" },
-  activeFilterTab: { background: "#0f172a", color: "#ffffff", borderColor: "#0f172a" },
-  dateSelectorContainer: { display: "flex", gap: "10px", background: "#ffffff", padding: "10px", borderRadius: "12px", border: "1px solid #e2e8f0" },
-  dateInputGroup: { flex: 1, display: "flex", flexDirection: "column", gap: "4px" },
-  dateLabel: { fontSize: "11px", color: "#64748b", fontWeight: "600" },
-  dateInput: { border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", fontSize: "12px", color: "#334155", outline: "none" },
   emptyCard: { background: "#ffffff", padding: "20px", borderRadius: "16px", color: "#64748b", textAlign: "center", border: "1px solid #e2e8f0" },
   logsContainer: { display: "flex", flexDirection: "column", background: "#ffffff", borderRadius: "18px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", border: "1px solid #e2e8f0" },
   logRow: { padding: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", cursor: "pointer", background: "#ffffff" },
