@@ -6418,28 +6418,34 @@ app.post("/save-bank-details", async (req, res) => {
 });
 
 
-// 🔄 পেজে ঢোকার সাথে সাথে হিস্ট্রি ও ওয়ালেট আইডি গেট করার জন্য API
+// 🔄 ইউজারের আসল Wallet ID সহ হিস্ট্রি গেট করার API
 app.get("/daily-reward/:email", async (req, res) => {
   try {
     const { email } = req.params;
+    const formattedEmail = email.toLowerCase();
 
-    // ডাটাবেস থেকে ইউজারের রিওয়ার্ড ডকুমেন্ট খোঁজা
-    // (এখানে নিশ্চিত করুন আপনার মডেলের নাম DailyReward বা আপনি যে নামে import করেছেন সেটি)
-    const rewardData = await DailyReward.findOne({ email: email.toLowerCase() });
+    // ১. User মডেল থেকে ইউজারের আসল wallet বা আইডি খুঁজে বের করা
+    // (এখানে আপনার প্রোজেক্টে User মডেলের নাম User না হয়ে অন্য কিছু হলে সেটা দিন, যেমন: user বা UserModel)
+    const userData = await User.findOne({ email: formattedEmail });
+    
+    // ইউজারের ডাটাবেসে থাকা আসল wallet আইডি, না থাকলে ডামি ব্যাকআপ
+    const trueWalletId = userData && userData.wallet ? userData.wallet : "N/A";
 
-    // যদি ইউজার আগে কখনো ক্লেইম না করে থাকে, তাও খালি হিস্ট্রি রিটার্ন করবে যাতে ফ্রন্টএন্ড ক্র্যাশ না করে
+    // ২. DailyReward মডেল থেকে হিস্ট্রি খোঁজা
+    const rewardData = await DailyReward.findOne({ email: formattedEmail });
+
     if (!rewardData) {
       return res.status(200).json({
         success: true,
-        walletId: `WL-${email.split('@')[0].toUpperCase()}`,
+        walletId: trueWalletId, // আসল ওয়ালেট আইডি যাচ্ছে
         history: []
       });
     }
 
-    // ডাটা থাকলে তা ফ্রন্টএন্ডে পাঠানো হচ্ছে
+    // ৩. আসল ওয়ালেট আইডি ও হিস্ট্রি ফ্রন্টএন্ডে পাঠানো
     res.status(200).json({
       success: true,
-      walletId: `WL-${email.split('@')[0].toUpperCase()}`,
+      walletId: trueWalletId, // আসল ওয়ালেট আইডি যাচ্ছে
       history: rewardData.history || []
     });
 
@@ -6448,6 +6454,7 @@ app.get("/daily-reward/:email", async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error while fetching history" });
   }
 });
+
 
 
 
