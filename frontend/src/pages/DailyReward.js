@@ -26,10 +26,14 @@ export default function DailyReward() {
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
 
-  // 🔄 Fixed Data Extraction Logic for History
+  // 🔄 Completely Re-written Data Extraction Logic
   const fetchHistory = useCallback(async () => {
-    if (!email) return;
+    if (!email) {
+      console.error("Email not found in localStorage");
+      return;
+    }
     try {
+      console.log("Fetching history for:", email);
       const res = await fetch(`${API}/daily-reward/${email}`, {
         method: "GET",
         headers: {
@@ -38,36 +42,39 @@ export default function DailyReward() {
       });
       const data = await res.json();
       
+      // 🛑 ব্রাউজারের Inspect Element -> Console ট্যাবে এই লগটি দেখবে আসল ডেটা কী আসছে
+      console.log("Backend Raw Response Data:", data);
+      
       if (res.ok && data) {
         let rawHistory = [];
         
-        // 1. ব্যাকএন্ডের স্ক্রিনশট অনুযায়ী ডেটা reward.history এর ভেতরেই মূল হিস্ট্রি থাকে
+        // ব্যাকএন্ডের সম্ভাব্য সব ধরনের রেসপন্স স্ট্রাকচার হ্যান্ডেল করা হলো:
         if (data.reward && Array.isArray(data.reward.history)) {
           rawHistory = data.reward.history;
-        } 
-        // 2. সেফটি ব্যাকআপ (অন্যান্য সম্ভাব্য ব্যাকএন্ড কী)
-        else if (data.walletHistory && Array.isArray(data.walletHistory)) {
-          rawHistory = data.walletHistory;
-        } 
-        else if (data.history && Array.isArray(data.history)) {
+        } else if (data.history && Array.isArray(data.history)) {
           rawHistory = data.history;
-        } 
-        else if (Array.isArray(data)) {
+        } else if (data.walletHistory && Array.isArray(data.walletHistory)) {
+          rawHistory = data.walletHistory;
+        } else if (Array.isArray(data)) {
           rawHistory = data;
+        } else if (data.reward && Array.isArray(data.reward.walletHistory)) {
+          rawHistory = data.reward.walletHistory;
         }
 
-        // নতুন ট্রানজেকশন সবার উপরে দেখানোর জন্য রিভার্স করা হলো
+        // রিভার্স করে নতুন ডেটা উপরে দেখানো
         const finalHistory = Array.isArray(rawHistory) ? [...rawHistory].reverse() : [];
         
-        // ওয়ালেট আইডি এক্সট্রাকশন
+        // ওয়ালেট আইডি বের করা
         const parsedWalletId = data.reward?.walletId || data.reward?._id || data.wallet || `WL-${email.split('@')[0].toUpperCase()}`;
 
+        console.log("Processed Final History Array:", finalHistory);
+
         setHistory(finalHistory);
-        setFilteredHistory(finalHistory);
+        setFilteredHistory(finalHistory); // প্রাথমিকভাবে সব ডেটা সেট হবে
         setWalletId(parsedWalletId);
       }
     } catch (err) {
-      console.error("Fetch history internal track:", err);
+      console.error("Fetch history internal error:", err);
     }
   }, [email, token]);
 
@@ -75,23 +82,25 @@ export default function DailyReward() {
     fetchHistory();
   }, [fetchHistory]);
 
-  // 🔍 Client Side Filtering Logic (Fixed Date Parsing)
+  // 🔍 Simplified & Bulletproof Filtering Logic
   useEffect(() => {
-    let updatedList = [...history];
-    const now = new Date();
-
-    if (filterType === "all") {
-      setFilteredHistory(updatedList);
+    if (!history || history.length === 0) {
+      setFilteredHistory([]);
       return;
     }
 
-    updatedList = updatedList.filter(h => {
-      // ব্যাকএন্ড থেকে date অথবা createdAt যেটাই আসুক, সেটাকে ভ্যালিড ডেট-এ রূপান্তর করা
+    if (filterType === "all") {
+      setFilteredHistory(history);
+      return;
+    }
+
+    const now = new Date();
+    let updatedList = history.filter(h => {
       const logDateStr = h.date || h.createdAt;
       if (!logDateStr) return false; 
       
       const d = new Date(logDateStr);
-      if (isNaN(d.getTime())) return false; // ইনভ্যালিড ডেট হলে স্কিপ করবে
+      if (isNaN(d.getTime())) return false; // ইনভ্যালিড ডেট হলে বাদ যাবে
 
       if (filterType === "week") {
         const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -301,7 +310,6 @@ export default function DailyReward() {
           <div style={styles.logsContainer}>
             {filteredHistory.map((h, i) => {
               const isSpecial = h.special;
-              // ব্যাকএন্ড ভেরিয়েবল ম্যাপিং
               const rewardAmt = h.amount || h.reward || h.rewardAmt || 0;
               const logDate = h.date || h.createdAt;
               
