@@ -6417,6 +6417,38 @@ app.post("/save-bank-details", async (req, res) => {
   }
 });
 
+
+// 🔄 পেজে ঢোকার সাথে সাথে হিস্ট্রি ও ওয়ালেট আইডি গেট করার জন্য API
+router.get("/daily-reward/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    // ডাটাবেস থেকে ইউজারের রিওয়ার্ড ডকুমেন্ট খোঁজা
+    const rewardData = await DailyReward.findOne({ email: email.toLowerCase() });
+
+    // যদি ইউজার আগে কখনো ক্লেইম না করে থাকে, তাও খালি হিস্ট্রি রিটার্ন করবে যাতে ক্র্যাশ না করে
+    if (!rewardData) {
+      return res.status(200).json({
+        success: true,
+        walletId: `WL-${email.split('@')[0].toUpperCase()}`,
+        history: []
+      });
+    }
+
+    // ডাটা থাকলে তা ফ্রন্টএন্ডে পাঠানো হচ্ছে
+    res.status(200).json({
+      success: true,
+      walletId: `WL-${email.split('@')[0].toUpperCase()}`,
+      history: rewardData.history || [] // এই ডিরেক্ট হিস্ট্রি অ্যারে ফ্রন্টএন্ডে যাবে
+    });
+
+  } catch (err) {
+    console.error("Get history error:", err);
+    res.status(500).json({ success: false, msg: "Server error while fetching history" });
+  }
+});
+
+
 app.post("/daily-reward", async (req, res) => {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
