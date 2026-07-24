@@ -5,174 +5,158 @@ export default function Support() {
   const [subject, setSubject] = useState("");
   const [problem, setProblem] = useState("");
 
-  // টেলিগ্রামে রিডাইরেক্ট করার ফাংশন
-  const handleTakeSupport = (e) => {
+  // টেলিগ্রামে নিয়ে যাওয়ার লজিক
+  const handleGetSupport = (e) => {
     e.preventDefault();
 
     if (!subject.trim() || !problem.trim()) {
       return alert("অনুগ্রহ করে সাবজেক্ট এবং প্রবলেম দুটিই লিখুন।");
     }
 
-    const telegramBotUsername = "savemoneysupport";
+    const telegramUsername = "savemoneysupport";
     
     // মেসেজ ফরম্যাট তৈরি (এডমিন যাতে সহজে বুঝতে পারে)
     const formattedMessage = `📌 New Support Request\n\n🔹 Subject: ${subject}\n❌ Problem: ${problem}`;
     
-    // URL এনকোড করা মেসেজ
+    // URL এনকোড করা
     const encodedMessage = encodeURIComponent(formattedMessage);
     
-    // Telegram ডিরেক্ট চ্যাট লিংক তৈরি
-    const telegramUrl = `https://t.me/${telegramBotUsername}?text=${encodedMessage}`;
+    // Telegram ডিরেক্ট লিংক
+    const telegramUrl = `https://t.me/${telegramUsername}?text=${encodedMessage}`;
 
-    // নতুন ট্যাবে টেলিগ্রাম ওপেন করা
+    // টেলিগ্রামে রিডাইরেক্ট করা
     window.open(telegramUrl, "_blank");
   };
 
   return (
     <div style={styles.container}>
-      <div style={styles.supportCard}>
-        <div style={styles.header}>
-          <h2 style={styles.title}>💬 Live Support</h2>
-          <p style={styles.subtitle}>আপনার সমস্যাটি নিচে লিখুন, আমরা দ্রুত সমাধান করার চেষ্টা করব।</p>
+      {/* পপআপ মডাল কার্ড */}
+      <div style={styles.modalCard}>
+        <div style={styles.modalHeader}>
+          <h3 style={styles.modalTitle}>Start a New Conversation</h3>
         </div>
-
-        <form onSubmit={handleTakeSupport} style={styles.form}>
+        
+        <form onSubmit={handleGetSupport} style={styles.form}>
           {/* Subject Input */}
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>সাবজেক্ট লিখো (Subject)</label>
-            <input
-              type="text"
-              style={styles.input}
-              placeholder="যেমন: ডিপোজিট সমস্যা, অ্যাকাউন্ট লক ইত্যাদি..."
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              required
-            />
-          </div>
-
+          <input
+            type="text"
+            style={styles.modalInput}
+            placeholder="What is your issue about? (Subject)"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            required
+          />
+          
           {/* Problem Input */}
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>প্রবলেম কি (Describe Problem)</label>
-            <textarea
-              style={styles.textarea}
-              placeholder="আপনার সমস্যাটি বিস্তারিত এখানে লিখুন..."
-              value={problem}
-              onChange={(e) => setProblem(e.target.value)}
-              required
-            />
+          <textarea
+            style={styles.modalTextarea}
+            placeholder="Describe your issue in detail..."
+            value={problem}
+            onChange={(e) => setProblem(e.target.value)}
+            required
+          />
+          
+          {/* Action Button */}
+          <div style={styles.modalActions}>
+            <button type="submit" style={styles.submitBtn}>
+              Get Support
+            </button>
           </div>
-
-          {/* Submit Button */}
-          <button type="submit" style={styles.submitBtn}>
-            🚀 Take Support
-          </button>
         </form>
       </div>
     </div>
   );
 }
 
-// 💎 আপনার আগের থিমের সাথে মিল রেখে প্রিমিয়াম গ্লাস-মরফিজম স্টাইল
+// 💎 ২য় স্ক্রিনশট এবং আপনার রিকোয়েস্ট অনুযায়ী আল্ট্রা-প্রিমিয়াম স্টাইলশিট
 const styles = {
   container: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #020617 0%, #0b1329 100%)",
+    height: "100vh",
+    width: "100vw",
+    // ব্যাকগ্রাউন্ডে একটি প্রিমিয়াম ডার্ক টেক-সাপোর্ট ইমেজ ও ডার্ক ওভারলে দেওয়া হয়েছে
+    backgroundImage: "linear-gradient(rgba(11, 19, 41, 0.85), rgba(2, 6, 23, 0.92)), url('https://images.unsplash.com/photo-1534536281715-e28d76689b4d?q=80&w=1920&auto=format&fit=crop')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
     color: "#f8fafc",
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    padding: "20px"
+    overflow: "hidden",
+    boxSizing: "border-box"
   },
 
-  supportCard: {
-    background: "rgba(15, 23, 42, 0.6)",
-    backdropFilter: "blur(20px)",
-    width: "100%",
-    maxWidth: "500px",
-    borderRadius: "24px",
-    padding: "32px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
-    border: "1px solid rgba(255, 255, 255, 0.08)"
+  modalCard: {
+    background: "#1e293b", // স্ক্রিনশটের মতো এক্সাক্ট কালার থিম
+    width: "90%",
+    maxWidth: "450px",
+    borderRadius: "20px",
+    padding: "24px",
+    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.6)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    boxSizing: "border-box"
   },
 
-  header: {
-    textAlign: "center",
-    marginBottom: "28px"
+  modalHeader: {
+    marginBottom: "20px"
   },
 
-  title: {
-    margin: "0 0 8px 0",
-    fontSize: "24px",
-    fontWeight: "700",
-    color: "#38bdf8"
-  },
-
-  subtitle: {
+  modalTitle: {
     margin: 0,
-    fontSize: "14px",
-    color: "#94a3b8",
-    lineHeight: "1.5"
+    fontSize: "18px",
+    fontWeight: "600",
+    color: "#ffffff"
   },
 
   form: {
     display: "flex",
-    flexDirection: "column",
-    gap: "20px"
+    flexDirection: "column"
   },
 
-  inputGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px"
-  },
-
-  label: {
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#e2e8f0"
-  },
-
-  input: {
+  modalInput: {
     width: "100%",
-    padding: "14px",
+    padding: "14px 16px",
     background: "#0f172a",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
-    borderRadius: "12px",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    borderRadius: "10px",
     color: "white",
-    fontSize: "15px",
+    marginBottom: "16px",
+    fontSize: "14px",
     outline: "none",
-    boxSizing: "border-box",
-    transition: "border-color 0.2s",
+    boxSizing: "border-box"
   },
 
-  textarea: {
+  modalTextarea: {
     width: "100%",
     minHeight: "140px",
-    padding: "14px",
+    padding: "14px 16px",
     background: "#0f172a",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
-    borderRadius: "12px",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    borderRadius: "10px",
     color: "white",
-    fontSize: "15px",
+    marginBottom: "20px",
+    fontSize: "14px",
     outline: "none",
-    boxSizing: "border-box",
     resize: "none",
-    lineHeight: "1.5"
+    lineHeight: "1.5",
+    boxSizing: "border-box"
+  },
+
+  modalActions: {
+    display: "flex",
+    justifyContent: "flex-end"
   },
 
   submitBtn: {
-    width: "100%",
-    padding: "14px",
-    background: "linear-gradient(135deg, #0284c7, #0369a1)",
+    padding: "12px 24px",
+    background: "#38bdf8", // ২য় স্ক্রিনশটের বাটন কালার ম্যাচিংস
     border: "none",
-    borderRadius: "12px",
-    color: "white",
-    fontWeight: "700",
-    fontSize: "16px",
+    color: "#0f172a",
+    borderRadius: "10px",
     cursor: "pointer",
-    boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)",
-    transition: "transform 0.1s, opacity 0.2s",
-    marginTop: "10px"
+    fontWeight: "700",
+    fontSize: "14px",
+    transition: "background 0.2s, transform 0.1s",
+    boxShadow: "0 4px 14px rgba(56, 189, 248, 0.2)"
   }
 };
