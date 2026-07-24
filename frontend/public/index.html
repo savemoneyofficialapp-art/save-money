@@ -42,5 +42,64 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+
+     <!-- Firebase App এবং Messaging SDK যুক্ত করা -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
+
+<script>
+  // আপনার Firebase Config এখানেও বসান
+  const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const messaging = firebase.messaging();
+
+  // ইউজারকে নোটিফিকেশন পারমিশন এবং টোকেন নেওয়ার ফাংশন
+  function requestNotificationPermission() {
+      console.log('পারমিশন চাওয়া হচ্ছে...');
+      Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+              console.log('নোটিফিকেশন পারমিশন পাওয়া গেছে।');
+              
+              // FCM Token নেওয়া
+              messaging.getToken({ vapidKey: 'YOUR_GENERATED_VAPID_KEY' }) // ধাপ ১ এর VAPID Key এখানে বসান
+              .then((currentToken) => {
+                  if (currentToken) {
+                      console.log('আপনার FCM Token:', currentToken);
+                      // 💡 এই টোকেনটি আপনাকে আপনার ডাটাবেজে (যেমন MySQL/MongoDB) সেভ করতে হবে 
+                      // যাতে পরবর্তীতে নির্দিষ্ট ইউজারকে নোটিফিকেশন পাঠানো যায়।
+                  } else {
+                      console.log('কোনো রেজিস্ট্রেশন টোকেন পাওয়া যায়নি। পারমিশন দিন।');
+                  }
+              }).catch((err) => {
+                  console.log('টোকেন নেওয়ার সময় ভুল হয়েছে: ', err);
+              });
+          } else {
+              console.log('ইউজার নোটিফিকেশন পারমিশন দেননি।');
+          }
+      });
+  }
+
+  // ওয়েবসাইট লোড হওয়ার পর পারমিশন চাওয়া (অথবা একটি বাটন ক্লিকের মাধ্যমেও করতে পারেন)
+  window.onload = function() {
+      requestNotificationPermission();
+  };
+
+  // ওয়েবসাইট ওপেন থাকা অবস্থায় (Foreground) নোটিফিকেশন আসলে কী হবে
+  messaging.onMessage((payload) => {
+      console.log('ফোরগ্রাউন্ড মেসেজ:', payload);
+      alert(`${payload.notification.title}: ${payload.notification.body}`);
+  });
+</script>
+    
+
+    
   </body>
 </html>
