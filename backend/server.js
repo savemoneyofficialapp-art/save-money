@@ -1300,6 +1300,7 @@ app.post("/login", async (req, res) => {
       });
     }
 
+    // নতুন টোকেন তৈরি
     const token = jwt.sign(
       {
         id: user._id,
@@ -1309,6 +1310,15 @@ app.post("/login", async (req, res) => {
       {
         expiresIn: "7d"
       }
+    );
+
+    // ============================================================
+    // সিকিউরিটি আপডেট: ডাটাবেজে এই নতুন টোকেনটি সেভ করা হচ্ছে
+    // এর ফলে আগের ডিভাইসের টোকেন ডাটাবেজের সাথে আর মিলবে না
+    // ============================================================
+    await User.updateOne(
+      { _id: user._id },
+      { current_token: token }
     );
 
     return res.json({
@@ -1332,6 +1342,7 @@ app.post("/login", async (req, res) => {
     });
   }
 });
+
 
 
 app.post("/send-otp", async (req, res) => {
