@@ -254,27 +254,48 @@ const auth = async (req, res, next) => {
             token = token.split(" ")[1];
         }
 
+        // টোকেন ভেরিফাই করা
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+        // ডেটাবেজ থেকে ইউজার বের করা
         const user = await User.findById(decoded.id);
 
         if (!user) {
             return res.status(401).json({ msg: "User not found" });
         }
 
-        // টোকেন ম্যাচিং ভেরিফিকেশন (যা অলরেডি আপনার স্ক্রিনশটে আছে)
+        // টোকেন ম্যাচিং ভেরিফিকেশন
         if (user.current_token !== token) {
             return res.status(401).json({
-                msg: "অন্য ডিভাইসে লগইন করার কারণে এই সেশনটি শেষ হয়ে গেছে।"
+                msg: "Token expired or invalid"
             });
         }
 
+        // ========================================================
+        // নতুন লজিক: ১০ মিনিট ইন-অ্যাক্টিভিটি চেক (১০ মিনিট = ৬০০,০০০ ms)
+        // ========================================================
+        const tenMinutes = 10 * 60 * 1000;
+        const now = new Date();
+        const timeDifference = now - new Date(user.lastActive || now);
+
+        if (timeDifference > tenMinutes) {
+            // ইউজার ১০ মিনিট কোনো কাজ করেনি, তাই সেশন ক্লিয়ার করে দেওয়া হলো
+            user.current_token = "";
+            await user.save();
+            return res.status(401).json({ msg: "Token expired or invalid" });
+        }
+
+        // ইউজার ব্যানড কিনা চেক
         if (user.banned) {
             return res.status(403).json({
                 msg: "Your account is banned.",
                 reason: user.banReason || ""
             });
         }
+
+        // ইউজার অ্যাক্টিভ আছে, তাই লাস্ট অ্যাক্টিভ টাইম আপডেট করে দেওয়া হলো
+        user.lastActive = now;
+        await user.save();
 
         req.user = decoded;
         next();
@@ -1292,9 +1313,9 @@ app.post("/login", async (req, res) => {
             });
         }
 
-                let isMatch = false;
+        let isMatch = false;
 
-        // আপডেটেড পাসওয়ার্ড চেক লজিক
+        // পাসওয়ার্ড চেক লজিক
         if (user.password && (user.password.startsWith("$2a") || user.password.startsWith("$2b") || user.password.startsWith("$2y"))) {
             isMatch = await bcrypt.compare(password, user.password);
         } else {
@@ -1308,16 +1329,13 @@ app.post("/login", async (req, res) => {
             });
         }
 
-
-        // ========================================================
-        // নতুন লজিক: অলরেডি লগইন থাকলে ব্লক করা
-        // ========================================================
+        // অন্য ডিভাইসে অলরেডি লগইন আছে কিনা চেক
         if (user.current_token && user.current_token !== "") {
-    return res.status(400).json({
-        success: false,
-        msg: "You are already logged in on another device. Please logout from that device first."
-    });
-}
+            return res.status(400).json({
+                success: false,
+                msg: "You are already logged in on another device. Please logout from that device first."
+            });
+        }
 
         // নতুন টোকেন তৈরি
         const token = jwt.sign(
@@ -1331,8 +1349,9 @@ app.post("/login", async (req, res) => {
             }
         );
 
-        // ডেটাবেজে নতুন টোকেনটি সেভ করে রাখা
+        // ডেটাবেজে নতুন টোকেন এবং লগইনের সময়ে লাস্ট অ্যাক্টিভ সেট করা
         user.current_token = token;
+        user.lastActive = new Date(); // লগইনের সময় অ্যাক্টিভ টাইম সেট হলো
         await user.save();
 
         return res.json({
