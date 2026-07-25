@@ -3310,8 +3310,11 @@ app.post("/reject-kyc", auth, adminAuth, async (req, res) => {
 app.post("/dashboard", auth, async (req, res) => {
   try {
     const { email } = req.body;
+    
+    // ইমেইল লোয়ারকেস করা হলো যাতে কোনো কেস-সেন্সিটিভিটি সমস্যা না হয়
+    const normalizedEmail = email ? email.toLowerCase() : "";
 
-    const user = await User.findOne({ email }).select("-password");
+    const user = await User.findOne({ email: normalizedEmail }).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -3319,32 +3322,34 @@ app.post("/dashboard", auth, async (req, res) => {
       });
     }
 
+    // ইনভেস্টমেন্ট খোঁজার সময়ও লোয়ারকেস ইমেইল ব্যবহার করা হলো
     const investments = await Investment.find({
-      email
+      email: normalizedEmail
     });
 
     let totalInvestment = 0;
     let totalReturn = 0;
 
     investments.forEach((inv) => {
-      const amount =
-        Number(inv.amount) ||
-        Number(inv.monthlyAmount) ||
-        Number(inv.investAmount) ||
-        Number(inv.principal) ||
-        0;
+      // /my-investments API এর মতো করে মাসিক অ্যামাউন্ট বের করা হলো
+      const monthly = Number(inv.monthlyAmount || inv.amount || 0);
+      
+      // প্রকৃত ইনভেস্ট করা টাকা = প্রতি মাসের টাকা × যত মাস পেইড হয়েছে (ডিফল্ট ১)
+      const investedAmount = monthly * Number(inv.monthsPaid || 1);
 
       const roi =
         Number(inv.roi) ||
         Number(inv.roiPercent) ||
         Number(inv.interestRate) ||
         Number(inv.returnPercent) ||
+        Number(inv.rate) || // আপনার my-investments এ 'rate' ফিল্ডটি রয়েছে
         0;
 
-      totalInvestment += amount;
+      // হোম পেজের জন্য মোট ইনভেস্টমেন্ট যোগ করা হচ্ছে
+      totalInvestment += investedAmount;
 
       const monthlyPercent = roi / 12;
-      const monthlyReturn = (amount * monthlyPercent) / 100;
+      const monthlyReturn = (investedAmount * monthlyPercent) / 100;
 
       totalReturn += monthlyReturn;
     });
@@ -3359,7 +3364,7 @@ app.post("/dashboard", auth, async (req, res) => {
       const withdrawData = await WalletHistory.aggregate([
         {
           $match: {
-            email,
+            email: normalizedEmail,
             type: {
               $in: [
                 "withdraw",
@@ -3387,19 +3392,19 @@ app.post("/dashboard", auth, async (req, res) => {
       name: user.name,
       email: user.email,
       mobile: user.mobile,
-wallet: Number(
-  user.balance ??
-  user.wallet ??
-  user.walletBalance ??
-  user.amount ??
-  0
-),
+      wallet: Number(
+        user.balance ??
+        user.wallet ??
+        user.walletBalance ??
+        user.amount ??
+        0
+      ),
       walletId: user.walletId,
       referCode: user.referCode,
       kycStatus: user.kycStatus,
       photo: user.photo,
 
-      totalInvestment,
+      totalInvestment, // এখন এটি সঠিকভাবে ৮,০০০ টাকা (৪,০০০ + ৪,০০০) রিটার্ন করবে
       totalReturn: Math.round(totalReturn),
       totalReferral,
       totalWithdraw
