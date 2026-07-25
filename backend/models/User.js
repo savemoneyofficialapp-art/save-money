@@ -154,7 +154,11 @@ royaltyIncome: {
     type: String,
     default:""
   },
-  
+
+  current_token: {
+  type: String,
+  default: null
+    },
 
   // ðŸ”¹ TEAM / REFERRAL
   referredBy: {
