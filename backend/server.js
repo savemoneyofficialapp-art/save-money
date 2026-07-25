@@ -242,54 +242,52 @@ io.on("connection", (socket) => {
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
 
-
-
 const auth = async (req, res, next) => {
-  try {
-    let token = req.headers.authorization;
+    try {
+        let token = req.headers.authorization;
 
-    if (!token) {
-      return res.status(401).json({ msg: "No token" });
+        if (!token) {
+            return res.status(401).json({ msg: "No token" });
+        }
+
+        if (token.startsWith("Bearer ")) {
+            token = token.split(" ")[1];
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const user = await User.findById(decoded.id);
+
+        if (!user) {
+            return res.status(401).json({ msg: "User not found" });
+        }
+
+        // টোকেন ম্যাচিং ভেরিফিকেশন (যা অলরেডি আপনার স্ক্রিনশটে আছে)
+        if (user.current_token !== token) {
+            return res.status(401).json({
+                msg: "অন্য ডিভাইসে লগইন করার কারণে এই সেশনটি শেষ হয়ে গেছে।"
+            });
+        }
+
+        if (user.banned) {
+            return res.status(403).json({
+                msg: "Your account is banned.",
+                reason: user.banReason || ""
+            });
+        }
+
+        req.user = decoded;
+        next();
+
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Token expired or invalid"
+        });
     }
-
-    if (token.startsWith("Bearer ")) {
-      token = token.split(" ")[1];
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const user = await User.findById(decoded.id);
-
-    if (!user) {
-      return res.status(401).json({ msg: "User not found" });
-    }
-
-    // ============================================================
-    // সিকিউরিটি আপডেট: টোকেন চেক করা হচ্ছে (সিঙ্গেল ডিভাইস লগইন)
-    // ডাটাবেজের current_token-এর সাথে ইনকামিং টোকেন না মিললে বের করে দেবে
-    // ============================================================
-    if (user.current_token !== token) {
-      return res.status(401).json({ 
-        msg: "অন্য ডিভাইসে লগইন করার কারণে এই সেশনটি শেষ হয়ে গেছে।" 
-      });
-    }
-
-    if (user.banned) {
-      return res.status(403).json({
-        msg: "Your account is banned.",
-        reason: user.banReason || ""
-      });
-    }
-
-    req.user = decoded;
-    next();
-
-  } catch (err) {
-    return res.status(401).json({
-      msg: "Token expired or invalid"
-    });
-  }
 };
+
+
+
 
 const adminAuth = async (req, res, next) => {
 
@@ -1267,91 +1265,97 @@ async function generateShortWalletId() {
 // ================= LOGIN =================
 
 app.post("/login", async (req, res) => {
-  try {
-    console.log("LOGIN BODY:", req.body);
+    try {
+        console.log("LOGIN BODY:", req.body);
 
-    const { email, password } = req.body;
+        const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        msg: "Email and password required"
-      });
+        if (!email || !password) {
+            return res.status(400).json({
+                msg: "Email and password required"
+            });
+        }
+
+        const user = await User.findOne({
+            email: email.toLowerCase()
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                msg: "User not found"
+            });
+        }
+
+        if (user.banned) {
+            return res.status(403).json({
+                msg: "Your account is banned"
+            });
+        }
+
+        let isMatch = false;
+
+        // hashed password check
+        if (user.password && user.password.startsWith("$2a")) {
+            isMatch = await bcrypt.compare(password, user.password);
+        } else {
+            // old plain password support
+            isMatch = user.password === password;
+        }
+
+        if (!isMatch) {
+            return res.status(401).json({
+                msg: "Wrong password"
+            });
+        }
+
+        // ========================================================
+        // নতুন লজিক: অলরেডি লগইন থাকলে ব্লক করা
+        // ========================================================
+        if (user.current_token && user.current_token !== "") {
+            return res.status(400).json({
+                success: false,
+                msg: "আপনি আগেই অন্য ডিভাইসে লগইন আছেন। দয়া করে সেটি আগে লগআউট করুন, তারপর নতুন ডিভাইসে চেষ্টা করুন।"
+            });
+        }
+
+        // নতুন টোকেন তৈরি
+        const token = jwt.sign(
+            {
+                id: user._id,
+                role: user.role
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: '7d'
+            }
+        );
+
+        // ডেটাবেজে নতুন টোকেনটি সেভ করে রাখা
+        user.current_token = token;
+        await user.save();
+
+        return res.json({
+            success: true,
+            msg: "Login Successful",
+            token,
+            role: user.role || "user",
+            email: user.email,
+            referCode: user.referCode,
+            name: user.name,
+            kycStatus: user.kycStatus,
+            walletId: user.walletId
+        });
+
+    } catch (err) {
+        console.log("LOGIN ERROR:", err.message);
+        console.log(err);
+
+        return res.status(500).json({
+            msg: err.message || "Server error"
+        });
     }
-
-    const user = await User.findOne({
-      email: email.toLowerCase()
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        msg: "User not found"
-      });
-    }
-
-    if (user.banned) {
-      return res.status(403).json({
-        msg: "Your account is banned"
-      });
-    }
-
-    let isMatch = false;
-
-    // hashed password check
-    if (user.password && user.password.startsWith("$2")) {
-      isMatch = await bcrypt.compare(password, user.password);
-    } else {
-      // old plain password support
-      isMatch = user.password === password;
-    }
-
-    if (!isMatch) {
-      return res.status(401).json({
-        msg: "Wrong password"
-      });
-    }
-
-    // নতুন টোকেন তৈরি
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d"
-      }
-    );
-
-    // ============================================================
-    // সিকিউরিটি আপডেট: ডাটাবেজে এই নতুন টোকেনটি সেভ করা হচ্ছে
-    // এর ফলে আগের ডিভাইসের টোকেন ডাটাবেজের সাথে আর মিলবে না
-    // ============================================================
-    await User.updateOne(
-      { _id: user._id },
-      { current_token: token }
-    );
-
-    return res.json({
-      success: true,
-      msg: "Login Successful",
-      token,
-      role: user.role || "user",
-      email: user.email,
-      referCode: user.referCode,
-      name: user.name,
-      kycStatus: user.kycStatus,
-      walletId: user.walletId
-    });
-
-  } catch (err) {
-    console.log("LOGIN ERROR:", err.message);
-    console.log(err);
-
-    return res.status(500).json({
-      msg: err.message || "Server error"
-    });
-  }
 });
+
 
 
 
@@ -2469,19 +2473,25 @@ app.post("/refresh-token", async (req, res) => {
 });
 
 app.post("/logout", auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        
+        if (!user) {
+            return res.status(404).json({ msg: "User not found" });
+        }
 
-  const user = await User.findById(
-    req.user.id
-  );
+        // সেশন ক্লিয়ার করা
+        user.refreshToken = "";
+        user.current_token = ""; // এই কলামটি খালি করে দেওয়া হলো
+        
+        await user.save();
 
-  user.refreshToken = "";
-
-  await user.save();
-
-  res.json({
-    msg: "Logout success"
-  });
-
+        res.json({
+            msg: "Logout success"
+        });
+    } catch (err) {
+        return res.status(500).json({ msg: "Server error" });
+    }
 });
 
 app.post("/user-dashboard-chart", auth, async (req, res) => {
