@@ -1292,13 +1292,13 @@ app.post("/login", async (req, res) => {
             });
         }
 
-        let isMatch = false;
+                let isMatch = false;
 
-        // hashed password check
-        if (user.password && user.password.startsWith("$2a")) {
+        // আপডেটেড পাসওয়ার্ড চেক লজিক
+        if (user.password && (user.password.startsWith("$2a") || user.password.startsWith("$2b") || user.password.startsWith("$2y"))) {
             isMatch = await bcrypt.compare(password, user.password);
         } else {
-            // old plain password support
+            // ওল্ড প্লেইন পাসওয়ার্ড সাপোর্ট
             isMatch = user.password === password;
         }
 
@@ -1307,6 +1307,7 @@ app.post("/login", async (req, res) => {
                 msg: "Wrong password"
             });
         }
+
 
         // ========================================================
         // নতুন লজিক: অলরেডি লগইন থাকলে ব্লক করা
