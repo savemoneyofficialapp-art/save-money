@@ -2473,27 +2473,37 @@ app.post("/refresh-token", async (req, res) => {
 
 });
 
-app.post("/logout", auth, async (req, res) => {
+// এখানে আমরা 'auth' মিডলওয়্যারটি সরিয়ে দিয়েছি যাতে লগআউট কখনো না আটকায়
+app.post("/logout", async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const { email } = req.body; // ফ্রন্টএন্ড থেকে বডিতে ইমেইল পাঠাবেন
+
+        if (!email) {
+            return res.status(400).json({ msg: "Email is required to logout" });
+        }
+
+        // ইউজার খুঁজে বের করা
+        const user = await User.findOne({ email: email.toLowerCase() });
         
         if (!user) {
             return res.status(404).json({ msg: "User not found" });
         }
 
-        // সেশন ক্লিয়ার করা
+        // টোকেন এবং সেশন সম্পূর্ণ খালি (Clear) করে দেওয়া
         user.refreshToken = "";
-        user.current_token = ""; // এই কলামটি খালি করে দেওয়া হলো
+        user.current_token = ""; 
         
         await user.save();
 
-        res.json({
+        return res.json({
+            success: true,
             msg: "Logout success"
         });
     } catch (err) {
         return res.status(500).json({ msg: "Server error" });
     }
 });
+
 
 app.post("/user-dashboard-chart", auth, async (req, res) => {
 
