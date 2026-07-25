@@ -264,9 +264,19 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ msg: "User not found" });
     }
 
+    // ============================================================
+    // সিকিউরিটি আপডেট: টোকেন চেক করা হচ্ছে (সিঙ্গেল ডিভাইস লগইন)
+    // ডাটাবেজের current_token-এর সাথে ইনকামিং টোকেন না মিললে বের করে দেবে
+    // ============================================================
+    if (user.current_token !== token) {
+      return res.status(401).json({ 
+        msg: "অন্য ডিভাইসে লগইন করার কারণে এই সেশনটি শেষ হয়ে গেছে।" 
+      });
+    }
+
     if (user.banned) {
       return res.status(403).json({
-        msg: "Your account is banned",
+        msg: "Your account is banned.",
         reason: user.banReason || ""
       });
     }
