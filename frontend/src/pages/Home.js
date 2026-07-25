@@ -181,14 +181,31 @@ export default function Home() {
         </button>
 
         <button
-          style={styles.logoutBtn}
-          onClick={() => {
-            localStorage.clear();
-            navigate("/login");
-          }}
-        >
-          Logout
-        </button>
+  style={styles.logoutBtn}
+  onClick={async () => {
+    try {
+      // ১. ব্যাকএন্ডের এপিআই কল করে ডেটাবেজের টোকেন ক্লিয়ার করা
+      if (email) {
+        await fetch(`${API}/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: email })
+        });
+      }
+    } catch (err) {
+      console.log("Logout backend error:", err);
+    } finally {
+      // ২. ফ্রন্টএন্ডের ডাটা ক্লিয়ার করে লগইন পেজে পাঠানো (এটি সবসময়ই এক্সিকিউট হবে)
+      localStorage.clear();
+      navigate("/login");
+    }
+  }}
+>
+  Logout
+</button>
+
 
       </div>
 
