@@ -1313,11 +1313,11 @@ app.post("/login", async (req, res) => {
         // নতুন লজিক: অলরেডি লগইন থাকলে ব্লক করা
         // ========================================================
         if (user.current_token && user.current_token !== "") {
-            return res.status(400).json({
-                success: false,
-                msg: "আপনি আগেই অন্য ডিভাইসে লগইন আছেন। দয়া করে সেটি আগে লগআউট করুন, তারপর নতুন ডিভাইসে চেষ্টা করুন।"
-            });
-        }
+    return res.status(400).json({
+        success: false,
+        msg: "You are already logged in on another device. Please logout from that device first."
+    });
+}
 
         // নতুন টোকেন তৈরি
         const token = jwt.sign(
