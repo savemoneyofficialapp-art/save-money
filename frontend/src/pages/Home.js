@@ -122,7 +122,7 @@ export default function Home() {
     }
   };
 
-  // ৩. ইউজার পেজে থাকা অবস্থায় ৭ মিনিট নিষ্ক্রিয় (Inactive) থাকলে পপআপ সহ অটো-লগআউট লজিক
+    // ৩. ইউজার পেজে থাকা অবস্থায় ৭ মিনিট নিষ্ক্রিয় (Inactive) থাকলে পপআপ সহ অটো-লগআউট লজিক
   useEffect(() => {
     let lastActivity = Date.now(); 
     const timeoutLimit = 420000; // ৭ মিনিট = ৪২০,০০০ ms
@@ -135,46 +135,50 @@ export default function Home() {
     const intervalId = setInterval(async () => {
       const currentTime = Date.now();
       
-      // কারেন্ট টোকেন আছে কিনা চেক করা (টোকেন না থাকলে টাইমার চালানোর দরকার নেই)
+      // লোকাল স্টোরেজ থেকে ফ্রেশ ডাটা নেওয়া
       const currentToken = localStorage.getItem("token");
-      if (!currentToken) return;
+      const currentEmail = localStorage.getItem("email");
+      
+      // টোকেন বা ইমেইল না থাকলে টাইমার বন্ধ করে দেওয়া (কারণ অলরেডি লগআউট অবস্থা)
+      if (!currentToken || !currentEmail) {
+        clearInterval(intervalId);
+        return;
+      }
 
+      // যদি নিষ্ক্রিয়তার সময় সীমা পার হয়ে যায়
       if (currentTime - lastActivity >= timeoutLimit) {
-        clearInterval(intervalId); // টাইমার ইন্টারভাল বন্ধ করা
+        clearInterval(intervalId); // লুপটি সাথে সাথে বন্ধ করা
 
-        // প্রথমে স্ক্রিনে লাল রঙের পপআপ মেসেজটি ট্রিগার করা
+        // ১. স্ক্রিনে লাল রঙের পপআপ মেসেজটি দেখানো
         triggerStatusOverlay("error", "You are logout please login again");
 
-        // ব্যাকএন্ড এপিআই কল করে টোকেন ক্লিয়ার করা
+        // ২. ব্যাকএন্ড এপিআই কল করে সেশন ডিলিট করা
         try {
-          const currentEmail = localStorage.getItem("email");
-          if (currentEmail) {
-            await fetch(`${API}/logout`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email: currentEmail })
-            });
-          }
+          await fetch(`${API}/logout`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: currentEmail })
+          });
         } catch (err) {
           console.log("Auto logout backend error:", err);
         }
 
-        // মেসেজটি দেখার জন্য ২.৫ সেকেন্ড সময় দিয়ে তারপর লগইন পেজে পাঠানো
+        // ৩. ২.৫ সেকেন্ড পর লোকাল স্টোরেজ পুরোপুরি সাফ করে রিফ্রেশ করা
         setTimeout(() => {
           localStorage.clear();
           navigate("/login");
-          window.location.reload(); // রিঅ্যাক্ট স্টেট ও মেমরি সম্পূর্ণ ফ্রেশ করার জন্য
+          window.location.reload(); 
         }, 2500); 
       }
     }, 1000); 
 
-    // ইউজারের অ্যাক্টিভিটি ডিটেক্ট করার ইভেন্ট লিসেনার
+    // ইউজারের অ্যাক্টিভিটি ডিটেক্ট করার জন্য গ্লোবাল ইভেন্ট লিসেনার
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
     window.addEventListener("click", resetTimer);
     window.addEventListener("scroll", resetTimer);
 
-    // কম্পোনেন্ট আনমাউন্ট বা বন্ধ হলে মেমরি লিক এড়াতে ক্লিয়ার করা
+    // ক্লিনআপ ফাংশন: কম্পোনেন্ট আনমাউন্ট হলে লিসেনার এবং ইন্টারভাল রিমুভ করা
     return () => {
       clearInterval(intervalId);
       window.removeEventListener("mousemove", resetTimer);
@@ -182,7 +186,8 @@ export default function Home() {
       window.removeEventListener("click", resetTimer);
       window.removeEventListener("scroll", resetTimer);
     };
-  }, []); // ডিপেনডেন্সি অ্যারে একদম খালি [] রাখা হলো যাতে টাইমার ব্রেক না করে
+  }, [navigate]); // navigate ডিপেনডেন্সি দেওয়া হলো যাতে React রাউটার ট্র্যাক রাখতে পারে
+  
 
   const fileUrl = (file) => {
     if (!file) return "";
