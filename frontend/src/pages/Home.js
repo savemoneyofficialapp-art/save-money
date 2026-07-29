@@ -121,11 +121,11 @@ export default function Home() {
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
       
-      // ১০ মিনিট = ১০ * ৬০ * ১০০০০ মিলিসেকেন্ড = 600000 ms
-      timeoutId = setTimeout(() => {
-        handleLogout();
-      }, 600000);
-    };
+      // ৭ মিনিট = ৭ * ৬০ * ১০০০ মিলিসেকেন্ড = 420000 ms
+timeoutId = setTimeout(() => {
+  handleLogout();
+}, 420000);
+
 
     // ইউজারের অ্যাক্টিভিটি ইভেন্ট লিসেনার যুক্ত করা
     window.addEventListener("mousemove", resetTimer);
