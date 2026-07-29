@@ -92,6 +92,60 @@ export default function Home() {
     }
   };
 
+  // মূল লগআউট ফাংশন (যা বাটনে এবং অটো-লগআউটে ব্যবহৃত হবে)
+  const handleLogout = async () => {
+    try {
+      // ১. ব্যাকএন্ডের এপিআই কল করে ডেটাবেজের টোকেন ক্লিয়ার করা
+      if (email) {
+        await fetch(`${API}/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: email })
+        });
+      }
+    } catch (err) {
+      console.log("Logout backend error:", err);
+    } finally {
+      // ২. ফ্রন্টএন্ডের ডাটা ক্লিয়ার করে লগইন পেজে পাঠানো (এটি সবসময়ই এক্সিকিউট হবে)
+      localStorage.clear();
+      navigate("/login");
+    }
+  };
+
+  // ১০ মিনিট ইনঅ্যাক্টিভ থাকলে অটোমেটিক লগআউট করার লজিক
+  useEffect(() => {
+    let timeoutId;
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      
+      // ১০ মিনিট = ১০ * ৬০ * ১০০০০ মিলিসেকেন্ড = 600000 ms
+      timeoutId = setTimeout(() => {
+        handleLogout();
+      }, 600000);
+    };
+
+    // ইউজারের অ্যাক্টিভিটি ইভেন্ট লিসেনার যুক্ত করা
+    window.addEventListener("mousemove", resetTimer);
+    window.addEventListener("keydown", resetTimer);
+    window.addEventListener("click", resetTimer);
+    window.addEventListener("scroll", resetTimer);
+
+    // প্রথমবার টাইমার চালু করা
+    resetTimer();
+
+    // কম্পোনেন্ট আনমাউন্ট হলে লিসেনার এবং টাইমার ক্লিয়ার করা
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      window.removeEventListener("mousemove", resetTimer);
+      window.removeEventListener("keydown", resetTimer);
+      window.removeEventListener("click", resetTimer);
+      window.removeEventListener("scroll", resetTimer);
+    };
+  }, [email, token]);
+
   const fileUrl = (file) => {
     if (!file) return "";
     if (file.startsWith("http")) return file;
@@ -181,31 +235,11 @@ export default function Home() {
         </button>
 
         <button
-  style={styles.logoutBtn}
-  onClick={async () => {
-    try {
-      // ১. ব্যাকএন্ডের এপিআই কল করে ডেটাবেজের টোকেন ক্লিয়ার করা
-      if (email) {
-        await fetch(`${API}/logout`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: email })
-        });
-      }
-    } catch (err) {
-      console.log("Logout backend error:", err);
-    } finally {
-      // ২. ফ্রন্টএন্ডের ডাটা ক্লিয়ার করে লগইন পেজে পাঠানো (এটি সবসময়ই এক্সিকিউট হবে)
-      localStorage.clear();
-      navigate("/login");
-    }
-  }}
->
-  Logout
-</button>
-
+          style={styles.logoutBtn}
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
 
       </div>
 
