@@ -125,6 +125,7 @@ export default function Home() {
 timeoutId = setTimeout(() => {
   handleLogout();
 }, 420000);
+    };
 
 
     // ইউজারের অ্যাক্টিভিটি ইভেন্ট লিসেনার যুক্ত করা
