@@ -66,6 +66,7 @@ export default function Home() {
         setTimeout(() => {
           localStorage.clear();
           navigate("/login");
+          window.location.reload();
         }, 2500);
         return;
       }
@@ -117,20 +118,27 @@ export default function Home() {
     } finally {
       localStorage.clear();
       navigate("/login");
+      window.location.reload();
     }
   };
 
   // ৩. ইউজার পেজে থাকা অবস্থায় ৭ মিনিট নিষ্ক্রিয় (Inactive) থাকলে পপআপ সহ অটো-লগআউট লজিক
   useEffect(() => {
     let lastActivity = Date.now(); 
-    const timeoutLimit = 420000; // ৭ মিনিট = ৪২০,০০০ ms (টেস্ট করার জন্য সাময়িকভাবে ১০০০০ বা ১০ সেকেন্ড দিয়ে দেখতে পারেন)
+    const timeoutLimit = 420000; // ৭ মিনিট = ৪২০,০০০ ms
 
     const resetTimer = () => {
       lastActivity = Date.now();
     };
 
+    // প্রতি ১ সেকেন্ড পরপর ব্যাকগ্রাউন্ডে ইনঅ্যাক্টিভিটি চেক করবে
     const intervalId = setInterval(async () => {
       const currentTime = Date.now();
+      
+      // কারেন্ট টোকেন আছে কিনা চেক করা (টোকেন না থাকলে টাইমার চালানোর দরকার নেই)
+      const currentToken = localStorage.getItem("token");
+      if (!currentToken) return;
+
       if (currentTime - lastActivity >= timeoutLimit) {
         clearInterval(intervalId); // টাইমার ইন্টারভাল বন্ধ করা
 
@@ -139,11 +147,12 @@ export default function Home() {
 
         // ব্যাকএন্ড এপিআই কল করে টোকেন ক্লিয়ার করা
         try {
-          if (email) {
+          const currentEmail = localStorage.getItem("email");
+          if (currentEmail) {
             await fetch(`${API}/logout`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email })
+              body: JSON.stringify({ email: currentEmail })
             });
           }
         } catch (err) {
@@ -154,9 +163,10 @@ export default function Home() {
         setTimeout(() => {
           localStorage.clear();
           navigate("/login");
+          window.location.reload(); // রিঅ্যাক্ট স্টেট ও মেমরি সম্পূর্ণ ফ্রেশ করার জন্য
         }, 2500); 
       }
-    }, 1000); // প্রতি ১ সেকেন্ড পরপর ব্যাকগ্রাউন্ডে ইনঅ্যাক্টিভিটি চেক করবে
+    }, 1000); 
 
     // ইউজারের অ্যাক্টিভিটি ডিটেক্ট করার ইভেন্ট লিসেনার
     window.addEventListener("mousemove", resetTimer);
@@ -172,7 +182,7 @@ export default function Home() {
       window.removeEventListener("click", resetTimer);
       window.removeEventListener("scroll", resetTimer);
     };
-  }, [email]);
+  }, []); // ডিপেনডেন্সি অ্যারে একদম খালি [] রাখা হলো যাতে টাইমার ব্রেক না করে
 
   const fileUrl = (file) => {
     if (!file) return "";
