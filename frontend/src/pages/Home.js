@@ -41,6 +41,7 @@ export default function Home() {
     loadNotifications();
   }, []);
 
+  // ২. টোকেন এক্সপায়ার হলে পপআপ দেখিয়ে লগআউট করার লজিক (১ দিন বা দীর্ঘ সময় পর ফিরে আসলে)
   const loadHome = async () => {
     try {
       setLoading(true);
@@ -56,9 +57,16 @@ export default function Home() {
 
       const data = await res.json();
 
+      // ইউজার অনেকদিন পর আসলে যদি ব্যাকএন্ড টোকেন ইনভ্যালিড বলে[span_0](start_span)[span_0](end_span)
       if (data?.msg === "Token expired or invalid") {
-        localStorage.clear();
-        navigate("/login");
+        // প্রথমে পপআপ মেসেজ দেখানো হবে
+        triggerStatusOverlay("error", "You are logout please login again");
+
+        // ২.৫ সেকেন্ড অপেক্ষা করে মেসেজটি পড়ার সুযোগ দিয়ে রিডাইরেক্ট করা হবে
+        setTimeout(() => {
+          localStorage.clear();
+          navigate("/login");
+        }, 2500);
         return;
       }
 
@@ -92,10 +100,9 @@ export default function Home() {
     }
   };
 
-  // মূল লগআউট ফাংশন (যা বাটনে এবং অটো-লগআউটে ব্যবহৃত হবে)
+  // মূল ম্যানুয়াল লগআউট ফাংশন (বাটনে ক্লিকের জন্য)
   const handleLogout = async () => {
     try {
-      // ১. ব্যাকএন্ডের এপিআই কল করে ডেটাবেজের টোকেন ক্লিয়ার করা
       if (email) {
         await fetch(`${API}/logout`, {
           method: "POST",
@@ -108,44 +115,64 @@ export default function Home() {
     } catch (err) {
       console.log("Logout backend error:", err);
     } finally {
-      // ২. ফ্রন্টএন্ডের ডাটা ক্লিয়ার করে লগইন পেজে পাঠানো (এটি সবসময়ই এক্সিকিউট হবে)
       localStorage.clear();
       navigate("/login");
     }
   };
 
-  // ১০ মিনিট ইনঅ্যাক্টিভ থাকলে অটোমেটিক লগআউট করার লজিক
+  // ৩. ইউজার পেজে থাকা অবস্থায় ৭ মিনিট নিষ্ক্রিয় (Inactive) থাকলে পপআপ সহ অটো-লগআউট লজিক
   useEffect(() => {
-    let timeoutId;
+    let lastActivity = Date.now(); 
+    const timeoutLimit = 420000; // ৭ মিনিট = ৪২০,০০০ ms (টেস্ট করার জন্য সাময়িকভাবে ১০০০০ বা ১০ সেকেন্ড দিয়ে দেখতে পারেন)
 
     const resetTimer = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      
-      // ৭ মিনিট = ৭ * ৬০ * ১০০০ মিলিসেকেন্ড = 420000 ms
-timeoutId = setTimeout(() => {
-  handleLogout();
-}, 420000);
+      lastActivity = Date.now();
     };
 
+    const intervalId = setInterval(async () => {
+      const currentTime = Date.now();
+      if (currentTime - lastActivity >= timeoutLimit) {
+        clearInterval(intervalId); // টাইমার ইন্টারভাল বন্ধ করা
 
-    // ইউজারের অ্যাক্টিভিটি ইভেন্ট লিসেনার যুক্ত করা
+        // প্রথমে স্ক্রিনে লাল রঙের পপআপ মেসেজটি ট্রিগার করা
+        triggerStatusOverlay("error", "You are logout please login again");
+
+        // ব্যাকএন্ড এপিআই কল করে টোকেন ক্লিয়ার করা
+        try {
+          if (email) {
+            await fetch(`${API}/logout`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email })
+            });
+          }
+        } catch (err) {
+          console.log("Auto logout backend error:", err);
+        }
+
+        // মেসেজটি দেখার জন্য ২.৫ সেকেন্ড সময় দিয়ে তারপর লগইন পেজে পাঠানো
+        setTimeout(() => {
+          localStorage.clear();
+          navigate("/login");
+        }, 2500); 
+      }
+    }, 1000); // প্রতি ১ সেকেন্ড পরপর ব্যাকগ্রাউন্ডে ইনঅ্যাক্টিভিটি চেক করবে
+
+    // ইউজারের অ্যাক্টিভিটি ডিটেক্ট করার ইভেন্ট লিসেনার
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
     window.addEventListener("click", resetTimer);
     window.addEventListener("scroll", resetTimer);
 
-    // প্রথমবার টাইমার চালু করা
-    resetTimer();
-
-    // কম্পোনেন্ট আনমাউন্ট হলে লিসেনার এবং টাইমার ক্লিয়ার করা
+    // কম্পোনেন্ট আনমাউন্ট বা বন্ধ হলে মেমরি লিক এড়াতে ক্লিয়ার করা
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      clearInterval(intervalId);
       window.removeEventListener("mousemove", resetTimer);
       window.removeEventListener("keydown", resetTimer);
       window.removeEventListener("click", resetTimer);
       window.removeEventListener("scroll", resetTimer);
     };
-  }, [email, token]);
+  }, [email]);
 
   const fileUrl = (file) => {
     if (!file) return "";
