@@ -247,13 +247,26 @@ export default function Home() {
     return (
       <div style={styles.loadingPage}>
         <div style={styles.loadingCard}>
-          <div style={styles.loadingLogo}>💚</div>
-          <h2>Save Money</h2>
-          <p>Loading your dashboard...</p>
+          {/* এখানে ইমোজি তুলে দিয়ে আপনার logo512.png লোগোটি যুক্ত করা হলো */}
+          <img 
+            src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
+            alt="Logo" 
+            style={styles.loadingLogoImg} 
+            onError={(e) => {
+              // কোনো কারণে লোগো লোড না হলে ব্যাকআপ হিসেবে টেক্সট দেখাবে
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'block';
+            }}
+          />
+          <h2 style={{ display: 'none', margin: '10px 0' }}>Save Money</h2>
+          
+          <h2 style={{ marginTop: "15px", fontSize: "20px", fontWeight: "800" }}>Save Money</h2>
+          <p style={{ color: "#94a3b8", fontSize: "14px" }}>Loading your dashboard...</p>
         </div>
       </div>
     );
   }
+
 
   return (
     <div style={styles.page}>
@@ -1353,6 +1366,16 @@ const styles = {
     fontWeight: "700",
     cursor: "pointer"
   },
+
+    // styles অবজেক্টের ভেতরে loadingCard এর নিচে বা যেকোনো জায়গায় এটি বসিয়ে দিন
+  loadingLogoImg: {
+    width: "80px",         // লোগোর চওড়া (আপনার পছন্দমতো ছোট-বড় করতে পারবেন)
+    height: "80px",        // লোগোর উচ্চতা
+    objectFit: "contain",
+    animation: "pulse 1.5s infinite ease-in-out", // লোগোটি হালকা ব্লিংক করার জন্য
+    borderRadius: "16px"   // লোগোর কোণাগুলো একটু গোল করার জন্য
+  },
+      
 
   bottomNav: {
     position: "fixed",
