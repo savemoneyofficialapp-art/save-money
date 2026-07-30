@@ -122,37 +122,43 @@ export default function Home() {
     }
   };
 
-    // ৩. ইউজার পেজে থাকা অবস্থায় ৭ মিনিট নিষ্ক্রিয় (Inactive) থাকলে পপআপ সহ অটো-লগআউট লজিক
+   // ৩. ইউজার পেজে থাকুক বা মিনিমাইজ করে রাখুক—৭ মিনিট নিষ্ক্রিয় থাকলেই অটো-লগআউট লজিক
   useEffect(() => {
-    let lastActivity = Date.now(); 
     const timeoutLimit = 420000; // ৭ মিনিট = ৪২০,০০০ ms
 
+    // যখনই ইউজার কোনো কাজ করবে, লোকাল স্টোরেজে বর্তমান সময় (Timestamp) সেভ হবে
     const resetTimer = () => {
-      lastActivity = Date.now();
+      localStorage.setItem("last_activity_time", Date.now().toString());
     };
 
-    // প্রতি ১ সেকেন্ড পরপর ব্যাকগ্রাউন্ডে ইনঅ্যাক্টিভিটি চেক করবে
+    // প্রথমবার পেজ লোড হলে একটা ইনিশিয়াল টাইম সেট করে নেওয়া
+    if (!localStorage.getItem("last_activity_time")) {
+      resetTimer();
+    }
+
+    // ব্যাকগ্রাউন্ড ট্র্যাকিংয়ের জন্য ইন্টারভাল টাইমার
     const intervalId = setInterval(async () => {
-      const currentTime = Date.now();
-      
-      // লোকাল স্টোরেজ থেকে ফ্রেশ ডাটা নেওয়া
       const currentToken = localStorage.getItem("token");
       const currentEmail = localStorage.getItem("email");
       
-      // টোকেন বা ইমেইল না থাকলে টাইমার বন্ধ করে দেওয়া (কারণ অলরেডি লগআউট অবস্থা)
       if (!currentToken || !currentEmail) {
         clearInterval(intervalId);
         return;
       }
 
-      // যদি নিষ্ক্রিয়তার সময় সীমা পার হয়ে যায়
-      if (currentTime - lastActivity >= timeoutLimit) {
-        clearInterval(intervalId); // লুপটি সাথে সাথে বন্ধ করা
+      // লোকাল স্টোরেজ থেকে লাস্ট অ্যাক্টিভিটি টাইম রিড করা
+      const lastActivityStr = localStorage.getItem("last_activity_time");
+      const lastActivity = lastActivityStr ? parseInt(lastActivityStr, 10) : Date.now();
+      const currentTime = Date.now();
 
-        // ১. স্ক্রিনে লাল রঙের পপআপ মেসেজটি দেখানো
+      // মিনিমাইজড থাকুক বা ওপেন থাকুক—আসল ঘড়ির সময় ৭ মিনিট পার হলেই ট্রিপ করবে
+      if (currentTime - lastActivity >= timeoutLimit) {
+        clearInterval(intervalId); // লুপ বন্ধ
+
+        // ১. পপআপ মেসেজ দেখানো
         triggerStatusOverlay("error", "You are logout please login again");
 
-        // ২. ব্যাকএন্ড এপিআই কল করে সেশন ডিলিট করা
+        // ২. ব্যাকএন্ড এপিআই কল
         try {
           await fetch(`${API}/logout`, {
             method: "POST",
@@ -163,7 +169,7 @@ export default function Home() {
           console.log("Auto logout backend error:", err);
         }
 
-        // ৩. ২.৫ সেকেন্ড পর লোকাল স্টোরেজ পুরোপুরি সাফ করে রিফ্রেশ করা
+        // ৩. লোকাল স্টোরেজ সাফ করে রিডাইরেক্ট ও হার্ড রিফ্রেশ করা
         setTimeout(() => {
           localStorage.clear();
           navigate("/login");
@@ -172,21 +178,38 @@ export default function Home() {
       }
     }, 1000); 
 
-    // ইউজারের অ্যাক্টিভিটি ডিটেক্ট করার জন্য গ্লোবাল ইভেন্ট লিসেনার
+    // ব্রাউজারের ট্যাব মিনিমাইজ থেকে আবার ওপেন করলেই তাৎক্ষণিকভাবে চেক করার জন্য
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const lastActivityStr = localStorage.getItem("last_activity_time");
+        const lastActivity = lastActivityStr ? parseInt(lastActivityStr, 10) : Date.now();
+        
+        // যদি মিনিমাইজড থাকা অবস্থাতেই ৭ মিনিট পার হয়ে গিয়ে থাকে, তবে সাথে সাথে লগআউট ট্রিগার হবে
+        if (Date.now() - lastActivity >= timeoutLimit) {
+          localStorage.clear();
+          navigate("/login");
+          window.location.reload();
+        }
+      }
+    };
+
+    // গ্লোবাল ইভেন্ট লিসেনার
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
     window.addEventListener("click", resetTimer);
     window.addEventListener("scroll", resetTimer);
+    document.addEventListener("visibilitychange", handleVisibilityChange); // ট্যাব ফোকাস চেঞ্জ ট্র্যাকার
 
-    // ক্লিনআপ ফাংশন: কম্পোনেন্ট আনমাউন্ট হলে লিসেনার এবং ইন্টারভাল রিমুভ করা
     return () => {
       clearInterval(intervalId);
       window.removeEventListener("mousemove", resetTimer);
       window.removeEventListener("keydown", resetTimer);
       window.removeEventListener("click", resetTimer);
       window.removeEventListener("scroll", resetTimer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [navigate]); // navigate ডিপেনডেন্সি দেওয়া হলো যাতে React রাউটার ট্র্যাক রাখতে পারে
+  }, [navigate]);
+
   
 
   const fileUrl = (file) => {
