@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import html2canvas from "html2canvas"; 
 import { API } from "../config";
 
@@ -17,8 +18,11 @@ export default function Refer() {
   const [royalty, setRoyalty] = useState({});
   const [treeData, setTreeData] = useState({});
   const [bonusModal, setBonusModal] = useState(null);
-  const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
-  const [bonusFilter, setBonusFilter] = useState("All");
+  const [treeOpen, setTreeOpen] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [referBonus, setReferBonus] = useState({});
+  const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
   
   // ট্রানসাকশান ডিটেইলস পপআপের জন্য স্টেট
   const [selectedTx, setSelectedTx] = useState(null);
@@ -31,11 +35,12 @@ export default function Refer() {
   const [teamStartDate, setTeamStartDate] = useState("");
   const [teamEndDate, setTeamEndDate] = useState("");
 
-  const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
+  const [bonusFilter, setBonusFilter] = useState("All");
+  const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
+  
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  // সাব-মোডাল স্টেট
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showTodayJoinModal, setShowTodayJoinModal] = useState(false);
 
@@ -302,10 +307,38 @@ export default function Refer() {
     : filteredBonusHistory.slice(0, 5);
 
   const bonusCards = [
-    { key: "performance", title: "Performance Bonus", amount: perfAmt, icon: "📈", color: "#c026d3", bg: "#fff0ff" },
-    { key: "team", title: "Team Bonus", amount: teamAmt, icon: "👥", color: "#2563eb", bg: "#eff6ff" },
-    { key: "royalty", title: "Royalty Bonus", amount: royAmt, icon: "👑", color: "#f97316", bg: "#fff7ed" },
-    { key: "refer", title: "Refer Bonus", amount: refAmt, icon: "🎁", color: "#16a34a", bg: "#ecfdf5" }
+    {
+      key: "performance",
+      title: "Performance Bonus",
+      amount: perfAmt,
+      icon: "📈",
+      color: "#c026d3",
+      bg: "#fff0ff"
+    },
+    {
+      key: "team",
+      title: "Team Bonus",
+      amount: teamAmt,
+      icon: "👥",
+      color: "#2563eb",
+      bg: "#eff6ff"
+    },
+    {
+      key: "royalty",
+      title: "Royalty Bonus",
+      amount: royAmt,
+      icon: "👑",
+      color: "#f97316",
+      bg: "#fff7ed"
+    },
+    {
+      key: "refer",
+      title: "Refer Bonus",
+      amount: refAmt,
+      icon: "🎁",
+      color: "#16a34a",
+      bg: "#ecfdf5"
+    }
   ];
 
   const getInitials = (name) => {
@@ -828,12 +861,26 @@ export default function Refer() {
               </div>
               
               <div style={styles.levelIncomeDenseBlockGrid}>
-                {[1, 2, 3, 4, 5].map((lvl) => (
-                  <div key={lvl} style={styles.levelMiniBlockGridItem}>
-                    <span style={styles.miniBlockLabelText}>Level {lvl}</span>
-                    <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[lvl])}</h5>
-                  </div>
-                ))}
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 1</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[1])}</h5>
+                </div>
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 2</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[2])}</h5>
+                </div>
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 3</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[3])}</h5>
+                </div>
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 4</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[4])}</h5>
+                </div>
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 5</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[5])}</h5>
+                </div>
               </div>
             </div>
           </div>
@@ -920,7 +967,6 @@ export default function Refer() {
           <div style={styles.teamDualFlexGridWrapper}>
             <div style={{ ...styles.teamFlexGridHalfBlock, flex: 1.1 }}>
               <div style={styles.verticalMetricsFlexListColumn}>
-                
                 <div style={styles.metricListingInlineRow}>
                   <div style={{display:"flex", alignItems:"center", gap:"10px"}}>
                     <span style={styles.metricIconCircleOrange}>📅</span>
@@ -934,7 +980,7 @@ export default function Refer() {
                     <span style={styles.metricIconCircleGreen}>📅</span>
                     <span style={styles.metricLabelNameText}>This Month Bonus</span>
                   </div>
-                  <span style={styles.metricBoldValueNumberText}>{money(referBonus.thisMonthBonus || 0)}</span>
+                  <span style={styles.metricBoldValueNumberText}>{money(referBonus.todayBonus || 0)}</span>
                 </div>
 
                 <div style={styles.metricListingInlineRow}>
@@ -960,7 +1006,6 @@ export default function Refer() {
                   </div>
                   <span style={styles.metricBoldValueNumberText}>{referBonus.count || 0}</span>
                 </div>
-
               </div>
             </div>
 
@@ -1090,51 +1135,54 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* ==========================================================
-          🔥 SUB-MODAL LAYER RENDERING AREA (FIXED Z-INDEX INTERPOLATION)
-          ========================================================== */}
+      {/* --- পেন্ডিং রেফারাল সাব-মডাল (Z-Index ফিক্সড) --- */}
       {showPendingModal && (
-        <Modal onClose={() => setShowPendingModal(false)}>
-          <h2 style={{ color: "#ea580c", margin: "0 0 10px 0" }}>⏳ Pending Refers List</h2>
-          <div style={{ maxHeight: "350px", overflowY: "auto", margin: "15px 0", display: "flex", flexDirection: "column", gap: 10 }}>
-            {pendingRefers.length === 0 ? (
-              <p style={{ textAlign: "center", color: "#94a3b8", padding: 20 }}>No pending refers available.</p>
-            ) : (
-              pendingRefers.map((item, idx) => (
-                <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "12px 16px", borderRadius: 14, border: "1px solid #e2e8f0" }}>
-                  <div>
-                    <b style={{ color: "#1e293b", fontSize: 15 }}>{item.name || "Save Money User"}</b><br />
-                    <small style={{ color: "#64748b" }}>{item.email}</small>
+        <div style={styles.subModalOverlay} onClick={() => setShowPendingModal(false)}>
+          <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ color: "#ea580c" }}>⏳ Pending Refers List</h2>
+            <div style={{ maxHeight: "350px", overflowY: "auto", margin: "20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+              {pendingRefers.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#94a3b8", padding: 20 }}>No pending refers available.</p>
+              ) : (
+                pendingRefers.map((item, idx) => (
+                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "12px 16px", borderRadius: 14, border: "1px solid #e2e8f0" }}>
+                    <div>
+                      <b style={{ color: "#1e293b", fontSize: 15 }}>{item.name || "Save Money User"}</b><br />
+                      <small style={{ color: "#64748b" }}>{item.email}</small>
+                    </div>
+                    <span style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, background: "#ffedd5", color: "#ea580c", fontWeight: 700 }}>Registered</span>
                   </div>
-                  <span style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, background: "#ffedd5", color: "#ea580c", fontWeight: 700 }}>Registered</span>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
+            <button style={{ ...styles.closeBtn, background: "#ea580c", color: "#fff" }} onClick={() => setShowPendingModal(false)}>Back</button>
           </div>
-          <button style={{ ...styles.closeBtn, background: "#ea580c", color: "#fff", marginTop: "10px" }} onClick={() => setShowPendingModal(false)}>Back</button>
-        </Modal>
+        </div>
       )}
 
+      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল (Z-Index ফিক্সড) --- */}
       {showTodayJoinModal && (
-        <Modal onClose={() => setShowTodayJoinModal(false)}>
-          <h2 style={{ color: "#2563eb", margin: "0 0 10px 0" }}>📊 Today's Network Joining List</h2>
-          <div style={{ maxHeight: "350px", overflowY: "auto", margin: "15px 0", display: "flex", flexDirection: "column", gap: 10 }}>
-            {todayJoinMembers.length === 0 ? (
-              <p style={{ textAlign: "center", color: "#94a3b8", padding: 20 }}>No members joined today yet.</p>
-            ) : (
-              todayJoinMembers.map((item, idx) => (
-                <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "12px 16px", borderRadius: 14, border: "1px solid #e2e8f0" }}>
-                  <div>
-                    <b style={{ color: "#1e293b", fontSize: 15 }}>{item.fromName || "Save Money User"}</b><br />
-                    <small style={{ color: "#64748b" }}>Level {item.level || "-"}</small>
+        <div style={styles.subModalOverlay} onClick={() => setShowTodayJoinModal(false)}>
+          <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ color: "#2563eb" }}>📊 Today's Network Joining List</h2>
+            <div style={{ maxHeight: "350px", overflowY: "auto", margin: "20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+              {todayJoinMembers.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#94a3b8", padding: 20 }}>No members joined today yet.</p>
+              ) : (
+                todayJoinMembers.map((item, idx) => (
+                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "12px 16px", borderRadius: 14, border: "1px solid #e2e8f0" }}>
+                    <div>
+                      <b style={{ color: "#1e293b", fontSize: 15 }}>{item.fromName || "Save Money User"}</b><br />
+                      <small style={{ color: "#64748b" }}>Level {item.level || "-"}</small>
+                    </div>
+                    <span style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, background: "#dbeafe", color: "#2563eb", fontWeight: 700 }}>Today Joined</span>
                   </div>
-                  <span style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, background: "#dbeafe", color: "#2563eb", fontWeight: 700 }}>Today Joined</span>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
+            <button style={{ ...styles.closeBtn, background: "#2563eb", color: "#fff" }} onClick={() => setShowTodayJoinModal(false)}>Back</button>
           </div>
-          <button style={{ ...styles.closeBtn, background: "#2563eb", color: "#fff", marginTop: "10px" }} onClick={() => setShowTodayJoinModal(false)}>Back</button>
-        </Modal>
+        </div>
       )}
 
     </div>
@@ -1154,7 +1202,7 @@ function NewModal({ children, onClose }) {
 
 function Modal({ children, onClose }) {
   return (
-    <div style={styles.subModalOverlayWrap} onClick={onClose}>
+    <div style={styles.modalOverlay} onClick={onClose}>
       <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
@@ -1163,12 +1211,26 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
+  /* ==========================================================
+     NEW PREMIUM STYLES (MATCHED 100% TO IMAGES 1, 2, 3)
+     ========================================================== */
   newModalOverlayOverlay: {
     position: "fixed",
     inset: 0,
     backgroundColor: "rgba(15, 23, 42, 0.45)",
     backdropFilter: "blur(12px)",
-    zIndex: 9999, // মেইন মোডাল লেয়ার লেভেল
+    zIndex: 99999, // মেইন মোডালের ইন্ডেক্স
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "20px"
+  },
+  subModalOverlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    backdropFilter: "blur(8px)",
+    zIndex: 100000, // মেইন মোডালের ওপরে সাব-মোডাল দেখানোর জন্য হায়ার ইন্ডেক্স
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -1185,28 +1247,6 @@ const styles = {
     overflowY: "auto",
     fontFamily: "system-ui, -apple-system, sans-serif",
     boxSizing: "border-box"
-  },
-  subModalOverlayWrap: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15, 23, 42, 0.6)",
-    backdropFilter: "blur(8px)",
-    zIndex: 20000, // মেইন মোডাল বাটন লেয়ারের ওপরে ১00% ফোর্সেবল টপ ভিউ ওভারলে ফিক্স
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20
-  },
-  modalBox: {
-    width: "100%",
-    maxWidth: "520px",
-    maxHeight: "85vh",
-    overflowY: "auto",
-    background: "#fff",
-    borderRadius: "24px",
-    padding: "24px",
-    boxShadow: "0 30px 90px rgba(0,0,0,0.3)",
-    fontFamily: "system-ui, -apple-system, sans-serif"
   },
   modalHeaderRow: {
     display: "flex",
@@ -1266,7 +1306,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#475569"
+    color: "#475569",
+    transition: "background 0.2s"
   },
   perfGradientBanner: {
     background: "linear-gradient(135deg, #f3e8ff 0%, #fae8ff 100%)",
@@ -1385,7 +1426,8 @@ const styles = {
     padding: "10px 16px",
     width: "fit-content",
     minWidth: "180px",
-    backgroundColor: "#ffffff"
+    backgroundColor: "#ffffff",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.02)"
   },
   modernDropdownField: {
     border: "none",
@@ -1465,9 +1507,9 @@ const styles = {
     borderRadius: "16px",
     fontSize: "16px",
     fontWeight: "700",
-    cursor: "pointer"
+    cursor: "pointer",
+    transition: "all 0.2s"
   },
-  
   teamMainAmountContainerCard: {
     background: "linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%)",
     borderRadius: "24px",
@@ -1597,14 +1639,16 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "repeat(5, 1fr)",
     gap: "12px",
-    marginBottom: "26px"
+    marginBottom: "26px",
+    flexWrap: "wrap"
   },
   levelHorizontalItemBox: {
     backgroundColor: "#ffffff",
     border: "1px solid #e2e8f0",
     borderRadius: "16px",
     padding: "14px",
-    textAlign: "left"
+    textAlign: "left",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.01)"
   },
   levelLabelNumberTitle: {
     margin: 0,
@@ -1957,7 +2001,8 @@ const styles = {
     alignItems: "center",
     padding: "16px 0",
     borderBottom: "1px solid #f1f5f9",
-    cursor: "pointer"
+    cursor: "pointer",
+    transition: "background 0.2s",
   },
   txLeftSection: { display: "flex", alignItems: "center", gap: "14px" },
   txUserAvatarImage: { width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0" },
@@ -1965,13 +2010,13 @@ const styles = {
   txMetaDetails: { display: "flex", flexDirection: "column", gap: "2px" },
   txSenderName: { margin: 0, fontSize: "16px", fontWeight: "600", color: "#1e293b" },
   txTimeStamp: { margin: 0, fontSize: "13px", color: "#64748b" },
-  txTagBadge: { display: "inline-flex", alignItems: "center", background: "#e8f5e9", color: "#2e7d32", fontSize: "11px", fontWeight: "700", padding: "3px 8px", borderRadius: "20px", marginTop: "4px" },
+  txTagBadge: { display: "inline-flex", alignItems: "center", background: "#e8f5e9", color: "#2e7d32", fontSize: "11px", fontWeight: "700", padding: "3px 8px", borderRadius: "20px", marginTop: "4px", width: "fit-content" },
   txRightSection: { textAlign: "right" },
   txAmountText: { margin: 0, fontSize: "16px", fontWeight: "700" },
   txFromBankText: { margin: 0, fontSize: "12px", color: "#64748b", marginTop: "2px" },
   upiIconSmall: { fontSize: "12px" },
   paytmBrandFooter: { display: "flex", justifyContent: "center", alignItems: "center", marginTop: "20px", paddingTop: "10px", fontSize: "14px" },
-  txDetailsCard: { width: "100%", maxWidth: "420px", background: "#fff", borderRadius: "24px", padding: "20px", boxShadow: "0 20px 50px rgba(0,0,0,0.15)" },
+  txDetailsCard: { width: "100%", maxWidth: "420px", background: "#fff", borderRadius: "24px", padding: "20px", boxShadow: "0 20px 50px rgba(0,0,0,0.15)", fontFamily: "sans-serif" },
   txDetailsHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "15px", color: "#1e293b", borderBottom: "1px solid #f1f5f9" },
   txBackArrow: { background: "none", border: "none", fontSize: "22px", cursor: "pointer", color: "#1e293b" },
   txHeaderLink: { color: "#2563eb", fontWeight: "600", fontSize: "14px", cursor: "pointer" },
@@ -1988,9 +2033,9 @@ const styles = {
   detailUserImage: { width: "44px", height: "44px", borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0" },
   txFooterMetaDetails: { background: "#f8fafc", padding: "12px", borderRadius: "12px", marginTop: "12px", fontSize: "12px", color: "#64748b", lineHeight: "1.6" },
   statusOverlayBg: { position: "fixed", inset: 0, background: "rgba(10, 15, 30, 0.45)", backdropFilter: "blur(8px)", zIndex: 100000, display: "flex", alignItems: "center", justifyContent: "center" },
-  statusOverlayCard: { background: "rgba(255, 255, 255, 0.95)", padding: "30px 40px", borderRadius: "20px", textAlign: "center", boxShadow: "0 25px 60px rgba(0, 0, 0, 0.15)", maxWidth: "360px", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" },
-  statusOverlayIcon: { width: "60px", height: "60px", borderRadius: "50%", display: "flex", alignItems: "center", justify"Content": "center", fontSize: "26px", fontWeight: "bold" },
-  statusOverlayText: { fontSize: "17px", color: "#1e293b", margin: 0, fontWeight: "700" },
+  statusOverlayCard: { background: "rgba(255, 255, 255, 0.95)", padding: "30px 40px", borderRadius: "20px", textAlign: "center", boxShadow: "0 25px 60px rgba(0, 0, 0, 0.15)", maxWidth: "360px", width: "85%", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" },
+  statusOverlayIcon: { width: "60px", height: "60px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", fontWeight: "bold" },
+  statusOverlayText: { fontSize: "17px", color: "#1e293b", margin: 0, fontWeight: "700", lineHeight: "1.5" },
   loadingPage: { minHeight: "100vh", background: "#fff7ff", display: "flex", alignItems: "center", justifyContent: "center" },
   loadingBox: { background: "white", padding: 35, borderRadius: 30, textAlign: "center", boxShadow: "0 20px 45px rgba(124,58,237,.18)" },
   loadingIcon: { fontSize: 70 },
@@ -2033,6 +2078,8 @@ const styles = {
   bottomBanner: { width: "min(1120px, 94vw)", margin: "26px auto 10px", padding: "26px 34px", borderRadius: 24, background: "linear-gradient(90deg,#fff2ff,#f5eaff)", display: "flex", alignItems: "center", gap: 24 },
   bottomGift: { fontSize: 70 },
   referNowBtn: { border: "none", borderRadius: 16, padding: "18px 48px", color: "white", background: "linear-gradient(90deg,#7b20ff,#c515e9)", fontSize: 20, fontWeight: 900, cursor: "pointer" },
+  modalOverlay: { position: "fixed", inset: 0, background: "rgba(15,23,42,.55)", backdropFilter: "blur(8px)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center", padding: 20 },
+  modalBox: { width: "min(760px, 96vw)", maxHeight: "88vh", overflowY: "auto", background: "#fff", borderRadius: 28, padding: 28, boxShadow: "0 30px 90px rgba(0,0,0,.25)" },
   closeBtn: { marginTop: 20, width: "100%", border: "none", borderRadius: 14, padding: 14, background: "#ebe9fe", color: "#4f46e5", fontWeight: 900, cursor: "pointer" },
   infoBox: { background: "#f8fafc", padding: 14, borderRadius: 14, lineHeight: 1.6 }
 };
