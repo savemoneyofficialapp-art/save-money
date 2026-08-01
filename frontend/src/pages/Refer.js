@@ -24,6 +24,9 @@ export default function Refer() {
   const [referBonus, setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
   
+  // নতুন স্টেট: পারফর্ম্যান্স রেফারাল লিস্ট পপআপের জন্য
+  const [showPerfListModal, setShowPerfListModal] = useState(false);
+
   // ট্রানসাকশান ডিটেইলস পপআপের জন্য স্টেট
   const [selectedTx, setSelectedTx] = useState(null);
 
@@ -634,99 +637,597 @@ export default function Refer() {
       )}
 
       {/* ==========================================================
-          আপডেটেড ইমেজ ২ স্ক্রিনশট অনুযায়ী: PERFORMANCE BONUS MODAL
+          IMAGE 1: PERFORMANCE BONUS MODAL (UPDATED WITH NEW BUTTON)
           ========================================================== */}
       {bonusModal === "performance" && (
-        <div style={styles.modalOverlay} onClick={() => setBonusModal(null)}>
-          <div style={{...styles.modalBox, maxWidth: "550px", padding: "20px", borderRadius: "18px"}} onClick={(e) => e.stopPropagation()}>
-            
-            {/* মোডাল হেডার */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "12px", marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "20px" }}>📊</span>
-                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#1e293b" }}>Performance Bonus</h3>
+        <NewModal onClose={() => setBonusModal(null)}>
+          <div style={styles.modalHeaderRow}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={styles.perfHeaderIconBox}>📊</div>
+              <h2 style={styles.modalMainTitle}>Performance Bonus</h2>
+            </div>
+            <button style={styles.modalRoundCloseBtn} onClick={() => setBonusModal(null)}>✕</button>
+          </div>
+
+          <div style={styles.perfGradientBanner}>
+            <div style={styles.bannerLeftInfo}>
+              <p style={styles.bannerSubText}>Total Performance Bonus</p>
+              <h1 style={styles.bannerMainAmount}>{money(performance.balance || 0)}</h1>
+            </div>
+            <div style={styles.bannerRightBadgeWrap}>
+              <span style={styles.bannerStatusLabel}>Status</span>
+              <span style={styles.bannerActiveBadge}>● Active</span>
+            </div>
+            <div style={styles.bannerGraphicIllustration}>📈</div>
+          </div>
+
+          <div style={styles.twoColumnStatsGrid}>
+            <div style={styles.subStatCardItem}>
+              <div style={styles.statIconBadgePurp}>📅</div>
+              <div>
+                <p style={styles.statCardLabelText}>This Month Bonus</p>
+                <h3 style={styles.statCardAmountVal}>{money(performance.thisMonthBonus || 0)}</h3>
               </div>
-              <button style={{ background: "#f1f5f9", border: "none", width: "28px", height: "28px", borderRadius: "50%", cursor: "pointer", color: "#64748b" }} onClick={() => setBonusModal(null)}>✕</button>
+            </div>
+            
+            <div style={{ ...styles.subStatCardItem, borderLeft: "1px solid #eef2f6" }}>
+              <div style={styles.statIconBadgeBlue}>📅</div>
+              <div>
+                <p style={styles.statCardLabelText}>Last Month Bonus</p>
+                <h3 style={styles.statCardAmountVal}>{money(performance.lastMonthBonus || 0)}</h3>
+              </div>
+            </div>
+          </div>
+
+          {/* 🌟 নতুন যোগ করা বাটন: পারফর্ম্যান্স মেম্বার লিস্ট দেখার জন্য */}
+          <div style={{ marginBottom: "20px" }}>
+            <button 
+              style={{
+                width: "100%",
+                padding: "14px 20px",
+                background: "linear-gradient(135deg, #c026d3 0%, #7c3aed 100%)",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "16px",
+                fontSize: "15px",
+                fontWeight: "700",
+                cursor: "pointer",
+                boxShadow: "0 8px 20px rgba(124, 58, 237, 0.25)"
+              }}
+              onClick={() => setShowPerfListModal(true)}
+            >
+              👥 View Performance Refer List
+            </button>
+          </div>
+
+          <div style={styles.modalHorizontalLine} />
+
+          <div style={{ marginBottom: "20px" }}>
+            <div style={styles.modernSelectInputWrapper}>
+              <span style={{ fontSize: "16px" }}>📅</span>
+              <select
+                value={performanceFilter}
+                onChange={(e) => setPerformanceFilter(e.target.value)}
+                style={styles.modernDropdownField}
+              >
+                <option value="thisMonth">This Month</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={styles.historyHeadingSection}>
+            <span style={{ fontSize: "18px", color: "#4f46e5" }}>🕒</span>
+            <h3 style={styles.historySectionTitleText}>Performance History</h3>
+          </div>
+
+          <div style={styles.modalDataLogsContainer}>
+            {filteredPerformanceHistory.length === 0 ? (
+              <div style={styles.emptyHistoryStateBox}>
+                <div style={styles.emptyStateIconPurple}>📄</div>
+                <h4 style={styles.emptyStateMainTitle}>No History</h4>
+                <p style={styles.emptyStateSubtitleText}>Your performance history will appear here</p>
+              </div>
+            ) : (
+              filteredPerformanceHistory.map((item, index) => (
+                <div key={index} style={styles.historyItemRowCard}>
+                  <div>
+                    <h4 style={styles.logUserNameText}>{item.fromName || "User Name"}</h4>
+                    <p style={styles.logDateSubText}>{new Date(item.date).toLocaleDateString("en-IN")}</p>
+                  </div>
+                  <h3 style={styles.logIncomeValueGreen}>+{money(item.amount)}</h3>
+                </div>
+              ))
+            )}
+          </div>
+
+          <button style={styles.modalFooterPrimaryBtn} onClick={() => setBonusModal(null)}>Close</button>
+        </NewModal>
+      )}
+
+      {/* ==========================================================
+          🌟 নতুন সাব-মোডাল: পারফর্ম্যান্স রেফারাল লিস্ট পপআপ
+          ========================================================== */}
+      {showPerfListModal && (
+        <div style={styles.subModalOverlay} onClick={() => setShowPerfListModal(false)}>
+          <div style={{ ...styles.modalBox, width: "min(860px, 96vw)", padding: "24px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ color: "#c026d3", margin: 0, fontSize: "22px", fontWeight: "700" }}>📈 Performance Refer List</h2>
+              <button style={styles.modalRoundCloseBtn} onClick={() => setShowPerfListModal(false)}>✕</button>
             </div>
 
-            {/* ব্যাক বাটন ও সাব টাইটেল */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-              <button style={{ background: "#f1f5f9", border: "none", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer", color: "#334155" }} onClick={() => setBonusModal(null)}>← Back</button>
-              <h4 style={{ margin: 0, fontSize: "14px", color: "#475569", fontWeight: "600" }}>Performance Refer List</h4>
-            </div>
-
-            {/* স্ক্রিনশট অনুযায়ী ডেটা টেবিল */}
-            <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: "480px" }}>
-                <thead>
-                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", textAlign: "left" }}>
-                    <th style={{ padding: "10px", color: "#475569", fontWeight: "600" }}>Name</th>
-                    <th style={{ padding: "10px", color: "#475569", fontWeight: "600" }}>Mobile</th>
-                    <th style={{ padding: "10px", color: "#475569", fontWeight: "600" }}>Next Renew Date</th>
-                    <th style={{ padding: "10px", color: "#475569", fontWeight: "600" }}>Expected Bonus</th>
-                    <th style={{ padding: "10px", color: "#475569", fontWeight: "600" }}>Status</th>
+            <div style={styles.tableWrap}>
+              <table style={styles.table}>
+                <thead style={styles.tableHeaderStyleRow}>
+                  <tr>
+                    <th style={styles.tableHeadCellText}>Name</th>
+                    <th style={styles.tableHeadCellText}>Mobile</th>
+                    <th style={styles.tableHeadCellText}>Next Renew Date</th>
+                    <th style={styles.tableHeadCellText}>Bonus Amount</th>
+                    <th style={styles.tableHeadCellText}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(!performance.history || performance.history.length === 0) ? (
+                  {history.length === 0 ? (
                     <tr>
-                      <td colSpan="5" style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
-                        No Performance Refer Found
+                      <td colSpan="5" style={{ textAlign: "center", padding: "30px", color: "#64748b" }}>
+                        No Referrals Found.
                       </td>
                     </tr>
                   ) : (
-                    performance.history.map((item, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "10px", fontWeight: "500", color: "#1e293b" }}>{item.fromName || item.name || "N/A"}</td>
-                        <td style={{ padding: "10px", color: "#64748b" }}>{item.mobile || "N/A"}</td>
-                        <td style={{ padding: "10px", color: "#64748b" }}>{item.nextRenewDate || "N/A"}</td>
-                        <td style={{ padding: "10px", fontWeight: "bold", color: "#c026d3" }}>{money(item.amount || item.expectedBonus || 0)}</td>
-                        <td style={{ padding: "10px" }}>
-                          <span style={{
-                            fontSize: "11px",
-                            padding: "4px 8px",
-                            borderRadius: "12px",
-                            fontWeight: "600",
-                            background: String(item.status).toLowerCase() === "active" || String(item.status).toLowerCase() === "bonus received" ? "#dcfce7" : "#fee2e2",
-                            color: String(item.status).toLowerCase() === "active" || String(item.status).toLowerCase() === "bonus received" ? "#16a34a" : "#ef4444"
-                          }}>
-                            {item.status || "Renew Due"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
+                    history.map((member, idx) => {
+                      // ব্যাকএন্ড activeInvestments থেকে চেক করে স্ট্যাটাস ও রিনিউ ডেট সেট করা
+                      const nextRenewStr = member.nextRenewDate 
+                        ? new Date(member.nextRenewDate).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' }) 
+                        : "No Plan Active";
+
+                      // স্ট্যাটাস লজিক নির্ধারণ (Overdue বা Inactive হলে Renew Due, অন্যথায় Received)
+                      const isOverdue = member.nextRenewDate && new Date() > new Date(member.nextRenewDate);
+                      const isRenewDue = isOverdue || member.status === "Inactive";
+                      
+                      const statusText = isRenewDue ? "Renew Due" : "Bonus Received";
+                      const statusColor = isRenewDue ? "#ea580c" : "#16a34a";
+                      const statusBg = isRenewDue ? "#fff7ed" : "#f0fdf4";
+
+                      // রেফারড পারফর্ম্যান্স বোনাস অ্যামাউন্ট (উক্ত ইউজারের ইনভেস্ট টেনুর অনুযায়ী যা সেট করা আছে)
+                      const bonusAmount = member.performanceBonus || member.bonusAmount || 0;
+
+                      return (
+                        <tr key={idx} style={styles.tableBodyRowItem}>
+                          <td style={styles.tableDataCellText}>
+                            <b>{member.name || "User"}</b><br/>
+                            <small style={{ color: "#64748b" }}>{member.email}</small>
+                          </td>
+                          <td style={styles.tableDataCellText}>{member.mobile || member.phone || "N/A"}</td>
+                          <td style={styles.tableDataCellText}>
+                            <span style={{ fontWeight: "600", color: "#334155" }}>{nextRenewStr}</span>
+                          </td>
+                          <td style={{ ...styles.tableDataCellText, fontWeight: "bold", color: "#c026d3" }}>
+                            {money(bonusAmount)}
+                          </td>
+                          <td style={styles.tableDataCellText}>
+                            <span style={{ 
+                              fontSize: "12px", 
+                              padding: "6px 12px", 
+                              borderRadius: "20px", 
+                              background: statusBg, 
+                              color: statusColor, 
+                              fontWeight: "700",
+                              display: "inline-block"
+                            }}>
+                              {statusText}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
             </div>
 
-            {/* ক্লোজ বাটন */}
-            <button style={{ marginTop: "16px", width: "100%", padding: "12px", background: "#0f172a", color: "#ffffff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }} onClick={() => setBonusModal(null)}>
-              Close
-            </button>
+            <button style={{ ...styles.closeBtn, background: "#c026d3", color: "#fff", marginTop: "20px" }} onClick={() => setShowPerfListModal(false)}>Back</button>
           </div>
         </div>
       )}
 
-      {/* --- Team Modal --- */}
+      {/* ==========================================================
+          IMAGE 2: TEAM BONUS MODAL
+          ========================================================== */}
       {bonusModal === "team" && (
-        <Modal onClose={() => setBonusModal(null)}>
-          <h2>👥 Team Bonus</h2>
-          <h1>{money(team.balance)}</h1>
-          <p>Today's Join Count: <b>{team.todayJoin || 0}</b></p>
-          <p>Total Business: <b>{money(team.totalBusiness)}</b></p>
-          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </Modal>
+        <NewModal onClose={() => setBonusModal(null)}>
+          <div style={styles.modalHeaderRow}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={styles.teamHeaderIconBox}>👥</div>
+              <div>
+                <h2 style={styles.modalMainTitle}>Team Bonus</h2>
+                <p style={styles.modalSubTitleDescription}>View your team's performance and earnings</p>
+              </div>
+            </div>
+            <button style={styles.modalRoundCloseBtn} onClick={() => setBonusModal(null)}>✕</button>
+          </div>
+
+          <div style={styles.teamMainAmountContainerCard}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <h1 style={styles.teamBigAmountHeading}>{money(team.balance || 0)}</h1>
+              <p style={styles.teamAmountLabelCaptionText}>Total Team Bonus</p>
+            </div>
+            <div style={styles.teamStatusBadgeFlexBox}>
+              <span style={{ fontSize: "12px", color: "#64748b" }}>Status</span>
+              <span style={styles.teamActiveBadgeFill}>● Active</span>
+            </div>
+            <div style={styles.teamGraphicIllustrationRight}>👥</div>
+          </div>
+
+          <div style={styles.teamDualFlexGridWrapper}>
+            <div style={styles.teamFlexGridHalfBlock}>
+              <div style={styles.cardHeaderHeadingRow}>
+                <span>📊</span>
+                <h4 style={styles.cardBlockTitleInlineText}>Today's Report</h4>
+              </div>
+              <p style={styles.reportInsideLabelSubText}>Today's Income</p>
+              <h3 style={styles.reportInsideValueBoldNumber}>{money(team.todayBonus || 0)}</h3>
+              
+              <button style={styles.networkJoinBadgeLinkBtn} onClick={() => setShowTodayJoinModal(true)}>
+                📈 Network Joining Today: {team.todayJoin || 0} (View All)
+              </button>
+            </div>
+
+            <div style={styles.teamFlexGridHalfBlock}>
+              <div style={styles.cardHeaderHeadingRow}>
+                <span>🕒</span>
+                <h4 style={styles.cardBlockTitleInlineText}>Select Time Frame</h4>
+              </div>
+              
+              <div style={{ ...styles.modernSelectInputWrapper, marginTop: "15px" }}>
+                <span>🌐</span>
+                <select
+                  value={teamTimeFilter}
+                  onChange={(e) => setTeamTimeFilter(e.target.value)}
+                  style={styles.modernDropdownField}
+                >
+                  <option value="allTime">All Time</option>
+                  <option value="thisMonth">This Month</option>
+                  <option value="lastMonth">Last Month</option>
+                  <option value="customRange">Select Date Range</option>
+                </select>
+              </div>
+
+              {teamTimeFilter === "customRange" && (
+                <div style={styles.customDateInputsFlexRow}>
+                  <input 
+                    type="date" 
+                    value={teamStartDate}
+                    onChange={(e) => setTeamStartDate(e.target.value)}
+                    style={styles.datePickerInputField}
+                  />
+                  <input 
+                    type="date" 
+                    value={teamEndDate}
+                    onChange={(e) => setTeamEndDate(e.target.value)}
+                    style={styles.datePickerInputField}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div style={styles.sectionHeadingRowFlex}>
+            <span>👥</span>
+            <h3 style={styles.sectionTitleBlockHeader}>Total Level Members ({teamTimeFilter === "allTime" ? "All Time" : "Filtered"})</h3>
+          </div>
+
+          <div style={styles.levelHorizontalFlexTrack}>
+            <div style={{ ...styles.levelHorizontalItemBox, borderLeft: "4px solid #16a34a", background: "#f0fdf4" }}>
+              <h4 style={{ ...styles.levelLabelNumberTitle, color: "#16a34a" }}>L1</h4>
+              <p style={styles.levelUserCountValueText}>Users: {dynamicCounts[1]}</p>
+            </div>
+            <div style={styles.levelHorizontalItemBox}>
+              <h4 style={styles.levelLabelNumberTitle}>L2</h4>
+              <p style={styles.levelUserCountValueText}>Users: {dynamicCounts[2]}</p>
+            </div>
+            <div style={styles.levelHorizontalItemBox}>
+              <h4 style={styles.levelLabelNumberTitle}>L3</h4>
+              <p style={styles.levelUserCountValueText}>Users: {dynamicCounts[3]}</p>
+            </div>
+            <div style={styles.levelHorizontalItemBox}>
+              <h4 style={styles.levelLabelNumberTitle}>L4</h4>
+              <p style={styles.levelUserCountValueText}>Users: {dynamicCounts[4]}</p>
+            </div>
+            <div style={styles.levelHorizontalItemBox}>
+              <h4 style={styles.levelLabelNumberTitle}>L5</h4>
+              <p style={styles.levelUserCountValueText}>Users: {dynamicCounts[5]}</p>
+            </div>
+          </div>
+
+          <div style={styles.teamDualFlexGridWrapper}>
+            <div style={styles.teamFlexGridHalfBlock}>
+              <div style={styles.cardHeaderHeadingRow}>
+                <span>⚙️</span>
+                <h4 style={styles.cardBlockTitleInlineText}>Income Summary</h4>
+              </div>
+              
+              <div style={styles.summaryListItemsFlexColumn}>
+                <div style={styles.summaryTableRowLine}>
+                  <span style={styles.summaryRowLabelCell}><span style={{marginRight:6}}>🔵</span> Selected Filter Total Income</span>
+                  <span style={styles.summaryRowValueCellBlue}>{teamTimeFilter === "allTime" ? money(team.balance) : money(selectedFilteredTotalIncome)}</span>
+                </div>
+                <div style={styles.summaryTableRowLine}>
+                  <span style={styles.summaryRowLabelCell}><span style={{marginRight:6}}>🟢</span> This Month Default Income</span>
+                  <span style={styles.summaryRowValueCellDark}>{money(team.thisMonthBonus)}</span>
+                </div>
+                <div style={styles.summaryTableRowLine}>
+                  <span style={styles.summaryRowLabelCell}><span style={{marginRight:6}}>🟣</span> Last Month Default Income</span>
+                  <span style={styles.summaryRowValueCellDark}>{money(team.lastMonthBonus)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.teamFlexGridHalfBlock}>
+              <div style={styles.cardHeaderHeadingRow}>
+                <span>📊</span>
+                <h4 style={styles.cardBlockTitleInlineText}>Level Income ({teamTimeFilter === "allTime" ? "All Time" : "Filtered"})</h4>
+              </div>
+              
+              <div style={styles.levelIncomeDenseBlockGrid}>
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 1</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[1])}</h5>
+                </div>
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 2</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[2])}</h5>
+                </div>
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 3</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[3])}</h5>
+                </div>
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 4</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[4])}</h5>
+                </div>
+                <div style={styles.levelMiniBlockGridItem}>
+                  <span style={styles.miniBlockLabelText}>Level 5</span>
+                  <h5 style={styles.miniBlockValueAmountText}>{money(dynamicIncomes[5])}</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.sectionHeadingRowFlex}>
+            <span>📄</span>
+            <h3 style={styles.sectionTitleBlockHeader}>Team Bonus History</h3>
+          </div>
+
+          <div style={styles.modalDataLogsContainer}>
+            {selectedFilteredHistory.length === 0 ? (
+              <div style={styles.emptyHistoryStateBox}>
+                <div style={styles.emptyStateIconBlue}>📄</div>
+                <h4 style={styles.emptyStateMainTitle}>No Team Bonus History Found</h4>
+              </div>
+            ) : (
+              <div style={styles.tableWrap}>
+                <table style={styles.table}>
+                  <thead style={styles.tableHeaderStyleRow}>
+                    <tr>
+                      <th style={styles.tableHeadCellText}>User</th>
+                      <th style={styles.tableHeadCellText}>Upline Name</th>
+                      <th style={styles.tableHeadCellText}>Level</th>
+                      <th style={styles.tableHeadCellText}>You Earned</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedFilteredHistory.map((item, index) => (
+                      <tr key={index} style={styles.tableBodyRowItem}>
+                        <td style={styles.tableDataCellText}><b>{item.fromName || "-"}</b><br/><small style={{color:"#64748b"}}>{item.fromEmail}</small></td>
+                        <td style={styles.tableDataCellText}>{item.uplineName || "-"}</td>
+                        <td style={styles.tableDataCellText}><span style={styles.tableLevelBadgeTag}>L{item.level || "-"}</span></td>
+                        <td style={{ ...styles.tableDataCellText, fontWeight: "bold", color: "#2563eb" }}>{money(item.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <button style={styles.modalFooterPrimaryBtn} onClick={() => setBonusModal(null)}>Close</button>
+        </NewModal>
       )}
 
-      {/* --- Refer Modal --- */}
+      {/* ==========================================================
+          IMAGE 3: REFER BONUS MODAL
+          ========================================================== */}
       {bonusModal === "refer" && (
-        <Modal onClose={() => setBonusModal(null)}>
-          <h2>🎁 Refer Bonus</h2>
-          <h1>{money(referBonus.totalBonus)}</h1>
-          <p>Total Active Invites: <b>{referBonus.count || 0}</b></p>
-          <button style={styles.closeBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </Modal>
+        <NewModal onClose={() => setBonusModal(null)}>
+          <div style={styles.modalHeaderRow}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={styles.referGiftIconBox}>🎁</div>
+              <div>
+                <h2 style={styles.modalMainTitle}>Refer Bonus</h2>
+                <p style={styles.modalSubTitleDescription}>Earn bonus from your direct referrals</p>
+              </div>
+            </div>
+            <button style={styles.modalRoundCloseBtn} onClick={() => setBonusModal(null)}>✕</button>
+          </div>
+
+          <div style={styles.referSuccessCalloutAlertBanner}>
+            <span style={styles.alertSuccessCheckIcon}>✓</span>
+            <p style={styles.alertSuccessBannerInlineMessageText}>Congratulations! Every direct user's first investment gives you Refer Bonus.</p>
+          </div>
+
+          <div style={styles.teamDualFlexGridWrapper}>
+            <div style={styles.referOrangeBannerCardContainer}>
+              <p style={styles.orangeBannerSubTitleLabel}>Total Refer Bonus</p>
+              <h1 style={styles.orangeBannerBigAmountDisplay}>{money(referBonus.totalBonus || 0)}</h1>
+              <div style={styles.orangeBannerGraphicAssetIllustration}>💰</div>
+            </div>
+
+            <div style={styles.referPendingActionFlexCenterBlock}>
+              <button 
+                style={styles.referOrangePendingArrowActionBtn}
+                onClick={() => setShowPendingModal(true)}
+              >
+                <span style={{marginRight:8}}>⏳</span> View Pending Refers ({pendingRefers.length}) <span style={{marginLeft:"auto", fontWeight:"bold"}}>˃</span>
+              </button>
+            </div>
+          </div>
+
+          <div style={styles.teamDualFlexGridWrapper}>
+            <div style={{ ...styles.teamFlexGridHalfBlock, flex: 1.1 }}>
+              <div style={styles.verticalMetricsFlexListColumn}>
+                <div style={styles.metricListingInlineRow}>
+                  <div style={{display:"flex", alignItems:"center", gap:"10px"}}>
+                    <span style={styles.metricIconCircleOrange}>📅</span>
+                    <span style={styles.metricLabelNameText}>Today's Bonus</span>
+                  </div>
+                  <span style={styles.metricBoldValueNumberText}>{money(referBonus.todayBonus || 0)}</span>
+                </div>
+
+                <div style={styles.metricListingInlineRow}>
+                  <div style={{display:"flex", alignItems:"center", gap:"10px"}}>
+                    <span style={styles.metricIconCircleGreen}>📅</span>
+                    <span style={styles.metricLabelNameText}>This Month Bonus</span>
+                  </div>
+                  <span style={styles.metricBoldValueNumberText}>{money(referBonus.todayBonus || 0)}</span>
+                </div>
+
+                <div style={styles.metricListingInlineRow}>
+                  <div style={{display:"flex", alignItems:"center", gap:"10px"}}>
+                    <span style={styles.metricIconCircleBlue}>📅</span>
+                    <span style={styles.metricLabelNameText}>Last Month Bonus</span>
+                  </div>
+                  <span style={styles.metricBoldValueNumberText}>{money(referBonus.lastMonthBonus || 0)}</span>
+                </div>
+
+                <div style={styles.metricListingInlineRow}>
+                  <div style={{display:"flex", alignItems:"center", gap:"10px"}}>
+                    <span style={styles.metricIconCirclePurp}>💼</span>
+                    <span style={styles.metricLabelNameText}>Total Refer Bonus</span>
+                  </div>
+                  <span style={styles.metricBoldValueNumberText}>{money(referBonus.totalBonus || 0)}</span>
+                </div>
+
+                <div style={{ ...styles.metricListingInlineRow, border: "none", paddingBottom: 0 }}>
+                  <div style={{display:"flex", alignItems:"center", gap:"10px"}}>
+                    <span style={styles.metricIconCircleOrange}>👥</span>
+                    <span style={styles.metricLabelNameText}>Eligible Refers</span>
+                  </div>
+                  <span style={styles.metricBoldValueNumberText}>{referBonus.count || 0}</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ ...styles.teamFlexGridHalfBlock, flex: 0.9, display: "flex", flexDirection: "column", gap: "15px", background: "none", border: "none", padding: 0, boxShadow: "none" }}>
+              <div style={styles.tripleSquareBadgesFlexRowTrack}>
+                <div style={styles.squareStatusBadgeMetricsItemBox}>
+                  <div style={styles.squareIconTrackBlue}>👥</div>
+                  <p style={styles.squareBadgeLabelCaption}>Total Direct</p>
+                  <h3 style={styles.squareBadgeValueNumberHeading}>{history.length}</h3>
+                </div>
+
+                <div style={styles.squareStatusBadgeMetricsItemBox}>
+                  <div style={styles.squareIconTrackGreen}>👤</div>
+                  <p style={styles.squareBadgeLabelCaption}>Active Refers</p>
+                  <h3 style={styles.squareBadgeValueNumberHeading}>{history.filter((x) => x.status === "Active").length}</h3>
+                </div>
+
+                <div style={styles.squareStatusBadgeMetricsItemBox}>
+                  <div style={styles.squareIconTrackRed}>👤</div>
+                  <p style={styles.squareBadgeLabelCaption}>Inactive</p>
+                  <h3 style={styles.squareBadgeValueNumberHeading}>{history.filter((x) => x.status === "Inactive").length}</h3>
+                </div>
+              </div>
+
+              <div style={styles.modernSelectInputWrapper}>
+                <span style={{ fontSize: "16px" }}>📅</span>
+                <select
+                  style={styles.modernDropdownField}
+                  value={selectedMonth}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSelectedMonth(value);
+                    let targetMonth = "";
+                    let targetYear = new Date().getFullYear();
+
+                    if (value === "thisMonth") {
+                      targetMonth = "";
+                    } else if (value === "lastMonth") {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() - 1);
+                      targetMonth = String(d.getMonth() + 1);
+                      targetYear = d.getFullYear();
+                    } else {
+                      targetMonth = value;
+                    }
+                    loadReferData(targetMonth, targetYear);
+                  }}
+                >
+                  <option value="thisMonth">This Month</option>
+                  <option value="lastMonth">Last Month</option>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('en-US', { month: 'long' })}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.historyHeadingSection}>
+            <span style={{ fontSize: "18px", color: "#f97316" }}>🕒</span>
+            <h3 style={styles.historySectionTitleText}>Bonus History</h3>
+          </div>
+
+          <div style={styles.modalDataLogsContainer}>
+            <table style={styles.table}>
+              <thead style={styles.tableHeaderStyleRow}>
+                <tr>
+                  <th style={styles.tableHeadCellText}>User</th>
+                  <th style={styles.tableHeadCellText}>Date</th>
+                  <th style={styles.tableHeadCellText}>Level</th>
+                  <th style={styles.tableHeadCellText}>Bonus</th>
+                  <th style={styles.tableHeadCellText}>Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(referBonus.history || []).length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: "center", padding: "30px", color: "#64748b" }}>
+                      No referral history found.
+                    </td>
+                  </tr>
+                ) : (
+                  (referBonus.history || []).map((x, i) => {
+                    const historyPhotoUrl = getDynamicUserPhoto(x);
+                    return (
+                      <tr key={i} style={styles.tableBodyRowItem}>
+                        <td style={{ ...styles.tableDataCellText, display: "flex", alignItems: "center", gap: "10px" }}>
+                          {historyPhotoUrl ? (
+                            <img src={historyPhotoUrl} style={styles.tableAvatarIconRoundPhoto} alt="user" />
+                          ) : (
+                            <span style={styles.tableInitialPlaceholderBadgeCircle}>{x.fromName ? x.fromName[0] : "S"}</span>
+                          )}
+                          <div>
+                            <b>{x.fromName || "User"}</b>
+                            <br />
+                            <small style={{ color: "#64748b" }}>{x.fromEmail}</small>
+                          </div>
+                        </td>
+                        <td style={styles.tableDataCellText}>{x.date ? new Date(x.date).toLocaleDateString("en-IN") : "-"}</td>
+                        <td style={styles.tableDataCellText}><span style={styles.tableLevelBadgeTag}>L{x.level || 1}</span></td>
+                        <td style={{ ...styles.tableDataCellText, fontWeight: "bold", color: "#16a34a" }}>{money(x.amount)}</td>
+                        <td style={styles.tableDataCellText}><small style={{ background: "#f1f5f9", padding: "4px 8px", borderRadius: "6px" }}>{x.note || "First Investment"}</small></td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <button style={styles.referModalFooterCloseButton} onClick={() => setBonusModal(null)}>Close</button>
+        </NewModal>
       )}
 
       {/* --- Royalty Modal --- */}
@@ -798,6 +1299,17 @@ export default function Refer() {
   );
 }
 
+// 100% সেম মডাল উইন্ডো ফ্রেম
+function NewModal({ children, onClose }) {
+  return (
+    <div style={styles.newModalOverlayOverlay} onClick={onClose}>
+      <div style={styles.newModalContentWindowBox} onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function Modal({ children, onClose }) {
   return (
     <div style={styles.modalOverlay} onClick={onClose}>
@@ -809,17 +1321,776 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
-  subModalOverlay: {
+  /* স্টাইল অবজেক্ট আগের মতোই অপরিবর্তিত রয়েছে */
+  newModalOverlayOverlay: {
     position: "fixed",
     inset: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.6)",
-    backdropFilter: "blur(8px)",
-    zIndex: 100000, 
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    backdropFilter: "blur(12px)",
+    zIndex: 99999,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     padding: "20px"
   },
+  subModalOverlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    backdropFilter: "blur(8px)",
+    zIndex: 100000,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "20px"
+  },
+  newModalContentWindowBox: {
+    width: "100%",
+    maxWidth: "920px",
+    maxHeight: "92vh",
+    backgroundColor: "#ffffff",
+    borderRadius: "32px",
+    padding: "30px",
+    boxShadow: "0 25px 70px -10px rgba(0, 0, 0, 0.12)",
+    overflowY: "auto",
+    fontFamily: "system-ui, -apple-system, sans-serif",
+    boxSizing: "border-box"
+  },
+  modalHeaderRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "24px"
+  },
+  perfHeaderIconBox: {
+    width: "48px",
+    height: "48px",
+    backgroundColor: "#f3e8ff",
+    borderRadius: "14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "22px"
+  },
+  teamHeaderIconBox: {
+    width: "48px",
+    height: "48px",
+    backgroundColor: "#dbeafe",
+    borderRadius: "14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "22px"
+  },
+  referGiftIconBox: {
+    width: "54px",
+    height: "54px",
+    backgroundColor: "#fff7ed",
+    borderRadius: "16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "26px"
+  },
+  modalMainTitle: {
+    margin: 0,
+    fontSize: "24px",
+    fontWeight: "700",
+    color: "#0f172a"
+  },
+  modalSubTitleDescription: {
+    margin: "2px 0 0 0",
+    fontSize: "14px",
+    color: "#64748b"
+  },
+  modalRoundCloseBtn: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    backgroundColor: "#f1f5f9",
+    border: "none",
+    fontSize: "14px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#475569",
+    transition: "background 0.2s"
+  },
+  perfGradientBanner: {
+    background: "linear-gradient(135deg, #f3e8ff 0%, #fae8ff 100%)",
+    borderRadius: "24px",
+    padding: "30px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    position: "relative",
+    overflow: "hidden",
+    marginBottom: "24px"
+  },
+  bannerLeftInfo: {
+    position: "relative",
+    zIndex: 2
+  },
+  bannerSubText: {
+    margin: 0,
+    fontSize: "15px",
+    color: "#6b21a8",
+    fontWeight: "500"
+  },
+  bannerMainAmount: {
+    margin: "6px 0 0 0",
+    fontSize: "42px",
+    fontWeight: "800",
+    color: "#2e1065"
+  },
+  bannerRightBadgeWrap: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: "6px",
+    position: "relative",
+    zIndex: 2
+  },
+  bannerStatusLabel: {
+    fontSize: "13px",
+    color: "#6b21a8",
+    fontWeight: "500"
+  },
+  bannerActiveBadge: {
+    backgroundColor: "#dcfce7",
+    color: "#16a34a",
+    padding: "6px 14px",
+    borderRadius: "20px",
+    fontSize: "14px",
+    fontWeight: "600"
+  },
+  bannerGraphicIllustration: {
+    position: "absolute",
+    right: "20%",
+    bottom: "-10px",
+    fontSize: "90px",
+    opacity: 0.12,
+    userSelect: "none"
+  },
+  twoColumnStatsGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    backgroundColor: "#f8fafc",
+    borderRadius: "20px",
+    padding: "20px",
+    marginBottom: "24px",
+    border: "1px solid #f1f5f9"
+  },
+  subStatCardItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    padding: "0 20px"
+  },
+  statIconBadgePurp: {
+    width: "44px",
+    height: "44px",
+    backgroundColor: "#f5e6ff",
+    borderRadius: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "18px"
+  },
+  statIconBadgeBlue: {
+    width: "44px",
+    height: "44px",
+    backgroundColor: "#e6f0ff",
+    borderRadius: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "18px"
+  },
+  statCardLabelText: {
+    margin: 0,
+    fontSize: "13px",
+    color: "#64748b"
+  },
+  statCardAmountVal: {
+    margin: "2px 0 0 0",
+    fontSize: "20px",
+    fontWeight: "700",
+    color: "#0f172a"
+  },
+  modalHorizontalLine: {
+    height: "1px",
+    backgroundColor: "#f1f5f9",
+    width: "100%",
+    marginBottom: "24px"
+  },
+  modernSelectInputWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "14px",
+    padding: "10px 16px",
+    width: "fit-content",
+    minWidth: "180px",
+    backgroundColor: "#ffffff",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.02)"
+  },
+  modernDropdownField: {
+    border: "none",
+    outline: "none",
+    fontSize: "15px",
+    fontWeight: "600",
+    color: "#334155",
+    width: "100%",
+    cursor: "pointer",
+    backgroundColor: "transparent"
+  },
+  historyHeadingSection: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginBottom: "16px"
+  },
+  historySectionTitleText: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#1e293b"
+  },
+  modalDataLogsContainer: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "20px",
+    overflow: "hidden",
+    backgroundColor: "#ffffff",
+    marginBottom: "20px"
+  },
+  emptyHistoryStateBox: {
+    padding: "50px 20px",
+    textAlign: "center",
+    backgroundColor: "#f8fafc"
+  },
+  emptyStateIconPurple: {
+    width: "54px",
+    height: "54px",
+    backgroundColor: "#f3e8ff",
+    color: "#a855f7",
+    borderRadius: "50%",
+    margin: "0 auto 14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "22px"
+  },
+  emptyStateIconBlue: {
+    width: "54px",
+    height: "54px",
+    backgroundColor: "#e0f2fe",
+    color: "#0284c7",
+    borderRadius: "50%",
+    margin: "0 auto 14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "22px"
+  },
+  emptyStateMainTitle: {
+    margin: 0,
+    fontSize: "16px",
+    fontWeight: "700",
+    color: "#334155"
+  },
+  emptyStateSubtitleText: {
+    margin: "4px 0 0 0",
+    fontSize: "13px",
+    color: "#94a3b8"
+  },
+  modalFooterPrimaryBtn: {
+    width: "100%",
+    padding: "15px",
+    backgroundColor: "#ebe9fe",
+    color: "#4f46e5",
+    border: "none",
+    borderRadius: "16px",
+    fontSize: "16px",
+    fontWeight: "700",
+    cursor: "pointer",
+    transition: "all 0.2s"
+  },
+  teamMainAmountContainerCard: {
+    background: "linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%)",
+    borderRadius: "24px",
+    padding: "30px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    position: "relative",
+    overflow: "hidden",
+    marginBottom: "24px",
+    border: "1px solid #dbeafe"
+  },
+  teamBigAmountHeading: {
+    margin: 0,
+    fontSize: "44px",
+    fontWeight: "800",
+    color: "#1e3a8a"
+  },
+  teamAmountLabelCaptionText: {
+    margin: "4px 0 0 0",
+    fontSize: "14px",
+    color: "#1e40af",
+    fontWeight: "500"
+  },
+  teamStatusBadgeFlexBox: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: "4px",
+    zIndex: 2
+  },
+  teamActiveBadgeFill: {
+    backgroundColor: "#dcfce7",
+    color: "#15803d",
+    padding: "6px 14px",
+    borderRadius: "20px",
+    fontSize: "13px",
+    fontWeight: "700"
+  },
+  teamGraphicIllustrationRight: {
+    position: "absolute",
+    right: "15%",
+    bottom: "-20px",
+    fontSize: "110px",
+    opacity: 0.08,
+    userSelect: "none"
+  },
+  teamDualFlexGridWrapper: {
+    display: "flex",
+    gap: "20px",
+    marginBottom: "24px",
+    flexWrap: "wrap"
+  },
+  teamFlexGridHalfBlock: {
+    flex: 1,
+    minWidth: "280px",
+    backgroundColor: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "22px",
+    padding: "20px",
+    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)"
+  },
+  cardHeaderHeadingRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    paddingBottom: "12px",
+    borderBottom: "1px solid #f1f5f9",
+    marginBottom: "14px"
+  },
+  cardBlockTitleInlineText: {
+    margin: 0,
+    fontSize: "15px",
+    fontWeight: "700",
+    color: "#1e293b"
+  },
+  reportInsideLabelSubText: {
+    margin: 0,
+    fontSize: "13px",
+    color: "#64748b"
+  },
+  reportInsideValueBoldNumber: {
+    margin: "4px 0 12px 0",
+    fontSize: "26px",
+    fontWeight: "800",
+    color: "#0f172a"
+  },
+  networkJoinBadgeLinkBtn: {
+    width: "100%",
+    padding: "10px 12px",
+    backgroundColor: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    color: "#16a34a",
+    borderRadius: "12px",
+    fontSize: "13px",
+    fontWeight: "600",
+    textAlign: "left",
+    cursor: "pointer"
+  },
+  customDateInputsFlexRow: {
+    display: "flex",
+    gap: "8px",
+    marginTop: "10px"
+  },
+  datePickerInputField: {
+    flex: 1,
+    border: "1px solid #e2e8f0",
+    padding: "8px",
+    borderRadius: "10px",
+    fontSize: "12px",
+    outline: "none"
+  },
+  sectionHeadingRowFlex: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginBottom: "16px",
+    marginTop: "8px"
+  },
+  sectionTitleBlockHeader: {
+    margin: 0,
+    fontSize: "17px",
+    fontWeight: "700",
+    color: "#1e293b"
+  },
+  levelHorizontalFlexTrack: {
+    display: "grid",
+    gridTemplateColumns: "repeat(5, 1fr)",
+    gap: "12px",
+    marginBottom: "26px",
+    flexWrap: "wrap"
+  },
+  levelHorizontalItemBox: {
+    backgroundColor: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "16px",
+    padding: "14px",
+    textAlign: "left",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.01)"
+  },
+  levelLabelNumberTitle: {
+    margin: 0,
+    fontSize: "16px",
+    fontWeight: "850",
+    color: "#475569"
+  },
+  levelUserCountValueText: {
+    margin: "4px 0 0 0",
+    fontSize: "13px",
+    color: "#64748b",
+    fontWeight: "500"
+  },
+  summaryListItemsFlexColumn: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    marginTop: "6px"
+  },
+  summaryTableRowLine: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: "13px"
+  },
+  summaryRowLabelCell: {
+    color: "#475569",
+    fontWeight: "500",
+    display: "flex",
+    alignItems: "center"
+  },
+  summaryRowValueCellBlue: {
+    fontWeight: "700",
+    color: "#2563eb",
+    fontSize: "14px"
+  },
+  summaryRowValueCellDark: {
+    fontWeight: "600",
+    color: "#1e293b"
+  },
+  levelIncomeDenseBlockGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px"
+  },
+  levelMiniBlockGridItem: {
+    backgroundColor: "#f8fafc",
+    padding: "10px 14px",
+    borderRadius: "12px",
+    border: "1px solid #f1f5f9"
+  },
+  miniBlockLabelText: {
+    fontSize: "12px",
+    color: "#64748b",
+    display: "block"
+  },
+  miniBlockValueAmountText: {
+    margin: "2px 0 0 0",
+    fontSize: "14px",
+    fontWeight: "700",
+    color: "#1e293b"
+  },
+  tableHeaderStyleRow: {
+    backgroundColor: "#f8fafc",
+    borderBottom: "1px solid #e2e8f0"
+  },
+  tableHeadCellText: {
+    padding: "12px 16px",
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#475569"
+  },
+  tableBodyRowItem: {
+    borderBottom: "1px solid #f1f5f9"
+  },
+  tableDataCellText: {
+    padding: "14px 16px",
+    fontSize: "14px",
+    color: "#1e293b"
+  },
+  tableLevelBadgeTag: {
+    backgroundColor: "#f1f5f9",
+    padding: "4px 10px",
+    borderRadius: "8px",
+    fontWeight: "600",
+    fontSize: "12px"
+  },
+  referSuccessCalloutAlertBanner: {
+    backgroundColor: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: "16px",
+    padding: "14px 20px",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginBottom: "24px"
+  },
+  alertSuccessCheckIcon: {
+    width: "22px",
+    height: "22px",
+    borderRadius: "50%",
+    backgroundColor: "#16a34a",
+    color: "#ffffff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "12px",
+    fontWeight: "bold"
+  },
+  alertSuccessBannerInlineMessageText: {
+    margin: 0,
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#15803d"
+  },
+  referOrangeBannerCardContainer: {
+    flex: 1.1,
+    minWidth: "280px",
+    background: "linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%)",
+    border: "1px solid orange",
+    borderRadius: "24px",
+    padding: "26px 30px",
+    position: "relative",
+    overflow: "hidden"
+  },
+  orangeBannerSubTitleLabel: {
+    margin: 0,
+    fontSize: "14px",
+    color: "#c2410c",
+    fontWeight: "600"
+  },
+  orangeBannerBigAmountDisplay: {
+    margin: "4px 0 0 0",
+    fontSize: "38px",
+    fontWeight: "900",
+    color: "#7c2d12"
+  },
+  orangeBannerGraphicAssetIllustration: {
+    position: "absolute",
+    right: "15%",
+    bottom: "-15px",
+    fontSize: "90px",
+    opacity: 0.1,
+    userSelect: "none"
+  },
+  referPendingActionFlexCenterBlock: {
+    flex: 0.9,
+    minWidth: "260px",
+    backgroundColor: "#fff7ed",
+    border: "1px solid #ffedd5",
+    borderRadius: "24px",
+    padding: "20px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  referOrangePendingArrowActionBtn: {
+    width: "100%",
+    padding: "16px",
+    backgroundColor: "#ea580c",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: "16px",
+    fontSize: "15px",
+    fontWeight: "700",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    boxShadow: "0 10px 20px -5px rgba(234, 88, 12, 0.3)"
+  },
+  verticalMetricsFlexListColumn: {
+    display: "flex",
+    flexDirection: "column"
+  },
+  metricListingInlineRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: "14px",
+    borderBottom: "1px solid #f1f5f9",
+    marginBottom: "14px"
+  },
+  metricIconCircleOrange: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    backgroundColor: "#fff7ed",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "15px"
+  },
+  metricIconCircleGreen: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    backgroundColor: "#f0fdf4",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "15px"
+  },
+  metricIconCircleBlue: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    backgroundColor: "#eff6ff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "15px"
+  },
+  metricIconCirclePurp: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    backgroundColor: "#faf5ff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "15px"
+  },
+  metricLabelNameText: {
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#475569"
+  },
+  metricBoldValueNumberText: {
+    fontSize: "16px",
+    fontWeight: "700",
+    color: "#0f172a"
+  },
+  tripleSquareBadgesFlexRowTrack: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "10px",
+    width: "100%"
+  },
+  squareStatusBadgeMetricsItemBox: {
+    backgroundColor: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "12px",
+    textAlign: "center"
+  },
+  squareIconTrackBlue: {
+    width: "34px",
+    height: "34px",
+    borderRadius: "50%",
+    backgroundColor: "#eff6ff",
+    color: "#2563eb",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 8px",
+    fontSize: "14px"
+  },
+  squareIconTrackGreen: {
+    width: "34px",
+    height: "34px",
+    borderRadius: "50%",
+    backgroundColor: "#f0fdf4",
+    color: "#16a34a",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 8px",
+    fontSize: "14px"
+  },
+  squareIconTrackRed: {
+    width: "34px",
+    height: "34px",
+    borderRadius: "50%",
+    backgroundColor: "#fef2f2",
+    color: "#dc2626",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 8px",
+    fontSize: "14px"
+  },
+  squareBadgeLabelCaption: {
+    margin: 0,
+    fontSize: "11px",
+    color: "#64748b",
+    fontWeight: "500"
+  },
+  squareBadgeValueNumberHeading: {
+    margin: "4px 0 0 0",
+    fontSize: "18px",
+    fontWeight: "800",
+    color: "#1e293b"
+  },
+  tableAvatarIconRoundPhoto: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "1px solid #e2e8f0"
+  },
+  tableInitialPlaceholderBadgeCircle: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    backgroundColor: "#fff7ed",
+    color: "#c2410c",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "bold",
+    fontSize: "15px"
+  },
+  referModalFooterCloseButton: {
+    width: "100%",
+    padding: "15px",
+    backgroundColor: "#fff3eb",
+    color: "#ea580c",
+    border: "none",
+    borderRadius: "16px",
+    fontSize: "16px",
+    fontWeight: "700",
+    cursor: "pointer",
+    marginTop: "10px"
+  },
+  historyItemRowCard: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "14px 20px",
+    borderBottom: "1px solid #f1f5f9"
+  },
+  logUserNameText: { margin: 0, fontSize: "14px", fontWeight: "600", color: "#1e293b" },
+  logDateSubText: { margin: "2px 0 0 0", fontSize: "12px", color: "#64748b" },
+  logIncomeValueGreen: { margin: 0, fontSize: "15px", fontWeight: "700", color: "#16a34a" },
   imgCloseBtn: {
     marginTop: "16px",
     width: "100%",
