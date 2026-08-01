@@ -4,6 +4,28 @@ import { toast } from "react-toastify";
 import html2canvas from "html2canvas"; 
 import { API } from "../config";
 
+// মেইন মোডাল কম্পোনেন্ট (Image 1, 2, 3 এর ডিজাইনের জন্য)
+function NewModal({ children, onClose }) {
+  return (
+    <div style={styles.modalOverlay} onClick={onClose}>
+      <div style={styles.modernModalContainerCard} onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// জেনারেল মোডাল কম্পোনেন্ট
+function Modal({ children, onClose }) {
+  return (
+    <div style={styles.modalOverlay} onClick={onClose}>
+      <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function Refer() {
   const navigate = useNavigate();
   const email = localStorage.getItem("email") || "";
@@ -18,12 +40,13 @@ export default function Refer() {
   const [royalty, setRoyalty] = useState({});
   const [treeData, setTreeData] = useState({});
   const [bonusModal, setBonusModal] = useState(null);
-  const [treeOpen, setTreeOpen] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("All");
   const [referBonus, setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
   
+  // নতুন স্টেট: পারফর্ম্যান্স রেফারাল সাব-লিস্ট দেখার জন্য
+  const [showPerfReferList, setShowPerfReferList] = useState(false);
+
   // ট্রানসাকশান ডিটেইলস পপআপের জন্য স্টেট
   const [selectedTx, setSelectedTx] = useState(null);
 
@@ -43,10 +66,6 @@ export default function Refer() {
 
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showTodayJoinModal, setShowTodayJoinModal] = useState(false);
-  
-  // নতুন রিকোয়ারমেন্টের জন্য স্টেট
-  const [showPerfMembersModal, setShowPerfMembersModal] = useState(false);
-  const [perfMemberSearch, setPerfMemberSearch] = useState("");
 
   // প্রিমিয়াম ইনফো/স্ট্যাটাস মেসেজ ওভারলে স্টেট
   const [statusOverlay, setStatusOverlay] = useState({
@@ -376,7 +395,7 @@ export default function Refer() {
   return (
     <div style={styles.page}>
       
-      {/* প্রিমিয়াম গ্লসি ইনফো মেসেজ টোস্ট ওভারলে */}
+      {/* প্রিমিয়াম টোস্ট ওভারলে */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
@@ -405,6 +424,7 @@ export default function Refer() {
         <p style={styles.tagline}>Refer More, Earn More, Grow Together!</p>
       </header>
 
+      {/* Hero কার্ড */}
       <section style={styles.heroCard}>
         <div style={styles.heroLeft}>
           <div style={styles.avatarWrap}>
@@ -445,6 +465,7 @@ export default function Refer() {
         </div>
       </section>
 
+      {/* রেফার লিংক সেকশন */}
       <section style={styles.linkCard}>
         <div style={styles.linkIcon}>🔗</div>
         <div style={styles.linkMiddle}>
@@ -463,6 +484,7 @@ export default function Refer() {
         </div>
       </section>
 
+      {/* বোনাস গ্রিড কার্ডস */}
       <section style={styles.bonusGrid}>
         {bonusCards.map((b) => (
           <div key={b.key} style={{ ...styles.bonusCard, background: b.bg }}>
@@ -473,7 +495,10 @@ export default function Refer() {
             <h2>{money(b.amount)}</h2>
             <button
               style={{ ...styles.detailBtn, color: b.color }}
-              onClick={() => setBonusModal(b.key)}
+              onClick={() => {
+                setShowPerfReferList(false); // মোডাল ওপেন হওয়ার সময় সাব-লিস্ট অফ থাকবে
+                setBonusModal(b.key);
+              }}
             >
               View Details
             </button>
@@ -481,6 +506,7 @@ export default function Refer() {
         ))}
       </section>
 
+      {/* বোনাস ট্রানসাকশান হিস্ট্রি */}
       <section style={styles.historyCard}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div><h2 style={{ fontSize: "20px", fontWeight: "700" }}>💰 All Bonus History</h2></div>
@@ -502,9 +528,7 @@ export default function Refer() {
             <p style={{ textAlign: "center", padding: "20px", color: "#666" }}>No Bonus History Found</p>
           ) : (
             visibleBonusHistory.map((item, index) => {
-              const isReceived = true;
               const userPhotoUrl = getDynamicUserPhoto(item);
-
               return (
                 <div 
                   key={index} 
@@ -530,17 +554,14 @@ export default function Refer() {
                     
                     <div style={styles.txMetaDetails}>
                       <h4 style={styles.txSenderName}>{item.fromName || "Save Money User"}</h4>
-                      <p style={styles.txTimeStamp}>Received Today, {new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
-                      
-                      <div style={styles.txTagBadge}>
-                        💵 {item.bonusType || "Money Received"}
-                      </div>
+                      <p style={styles.txTimeStamp}>{new Date(item.date).toLocaleDateString("en-IN")}, {new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+                      <div style={styles.txTagBadge}>💵 {item.bonusType || "Money Received"}</div>
                     </div>
                   </div>
 
                   <div style={styles.txRightSection}>
-                    <h3 style={{ ...styles.txAmountText, color: isReceived ? "#16a34a" : "#dc2626" }}>
-                      {isReceived ? "+ " : "- "}{money(item.amount)}
+                    <h3 style={{ ...styles.txAmountText, color: "#16a34a" }}>
+                      + {money(item.amount)}
                     </h3>
                     <p style={styles.txFromBankText}>In <span style={styles.upiIconSmall}>🌐</span></p>
                   </div>
@@ -583,7 +604,7 @@ export default function Refer() {
               <h3 style={{ margin: 0, fontSize: "18px" }}>Money Received</h3>
               <div style={{ display: "flex", gap: "15px" }}>
                 <span style={styles.txHeaderLink} onClick={() => handleShareTx(selectedTx)}>Share</span>
-                <span style={styles.txHeaderLink} onClick={() => alert("Help Center Clicked")}>Help</span>
+                <span style={styles.txHeaderLink} onClick={() => setSelectedTx(null)}>Close</span>
               </div>
             </div>
 
@@ -593,17 +614,14 @@ export default function Refer() {
                 <h1 style={styles.txDetailMainAmount}>
                   {money(selectedTx.amount)} <span style={styles.verifiedCheck}>✓</span>
                 </h1>
-                <p style={{ margin: 0, color: "#666", textTransform: "capitalize", fontSize: "13px" }}>Rupees One Thousand Only</p>
-                <div style={styles.moneyReceivedTag}>
-                  💵 Money Received
-                </div>
+                <div style={styles.moneyReceivedTag}>💵 {selectedTx.bonusType || "Money Received"}</div>
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0", borderBottom: "1px dashed #e2e8f0" }}>
                 <div>
                   <p style={styles.sectionLabel}>From</p>
                   <h4 style={styles.sectionValueName}>{selectedTx.fromName || "Sender User"} <span style={styles.blueTick}>✓</span></h4>
-                  <p style={styles.sectionSubValue}>{selectedTx.fromEmail || "user@axl"}</p>
+                  <p style={styles.sectionSubValue}>{selectedTx.fromEmail || "user@savemoney"}</p>
                 </div>
                 {getDynamicUserPhoto(selectedTx) ? (
                   <img style={styles.detailUserImage} src={getDynamicUserPhoto(selectedTx)} alt="Sender" />
@@ -638,7 +656,7 @@ export default function Refer() {
       )}
 
       {/* ==========================================================
-          IMAGE 1: PERFORMANCE BONUS MODAL (UPDATED WITH SEPARATE BUTTON)
+          IMAGE 1: PERFORMANCE BONUS MODAL WITH NEW REFER LIST
           ========================================================== */}
       {bonusModal === "performance" && (
         <NewModal onClose={() => setBonusModal(null)}>
@@ -650,233 +668,158 @@ export default function Refer() {
             <button style={styles.modalRoundCloseBtn} onClick={() => setBonusModal(null)}>✕</button>
           </div>
 
-          <div style={styles.perfGradientBanner}>
-            <div style={styles.bannerLeftInfo}>
-              <p style={styles.bannerSubText}>Total Performance Bonus</p>
-              <h1 style={styles.bannerMainAmount}>{money(performance.balance || 0)}</h1>
-            </div>
-            <div style={styles.bannerRightBadgeWrap}>
-              <span style={styles.bannerStatusLabel}>Status</span>
-              <span style={styles.bannerActiveBadge}>● Active</span>
-            </div>
-            <div style={styles.bannerGraphicIllustration}>📈</div>
-          </div>
-
-          {/* 🔘 রিকোয়ারমেন্ট অনুযায়ী আলাদা বোতাম যা ক্লিক করলে পারফরম্যান্স লিস্ট খুলবে */}
-          <div style={{ marginBottom: "24px" }}>
-            <button 
-              style={styles.openPerfMembersBtn} 
-              onClick={() => {
-                setBonusModal(null);
-                setShowPerfMembersModal(true);
-              }}
-            >
-              📊 View Performance Referral Members List
-            </button>
-          </div>
-
-          <div style={styles.twoColumnStatsGrid}>
-            <div style={styles.subStatCardItem}>
-              <div style={styles.statIconBadgePurp}>📅</div>
-              <div>
-                <p style={styles.statCardLabelText}>This Month Bonus</p>
-                <h3 style={styles.statCardAmountVal}>{money(performance.thisMonthBonus || 0)}</h3>
-              </div>
-            </div>
-            
-            <div style={{ ...styles.subStatCardItem, borderLeft: "1px solid #eef2f6" }}>
-              <div style={styles.statIconBadgeBlue}>📅</div>
-              <div>
-                <p style={styles.statCardLabelText}>Last Month Bonus</p>
-                <h3 style={styles.statCardAmountVal}>{money(performance.lastMonthBonus || 0)}</h3>
-              </div>
-            </div>
-          </div>
-
-          <div style={styles.modalHorizontalLine} />
-
-          <div style={{ marginBottom: "20px" }}>
-            <div style={styles.modernSelectInputWrapper}>
-              <span style={{ fontSize: "16px" }}>📅</span>
-              <select
-                value={performanceFilter}
-                onChange={(e) => setPerformanceFilter(e.target.value)}
-                style={styles.modernDropdownField}
-              >
-                <option value="thisMonth">This Month</option>
-                <option value="lastMonth">Last Month</option>
-                <option value="all">All</option>
-              </select>
-            </div>
-          </div>
-
-          <div style={styles.historyHeadingSection}>
-            <span style={{ fontSize: "18px", color: "#4f46e5" }}>🕒</span>
-            <h3 style={styles.historySectionTitleText}>Performance History</h3>
-          </div>
-
-          <div style={styles.modalDataLogsContainer}>
-            {filteredPerformanceHistory.length === 0 ? (
-              <div style={styles.emptyHistoryStateBox}>
-                <div style={styles.emptyStateIconPurple}>📄</div>
-                <h4 style={styles.emptyStateMainTitle}>No History</h4>
-                <p style={styles.emptyStateSubtitleText}>Your performance history will appear here</p>
-              </div>
-            ) : (
-              filteredPerformanceHistory.map((item, index) => (
-                <div key={index} style={styles.historyItemRowCard}>
-                  <div>
-                    <h4 style={styles.logUserNameText}>{item.fromName || "User Name"}</h4>
-                    <p style={styles.logDateSubText}>{new Date(item.date).toLocaleDateString("en-IN")}</p>
-                  </div>
-                  <h3 style={styles.logIncomeValueGreen}>+{money(item.amount)}</h3>
+          {!showPerfReferList ? (
+            <>
+              <div style={styles.perfGradientBanner}>
+                <div style={styles.bannerLeftInfo}>
+                  <p style={styles.bannerSubText}>Total Performance Bonus</p>
+                  <h1 style={styles.bannerMainAmount}>{money(performance.balance || 0)}</h1>
                 </div>
-              ))
-            )}
-          </div>
+                <div style={styles.bannerRightBadgeWrap}>
+                  <span style={styles.bannerStatusLabel}>Status</span>
+                  <span style={styles.bannerActiveBadge}>● Active</span>
+                </div>
+                <div style={styles.bannerGraphicIllustration}>📈</div>
+              </div>
+
+              <div style={styles.twoColumnStatsGrid}>
+                <div style={styles.subStatCardItem}>
+                  <div style={styles.statIconBadgePurp}>📅</div>
+                  <div>
+                    <p style={styles.statCardLabelText}>This Month Bonus</p>
+                    <h3 style={styles.statCardAmountVal}>{money(performance.thisMonthBonus || 0)}</h3>
+                  </div>
+                </div>
+                
+                <div style={{ ...styles.subStatCardItem, borderLeft: "1px solid #eef2f6" }}>
+                  <div style={styles.statIconBadgeBlue}>📅</div>
+                  <div>
+                    <p style={styles.statCardLabelText}>Last Month Bonus</p>
+                    <h3 style={styles.statCardAmountVal}>{money(performance.lastMonthBonus || 0)}</h3>
+                  </div>
+                </div>
+              </div>
+
+              {/* 🎯 পারফর্ম্যান্স মেম্বারদের দেখার প্রিমিয়াম বোতাম */}
+              <button 
+                style={styles.perfReferListTriggerBtn}
+                onClick={() => setShowPerfReferList(true)}
+              >
+                👥 View Performance Refer List
+              </button>
+
+              <div style={styles.modalHorizontalLine} />
+
+              <div style={{ marginBottom: "20px" }}>
+                <div style={styles.modernSelectInputWrapper}>
+                  <span style={{ fontSize: "16px" }}>📅</span>
+                  <select
+                    value={performanceFilter}
+                    onChange={(e) => setPerformanceFilter(e.target.value)}
+                    style={styles.modernDropdownField}
+                  >
+                    <option value="thisMonth">This Month</option>
+                    <option value="lastMonth">Last Month</option>
+                    <option value="all">All</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={styles.historyHeadingSection}>
+                <span style={{ fontSize: "18px", color: "#4f46e5" }}>🕒</span>
+                <h3 style={styles.historySectionTitleText}>Performance History</h3>
+              </div>
+
+              <div style={styles.modalDataLogsContainer}>
+                {filteredPerformanceHistory.length === 0 ? (
+                  <div style={styles.emptyHistoryStateBox}>
+                    <div style={styles.emptyStateIconPurple}>📄</div>
+                    <h4 style={styles.emptyStateMainTitle}>No History</h4>
+                    <p style={styles.emptyStateSubtitleText}>Your performance history will appear here</p>
+                  </div>
+                ) : (
+                  filteredPerformanceHistory.map((item, index) => (
+                    <div key={index} style={styles.historyItemRowCard}>
+                      <div>
+                        <h4 style={styles.logUserNameText}>{item.fromName || "User Name"}</h4>
+                        <p style={styles.logDateSubText}>{new Date(item.date).toLocaleDateString("en-IN")}</p>
+                      </div>
+                      <h3 style={styles.logIncomeValueGreen}>+{money(item.amount)}</h3>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          ) : (
+            /* ==========================================
+               ✨ ডাইনামিক পারফর্ম্যান্স রেফারাল সাব-লিস্ট ভিউ
+               ========================================== */
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+                <button 
+                  onClick={() => setShowPerfReferList(false)}
+                  style={styles.subListBackBtn}
+                >
+                  ← Back
+                </button>
+                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>Performance Refer List</h3>
+              </div>
+
+              <div style={styles.tableWrap}>
+                <table style={styles.table}>
+                  <thead style={styles.tableHeaderStyleRow}>
+                    <tr>
+                      <th style={styles.tableHeadCellText}>Name</th>
+                      <th style={styles.tableHeadCellText}>Mobile</th>
+                      <th style={styles.tableHeadCellText}>Next Renew Date</th>
+                      <th style={styles.tableHeadCellText}>Expected Bonus</th>
+                      <th style={styles.tableHeadCellText}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history && history.length > 0 ? (
+                      history.map((member, i) => {
+                        const renewDateStr = member.nextRenewDate || member.renewDate || "N/A";
+                        const isOverdue = renewDateStr !== "N/A" && new Date() > new Date(renewDateStr);
+                        const displayStatus = member.status === "Active" && !isOverdue ? "Bonus Received" : "Renew Due";
+                        const expectedBonus = member.performanceBonus || member.bonusAmount || 0;
+
+                        return (
+                          <tr key={i} style={styles.tableBodyRowItem}>
+                            <td style={styles.tableDataCellText}><b>{member.name || "User"}</b></td>
+                            <td style={styles.tableDataCellText}>{member.mobile || member.phone || "N/A"}</td>
+                            <td style={styles.tableDataCellText}>
+                              {renewDateStr !== "N/A" ? new Date(renewDateStr).toLocaleDateString("en-IN") : "N/A"}
+                            </td>
+                            <td style={{ ...styles.tableDataCellText, fontWeight: "bold", color: "#c026d3" }}>
+                              {money(expectedBonus)}
+                            </td>
+                            <td style={styles.tableDataCellText}>
+                              <span style={{
+                                ...styles.statusBadgeGlobal,
+                                background: displayStatus === "Bonus Received" ? "#dcfce7" : "#fee2e2",
+                                color: displayStatus === "Bonus Received" ? "#16a34a" : "#dc2626"
+                              }}>
+                                {displayStatus}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: "center", padding: "20px", color: "#64748b" }}>
+                          No Referrals Found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
 
           <button style={styles.modalFooterPrimaryBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </NewModal>
-      )}
-
-      {/* ==========================================================
-          NEW POPUP: PERFORMANCE REFERRAL MEMBERS LIST MODAL
-          ========================================================== */}
-      {showPerfMembersModal && (
-        <NewModal onClose={() => setShowPerfMembersModal(false)}>
-          <div style={styles.modalHeaderRow}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div style={{ ...styles.perfHeaderIconBox, backgroundColor: "#e0f2fe" }}>👥</div>
-              <div>
-                <h2 style={styles.modalMainTitle}>Performance Referral Members</h2>
-                <p style={styles.modalSubTitleDescription}>List of all members eligible for your performance bonus</p>
-              </div>
-            </div>
-            <button style={styles.modalRoundCloseBtn} onClick={() => setShowPerfMembersModal(false)}>✕</button>
-          </div>
-
-          {/* সার্চ ফিল্টার */}
-          <div style={{ marginBottom: "20px" }}>
-            <input 
-              type="text"
-              placeholder="🔍 Search member by name or mobile number..."
-              value={perfMemberSearch}
-              onChange={(e) => setPerfMemberSearch(e.target.value)}
-              style={styles.perfSearchInput}
-            />
-          </div>
-
-          <div style={styles.modalDataLogsContainer}>
-            <div style={styles.tableWrap}>
-              <table style={styles.table}>
-                <thead style={styles.tableHeaderStyleRow}>
-                  <tr>
-                    <th style={styles.tableHeadCellText}>Name & Mobile</th>
-                    <th style={styles.tableHeadCellText}>Next Renew Date</th>
-                    <th style={styles.tableHeadCellText}>Expected Bonus</th>
-                    <th style={styles.tableHeadCellText}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history
-                    .filter(member => {
-                      // সার্চ ফিল্টারিং লজিক (নাম অথবা ফোন নম্বর দিয়ে)
-                      const term = perfMemberSearch.toLowerCase();
-                      const nameMatch = (member.name || "").toLowerCase().includes(term);
-                      const mobileMatch = (member.mobile || member.phone || "").includes(term);
-                      return nameMatch || mobileMatch;
-                    })
-                    .map((member, index) => {
-                      // ১. Next Renew Date ক্যালকুলেশন (প্রতি মাসে জয়েনিং ডেট অনুযায়ী চেঞ্জ হবে)
-                      const joinDate = member.joinDate ? new Date(member.joinDate) : new Date();
-                      const today = new Date();
-                      let nextRenew = new Date(today.getFullYear(), today.getMonth(), joinDate.getDate());
-                      if (nextRenew < today) {
-                        nextRenew.setMonth(nextRenew.getMonth() + 1);
-                      }
-                      const nextRenewStr = nextRenew.toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
-
-                      // ২. Expected Bonus এবং Status নির্ধারণ
-                      // ব্যাকেন্ড অনুযায়ী `member.status === 'Active'` মানে ইনভেস্ট রিনিউ করা আছে
-                      const isRenewed = member.status === "Active";
-                      const statusText = isRenewed ? "Bonus Received" : "Renew Due";
-                      const statusBg = isRenewed ? "#dcfce7" : "#fee2e2";
-                      const statusColor = isRenewed ? "#15803d" : "#dc2626";
-
-                      // ইনভেস্ট টেনুর এবং ডেটা অনুযায়ী বোনাস অ্যামাউন্ট ক্যালকুলেট বা শো করা
-                      const expectedBonus = member.earning || 0; 
-
-                      return (
-                        <tr key={index} style={styles.tableBodyRowItem}>
-                          {/* নাম এবং মোবাইল নম্বর */}
-                          <td style={styles.tableDataCellText}>
-                            <b style={{ fontSize: "15px", color: "#1e293b" }}>{member.name || "N/A"}</b>
-                            <br />
-                            <small style={{ color: "#64748b", fontWeight: "500" }}>📱 {member.mobile || member.phone || "No Number"}</small>
-                          </td>
-                          
-                          {/* নেক্সট রিনিউ ডেট */}
-                          <td style={styles.tableDataCellText}>
-                            <span style={{ fontWeight: "600", color: "#475569" }}>{nextRenewStr}</span>
-                          </td>
-                          
-                          {/* বোনাস অ্যামাউন্ট */}
-                          <td style={{ ...styles.tableDataCellText, fontWeight: "bold", color: "#c026d3" }}>
-                            {money(expectedBonus)}
-                          </td>
-                          
-                          {/* স্ট্যাটাস বাটন/ব্যাজ */}
-                          <td style={styles.tableDataCellText}>
-                            <span style={{ 
-                              padding: "6px 14px", 
-                              borderRadius: "20px", 
-                              fontSize: "12px", 
-                              fontWeight: "700",
-                              background: statusBg,
-                              color: statusColor,
-                              display: "inline-block"
-                            }}>
-                              {statusText}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* হিস্ট্রি সেকশন: শুধুমাত্র যাদের কাছ থেকে বোনাস পাওয়া গেছে বা রিনিউ করেছে তাদের জন্য */}
-          <div style={{ ...styles.historyHeadingSection, marginTop: "30px" }}>
-            <span style={{ fontSize: "18px", color: "#16a34a" }}>📜</span>
-            <h3 style={styles.historySectionTitleText}>Received Performance History</h3>
-          </div>
-
-          <div style={styles.modalDataLogsContainer}>
-            {filteredPerformanceHistory.length === 0 ? (
-              <div style={styles.emptyHistoryStateBox}>
-                <p style={{ margin: 0, color: "#64748b" }}>No active renew history found yet.</p>
-              </div>
-            ) : (
-              filteredPerformanceHistory.map((item, idx) => (
-                <div key={idx} style={styles.historyItemRowCard}>
-                  <div>
-                    <h4 style={styles.logUserNameText}>{item.fromName || "Member User"}</h4>
-                    <p style={styles.logDateSubText}>🔄 Renewed on: {new Date(item.date).toLocaleDateString("en-IN")}</p>
-                  </div>
-                  <h3 style={{ ...styles.logIncomeValueGreen, color: "#16a34a" }}>+{money(item.amount)}</h3>
-                </div>
-              ))
-            )}
-          </div>
-
-          <button 
-            style={{ ...styles.modalFooterPrimaryBtn, backgroundColor: "#e0f2fe", color: "#0369a1", marginTop: "15px" }} 
-            onClick={() => setShowPerfMembersModal(false)}
-          >
-            Back to Dashboard
-          </button>
         </NewModal>
       )}
 
@@ -1015,7 +958,7 @@ export default function Refer() {
             <div style={styles.teamFlexGridHalfBlock}>
               <div style={styles.cardHeaderHeadingRow}>
                 <span>📊</span>
-                <h4 style={styles.cardBlockTitleInlineText}>Level Income ({teamTimeFilter === "allTime" ? "All Time" : "Filtered"})</h4>
+                <h4 style={styles.cardBlockTitleInlineText}>Level Income</h4>
               </div>
               
               <div style={styles.levelIncomeDenseBlockGrid}>
@@ -1293,7 +1236,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- পেন্ডিং রেফারাল সাব-মডাল (Z-Index ফিক্সড) --- */}
+      {/* --- পেন্ডিং রেফারাল সাব-মডাল --- */}
       {showPendingModal && (
         <div style={styles.subModalOverlay} onClick={() => setShowPendingModal(false)}>
           <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -1318,7 +1261,7 @@ export default function Refer() {
         </div>
       )}
 
-      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল (Z-Index ফিক্সড) --- */}
+      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল --- */}
       {showTodayJoinModal && (
         <div style={styles.subModalOverlay} onClick={() => setShowTodayJoinModal(false)}>
           <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -1347,92 +1290,440 @@ export default function Refer() {
   );
 }
 
-// 100% সেম মডাল উইন্ডো ফ্রেম
-function NewModal({ children, onClose }) {
-  return (
-    <div style={styles.newModalOverlayOverlay} onClick={onClose}>
-      <div style={styles.newModalContentWindowBox} onClick={(e) => e.stopPropagation()}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function Modal({ children, onClose }) {
-  return (
-    <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
+// 🎨 প্রিমিয়াম লাক্সারি স্টাইলিং শীট
 const styles = {
-  /* ==========================================================
-     NEW ADDED PREMIUM UI STYLE FOR PERFORMANCE LIST
-     ========================================================== */
-  openPerfMembersBtn: {
-    width: "100%",
-    padding: "16px",
-    background: "linear-gradient(135deg, #c026d3 0%, #7b20ff 100%)",
-    color: "#ffffff",
+  page: {
+    padding: "20px",
+    background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+    minHeight: "100vh",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+    color: "#1e293b",
+    position: "relative"
+  },
+  loadingPage: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100vh",
+    background: "#f8fafc"
+  },
+  loadingBox: {
+    textAlign: "center"
+  },
+  loadingIcon: {
+    fontSize: "50px",
+    animation: "pulse 1.5s infinite"
+  },
+  backBtn: {
+    position: "absolute",
+    top: "20px",
+    left: "20px",
+    background: "#fff",
     border: "none",
-    borderRadius: "16px",
-    fontSize: "16px",
-    fontWeight: "700",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+    width: "45px",
+    height: "45px",
+    borderRadius: "50%",
+    fontSize: "20px",
     cursor: "pointer",
-    boxShadow: "0 10px 20px -5px rgba(192, 38, 211, 0.3)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  bellBtn: {
+    position: "absolute",
+    top: "20px",
+    right: "20px",
+    background: "#fff",
+    border: "none",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+    width: "45px",
+    height: "45px",
+    borderRadius: "50%",
+    fontSize: "20px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  header: {
+    textAlign: "center",
+    marginTop: "60px",
+    marginBottom: "30px"
+  },
+  welcome: {
+    fontSize: "14px",
+    textTransform: "uppercase",
+    letterSpacing: "2px",
+    color: "#64748b",
+    fontWeight: "600",
+    margin: 0
+  },
+  mainTitle: {
+    fontSize: "32px",
+    fontWeight: "800",
+    background: "linear-gradient(135deg, #1e293b 0%, #475569 100%)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    margin: "5px 0"
+  },
+  referWorld: {
+    fontSize: "26px",
+    fontWeight: "700",
+    color: "#2563eb",
+    margin: 0
+  },
+  tagline: {
+    fontSize: "14px",
+    color: "#64748b",
+    marginTop: "5px"
+  },
+  heroCard: {
+    background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+    borderRadius: "24px",
+    padding: "25px",
+    color: "#fff",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "20px",
+    boxShadow: "0 20px 40px rgba(15, 23, 42, 0.15)",
+    marginBottom: "25px"
+  },
+  heroLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "20px"
+  },
+  avatarWrap: {
+    position: "relative"
+  },
+  avatar: {
+    width: "75px",
+    height: "75px",
+    borderRadius: "50%",
+    border: "3px solid #38bdf8",
+    objectFit: "cover"
+  },
+  crown: {
+    position: "absolute",
+    top: "-12px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    fontSize: "20px",
+    color: "#fbbf24"
+  },
+  activeMember: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    background: "rgba(255,255,255,0.1)",
+    padding: "4px 12px",
+    borderRadius: "20px",
+    fontSize: "12px",
+    fontWeight: "600",
+    marginTop: "5px"
+  },
+  greenDot: {
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%"
+  },
+  smallText: {
+    fontSize: "11px",
+    color: "#94a3b8",
+    margin: "10px 0 2px 0",
+    textTransform: "uppercase"
+  },
+  referIdBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    background: "rgba(255,255,255,0.05)",
+    padding: "6px 12px",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.1)"
+  },
+  heroRight: {
+    textAlign: "right",
+    background: "rgba(255,255,255,0.05)",
+    padding: "15px 25px",
+    borderRadius: "20px",
+    border: "1px solid rgba(255,255,255,0.1)"
+  },
+  walletRound: {
+    fontSize: "22px",
+    marginBottom: "5px"
+  },
+  linkCard: {
+    background: "#fff",
+    borderRadius: "24px",
+    padding: "20px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "20px",
+    marginBottom: "25px"
+  },
+  linkIcon: {
+    fontSize: "30px",
+    background: "#f0fdf4",
+    width: "60px",
+    height: "60px",
+    borderRadius: "20px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  linkMiddle: {
+    flex: 1,
+    minWidth: "250px"
+  },
+  copyBox: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    background: "#f8fafc",
+    padding: "8px 12px",
+    borderRadius: "14px",
+    border: "1px dashed #cbd5e1",
+    marginTop: "8px",
+    overflow: "hidden"
+  },
+  copyLinkBtn: {
+    background: "#2563eb",
+    color: "#fff",
+    border: "none",
+    padding: "6px 14px",
+    borderRadius: "10px",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontSize: "13px"
+  },
+  shareBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  },
+  whatsapp: {
+    background: "#dcfce7",
+    border: "none",
+    width: "45px",
+    height: "45px",
+    borderRadius: "50%",
+    fontSize: "20px",
+    cursor: "pointer"
+  },
+  telegram: {
+    background: "#e0f2fe",
+    border: "none",
+    width: "45px",
+    height: "45px",
+    borderRadius: "50%",
+    fontSize: "20px",
+    cursor: "pointer"
+  },
+  bonusGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+    gap: "20px",
+    marginBottom: "30px"
+  },
+  bonusCard: {
+    borderRadius: "24px",
+    padding: "25px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.02)",
+    position: "relative",
+    overflow: "hidden"
+  },
+  bonusIcon: {
+    width: "45px",
+    height: "45px",
+    borderRadius: "14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#fff",
+    fontSize: "20px",
+    marginBottom: "15px"
+  },
+  detailBtn: {
+    background: "#fff",
+    border: "1px solid currentColor",
+    padding: "6px 16px",
+    borderRadius: "12px",
+    fontWeight: "700",
+    fontSize: "12px",
+    cursor: "pointer",
+    marginTop: "10px",
     transition: "all 0.2s"
   },
-  perfSearchInput: {
-    width: "100%",
-    padding: "14px 20px",
+  historyCard: {
+    background: "#fff",
+    borderRadius: "28px",
+    padding: "25px",
+    boxShadow: "0 15px 35px rgba(0,0,0,0.03)",
+    marginBottom: "20px"
+  },
+  filterSelect: {
+    padding: "10px 16px",
     borderRadius: "14px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid #e2e8f0",
+    background: "#f8fafc",
+    fontWeight: "600",
+    color: "#475569",
+    outline: "none"
+  },
+  txListWrapper: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px"
+  },
+  txItemRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    background: "#ffffff",
+    padding: "16px",
+    borderRadius: "20px",
+    border: "1px solid #f1f5f9",
+    cursor: "pointer",
+    transition: "transform 0.2s, box-shadow 0.2s",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.01)"
+  },
+  txLeftSection: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px"
+  },
+  txUserAvatarImage: {
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "2px solid #e2e8f0"
+  },
+  txAvatarCircle: {
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "bold",
+    fontSize: "16px"
+  },
+  txMetaDetails: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "3px"
+  },
+  txSenderName: {
+    margin: 0,
     fontSize: "15px",
-    outline: "none",
-    backgroundColor: "#f8fafc",
-    color: "#334155",
-    boxSizing: "border-box"
+    fontWeight: "700",
+    color: "#0f172a"
   },
-
-  /* ==========================================================
-     EXISTING PREMIUM STYLES (MATCHED 100% TO IMAGES 1, 2, 3)
-     ========================================================== */
-  newModalOverlayOverlay: {
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.45)",
-    backdropFilter: "blur(12px)",
-    zIndex: 99999,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "20px"
+  txTimeStamp: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#64748b"
   },
-  subModalOverlay: {
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.6)",
-    backdropFilter: "blur(8px)",
-    zIndex: 100000, 
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "20px"
+  txTagBadge: {
+    display: "inline-block",
+    alignSelf: "flex-start",
+    fontSize: "11px",
+    background: "#f1f5f9",
+    padding: "2px 8px",
+    borderRadius: "6px",
+    color: "#475569",
+    fontWeight: "600",
+    marginTop: "4px"
   },
-  newModalContentWindowBox: {
+  txRightSection: {
+    textAlign: "right"
+  },
+  txAmountText: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "800"
+  },
+  txFromBankText: {
+    margin: 0,
+    fontSize: "11px",
+    color: "#64748b"
+  },
+  upiIconSmall: {
+    fontSize: "12px"
+  },
+  paytmBrandFooter: {
+    textAlign: "center",
+    marginTop: "20px",
+    paddingTop: "15px",
+    borderTop: "1px dashed #e2e8f0"
+  },
+  viewMoreBtn: {
     width: "100%",
-    maxWidth: "920px",
-    maxHeight: "92vh",
-    backgroundColor: "#ffffff",
+    padding: "12px",
+    borderRadius: "16px",
+    border: "1px solid #e2e8f0",
+    background: "#fff",
+    color: "#475569",
+    fontWeight: "700",
+    cursor: "pointer",
+    marginBottom: "30px"
+  },
+  bottomBanner: {
+    background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+    borderRadius: "24px",
+    padding: "25px",
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    gap: "20px",
+    flexWrap: "wrap",
+    marginBottom: "40px"
+  },
+  bottomGift: {
+    fontSize: "35px"
+  },
+  referNowBtn: {
+    background: "#fff",
+    color: "#4f46e5",
+    border: "none",
+    padding: "12px 25px",
+    borderRadius: "16px",
+    fontWeight: "700",
+    cursor: "pointer",
+    boxShadow: "0 10px 20px rgba(0,0,0,0.1)"
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(15, 23, 42, 0.4)",
+    backdropFilter: "blur(8px)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+    padding: "15px"
+  },
+  modernModalContainerCard: {
+    background: "#ffffff",
     borderRadius: "32px",
-    padding: "30px",
-    boxShadow: "0 25px 70px -10px rgba(0, 0, 0, 0.12)",
+    width: "100%",
+    maxWidth: "680px",
+    maxHeight: "90vh",
     overflowY: "auto",
-    fontFamily: "system-ui, -apple-system, sans-serif",
-    boxSizing: "border-box"
+    padding: "28px",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+    border: "1px solid #f1f5f9"
   },
   modalHeaderRow: {
     display: "flex",
@@ -1441,370 +1732,370 @@ const styles = {
     marginBottom: "24px"
   },
   perfHeaderIconBox: {
-    width: "48px",
-    height: "48px",
-    backgroundColor: "#f3e8ff",
-    borderRadius: "14px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "22px"
-  },
-  teamHeaderIconBox: {
-    width: "48px",
-    height: "48px",
-    backgroundColor: "#dbeafe",
-    borderRadius: "14px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "22px"
-  },
-  referGiftIconBox: {
-    width: "54px",
-    height: "54px",
-    backgroundColor: "#fff7ed",
+    fontSize: "24px",
+    background: "#fdf4ff",
+    width: "50px",
+    height: "50px",
     borderRadius: "16px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "26px"
+    color: "#c026d3"
   },
   modalMainTitle: {
     margin: 0,
-    fontSize: "24px",
-    fontWeight: "700",
+    fontSize: "22px",
+    fontWeight: "800",
     color: "#0f172a"
   },
-  modalSubTitleDescription: {
-    margin: "2px 0 0 0",
-    fontSize: "14px",
-    color: "#64748b"
-  },
   modalRoundCloseBtn: {
+    border: "none",
+    background: "#f1f5f9",
     width: "36px",
     height: "36px",
     borderRadius: "50%",
-    backgroundColor: "#f1f5f9",
-    border: "none",
-    fontSize: "14px",
     cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#475569",
-    transition: "background 0.2s"
+    fontWeight: "bold",
+    color: "#64748b"
   },
   perfGradientBanner: {
-    background: "linear-gradient(135deg, #f3e8ff 0%, #fae8ff 100%)",
+    background: "linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)",
     borderRadius: "24px",
-    padding: "30px",
+    padding: "24px",
+    position: "relative",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    position: "relative",
-    overflow: "hidden",
-    marginBottom: "24px"
+    marginBottom: "20px",
+    border: "1px solid #f5d0fe"
   },
   bannerLeftInfo: {
-    position: "relative",
     zIndex: 2
   },
   bannerSubText: {
     margin: 0,
-    fontSize: "15px",
-    color: "#6b21a8",
-    fontWeight: "500"
+    fontSize: "13px",
+    color: "#a21caf",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px"
   },
   bannerMainAmount: {
-    margin: "6px 0 0 0",
-    fontSize: "42px",
+    margin: "5px 0 0 0",
+    fontSize: "32px",
     fontWeight: "800",
-    color: "#2e1065"
+    color: "#701a75"
   },
   bannerRightBadgeWrap: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-end",
-    gap: "6px",
-    position: "relative",
+    textAlign: "right",
     zIndex: 2
   },
   bannerStatusLabel: {
-    fontSize: "13px",
-    color: "#6b21a8",
-    fontWeight: "500"
+    display: "block",
+    fontSize: "11px",
+    color: "#a21caf",
+    textTransform: "uppercase"
   },
   bannerActiveBadge: {
-    backgroundColor: "#dcfce7",
-    color: "#16a34a",
-    padding: "6px 14px",
-    borderRadius: "20px",
-    fontSize: "14px",
-    fontWeight: "600"
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#16a34a"
   },
   bannerGraphicIllustration: {
     position: "absolute",
-    right: "20%",
-    bottom: "-10px",
-    fontSize: "90px",
+    right: "20px",
+    bottom: "10px",
+    fontSize: "70px",
     opacity: 0.12,
     userSelect: "none"
   },
   twoColumnStatsGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    backgroundColor: "#f8fafc",
+    background: "#f8fafc",
     borderRadius: "20px",
-    padding: "20px",
-    marginBottom: "24px",
-    border: "1px solid #f1f5f9"
+    padding: "16px",
+    marginBottom: "20px",
+    border: "1px solid #e2e8f0"
   },
   subStatCardItem: {
     display: "flex",
     alignItems: "center",
-    gap: "16px",
-    padding: "0 20px"
+    gap: "12px",
+    padding: "10px"
   },
   statIconBadgePurp: {
-    width: "44px",
-    height: "44px",
-    backgroundColor: "#f5e6ff",
+    width: "38px",
+    height: "38px",
     borderRadius: "12px",
+    background: "#fdf4ff",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "18px"
+    fontSize: "16px"
   },
   statIconBadgeBlue: {
-    width: "44px",
-    height: "44px",
-    backgroundColor: "#e6f0ff",
+    width: "38px",
+    height: "38px",
     borderRadius: "12px",
+    background: "#eff6ff",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "18px"
+    fontSize: "16px"
   },
   statCardLabelText: {
     margin: 0,
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#64748b"
   },
   statCardAmountVal: {
-    margin: "2px 0 0 0",
-    fontSize: "20px",
+    margin: 0,
+    fontSize: "16px",
     fontWeight: "700",
-    color: "#0f172a"
+    color: "#1e293b"
   },
   modalHorizontalLine: {
     height: "1px",
-    backgroundColor: "#f1f5f9",
-    width: "100%",
-    marginBottom: "24px"
+    background: "#e2e8f0",
+    margin: "20px 0"
   },
   modernSelectInputWrapper: {
     display: "flex",
     alignItems: "center",
     gap: "10px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "14px",
+    background: "#f8fafc",
+    border: "1px solid #cbd5e1",
     padding: "10px 16px",
-    width: "fit-content",
-    minWidth: "180px",
-    backgroundColor: "#ffffff",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.02)"
+    borderRadius: "14px"
   },
   modernDropdownField: {
+    flex: 1,
+    background: "transparent",
     border: "none",
     outline: "none",
-    fontSize: "15px",
     fontWeight: "600",
     color: "#334155",
-    width: "100%",
-    cursor: "pointer",
-    backgroundColor: "transparent"
+    fontSize: "14px"
   },
   historyHeadingSection: {
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    marginBottom: "16px"
+    marginBottom: "14px"
   },
   historySectionTitleText: {
-    margin: 0,
-    fontSize: "18px",
-    fontWeight: "700",
-    color: "#1e293b"
-  },
-  modalDataLogsContainer: {
-    border: "1px solid #e2e8f0",
-    borderRadius: "20px",
-    overflow: "hidden",
-    backgroundColor: "#ffffff",
-    marginBottom: "20px"
-  },
-  emptyHistoryStateBox: {
-    padding: "50px 20px",
-    textAlign: "center",
-    backgroundColor: "#f8fafc"
-  },
-  emptyStateIconPurple: {
-    width: "54px",
-    height: "54px",
-    backgroundColor: "#f3e8ff",
-    color: "#a855f7",
-    borderRadius: "50%",
-    margin: "0 auto 14px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "22px"
-  },
-  emptyStateIconBlue: {
-    width: "54px",
-    height: "54px",
-    backgroundColor: "#e0f2fe",
-    color: "#0284c7",
-    borderRadius: "50%",
-    margin: "0 auto 14px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "22px"
-  },
-  emptyStateMainTitle: {
     margin: 0,
     fontSize: "16px",
     fontWeight: "700",
     color: "#334155"
   },
+  modalDataLogsContainer: {
+    maxHeight: "260px",
+    overflowY: "auto",
+    paddingRight: "5px",
+    marginBottom: "20px"
+  },
+  emptyHistoryStateBox: {
+    textAlign: "center",
+    padding: "30px 10px"
+  },
+  emptyStateIconPurple: {
+    fontSize: "36px",
+    color: "#d946ef",
+    marginBottom: "10px"
+  },
+  emptyStateMainTitle: {
+    margin: "0 0 4px 0",
+    color: "#475569"
+  },
   emptyStateSubtitleText: {
-    margin: "4px 0 0 0",
+    margin: 0,
     fontSize: "13px",
     color: "#94a3b8"
   },
-  modalFooterPrimaryBtn: {
-    width: "100%",
-    padding: "15px",
-    backgroundColor: "#ebe9fe",
-    color: "#4f46e5",
-    border: "none",
-    borderRadius: "16px",
-    fontSize: "16px",
-    fontWeight: "700",
-    cursor: "pointer",
-    transition: "all 0.2s"
-  },
-  teamMainAmountContainerCard: {
-    background: "linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%)",
-    borderRadius: "24px",
-    padding: "30px",
+  historyItemRowCard: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    padding: "12px 16px",
+    background: "#f8fafc",
+    borderRadius: "14px",
+    marginBottom: "10px",
+    border: "1px solid #f1f5f9"
+  },
+  logUserNameText: {
+    margin: 0,
+    fontSize: "14px",
+    fontWeight: "600"
+  },
+  logDateSubText: {
+    margin: 0,
+    fontSize: "11px",
+    color: "#64748b"
+  },
+  logIncomeValueGreen: {
+    margin: 0,
+    color: "#16a34a",
+    fontSize: "15px",
+    fontWeight: "700"
+  },
+  modalFooterPrimaryBtn: {
+    width: "100%",
+    padding: "14px",
+    background: "#0f172a",
+    color: "#fff",
+    border: "none",
+    borderRadius: "16px",
+    fontSize: "15px",
+    fontWeight: "700",
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+  },
+  perfReferListTriggerBtn: {
+    width: "100%",
+    padding: "14px",
+    background: "linear-gradient(135deg, #c026d3, #7c3aed)",
+    color: "#fff",
+    border: "none",
+    borderRadius: "16px",
+    fontSize: "15px",
+    fontWeight: "700",
+    cursor: "pointer",
+    marginBottom: "20px",
+    boxShadow: "0 8px 20px rgba(124, 58, 237, 0.25)"
+  },
+  subListBackBtn: {
+    border: "none",
+    background: "#f1f5f9",
+    padding: "8px 14px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "bold"
+  },
+  statusBadgeGlobal: {
+    padding: "4px 10px",
+    borderRadius: "8px",
+    fontSize: "12px",
+    fontWeight: "700"
+  },
+  teamHeaderIconBox: {
+    fontSize: "24px",
+    background: "#eff6ff",
+    width: "50px",
+    height: "50px",
+    borderRadius: "16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#2563eb"
+  },
+  modalSubTitleDescription: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#64748b"
+  },
+  teamMainAmountContainerCard: {
+    background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+    borderRadius: "24px",
+    padding: "24px",
     position: "relative",
-    overflow: "hidden",
-    marginBottom: "24px",
-    border: "1px solid #dbeafe"
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "20px",
+    border: "1px solid #bfdbfe"
   },
   teamBigAmountHeading: {
     margin: 0,
-    fontSize: "44px",
+    fontSize: "32px",
     fontWeight: "800",
-    color: "#1e3a8a"
+    color: "#1e40af"
   },
   teamAmountLabelCaptionText: {
     margin: "4px 0 0 0",
-    fontSize: "14px",
-    color: "#1e40af",
-    fontWeight: "500"
+    fontSize: "13px",
+    color: "#2563eb",
+    fontWeight: "600",
+    textTransform: "uppercase"
   },
   teamStatusBadgeFlexBox: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-end",
-    gap: "4px",
+    textAlign: "right",
     zIndex: 2
   },
   teamActiveBadgeFill: {
-    backgroundColor: "#dcfce7",
-    color: "#15803d",
-    padding: "6px 14px",
-    borderRadius: "20px",
     fontSize: "13px",
-    fontWeight: "700"
+    fontWeight: "700",
+    color: "#16a34a"
   },
   teamGraphicIllustrationRight: {
     position: "absolute",
-    right: "15%",
-    bottom: "-20px",
-    fontSize: "110px",
-    opacity: 0.08,
+    right: "20px",
+    bottom: "10px",
+    fontSize: "70px",
+    opacity: 0.1,
     userSelect: "none"
   },
   teamDualFlexGridWrapper: {
     display: "flex",
-    gap: "20px",
-    marginBottom: "24px",
-    flexWrap: "wrap"
+    gap: "16px",
+    flexWrap: "wrap",
+    marginBottom: "20px"
   },
   teamFlexGridHalfBlock: {
     flex: 1,
-    minWidth: "280px",
-    backgroundColor: "#ffffff",
+    minWidth: "240px",
+    background: "#f8fafc",
+    borderRadius: "20px",
+    padding: "18px",
     border: "1px solid #e2e8f0",
-    borderRadius: "22px",
-    padding: "20px",
-    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)"
+    boxShadow: "0 4px 6px rgba(0,0,0,0.01)"
   },
   cardHeaderHeadingRow: {
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    paddingBottom: "12px",
-    borderBottom: "1px solid #f1f5f9",
-    marginBottom: "14px"
+    marginBottom: "10px"
   },
   cardBlockTitleInlineText: {
     margin: 0,
-    fontSize: "15px",
+    fontSize: "14px",
     fontWeight: "700",
-    color: "#1e293b"
+    color: "#475569"
   },
   reportInsideLabelSubText: {
     margin: 0,
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#64748b"
   },
   reportInsideValueBoldNumber: {
-    margin: "4px 0 12px 0",
-    fontSize: "26px",
+    margin: "2px 0 10px 0",
+    fontSize: "20px",
     fontWeight: "800",
     color: "#0f172a"
   },
   networkJoinBadgeLinkBtn: {
     width: "100%",
-    padding: "10px 12px",
-    backgroundColor: "#f0fdf4",
-    border: "1px solid #bbf7d0",
-    color: "#16a34a",
-    borderRadius: "12px",
-    fontSize: "13px",
-    fontWeight: "600",
-    textAlign: "left",
-    cursor: "pointer"
+    padding: "8px 12px",
+    background: "#e0f2fe",
+    color: "#0369a1",
+    border: "none",
+    borderRadius: "10px",
+    fontSize: "11px",
+    fontWeight: "700",
+    cursor: "pointer",
+    textAlign: "left"
   },
   customDateInputsFlexRow: {
     display: "flex",
-    gap: "8px",
+    gap: "10px",
     marginTop: "10px"
   },
   datePickerInputField: {
     flex: 1,
-    border: "1px solid #e2e8f0",
     padding: "8px",
     borderRadius: "10px",
+    border: "1px solid #cbd5e1",
     fontSize: "12px",
     outline: "none"
   },
@@ -1812,98 +2103,113 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    marginBottom: "16px",
-    marginTop: "8px"
+    marginBottom: "12px"
   },
   sectionTitleBlockHeader: {
     margin: 0,
-    fontSize: "17px",
+    fontSize: "15px",
     fontWeight: "700",
-    color: "#1e293b"
+    color: "#334155"
   },
   levelHorizontalFlexTrack: {
-    display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
-    gap: "12px",
-    marginBottom: "26px",
-    flexWrap: "wrap"
+    display: "flex",
+    gap: "10px",
+    overflowX: "auto",
+    paddingBottom: "10px",
+    marginBottom: "20px"
   },
   levelHorizontalItemBox: {
-    backgroundColor: "#ffffff",
+    flex: "1 0 100px",
+    background: "#f8fafc",
     border: "1px solid #e2e8f0",
-    borderRadius: "16px",
-    padding: "14px",
-    textAlign: "left",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.01)"
+    borderRadius: "14px",
+    padding: "12px",
+    textAlign: "center"
   },
   levelLabelNumberTitle: {
-    margin: 0,
+    margin: "0 0 4px 0",
     fontSize: "16px",
-    fontWeight: "850",
+    fontWeight: "800",
     color: "#475569"
   },
   levelUserCountValueText: {
-    margin: "4px 0 0 0",
-    fontSize: "13px",
+    margin: 0,
+    fontSize: "11px",
     color: "#64748b",
-    fontWeight: "500"
+    fontWeight: "600"
   },
   summaryListItemsFlexColumn: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
-    marginTop: "6px"
+    gap: "10px",
+    marginTop: "12px"
   },
   summaryTableRowLine: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    fontSize: "13px"
+    fontSize: "12px",
+    paddingBottom: "8px",
+    borderBottom: "1px solid #f1f5f9"
   },
   summaryRowLabelCell: {
-    color: "#475569",
-    fontWeight: "500",
-    display: "flex",
-    alignItems: "center"
+    color: "#64748b",
+    fontWeight: "600"
   },
   summaryRowValueCellBlue: {
     fontWeight: "700",
-    color: "#2563eb",
-    fontSize: "14px"
+    color: "#2563eb"
   },
   summaryRowValueCellDark: {
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#1e293b"
   },
   levelIncomeDenseBlockGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "10px"
+    gap: "8px",
+    marginTop: "10px"
   },
   levelMiniBlockGridItem: {
-    backgroundColor: "#f8fafc",
-    padding: "10px 14px",
-    borderRadius: "12px",
-    border: "1px solid #f1f5f9"
+    background: "#fff",
+    border: "1px solid #f1f5f9",
+    padding: "8px",
+    borderRadius: "10px",
+    textAlign: "center"
   },
   miniBlockLabelText: {
-    fontSize: "12px",
-    color: "#64748b",
-    display: "block"
+    display: "block",
+    fontSize: "11px",
+    color: "#64748b"
   },
   miniBlockValueAmountText: {
     margin: "2px 0 0 0",
-    fontSize: "14px",
+    fontSize: "13px",
     fontWeight: "700",
-    color: "#1e293b"
+    color: "#0f172a"
+  },
+  emptyStateIconBlue: {
+    fontSize: "36px",
+    color: "#3b82f6",
+    marginBottom: "10px"
+  },
+  tableWrap: {
+    width: "100%",
+    overflowX: "auto",
+    marginTop: "10px"
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    textAlign: "left",
+    fontSize: "13px"
   },
   tableHeaderStyleRow: {
-    backgroundColor: "#f8fafc",
-    borderBottom: "1px solid #e2e8f0"
+    background: "#f8fafc",
+    borderBottom: "2px solid #e2e8f0"
   },
   tableHeadCellText: {
-    padding: "12px 16px",
-    fontSize: "13px",
+    padding: "12px 10px",
     fontWeight: "700",
     color: "#475569"
   },
@@ -1911,361 +2217,429 @@ const styles = {
     borderBottom: "1px solid #f1f5f9"
   },
   tableDataCellText: {
-    padding: "14px 16px",
-    fontSize: "14px",
-    color: "#1e293b"
+    padding: "12px 10px",
+    color: "#334155"
   },
   tableLevelBadgeTag: {
-    backgroundColor: "#f1f5f9",
-    padding: "4px 10px",
-    borderRadius: "8px",
-    fontWeight: "600",
-    fontSize: "12px"
+    background: "#eff6ff",
+    color: "#2563eb",
+    padding: "2px 6px",
+    borderRadius: "6px",
+    fontWeight: "700"
   },
-  referSuccessCalloutAlertBanner: {
-    backgroundColor: "#f0fdf4",
-    border: "1px solid #bbf7d0",
+  referGiftIconBox: {
+    fontSize: "24px",
+    background: "#fff7ed",
+    width: "50px",
+    height: "50px",
     borderRadius: "16px",
-    padding: "14px 20px",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "24px"
-  },
-  alertSuccessCheckIcon: {
-    width: "22px",
-    height: "22px",
-    borderRadius: "50%",
-    backgroundColor: "#16a34a",
-    color: "#ffffff",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "12px",
-    fontWeight: "bold"
+    color: "#f97316"
+  },
+  referSuccessCalloutAlertBanner: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    padding: "12px 16px",
+    borderRadius: "16px",
+    marginBottom: "20px"
+  },
+  alertSuccessCheckIcon: {
+    color: "#16a34a",
+    fontWeight: "bold",
+    fontSize: "16px"
   },
   alertSuccessBannerInlineMessageText: {
     margin: 0,
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#15803d"
+    fontSize: "12px",
+    color: "#166534",
+    fontWeight: "600"
   },
   referOrangeBannerCardContainer: {
     flex: 1.1,
-    minWidth: "280px",
-    background: "linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%)",
-    border: "1px solid orange",
+    minWidth: "220px",
+    background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
     borderRadius: "24px",
-    padding: "26px 30px",
+    padding: "24px",
     position: "relative",
-    overflow: "hidden"
+    border: "1px solid #fed7aa"
   },
   orangeBannerSubTitleLabel: {
     margin: 0,
-    fontSize: "14px",
+    fontSize: "13px",
     color: "#c2410c",
-    fontWeight: "600"
+    fontWeight: "600",
+    textTransform: "uppercase"
   },
   orangeBannerBigAmountDisplay: {
     margin: "4px 0 0 0",
-    fontSize: "38px",
-    fontWeight: "900",
-    color: "#7c2d12"
+    fontSize: "32px",
+    fontWeight: "800",
+    color: "#9a3412"
   },
   orangeBannerGraphicAssetIllustration: {
     position: "absolute",
-    right: "15%",
-    bottom: "-15px",
-    fontSize: "90px",
-    opacity: 0.1,
+    right: "20px",
+    bottom: "10px",
+    fontSize: "65px",
+    opacity: 0.12,
     userSelect: "none"
   },
   referPendingActionFlexCenterBlock: {
     flex: 0.9,
-    minWidth: "260px",
-    backgroundColor: "#fff7ed",
-    border: "1px solid #ffedd5",
-    borderRadius: "24px",
-    padding: "20px",
+    minWidth: "200px",
     display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
+    alignItems: "center"
   },
   referOrangePendingArrowActionBtn: {
     width: "100%",
     padding: "16px",
-    backgroundColor: "#ea580c",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: "16px",
-    fontSize: "15px",
+    background: "#fff",
+    border: "2px solid #ffedd5",
+    borderRadius: "20px",
+    color: "#ea580c",
     fontWeight: "700",
+    fontSize: "14px",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
-    boxShadow: "0 10px 20px -5px rgba(234, 88, 12, 0.3)"
+    boxShadow: "0 4px 6px rgba(234, 88, 12, 0.02)"
   },
   verticalMetricsFlexListColumn: {
     display: "flex",
-    flexDirection: "column"
+    flexDirection: "column",
+    gap: "12px"
   },
   metricListingInlineRow: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingBottom: "14px",
-    borderBottom: "1px solid #f1f5f9",
-    marginBottom: "14px"
+    paddingBottom: "10px",
+    borderBottom: "1px solid #e2e8f0"
   },
   metricIconCircleOrange: {
-    width: "32px",
-    height: "32px",
+    width: "30px",
+    height: "30px",
     borderRadius: "50%",
-    backgroundColor: "#fff7ed",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "15px"
-  },
-  metricIconCircleGreen: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    backgroundColor: "#f0fdf4",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "15px"
-  },
-  metricIconCircleBlue: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    backgroundColor: "#eff6ff",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "15px"
-  },
-  metricIconCirclePurp: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    backgroundColor: "#faf5ff",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "15px"
-  },
-  metricLabelNameText: {
-    fontSize: "14px",
-    fontWeight: "500",
-    color: "#475569"
-  },
-  metricBoldValueNumberText: {
-    fontSize: "16px",
-    fontWeight: "700",
-    color: "#0f172a"
-  },
-  tripleSquareBadgesFlexRowTrack: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "10px",
-    width: "100%"
-  },
-  squareStatusBadgeMetricsItemBox: {
-    backgroundColor: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "18px",
-    padding: "12px",
-    textAlign: "center"
-  },
-  squareIconTrackBlue: {
-    width: "34px",
-    height: "34px",
-    borderRadius: "50%",
-    backgroundColor: "#eff6ff",
-    color: "#2563eb",
+    background: "#fff7ed",
+    color: "#f97316",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    margin: "0 auto 8px",
-    fontSize: "14px"
+    fontSize: "13px"
   },
-  squareIconTrackGreen: {
-    width: "34px",
-    height: "34px",
+  metricIconCircleGreen: {
+    width: "30px",
+    height: "30px",
     borderRadius: "50%",
-    backgroundColor: "#f0fdf4",
+    background: "#f0fdf4",
     color: "#16a34a",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    margin: "0 auto 8px",
-    fontSize: "14px"
+    fontSize: "13px"
   },
-  squareIconTrackRed: {
-    width: "34px",
-    height: "34px",
+  metricIconCircleBlue: {
+    width: "30px",
+    height: "30px",
     borderRadius: "50%",
-    backgroundColor: "#fef2f2",
-    color: "#dc2626",
+    background: "#eff6ff",
+    color: "#2563eb",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    margin: "0 auto 8px",
-    fontSize: "14px"
+    fontSize: "13px"
+  },
+  metricIconCirclePurp: {
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    background: "#fdf4ff",
+    color: "#c026d3",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "13px"
+  },
+  metricLabelNameText: {
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#475569"
+  },
+  metricBoldValueNumberText: {
+    fontSize: "15px",
+    fontWeight: "700",
+    color: "#0f172a"
+  },
+  tripleSquareBadgesFlexRowTrack: {
+    display: "flex",
+    gap: "8px"
+  },
+  squareStatusBadgeMetricsItemBox: {
+    flex: 1,
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: "16px",
+    padding: "10px 6px",
+    textAlign: "center"
+  },
+  squareIconTrackBlue: {
+    fontSize: "16px",
+    color: "#2563eb",
+    marginBottom: "4px"
+  },
+  squareIconTrackGreen: {
+    fontSize: "16px",
+    color: "#16a34a",
+    marginBottom: "4px"
+  },
+  squareIconTrackRed: {
+    fontSize: "16px",
+    color: "#dc2626",
+    marginBottom: "4px"
   },
   squareBadgeLabelCaption: {
     margin: 0,
-    fontSize: "11px",
+    fontSize: "10px",
     color: "#64748b",
-    fontWeight: "500"
+    fontWeight: "600"
   },
   squareBadgeValueNumberHeading: {
-    margin: "4px 0 0 0",
-    fontSize: "18px",
+    margin: "2px 0 0 0",
+    fontSize: "15px",
     fontWeight: "800",
-    color: "#1e293b"
+    color: "#0f172a"
   },
   tableAvatarIconRoundPhoto: {
-    width: "36px",
-    height: "36px",
+    width: "32px",
+    height: "32px",
     borderRadius: "50%",
-    objectFit: "cover",
-    border: "1px solid #e2e8f0"
+    objectFit: "cover"
   },
   tableInitialPlaceholderBadgeCircle: {
-    width: "36px",
-    height: "36px",
+    width: "32px",
+    height: "32px",
     borderRadius: "50%",
-    backgroundColor: "#fff7ed",
-    color: "#c2410c",
-    display: "inline-flex",
+    background: "#f1f5f9",
+    color: "#475569",
+    display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "bold",
-    fontSize: "15px"
+    fontWeight: "700"
   },
   referModalFooterCloseButton: {
     width: "100%",
-    padding: "15px",
-    backgroundColor: "#fff3eb",
-    color: "#ea580c",
+    padding: "14px",
+    background: "#0f172a",
+    color: "#fff",
     border: "none",
     borderRadius: "16px",
-    fontSize: "16px",
+    fontSize: "15px",
     fontWeight: "700",
     cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
     marginTop: "10px"
   },
-  historyItemRowCard: {
+  modalBox: {
+    background: "#fff",
+    borderRadius: "24px",
+    padding: "30px",
+    width: "100%",
+    maxWidth: "460px",
+    textAlign: "center",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
+  },
+  closeBtn: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#0f172a",
+    color: "#fff",
+    fontWeight: "700",
+    cursor: "pointer",
+    marginTop: "15px"
+  },
+  infoBox: {
+    background: "#f8fafc",
+    padding: "15px",
+    borderRadius: "14px",
+    fontSize: "13px",
+    color: "#64748b",
+    lineHeight: "1.6",
+    textAlign: "left",
+    border: "1px dashed #cbd5e1"
+  },
+  subModalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.3)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1100,
+    padding: "15px"
+  },
+  statusOverlayBg: {
+    position: "fixed",
+    top: "30px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 9999,
+    width: "90%",
+    maxWidth: "380px",
+    animation: "slideDown 0.3s ease-out"
+  },
+  statusOverlayCard: {
+    background: "rgba(255, 255, 255, 0.9)",
+    backdropFilter: "blur(12px)",
+    borderRadius: "20px",
+    padding: "14px 20px",
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    boxShadow: "0 15px 35px rgba(15, 23, 42, 0.12)"
+  },
+  statusOverlayIcon: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "800",
+    fontSize: "15px"
+  },
+  statusOverlayText: {
+    margin: 0,
+    fontSize: "14px",
+    fontWeight: "700",
+    color: "#1e293b"
+  },
+  txDetailsCard: {
+    background: "#fff",
+    borderRadius: "28px",
+    width: "100%",
+    maxWidth: "480px",
+    overflow: "hidden",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+    border: "1px solid #e2e8f0"
+  },
+  txDetailsHeader: {
+    background: "#00baf2",
+    color: "#fff",
+    padding: "18px 20px",
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    padding: "14px 20px",
-    borderBottom: "1px solid #f1f5f9"
+    alignItems: "center"
   },
-  logUserNameText: { margin: 0, fontSize: "14px", fontWeight: "600", color: "#1e293b" },
-  logDateSubText: { margin: "2px 0 0 0", fontSize: "12px", color: "#64748b" },
-  logIncomeValueGreen: { margin: 0, fontSize: "15px", fontWeight: "700", color: "#16a34a" },
-  imgCloseBtn: {
-    marginTop: "16px",
-    width: "100%",
+  txBackArrow: {
+    background: "none",
     border: "none",
-    borderRadius: "14px",
-    padding: "12px",
-    background: "#f1f5f9",
-    color: "#475569",
+    color: "#fff",
+    fontSize: "22px",
+    cursor: "pointer"
+  },
+  txHeaderLink: {
+    fontSize: "14px",
     fontWeight: "700",
     cursor: "pointer"
   },
-  txListWrapper: { display: "flex", flexDirection: "column", gap: "0px" },
-  txItemRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "16px 0",
-    borderBottom: "1px solid #f1f5f9",
-    cursor: "pointer",
-    transition: "background 0.2s",
+  txDetailsInnerBox: {
+    padding: "24px"
   },
-  txLeftSection: { display: "flex", alignItems: "center", gap: "14px" },
-  txUserAvatarImage: { width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0" },
-  txAvatarCircle: { width: "48px", height: "48px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "16px" },
-  txMetaDetails: { display: "flex", flexDirection: "column", gap: "2px" },
-  txSenderName: { margin: 0, fontSize: "16px", fontWeight: "600", color: "#1e293b" },
-  txTimeStamp: { margin: 0, fontSize: "13px", color: "#64748b" },
-  txTagBadge: { display: "inline-flex", alignItems: "center", background: "#e8f5e9", color: "#2e7d32", fontSize: "11px", fontWeight: "700", padding: "3px 8px", borderRadius: "20px", marginTop: "4px", width: "fit-content" },
-  txRightSection: { textAlign: "right" },
-  txAmountText: { margin: 0, fontSize: "16px", fontWeight: "700" },
-  txFromBankText: { margin: 0, fontSize: "12px", color: "#64748b", marginTop: "2px" },
-  upiIconSmall: { fontSize: "12px" },
-  paytmBrandFooter: { display: "flex", justifyContent: "center", alignItems: "center", marginTop: "20px", paddingTop: "10px", fontSize: "14px" },
-  txDetailsCard: { width: "100%", maxWidth: "420px", background: "#fff", borderRadius: "24px", padding: "20px", boxShadow: "0 20px 50px rgba(0,0,0,0.15)", fontFamily: "sans-serif" },
-  txDetailsHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "15px", color: "#1e293b", borderBottom: "1px solid #f1f5f9" },
-  txBackArrow: { background: "none", border: "none", fontSize: "22px", cursor: "pointer", color: "#1e293b" },
-  txHeaderLink: { color: "#2563eb", fontWeight: "600", fontSize: "14px", cursor: "pointer" },
-  txDetailsInnerBox: { border: "1px solid #e2e8f0", borderRadius: "20px", padding: "16px", marginTop: "16px", background: "#fff" },
-  txDetailMainAmount: { fontSize: "32px", fontWeight: "800", margin: "5px 0", color: "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" },
-  verifiedCheck: { color: "#10b981", fontSize: "24px" },
-  moneyReceivedTag: { background: "#e8f5e9", color: "#2e7d32", padding: "6px 14px", borderRadius: "20px", fontWeight: "bold", fontSize: "13px", display: "inline-block", marginTop: "10px" },
-  sectionLabel: { margin: 0, fontSize: "13px", color: "#666", fontWeight: "500" },
-  sectionValueName: { margin: "2px 0 0 0", fontSize: "16px", fontWeight: "700", color: "#1e293b" },
-  blueTick: { color: "#00baf2" },
-  sectionSubValue: { margin: 0, fontSize: "13px", color: "#64748b" },
-  bankNameFooter: { margin: "4px 0 0 0", fontSize: "12px", color: "#94a3b8" },
-  detailAvatarCircle: { width: "44px", height: "44px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" },
-  detailUserImage: { width: "44px", height: "44px", borderRadius: "50%", objectFit: "cover", border: "1px solid #e2e8f0" },
-  txFooterMetaDetails: { background: "#f8fafc", padding: "12px", borderRadius: "12px", marginTop: "12px", fontSize: "12px", color: "#64748b", lineHeight: "1.6" },
-  statusOverlayBg: { position: "fixed", inset: 0, background: "rgba(10, 15, 30, 0.45)", backdropFilter: "blur(8px)", zIndex: 100000, display: "flex", alignItems: "center", justifyContent: "center" },
-  statusOverlayCard: { background: "rgba(255, 255, 255, 0.95)", padding: "30px 40px", borderRadius: "20px", textAlign: "center", boxShadow: "0 25px 60px rgba(0, 0, 0, 0.15)", maxWidth: "360px", width: "85%", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" },
-  statusOverlayIcon: { width: "60px", height: "60px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", fontWeight: "bold" },
-  statusOverlayText: { fontSize: "17px", color: "#1e293b", margin: 0, fontWeight: "700", lineHeight: "1.5" },
-  loadingPage: { minHeight: "100vh", background: "#fff7ff", display: "flex", alignItems: "center", justifyContent: "center" },
-  loadingBox: { background: "white", padding: 35, borderRadius: 30, textAlign: "center", boxShadow: "0 20px 45px rgba(124,58,237,.18)" },
-  loadingIcon: { fontSize: 70 },
-  page: { minHeight: "100vh", padding: 28, background: "linear-gradient(135deg,#fffaff,#f8f3ff,#ffffff)", fontFamily: "Arial, sans-serif", color: "#111542", position: "relative" },
-  backBtn: { position: "absolute", top: 24, left: 24, width: 54, height: 54, border: "none", borderRadius: 16, background: "white", boxShadow: "0 12px 30px rgba(137,84,255,.22)", fontSize: 30, cursor: "pointer" },
-  bellBtn: { position: "absolute", top: 24, right: 24, width: 58, height: 58, border: "none", borderRadius: 18, background: "white", boxShadow: "0 12px 30px rgba(137,84,255,.22)", fontSize: 25, cursor: "pointer" },
-  header: { textAlign: "center" },
-  welcome: { margin: 0, fontSize: 22 },
-  mainTitle: { margin: "2px 0 0", fontSize: 58, fontWeight: 900, background: "linear-gradient(90deg,#1463ff,#8b20ff,#ff1685)", WebkitBackgroundClip: "text", color: "transparent" },
-  referWorld: { margin: 0, fontSize: 36 },
-  tagline: { color: "#62678c", fontSize: 18 },
-  heroCard: { width: "min(1050px, 94vw)", margin: "30px auto 18px", padding: 40, borderRadius: 34, background: "linear-gradient(135deg,#3a19d6,#6b08d8,#b616a1)", color: "white", display: "flex", justifyContent: "space-between", gap: 30, boxShadow: "0 30px 55px rgba(102,38,190,.35)" },
-  heroLeft: { display: "flex", alignItems: "center", gap: 28 },
-  avatarWrap: { position: "relative" },
-  avatar: { width: 140, height: 140, borderRadius: "50%", border: "8px solid white", objectFit: "cover" },
-  crown: { position: "absolute", right: -4, bottom: 12, width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(135deg,#e11dff,#9f18ff)", display: "grid", placeItems: "center", fontSize: 24, border: "4px solid white" },
-  activeMember: { display: "inline-block", margin: "12px 0", padding: "10px 18px", borderRadius: 12, background: "rgba(255,255,255,.16)", fontWeight: 700 },
-  greenDot: { width: 10, height: 10, borderRadius: "50%", display: "inline-block", marginRight: 8 },
-  smallText: { margin: "8px 0", opacity: 0.9 },
-  referIdBox: { border: "1px dashed rgba(255,255,255,.85)", borderRadius: 14, padding: "12px 16px", fontSize: 20, fontWeight: 900, display: "flex", gap: 18, justifyContent: "space-between" },
-  heroRight: { minWidth: 270 },
-  walletRound: { width: 76, height: 76, borderRadius: "50%", background: "rgba(255,255,255,.18)", display: "grid", placeItems: "center", fontSize: 38 },
-  linkCard: { width: "min(1120px, 94vw)", margin: "20px auto", padding: 28, borderRadius: 26, background: "white", boxShadow: "0 16px 36px rgba(156,105,255,.16)", display: "flex", alignItems: "center", gap: 24 },
-  linkIcon: { width: 90, height: 90, borderRadius: 22, background: "#f0e7ff", display: "grid", placeItems: "center", fontSize: 48 },
-  linkMiddle: { flex: 1 },
-  copyBox: { border: "1px solid #ddd9ec", borderRadius: 14, padding: 12, display: "flex", justifyContent: "space-between", gap: 10 },
-  copyLinkBtn: { border: "none", borderRadius: 12, padding: "12px 22px", background: "linear-gradient(90deg,#7c3aed,#d946ef)", color: "#fff", fontWeight: 900, cursor: "pointer" },
-  shareBox: { borderLeft: "1px solid #e7e2f0", paddingLeft: 30, minWidth: 190 },
-  whatsapp: { width: 58, height: 58, border: "none", borderRadius: "50%", background: "#16c768", color: "white", fontSize: 24, marginRight: 12, cursor: "pointer" },
-  telegram: { width: 58, height: 58, border: "none", borderRadius: "50%", background: "#2196f3", color: "white", fontSize: 30, cursor: "pointer" },
-  bonusGrid: { width: "min(1120px, 94vw)", margin: "26px auto", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20 },
-  bonusCard: { borderRadius: 24, padding: "34px 18px", textAlign: "center", boxShadow: "0 14px 34px rgba(0,0,0,.08)" },
-  bonusIcon: { width: 78, height: 78, borderRadius: 22, margin: "0 auto 18px", display: "grid", placeItems: "center", color: "white", fontSize: 38 },
-  detailBtn: { border: "1px solid currentColor", borderRadius: 12, background: "white", padding: "12px 22px", fontWeight: 900, cursor: "pointer" },
-  historyCard: { width: "min(1120px, 94vw)", margin: "26px auto", background: "white", borderRadius: 26, padding: 28, boxShadow: "0 16px 36px rgba(156,105,255,.16)" },
-  filterSelect: { padding: "12px 18px", borderRadius: 14, border: "1px solid #ddd", fontSize: "15px", outline: "none", background: "#fff" },
-  tableWrap: { overflowX: "auto" },
-  table: { width: "100%", borderCollapse: "collapse", minWidth: 650, textAlign: "left" },
-  viewMoreBtn: { display: "block", margin: "22px auto 0", border: "none", background: "white", color: "#7b20e8", fontSize: 18, fontWeight: 900, cursor: "pointer" },
-  bottomBanner: { width: "min(1120px, 94vw)", margin: "26px auto 10px", padding: "26px 34px", borderRadius: 24, background: "linear-gradient(90deg,#fff2ff,#f5eaff)", display: "flex", alignItems: "center", gap: 24 },
-  bottomGift: { fontSize: 70 },
-  referNowBtn: { border: "none", borderRadius: 16, padding: "18px 48px", color: "white", background: "linear-gradient(90deg,#7b20ff,#c515e9)", fontSize: 20, fontWeight: 900, cursor: "pointer" },
-  modalOverlay: { position: "fixed", inset: 0, background: "rgba(15,23,42,.55)", backdropFilter: "blur(8px)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center", padding: 20 },
-  modalBox: { width: "min(760px, 96vw)", maxHeight: "88vh", overflowY: "auto", background: "#fff", borderRadius: 28, padding: 28, boxShadow: "0 30px 90px rgba(0,0,0,.25)" },
-  closeBtn: { marginTop: 20, width: "100%", border: "none", borderRadius: 14, padding: 14, background: "#ebe9fe", color: "#4f46e5", fontWeight: 900, cursor: "pointer" },
-  infoBox: { background: "#f8fafc", padding: 14, borderRadius: 14, lineHeight: 1.6 }
+  txDetailMainAmount: {
+    margin: "5px 0 0 0",
+    fontSize: "36px",
+    fontWeight: "800",
+    color: "#0f172a"
+  },
+  verifiedCheck: {
+    color: "#00baf2",
+    fontSize: "24px"
+  },
+  moneyReceivedTag: {
+    display: "inline-block",
+    background: "#f1f5f9",
+    padding: "4px 12px",
+    borderRadius: "8px",
+    fontSize: "12px",
+    fontWeight: "700",
+    color: "#475569",
+    marginTop: "10px"
+  },
+  sectionLabel: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#64748b",
+    textTransform: "uppercase"
+  },
+  sectionValueName: {
+    margin: "2px 0 0 0",
+    fontSize: "15px",
+    fontWeight: "700",
+    color: "#0f172a"
+  },
+  blueTick: {
+    color: "#00baf2"
+  },
+  sectionSubValue: {
+    margin: 0,
+    fontSize: "13px",
+    color: "#64748b"
+  },
+  detailUserImage: {
+    width: "45px",
+    height: "45px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "2px solid #e2e8f0"
+  },
+  detailAvatarCircle: {
+    width: "45px",
+    height: "45px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "700"
+  },
+  bankNameFooter: {
+    margin: "4px 0 0 0",
+    fontSize: "11px",
+    color: "#94a3b8",
+    fontWeight: "600"
+  },
+  txFooterMetaDetails: {
+    background: "#f8fafc",
+    borderRadius: "16px",
+    padding: "12px 16px",
+    fontSize: "12px",
+    color: "#64748b",
+    marginTop: "10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px"
+  },
+  imgCloseBtn: {
+    width: "90%",
+    margin: "0 auto 20px auto",
+    display: "block",
+    padding: "12px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#f1f5f9",
+    color: "#475569",
+    fontWeight: "700",
+    cursor: "pointer",
+    textAlign: "center"
+  }
 };
