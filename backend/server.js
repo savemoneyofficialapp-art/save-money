@@ -39,7 +39,6 @@ const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
 const AutoWithdraw = require("./models/AutoWithdraw");
-const PerformanceBonus = require("./models/PerformanceBonus"); // আপনার সঠিক পাথ অনুযায়ী দিন
 
 
 
@@ -7207,12 +7206,7 @@ cron.schedule("0 0 1 * *", async () => {
 
   console.log("AUTO MONTH RESET RUNNING...");
 
-  try {
-
-    const all = await PerformanceBonus.find();
-
-    for (let pb of all) {
-
+  
       // move current to last month
       pb.lastMonthBonus = pb.thisMonthBonus;
 
