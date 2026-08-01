@@ -39,6 +39,8 @@ const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
 const AutoWithdraw = require("./models/AutoWithdraw");
+const PerformanceBonus = require("./models/PerformanceBonus"); // আপনার সঠিক পাথ অনুযায়ী দিন
+
 
 
 
@@ -2810,9 +2812,11 @@ app.post("/my-plan", auth, async (req, res) => {
     renewStatus = "Open";
   }
 
-  if (today > renewEnd) {
+ if (today > renewEnd) {
     renewStatus = "Overdue";
-  }
+    plan.status = "Inactive";
+}
+
 
   plan.renewStatus = renewStatus;
   await plan.save();
