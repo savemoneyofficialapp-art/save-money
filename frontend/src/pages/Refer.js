@@ -43,6 +43,10 @@ export default function Refer() {
 
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [showTodayJoinModal, setShowTodayJoinModal] = useState(false);
+  
+  // নতুন রিকোয়ারমেন্টের জন্য স্টেট
+  const [showPerfMembersModal, setShowPerfMembersModal] = useState(false);
+  const [perfMemberSearch, setPerfMemberSearch] = useState("");
 
   // প্রিমিয়াম ইনফো/স্ট্যাটাস মেসেজ ওভারলে স্টেট
   const [statusOverlay, setStatusOverlay] = useState({
@@ -369,9 +373,6 @@ export default function Refer() {
   const selectedFilteredHistory = getFilteredTeamHistory();
   const selectedFilteredTotalIncome = selectedFilteredHistory.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
-  // পারফর্ম্যান্স বোনাস প্রাপ্ত ইউজারদের লিস্ট ফিল্টারিং (শুধুমাত্র বোনাস প্রাপ্তদের জন্য)
-  const performanceBonusUsers = safeHistory.filter(userItem => Number(userItem.earning || 0) > 0);
-
   return (
     <div style={styles.page}>
       
@@ -637,7 +638,7 @@ export default function Refer() {
       )}
 
       {/* ==========================================================
-          IMAGE 1: PERFORMANCE BONUS MODAL (UPDATED WITH REFERRAL BONUS LIST)
+          IMAGE 1: PERFORMANCE BONUS MODAL (UPDATED WITH SEPARATE BUTTON)
           ========================================================== */}
       {bonusModal === "performance" && (
         <NewModal onClose={() => setBonusModal(null)}>
@@ -661,6 +662,19 @@ export default function Refer() {
             <div style={styles.bannerGraphicIllustration}>📈</div>
           </div>
 
+          {/* 🔘 রিকোয়ারমেন্ট অনুযায়ী আলাদা বোতাম যা ক্লিক করলে পারফরম্যান্স লিস্ট খুলবে */}
+          <div style={{ marginBottom: "24px" }}>
+            <button 
+              style={styles.openPerfMembersBtn} 
+              onClick={() => {
+                setBonusModal(null);
+                setShowPerfMembersModal(true);
+              }}
+            >
+              📊 View Performance Referral Members List
+            </button>
+          </div>
+
           <div style={styles.twoColumnStatsGrid}>
             <div style={styles.subStatCardItem}>
               <div style={styles.statIconBadgePurp}>📅</div>
@@ -676,70 +690,6 @@ export default function Refer() {
                 <p style={styles.statCardLabelText}>Last Month Bonus</p>
                 <h3 style={styles.statCardAmountVal}>{money(performance.lastMonthBonus || 0)}</h3>
               </div>
-            </div>
-          </div>
-
-          <div style={styles.modalHorizontalLine} />
-
-          {/* 🌟 নতুন যোগ করা পারফর্ম্যান্স বোনাস রিসিভড ইউজার লিস্ট 🌟 */}
-          <div style={{ marginBottom: "26px" }}>
-            <div style={styles.historyHeadingSection}>
-              <span style={{ fontSize: "18px", color: "#c026d3" }}>👥</span>
-              <h3 style={styles.historySectionTitleText}>Performance Refer Earnings List</h3>
-            </div>
-            
-            <div style={styles.modalDataLogsContainer}>
-              {performanceBonusUsers.length === 0 ? (
-                <div style={styles.emptyHistoryStateBox}>
-                  <div style={styles.emptyStateIconPurple}>👤</div>
-                  <h4 style={styles.emptyStateMainTitle}>No Earning Records</h4>
-                  <p style={styles.emptyStateSubtitleText}>Referrals with received performance bonus will appear here.</p>
-                </div>
-              ) : (
-                <div style={styles.tableWrap}>
-                  <table style={styles.table}>
-                    <thead style={styles.tableHeaderStyleRow}>
-                      <tr>
-                        <th style={styles.tableHeadCellText}>Name</th>
-                        <th style={styles.tableHeadCellText}>Mobile</th>
-                        <th style={styles.tableHeadCellText}>Next Renew Date</th>
-                        <th style={styles.tableHeadCellText}>Bonus Amount</th>
-                        <th style={styles.tableHeadCellText}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {performanceBonusUsers.map((item, idx) => {
-                        // স্ট্যাটাস ডাইনামিক নির্ধারণ করার জন্য
-                        const isRenewed = item.status === "Active"; 
-                        return (
-                          <tr key={idx} style={styles.tableBodyRowItem}>
-                            <td style={styles.tableDataCellText}><b>{item.name || "N/A"}</b></td>
-                            <td style={styles.tableDataCellText}>{item.mobile || item.phone || "N/A"}</td>
-                            <td style={styles.tableDataCellText}>
-                              {item.nextRenewDate ? new Date(item.nextRenewDate).toLocaleDateString("en-IN") : "N/A"}
-                            </td>
-                            <td style={{ ...styles.tableDataCellText, fontWeight: "bold", color: "#16a34a" }}>
-                              {money(item.earning)}
-                            </td>
-                            <td style={styles.tableDataCellText}>
-                              <span style={{
-                                padding: "4px 10px",
-                                borderRadius: "8px",
-                                fontWeight: "700",
-                                fontSize: "12px",
-                                backgroundColor: isRenewed ? "#dcfce7" : "#fee2e2",
-                                color: isRenewed ? "#16a34a" : "#dc2626"
-                              }}>
-                                {isRenewed ? "bonus received" : "renew due"}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </div>
           </div>
 
@@ -786,6 +736,147 @@ export default function Refer() {
           </div>
 
           <button style={styles.modalFooterPrimaryBtn} onClick={() => setBonusModal(null)}>Close</button>
+        </NewModal>
+      )}
+
+      {/* ==========================================================
+          NEW POPUP: PERFORMANCE REFERRAL MEMBERS LIST MODAL
+          ========================================================== */}
+      {showPerfMembersModal && (
+        <NewModal onClose={() => setShowPerfMembersModal(false)}>
+          <div style={styles.modalHeaderRow}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ ...styles.perfHeaderIconBox, backgroundColor: "#e0f2fe" }}>👥</div>
+              <div>
+                <h2 style={styles.modalMainTitle}>Performance Referral Members</h2>
+                <p style={styles.modalSubTitleDescription}>List of all members eligible for your performance bonus</p>
+              </div>
+            </div>
+            <button style={styles.modalRoundCloseBtn} onClick={() => setShowPerfMembersModal(false)}>✕</button>
+          </div>
+
+          {/* সার্চ ফিল্টার */}
+          <div style={{ marginBottom: "20px" }}>
+            <input 
+              type="text"
+              placeholder="🔍 Search member by name or mobile number..."
+              value={perfMemberSearch}
+              onChange={(e) => setPerfMemberSearch(e.target.value)}
+              style={styles.perfSearchInput}
+            />
+          </div>
+
+          <div style={styles.modalDataLogsContainer}>
+            <div style={styles.tableWrap}>
+              <table style={styles.table}>
+                <thead style={styles.tableHeaderStyleRow}>
+                  <tr>
+                    <th style={styles.tableHeadCellText}>Name & Mobile</th>
+                    <th style={styles.tableHeadCellText}>Next Renew Date</th>
+                    <th style={styles.tableHeadCellText}>Expected Bonus</th>
+                    <th style={styles.tableHeadCellText}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history
+                    .filter(member => {
+                      // সার্চ ফিল্টারিং লজিক (নাম অথবা ফোন নম্বর দিয়ে)
+                      const term = perfMemberSearch.toLowerCase();
+                      const nameMatch = (member.name || "").toLowerCase().includes(term);
+                      const mobileMatch = (member.mobile || member.phone || "").includes(term);
+                      return nameMatch || mobileMatch;
+                    })
+                    .map((member, index) => {
+                      // ১. Next Renew Date ক্যালকুলেশন (প্রতি মাসে জয়েনিং ডেট অনুযায়ী চেঞ্জ হবে)
+                      const joinDate = member.joinDate ? new Date(member.joinDate) : new Date();
+                      const today = new Date();
+                      let nextRenew = new Date(today.getFullYear(), today.getMonth(), joinDate.getDate());
+                      if (nextRenew < today) {
+                        nextRenew.setMonth(nextRenew.getMonth() + 1);
+                      }
+                      const nextRenewStr = nextRenew.toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+
+                      // ২. Expected Bonus এবং Status নির্ধারণ
+                      // ব্যাকেন্ড অনুযায়ী `member.status === 'Active'` মানে ইনভেস্ট রিনিউ করা আছে
+                      const isRenewed = member.status === "Active";
+                      const statusText = isRenewed ? "Bonus Received" : "Renew Due";
+                      const statusBg = isRenewed ? "#dcfce7" : "#fee2e2";
+                      const statusColor = isRenewed ? "#15803d" : "#dc2626";
+
+                      // ইনভেস্ট টেনুর এবং ডেটা অনুযায়ী বোনাস অ্যামাউন্ট ক্যালকুলেট বা শো করা
+                      const expectedBonus = member.earning || 0; 
+
+                      return (
+                        <tr key={index} style={styles.tableBodyRowItem}>
+                          {/* নাম এবং মোবাইল নম্বর */}
+                          <td style={styles.tableDataCellText}>
+                            <b style={{ fontSize: "15px", color: "#1e293b" }}>{member.name || "N/A"}</b>
+                            <br />
+                            <small style={{ color: "#64748b", fontWeight: "500" }}>📱 {member.mobile || member.phone || "No Number"}</small>
+                          </td>
+                          
+                          {/* নেক্সট রিনিউ ডেট */}
+                          <td style={styles.tableDataCellText}>
+                            <span style={{ fontWeight: "600", color: "#475569" }}>{nextRenewStr}</span>
+                          </td>
+                          
+                          {/* বোনাস অ্যামাউন্ট */}
+                          <td style={{ ...styles.tableDataCellText, fontWeight: "bold", color: "#c026d3" }}>
+                            {money(expectedBonus)}
+                          </td>
+                          
+                          {/* স্ট্যাটাস বাটন/ব্যাজ */}
+                          <td style={styles.tableDataCellText}>
+                            <span style={{ 
+                              padding: "6px 14px", 
+                              borderRadius: "20px", 
+                              fontSize: "12px", 
+                              fontWeight: "700",
+                              background: statusBg,
+                              color: statusColor,
+                              display: "inline-block"
+                            }}>
+                              {statusText}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* হিস্ট্রি সেকশন: শুধুমাত্র যাদের কাছ থেকে বোনাস পাওয়া গেছে বা রিনিউ করেছে তাদের জন্য */}
+          <div style={{ ...styles.historyHeadingSection, marginTop: "30px" }}>
+            <span style={{ fontSize: "18px", color: "#16a34a" }}>📜</span>
+            <h3 style={styles.historySectionTitleText}>Received Performance History</h3>
+          </div>
+
+          <div style={styles.modalDataLogsContainer}>
+            {filteredPerformanceHistory.length === 0 ? (
+              <div style={styles.emptyHistoryStateBox}>
+                <p style={{ margin: 0, color: "#64748b" }}>No active renew history found yet.</p>
+              </div>
+            ) : (
+              filteredPerformanceHistory.map((item, idx) => (
+                <div key={idx} style={styles.historyItemRowCard}>
+                  <div>
+                    <h4 style={styles.logUserNameText}>{item.fromName || "Member User"}</h4>
+                    <p style={styles.logDateSubText}>🔄 Renewed on: {new Date(item.date).toLocaleDateString("en-IN")}</p>
+                  </div>
+                  <h3 style={{ ...styles.logIncomeValueGreen, color: "#16a34a" }}>+{money(item.amount)}</h3>
+                </div>
+              ))
+            )}
+          </div>
+
+          <button 
+            style={{ ...styles.modalFooterPrimaryBtn, backgroundColor: "#e0f2fe", color: "#0369a1", marginTop: "15px" }} 
+            onClick={() => setShowPerfMembersModal(false)}
+          >
+            Back to Dashboard
+          </button>
         </NewModal>
       )}
 
@@ -901,7 +992,7 @@ export default function Refer() {
           <div style={styles.teamDualFlexGridWrapper}>
             <div style={styles.teamFlexGridHalfBlock}>
               <div style={styles.cardHeaderHeadingRow}>
-                <span>¼</span>
+                <span>⚙️</span>
                 <h4 style={styles.cardBlockTitleInlineText}>Income Summary</h4>
               </div>
               
@@ -1279,14 +1370,42 @@ function Modal({ children, onClose }) {
 
 const styles = {
   /* ==========================================================
-     NEW PREMIUM STYLES (MATCHED 100% TO IMAGES 1, 2, 3)
+     NEW ADDED PREMIUM UI STYLE FOR PERFORMANCE LIST
+     ========================================================== */
+  openPerfMembersBtn: {
+    width: "100%",
+    padding: "16px",
+    background: "linear-gradient(135deg, #c026d3 0%, #7b20ff 100%)",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: "16px",
+    fontSize: "16px",
+    fontWeight: "700",
+    cursor: "pointer",
+    boxShadow: "0 10px 20px -5px rgba(192, 38, 211, 0.3)",
+    transition: "all 0.2s"
+  },
+  perfSearchInput: {
+    width: "100%",
+    padding: "14px 20px",
+    borderRadius: "14px",
+    border: "1px solid #cbd5e1",
+    fontSize: "15px",
+    outline: "none",
+    backgroundColor: "#f8fafc",
+    color: "#334155",
+    boxSizing: "border-box"
+  },
+
+  /* ==========================================================
+     EXISTING PREMIUM STYLES (MATCHED 100% TO IMAGES 1, 2, 3)
      ========================================================== */
   newModalOverlayOverlay: {
     position: "fixed",
     inset: 0,
     backgroundColor: "rgba(15, 23, 42, 0.45)",
     backdropFilter: "blur(12px)",
-    zIndex: 99999, // মেইন মোডালের ইন্ডেক্স
+    zIndex: 99999,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -1297,7 +1416,7 @@ const styles = {
     inset: 0,
     backgroundColor: "rgba(15, 23, 42, 0.6)",
     backdropFilter: "blur(8px)",
-    zIndex: 100000, // মেইন মোডালের ওপরে সাব-মোডাল দেখানোর জন্য হায়ার ইন্ডেক্স
+    zIndex: 100000, 
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
