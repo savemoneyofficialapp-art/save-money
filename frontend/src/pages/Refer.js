@@ -369,6 +369,9 @@ export default function Refer() {
   const selectedFilteredHistory = getFilteredTeamHistory();
   const selectedFilteredTotalIncome = selectedFilteredHistory.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
+  // পারফর্ম্যান্স বোনাস প্রাপ্ত ইউজারদের লিস্ট ফিল্টারিং (শুধুমাত্র বোনাস প্রাপ্তদের জন্য)
+  const performanceBonusUsers = safeHistory.filter(userItem => Number(userItem.earning || 0) > 0);
+
   return (
     <div style={styles.page}>
       
@@ -634,7 +637,7 @@ export default function Refer() {
       )}
 
       {/* ==========================================================
-          IMAGE 1: PERFORMANCE BONUS MODAL
+          IMAGE 1: PERFORMANCE BONUS MODAL (UPDATED WITH REFERRAL BONUS LIST)
           ========================================================== */}
       {bonusModal === "performance" && (
         <NewModal onClose={() => setBonusModal(null)}>
@@ -673,6 +676,70 @@ export default function Refer() {
                 <p style={styles.statCardLabelText}>Last Month Bonus</p>
                 <h3 style={styles.statCardAmountVal}>{money(performance.lastMonthBonus || 0)}</h3>
               </div>
+            </div>
+          </div>
+
+          <div style={styles.modalHorizontalLine} />
+
+          {/* 🌟 নতুন যোগ করা পারফর্ম্যান্স বোনাস রিসিভড ইউজার লিস্ট 🌟 */}
+          <div style={{ marginBottom: "26px" }}>
+            <div style={styles.historyHeadingSection}>
+              <span style={{ fontSize: "18px", color: "#c026d3" }}>👥</span>
+              <h3 style={styles.historySectionTitleText}>Performance Refer Earnings List</h3>
+            </div>
+            
+            <div style={styles.modalDataLogsContainer}>
+              {performanceBonusUsers.length === 0 ? (
+                <div style={styles.emptyHistoryStateBox}>
+                  <div style={styles.emptyStateIconPurple}>👤</div>
+                  <h4 style={styles.emptyStateMainTitle}>No Earning Records</h4>
+                  <p style={styles.emptyStateSubtitleText}>Referrals with received performance bonus will appear here.</p>
+                </div>
+              ) : (
+                <div style={styles.tableWrap}>
+                  <table style={styles.table}>
+                    <thead style={styles.tableHeaderStyleRow}>
+                      <tr>
+                        <th style={styles.tableHeadCellText}>Name</th>
+                        <th style={styles.tableHeadCellText}>Mobile</th>
+                        <th style={styles.tableHeadCellText}>Next Renew Date</th>
+                        <th style={styles.tableHeadCellText}>Bonus Amount</th>
+                        <th style={styles.tableHeadCellText}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {performanceBonusUsers.map((item, idx) => {
+                        // স্ট্যাটাস ডাইনামিক নির্ধারণ করার জন্য
+                        const isRenewed = item.status === "Active"; 
+                        return (
+                          <tr key={idx} style={styles.tableBodyRowItem}>
+                            <td style={styles.tableDataCellText}><b>{item.name || "N/A"}</b></td>
+                            <td style={styles.tableDataCellText}>{item.mobile || item.phone || "N/A"}</td>
+                            <td style={styles.tableDataCellText}>
+                              {item.nextRenewDate ? new Date(item.nextRenewDate).toLocaleDateString("en-IN") : "N/A"}
+                            </td>
+                            <td style={{ ...styles.tableDataCellText, fontWeight: "bold", color: "#16a34a" }}>
+                              {money(item.earning)}
+                            </td>
+                            <td style={styles.tableDataCellText}>
+                              <span style={{
+                                padding: "4px 10px",
+                                borderRadius: "8px",
+                                fontWeight: "700",
+                                fontSize: "12px",
+                                backgroundColor: isRenewed ? "#dcfce7" : "#fee2e2",
+                                color: isRenewed ? "#16a34a" : "#dc2626"
+                              }}>
+                                {isRenewed ? "bonus received" : "renew due"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
 
@@ -834,7 +901,7 @@ export default function Refer() {
           <div style={styles.teamDualFlexGridWrapper}>
             <div style={styles.teamFlexGridHalfBlock}>
               <div style={styles.cardHeaderHeadingRow}>
-                <span>⚙️</span>
+                <span>¼</span>
                 <h4 style={styles.cardBlockTitleInlineText}>Income Summary</h4>
               </div>
               
