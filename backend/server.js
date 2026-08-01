@@ -7232,7 +7232,7 @@ cron.schedule("0 0 1 * *", async () => {
 
 //=======================AUTO RENEW=========================
 // অটো রিনিউ ক্রন জব (ইন্ডিয়ান টাইমজোন অনুযায়ী প্রতিদিন রাত ১২টায় চলবে)
-cron.schedule("30 9 1 * *",  async () => {
+cron.schedule("0 0 * * *",  async () => {
     console.log("Running Automatic Investment Renewal Cron Job...");
     try {
         const today = new Date();
