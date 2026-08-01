@@ -7200,37 +7200,37 @@ cron.schedule("0 0 * * *", async () => {
 
 
 
-// ================= AUTO MONTH RESET =================
+// ==================== AUTO MONTH RESET ====================
 
 cron.schedule("0 0 1 * *", async () => {
+    console.log("AUTO MONTH RESET RUNNING...");
 
-  console.log("AUTO MONTH RESET RUNNING...");
+    try {
+        // ১. সমস্ত ইউজারের চলতি মাসের বোনাসকে গত মাসে শিফট করা এবং চলতি মাসের বোনাস/ডিরেক্ট রেফারেল ০ করা
+        const result = await User.updateMany(
+            {}, 
+            [
+                {
+                    $set: {
+                        // বর্তমান মাসের বোনাসকে গত মাসের বোনাসে নিয়ে যাওয়া
+                        lastMonthBonus: { $ifNull: ["$thisMonthBonus", 0] },
+                        // চলতি মাসের বোনাস এবং ডিরেক্ট রেফারেল ০ (রিসেট) করা
+                        thisMonthBonus: 0,
+                        monthlyDirects: 0
+                    }
+                }
+            ]
+        );
 
-  
-      // move current to last month
-      pb.lastMonthBonus = pb.thisMonthBonus;
+        console.log(`MONTH RESET SUCCESS. Updated ${result.modifiedCount} users.`);
 
-      // reset current month
-      pb.thisMonthBonus = 0;
-
-      await pb.save();
+    } catch (err) {
+        console.error("MONTH RESET ERROR:", err);
     }
-
-    // 🔥 reset monthly directs
-await User.updateMany(
-  {},
-  { monthlyDirects: 0 }
-);
-    console.log("MONTH RESET SUCCESS");
-
-  } catch (err) {
-
-    console.log("MONTH RESET ERROR:", err);
-
-  }
-
 });
 
+
+//=======================AUTO RENEW=========================
 // অটো রিনিউ ক্রন জব (ইন্ডিয়ান টাইমজোন অনুযায়ী প্রতিদিন রাত ১২টায় চলবে)
 cron.schedule('0 0 * * *', async () => {
     console.log("Running Automatic Investment Renewal Cron Job...");
