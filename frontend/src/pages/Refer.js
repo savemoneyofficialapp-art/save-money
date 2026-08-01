@@ -24,7 +24,7 @@ export default function Refer() {
   const [referBonus, setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
   
-  // নতুন স্টেট: পারফর্ম্যান্স রেফারাল লিস্ট পপআপের জন্য
+  // পারফর্ম্যান্স রেফারাল লিস্ট পপআপের জন্য স্টেট
   const [showPerfListModal, setShowPerfListModal] = useState(false);
 
   // ট্রানসাকশান ডিটেইলস পপআপের জন্য স্টেট
@@ -481,7 +481,7 @@ export default function Refer() {
       </section>
 
       <section style={styles.historyCard}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ display: "flex", justifycontent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div><h2 style={{ fontSize: "20px", fontWeight: "700" }}>💰 All Bonus History</h2></div>
           <select
             value={bonusFilter}
@@ -637,7 +637,7 @@ export default function Refer() {
       )}
 
       {/* ==========================================================
-          IMAGE 1: PERFORMANCE BONUS MODAL (UPDATED WITH NEW BUTTON)
+          IMAGE 1: PERFORMANCE BONUS MODAL
           ========================================================== */}
       {bonusModal === "performance" && (
         <NewModal onClose={() => setBonusModal(null)}>
@@ -679,7 +679,7 @@ export default function Refer() {
             </div>
           </div>
 
-          {/* 🌟 নতুন যোগ করা বাটন: পারফর্ম্যান্স মেম্বার লিস্ট দেখার জন্য */}
+          {/* বাটন: পারফর্ম্যান্স মেম্বার লিস্ট দেখার জন্য */}
           <div style={{ marginBottom: "20px" }}>
             <button 
               style={{
@@ -747,7 +747,7 @@ export default function Refer() {
       )}
 
       {/* ==========================================================
-          🌟 নতুন সাব-মোডাল: পারফর্ম্যান্স রেফারাল লিস্ট পপআপ
+          🌟 ফিক্সড সাব-মোডাল: পারফর্ম্যান্স রেফারাল লিস্ট পপআপ
           ========================================================== */}
       {showPerfListModal && (
         <div style={styles.subModalOverlay} onClick={() => setShowPerfListModal(false)}>
@@ -769,28 +769,39 @@ export default function Refer() {
                   </tr>
                 </thead>
                 <tbody>
-                  {history.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" style={{ textAlign: "center", padding: "30px", color: "#64748b" }}>
-                        No Referrals Found.
-                      </td>
-                    </tr>
-                  ) : (
-                    history.map((member, idx) => {
-                      // ব্যাকএন্ড activeInvestments থেকে চেক করে স্ট্যাটাস ও রিনিউ ডেট সেট করা
-                      const nextRenewStr = member.nextRenewDate 
+                  {(() => {
+                    // ফিক্স ১: শুধুমাত্র যাদের কাছ থেকে রেফার বোনাস পাওয়া গেছে তাদের ক্রস-ম্যাচ করে ফিল্টার করা হচ্ছে
+                    const perfFilteredMembers = history.filter((member) => 
+                      (referBonus.history || []).some((bonus) => bonus.fromEmail === member.email)
+                    );
+
+                    if (perfFilteredMembers.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan="5" style={{ textAlign: "center", padding: "30px", color: "#64748b" }}>
+                            No Referrals Found with Referral Bonus.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return perfFilteredMembers.map((member, idx) => {
+                      const nextRenewStr = member.nextRenewDate && member.nextRenewDate !== "No Plan Active"
                         ? new Date(member.nextRenewDate).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' }) 
                         : "No Plan Active";
 
-                      // স্ট্যাটাস লজিক নির্ধারণ (Overdue বা Inactive হলে Renew Due, অন্যথায় Received)
-                      const isOverdue = member.nextRenewDate && new Date() > new Date(member.nextRenewDate);
-                      const isRenewDue = isOverdue || member.status === "Inactive";
+                      // ফিক্স ২: মেম্বার রিনিউ করেছে কি না তা চেক করার নতুন লজিক
+                      // যদি Valid Plan থাকে এবং সেটি আজকের চেয়ে ফিউচার ডেট হয় এবং মেম্বার একটিভ থাকে, তবেই Success, অন্যথায় Due.
+                      const hasValidPlan = member.nextRenewDate && 
+                                           member.nextRenewDate !== "No Plan Active" && 
+                                           new Date(member.nextRenewDate) > new Date();
+                                           
+                      const isRenewed = hasValidPlan && member.status === "Active";
                       
-                      const statusText = isRenewDue ? "Renew Due" : "Bonus Received";
-                      const statusColor = isRenewDue ? "#ea580c" : "#16a34a";
-                      const statusBg = isRenewDue ? "#fff7ed" : "#f0fdf4";
+                      const statusText = isRenewed ? "Success" : "Due";
+                      const statusColor = isRenewed ? "#16a34a" : "#dc2626"; // Success হলে Green, Due হলে Red
+                      const statusBg = isRenewed ? "#f0fdf4" : "#fef2f2";
 
-                      // রেফারড পারফর্ম্যান্স বোনাস অ্যামাউন্ট (উক্ত ইউজারের ইনভেস্ট টেনুর অনুযায়ী যা সেট করা আছে)
                       const bonusAmount = member.performanceBonus || member.bonusAmount || 0;
 
                       return (
@@ -821,8 +832,8 @@ export default function Refer() {
                           </td>
                         </tr>
                       );
-                    })
-                  )}
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -1245,7 +1256,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- পেন্ডিং রেফারাল সাব-মডাল (Z-Index ফিক্সড) --- */}
+      {/* --- পেন্ডিং রেফারাল সাব-মডাল --- */}
       {showPendingModal && (
         <div style={styles.subModalOverlay} onClick={() => setShowPendingModal(false)}>
           <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -1270,7 +1281,7 @@ export default function Refer() {
         </div>
       )}
 
-      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল (Z-Index ফিক্সড) --- */}
+      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল --- */}
       {showTodayJoinModal && (
         <div style={styles.subModalOverlay} onClick={() => setShowTodayJoinModal(false)}>
           <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -1299,7 +1310,6 @@ export default function Refer() {
   );
 }
 
-// 100% সেম মডাল উইন্ডো ফ্রেম
 function NewModal({ children, onClose }) {
   return (
     <div style={styles.newModalOverlayOverlay} onClick={onClose}>
@@ -1321,7 +1331,6 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
-  /* স্টাইল অবজেক্ট আগের মতোই অপরিবর্তিত রয়েছে */
   newModalOverlayOverlay: {
     position: "fixed",
     inset: 0,
