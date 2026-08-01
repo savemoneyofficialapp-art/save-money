@@ -7296,7 +7296,7 @@ cron.schedule('0 0 * * *', async () => {
 
                 // ================= কিস্তি লজিক =================
                 // বর্তমান রিনিউ করার দিন থেকে ঠিক ৩০ দিন পরের তারিখ সেট করা
-                const nextRenew = new Date();
+                const nextRenew = new Date(investment.nextRenewDate || investment.renewDate);
                 nextRenew.setDate(nextRenew.getDate() + 30);
 
                 investment.nextRenewDate = nextRenew;
