@@ -28,6 +28,13 @@ export default function SaveMoney() {
   const [loading, setLoading] = useState(false);
 
   // =========================================================================
+  // COUPON & DISCOUNT STATE CONFIGURATIONS
+  // =========================================================================
+  const [couponCode, setCouponCode] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [appliedCouponName, setAppliedCouponName] = useState("");
+
+  // =========================================================================
   // VISUAL OVERLAY SHEATH NOTIFIER STATES
   // =========================================================================
   const [statusOverlay, setStatusOverlay] = useState({
@@ -41,6 +48,7 @@ export default function SaveMoney() {
   // =========================================================================
   const [hoveredCard, setHoveredCard] = useState(null);
   const [activeInputFocus, setActiveInputFocus] = useState(false);
+  const [activeCouponFocus, setActiveCouponFocus] = useState(false);
   const [hoveredTenureNode, setHoveredTenureNode] = useState(null);
 
   // =========================================================================
@@ -100,6 +108,38 @@ export default function SaveMoney() {
   const rate = getRate(years);
 
   // =========================================================================
+  // COUPON APPLICATION HANDLER LOGIC
+  // =========================================================================
+  const handleApplyCoupon = () => {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
+      showStatusMsg("error", "Please enter a valid coupon code");
+      return;
+    }
+
+    // ডেমো কুপন লজিক: 'SAVE300' কোড দিলে ৩০০ টাকা ছাড় পাবে
+    if (code === "SAVE300") {
+      const sipAmt = Number(amount || 0);
+      if (sipAmt <= 300) {
+        showStatusMsg("error", "SIP amount must be greater than discount amount");
+        return;
+      }
+      setDiscountAmount(300);
+      setAppliedCouponName("SAVE300");
+      showStatusMsg("success", "Coupon Applied Successfully! ₹300 OFF 🎉");
+    } else {
+      showStatusMsg("error", "Invalid or expired coupon code");
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setDiscountAmount(0);
+    setAppliedCouponName("");
+    setCouponCode("");
+    showStatusMsg("info", "Coupon removed");
+  };
+
+  // =========================================================================
   // MATHEMATICAL ACCELERATED COMPOUNDING CALCULATOR VECTOR ENGINE
   // =========================================================================
   const calc = useMemo(() => {
@@ -120,14 +160,18 @@ export default function SaveMoney() {
       totalInterest = 0;
     }
 
+    // ফাইন্যাল পেঅফ ক্যালকুলেশন (যে টাকা অ্যাকাউন্ট থেকে কাটা হবে)
+    const finalPayableToday = Math.max(0, monthly - discountAmount);
+
     return {
       monthly,
       totalInvestment: monthly * n,
       estimatedReturn: totalInterest,
       totalInterest,
-      totalReturn: maturityAmount
+      totalReturn: maturityAmount,
+      finalPayableToday
     };
-  }, [amount, years, rate]);
+  }, [amount, years, rate, discountAmount]);
 
   // =========================================================================
   // HIGH DEFINITION LOCAL CURRENCY CONVERTER FORMATTER (INR)
@@ -170,8 +214,9 @@ export default function SaveMoney() {
       return;
     }
 
-    if (Number(balance) < Number(amount)) {
-      showStatusMsg("error", "Insufficient wallet balance");
+    // ওয়ালেট ব্যালেন্স চেক হবে ডিসকাউন্ট বাদ দেওয়া ফাইনাল টাকার সাথে
+    if (Number(balance) < calc.finalPayableToday) {
+      showStatusMsg("error", "Insufficient wallet balance for discounted SIP");
       return toast.error("Insufficient wallet balance");
     }
 
@@ -186,6 +231,8 @@ export default function SaveMoney() {
         body: JSON.stringify({
           email,
           amount: Number(amount),
+          discountApplied: Number(discountAmount),
+          finalDeductedAmount: Number(calc.finalPayableToday),
           monthlyReturn: Number(amount),
           years: Number(years),
           rate: Number(rate),
@@ -207,6 +254,9 @@ export default function SaveMoney() {
       if (data.success) {
         showStatusMsg("success", data.msg || "SIP Plan Started Successfully! 🌱");
         setAmount("");
+        setDiscountAmount(0);
+        setCouponCode("");
+        setAppliedCouponName("");
         setAccepted(false);
         loadBalance();
       } else {
@@ -337,6 +387,47 @@ export default function SaveMoney() {
                 </div>
               </div>
 
+              {/* ========================================================= */}
+              {/* নতুন কুপন কোড এপ্লাই করার সেকশন (ওয়ালেট ব্যালেন্সের নিচে) */}
+              {/* ========================================================= */}
+              <div style={styles.couponSectionContainer}>
+                <div style={styles.inputFieldLabelFlexHeader}>
+                  <span style={styles.inputFieldMainTitleLabel}>HAVE A PROMO / COUPON CODE?</span>
+                  {appliedCouponName && <span style={styles.couponAppliedBadge}>APPLIED: {appliedCouponName}</span>}
+                </div>
+
+                {!appliedCouponName ? (
+                  <div style={{
+                    ...styles.cyberInputWrapperGlassBox,
+                    borderColor: activeCouponFocus ? "#00ffa3" : "#334155",
+                    boxShadow: activeCouponFocus ? "0 0 20px rgba(0,255,163,0.15)" : "none",
+                    height: "52px"
+                  }}>
+                    <input
+                      style={styles.cyberInputActualInputElement}
+                      type="text"
+                      value={couponCode}
+                      onFocus={() => setActiveCouponFocus(true)}
+                      onBlur={() => setActiveCouponFocus(false)}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="e.g. SAVE300"
+                    />
+                    <button 
+                      style={styles.applyCouponBtnElement}
+                      onClick={handleApplyCoupon}
+                    >
+                      APPLY
+                    </button>
+                  </div>
+                ) : (
+                  <div style={styles.appliedCouponInfoBox}>
+                    <span style={styles.appliedCouponSuccessText}>🎟️ {appliedCouponName} Applied (-₹{discountAmount} Off)</span>
+                    <button style={styles.removeCouponBtn} onClick={handleRemoveCoupon}>Remove</button>
+                  </div>
+                )}
+              </div>
+              {/* ========================================================= */}
+
               <button 
                 style={styles.walletActionInjectFundsBtn}
                 onClick={() => (window.location.href = "/wallet")}
@@ -396,7 +487,7 @@ export default function SaveMoney() {
                 )}
               </div>
 
-              {/* FIX DEPLOYED: TENURE SELECTION LAYOUT WITH EXTRA MAXIMUM READABILITY CONTRAST SHIELDS */}
+              {/* TENURE SELECTION LAYOUT */}
               <div style={styles.tenureSelectionStructureBox}>
                 <div style={styles.inputFieldLabelFlexHeader}>
                   <span style={styles.inputFieldMainTitleLabel}>SELECT ASSET ACCUMULATION TIMEFRAME</span>
@@ -450,6 +541,26 @@ export default function SaveMoney() {
                 </div>
               </div>
 
+              {/* PAYMENT BREAKDOWN SUMMARY (কুপন ডিসকাউন্ট সহ) */}
+              {Number(amount) > 0 && (
+                <div style={styles.paymentSummaryBox}>
+                  <div style={styles.summaryRow}>
+                    <span>SIP Amount:</span>
+                    <span>{money(amount)}</span>
+                  </div>
+                  {discountAmount > 0 && (
+                    <div style={{...styles.summaryRow, color: "#00ffa3"}}>
+                      <span>Coupon Discount:</span>
+                      <span>- {money(discountAmount)}</span>
+                    </div>
+                  )}
+                  <div style={{...styles.summaryRow, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "8px", fontWeight: "bold"}}>
+                    <span>Deducted from Wallet (This Time):</span>
+                    <span style={{color: "#00d2ff"}}>{money(calc.finalPayableToday)}</span>
+                  </div>
+                </div>
+              )}
+
               {/* SYSTEM INFORMATIONAL BAR COMPLIANCE ADVICE */}
               <div style={styles.adviceSystemBarWrapperBox}>
                 <div style={styles.adviceSystemLightBulbIcon}>💡</div>
@@ -470,10 +581,9 @@ export default function SaveMoney() {
           <div style={styles.separatorLineDecorativeRight}></div>
         </div>
 
-        {/* PARALLEL GRAPH ROW TRACK 1 (BOTTOM PLACEMENT AS REQUESTED) */}
+        {/* PARALLEL GRAPH ROW TRACK 1 */}
         <div style={styles.compoundingDataDisplayRowLineOneGrid}>
           
-          {/* CALC CELL MODULE 1: ESTIMATED RETURNS */}
           <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "5px solid #00ffa3"}}>
             <div style={styles.projectionCellTopMetaLine}>
               <div style={{...styles.projectionCellIconCircleBox, color: "#00ffa3", backgroundColor: "rgba(0,255,163,0.1)"}}>📈</div>
@@ -488,7 +598,6 @@ export default function SaveMoney() {
             <p style={styles.projectionCellFooterNarrativeText}>Estimated return accrual across selected timeline framework matrix.</p>
           </div>
 
-          {/* CALC CELL MODULE 2: TOTAL DEPLOYED PRINCIPAL */}
           <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "5px solid #00d2ff"}}>
             <div style={styles.projectionCellTopMetaLine}>
               <div style={{...styles.projectionCellIconCircleBox, color: "#00d2ff", backgroundColor: "rgba(0,210,255,0.1)"}}>👛</div>
@@ -505,10 +614,9 @@ export default function SaveMoney() {
 
         </div>
 
-        {/* PARALLEL GRAPH ROW TRACK 2 (BOTTOM PLACEMENT AS REQUESTED) */}
+        {/* PARALLEL GRAPH ROW TRACK 2 */}
         <div style={styles.compoundingDataDisplayRowLineTwoGrid}>
           
-          {/* CALC CELL MODULE 3: NET COMPREHENSIVE INTEREST YIELD */}
           <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "5px solid #ffb800"}}>
             <div style={styles.projectionCellTopMetaLine}>
               <div style={{...styles.projectionCellIconCircleBox, color: "#ffb800", backgroundColor: "rgba(255,184,0,0.1)"}}>🪙</div>
@@ -523,7 +631,6 @@ export default function SaveMoney() {
             <p style={styles.projectionCellFooterNarrativeText}>Pure asset yield generation extracted via algorithmic standard interest modules.</p>
           </div>
 
-          {/* CALC CELL MODULE 4: EXPECTED MATURITY LIQUIDITY TOTAL */}
           <div style={{...styles.projectionDataMetricsCardCellBlock, borderLeft: "5px solid #cc00ff"}}>
             <div style={styles.projectionCellTopMetaLine}>
               <div style={{...styles.projectionCellIconCircleBox, color: "#cc00ff", backgroundColor: "rgba(204,0,255,0.1)"}}>📊</div>
@@ -540,7 +647,7 @@ export default function SaveMoney() {
 
         </div>
 
-        {/* HIGH RECONCILED CLEAR TEXT DISCLAIMER PANEL STRIP */}
+        {/* DISCLAIMER */}
         <div style={styles.systemAnalyticalDisclaimerBox}>
           <span style={styles.disclaimerIconInfoBadge}>i</span>
           <span style={styles.disclaimerTextMessagePara}>
@@ -548,7 +655,7 @@ export default function SaveMoney() {
           </span>
         </div>
 
-        {/* STATUTORY LEGAL DECLARATION MUTUAL ACKNOWLEDGEMENT ROW CONTAINER */}
+        {/* LEGAL DECLARATION */}
         <div style={styles.legalComplianceActionShieldContainerBox}>
           <div 
             style={{...styles.legalInteractiveClickableRowBox, ...(accepted ? styles.legalInteractiveClickableRowBoxActive : {})}}
@@ -570,7 +677,7 @@ export default function SaveMoney() {
           </div>
         </div>
 
-        {/* MAXIMUM APEX COMMAND INITIALIZATION LAUNCH SWITCH ACTION BUTTON */}
+        {/* LAUNCH BUTTON */}
         <div style={styles.ultimateLaunchButtonCentralContainerFlex}>
           <button 
             style={{
@@ -589,7 +696,7 @@ export default function SaveMoney() {
           </button>
         </div>
 
-        {/* METABOLIC TRIPLE DECK SUPPORT NETWORKING MATRIX LISTS */}
+        {/* TRIPLE DECK SUPPORT */}
         <section style={styles.systemCapabilitiesTripleFooterGridColumnLayout}>
           <div style={styles.capabilityCellBlockNodeCard}>
             <div style={{...styles.capabilityIconCircleWrapContainer, color: "#3b82f6", backgroundColor: "rgba(59,130,246,0.15)"}}>🔒</div>
@@ -618,11 +725,7 @@ export default function SaveMoney() {
 
       </div>
 
-      {/* ========================================================================= */}
-      {/* COMPLETELY UNTOUCHED CORE TRANSACTIONAL OVERLAY MODAL HUD SHIELDS */}
-      {/* ========================================================================= */}
-      
-      {/* MODAL 1: PRESERVED COMPREHENSIVE TERMS AND CONDITIONS LEDGER SYSTEM */}
+      {/* MODALS */}
       {termsOpen && (
         <div style={styles.modalSystemFallbackOverlayBlurScreen}>
           <div style={styles.modalSystemOuterBoxArchitecture}>
@@ -646,7 +749,6 @@ export default function SaveMoney() {
         </div>
       )}
 
-      {/* MODAL 2: ASSISTANT HELPDESK ENGINE MODULE DISPLAY */}
       {helpOpen && (
         <div style={styles.modalSystemFallbackOverlayBlurScreen}>
           <div style={{...styles.modalSystemOuterBoxArchitecture, borderColor: "#3b82f6"}}>
@@ -676,7 +778,7 @@ export default function SaveMoney() {
 }
 
 // =========================================================================
-// EXPANDED MATRIX PRESETS STYLE ENGINE (ULTRA CONTRAST MOBILE EDITION)
+// STYLES ADDITIONS FOR COUPON & PAYMENT SUMMARY
 // =========================================================================
 const styles = {
   cyberPageWrapper: {
@@ -1098,7 +1200,7 @@ const styles = {
     padding: "26px",
     width: "100%",
     boxSizing: "border-box",
-    marginBottom: "24px"
+    marginBottom: "20px"
   },
   walletMetaLabelRow: {
     display: "flex",
@@ -1152,6 +1254,56 @@ const styles = {
     fontSize: "11px",
     fontWeight: "700",
     color: "#00ffa3"
+  },
+  // কুপন সেকশন স্টাইল
+  couponSectionContainer: {
+    width: "100%",
+    marginBottom: "20px"
+  },
+  couponAppliedBadge: {
+    fontSize: "10px",
+    fontWeight: "700",
+    color: "#00ffa3",
+    backgroundColor: "rgba(0,255,163,0.15)",
+    padding: "3px 8px",
+    borderRadius: "6px"
+  },
+  applyCouponBtnElement: {
+    padding: "0 20px",
+    height: "38px",
+    backgroundColor: "#00ffa3",
+    color: "#020617",
+    fontWeight: "800",
+    fontSize: "12px",
+    border: "none",
+    borderRadius: "12px",
+    cursor: "pointer",
+    boxShadow: "0 4px 15px rgba(0,255,163,0.3)"
+  },
+  appliedCouponInfoBox: {
+    width: "100%",
+    height: "52px",
+    backgroundColor: "rgba(0,255,163,0.08)",
+    border: "1px solid rgba(0,255,163,0.3)",
+    borderRadius: "18px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0 16px",
+    boxSizing: "border-box"
+  },
+  appliedCouponSuccessText: {
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#00ffa3"
+  },
+  removeCouponBtn: {
+    backgroundColor: "transparent",
+    border: "none",
+    color: "#ff4a4a",
+    fontSize: "12px",
+    fontWeight: "700",
+    cursor: "pointer"
   },
   walletActionInjectFundsBtn: {
     width: "100%",
@@ -1267,9 +1419,8 @@ const styles = {
   },
   tenureSelectionStructureBox: {
     width: "100%",
-    marginBottom: "24px"
+    marginBottom: "20px"
   },
-  // HIGH DEFINITION RE-CALIBRATION MATRIX GRID FOR MAXIMUM TEXT CLARITY
   tenureGridSelectorLayoutMatrix: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
@@ -1315,6 +1466,24 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     boxShadow: "0 4px 10px rgba(0,0,0,0.5)"
+  },
+  paymentSummaryBox: {
+    backgroundColor: "rgba(0, 210, 255, 0.04)",
+    border: "1px solid rgba(0, 210, 255, 0.2)",
+    borderRadius: "16px",
+    padding: "14px 18px",
+    marginBottom: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    boxSizing: "border-box"
+  },
+  summaryRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: "12px",
+    color: "#cbd5e1"
   },
   adviceSystemBarWrapperBox: {
     backgroundColor: "rgba(0, 210, 255, 0.05)",
