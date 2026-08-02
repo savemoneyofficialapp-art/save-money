@@ -78,6 +78,12 @@ export default function Withdraw() {
   };
 
   const submitWithdraw = async () => {
+    if (!bank || !bank.accountNumber) {
+      toast.error("Please add your bank details first before withdrawing.");
+      navigate("/bank-details");
+      return;
+    }
+
     if (Number(amount) < 100) {
       toast.info("Minimum withdrawal limit is ₹100");
       return;
@@ -184,11 +190,9 @@ export default function Withdraw() {
 
   // ফ্রন্টএন্ড ফিল্টারিং লজিক (Date to Date এবং Type)
   const filteredHistory = history.filter((item) => {
-    // ১. টাইপ ফিল্টার (নোট: উইথড্র সাধারণত ডেবিট হয়, তবে টাইপ স্কিমার ওপর ভিত্তি করে কাস্টমাইজ করতে পারেন)
     if (filterType === "Credit" && item.type !== "Credit") return false;
     if (filterType === "Debit" && item.type === "Credit") return false;
 
-    // ২. ডেট ফিল্টার
     if (startDate || endDate) {
       const txDate = new Date(item.createdAt);
       txDate.setHours(0, 0, 0, 0);
@@ -207,7 +211,6 @@ export default function Withdraw() {
     return true;
   });
 
-  // ফিল্টার করা ডেটা থেকে নির্দিষ্ট সংখ্যক (visibleCount) হিস্টরি দেখানো
   const visibleHistory = filteredHistory.slice(0, visibleCount);
 
   return (
@@ -317,29 +320,44 @@ export default function Withdraw() {
         </div>
 
         <div style={styles.bankGrid} onClick={handleBankClick}>
-          <div style={styles.bankFieldsGroup}>
-            <div style={styles.bankMeta}>
-              <span style={styles.metaLabel}>HOLDER NAME</span>
-              <span style={styles.metaValue}>{bank?.accountHolderName || "Rama Basu Biswas"}</span>
+          {bank && bank.accountNumber ? (
+            <>
+              <div style={styles.bankFieldsGroup}>
+                <div style={styles.bankMeta}>
+                  <span style={styles.metaLabel}>HOLDER NAME</span>
+                  <span style={styles.metaValue}>{bank.accountHolderName}</span>
+                </div>
+                <div style={styles.bankMeta}>
+                  <span style={styles.metaLabel}>BANK NAME</span>
+                  <span style={styles.metaValue}>{bank.bankName}</span>
+                </div>
+                <div style={styles.bankMeta}>
+                  <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
+                  <span style={styles.metaValue}>{bank.accountNumber}</span>
+                </div>
+                <div style={styles.bankMeta}>
+                  <span style={styles.metaLabel}>IFSC CODE</span>
+                  <span style={styles.metaValue}>{bank.ifscCode}</span>
+                </div>
+              </div>
+              <div style={styles.bankArrowContainer}>
+                <button style={styles.bankActionCircle}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+              </div>
+            </>
+          ) : (
+            <div style={styles.noBankContainer}>
+              <div style={styles.noBankContent}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <div>
+                  <h4 style={styles.noBankTitle}>No Bank Account Added</h4>
+                  <p style={styles.noBankDesc}>Click here to add your bank details to enable secure withdrawals.</p>
+                </div>
+              </div>
+              <button style={styles.addBankBtn}>Add Bank Details →</button>
             </div>
-            <div style={styles.bankMeta}>
-              <span style={styles.metaLabel}>BANK NAME</span>
-              <span style={styles.metaValue}>{bank?.bankName || "Sbi"}</span>
-            </div>
-            <div style={styles.bankMeta}>
-              <span style={styles.metaLabel}>ACCOUNT NUMBER</span>
-              <span style={styles.metaValue}>{bank?.accountNumber || "6347223058"}</span>
-            </div>
-            <div style={styles.bankMeta}>
-              <span style={styles.metaLabel}>IFSC CODE</span>
-              <span style={styles.metaValue}>{bank?.ifscCode || "KKBK0007451"}</span>
-            </div>
-          </div>
-          <div style={styles.bankArrowContainer}>
-            <button style={styles.bankActionCircle}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </button>
-          </div>
+          )}
         </div>
       </section>
 
@@ -401,7 +419,7 @@ export default function Withdraw() {
           <div style={styles.historyListContainer}>
             {visibleHistory.map((x) => {
               const statusInfo = getStatusDetails(x.status);
-              const holderName = bank?.accountHolderName || "Rama Basu Biswas";
+              const holderName = bank?.accountHolderName || "Account Holder";
               const firstLetter = holderName.charAt(0).toUpperCase();
               const isRejected = x.status === "Rejected" || x.status === "Reject";
 
@@ -443,7 +461,6 @@ export default function Withdraw() {
               );
             })}
             
-            {/* View More অপশন লজিক */}
             {filteredHistory.length > visibleCount && (
               <button 
                 style={styles.viewMoreBtn} 
@@ -456,13 +473,12 @@ export default function Withdraw() {
         )}
       </section>
 
-      {/* রসিদ উইন্ডো মোডাল (স্থিরীকৃত ও ডায়নামিক লজিক) */}
+      {/* রসিদ উইন্ডো মোডাল */}
       {selectedTx && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContentWrapper}>
             
             <div ref={receiptRef} style={styles.newReceiptCard}>
-              {/* ডায়নামিক হেডার আইকন ও টেক্সট */}
               {selectedTx.status === "Rejected" || selectedTx.status === "Reject" ? (
                 <div style={styles.tickAreaContainer}>
                   <div style={{ ...styles.greenTickCircle, backgroundColor: "#fef2f2" }}>
@@ -492,7 +508,7 @@ export default function Withdraw() {
                 </div>
                 <div style={styles.gridRow}>
                   <span style={styles.gridLabel}>User Name</span>
-                  <span style={styles.gridValueBold}>{bank?.accountHolderName || "Rama Basu Biswas"}</span>
+                  <span style={styles.gridValueBold}>{bank?.accountHolderName || "Account Holder"}</span>
                 </div>
                 <div style={styles.gridRow}>
                   <span style={styles.gridLabel}>Transaction ID</span>
@@ -611,6 +627,14 @@ const styles = {
   metaValue: { fontSize: "21px", fontWeight: "900" }, 
   bankArrowContainer: { paddingLeft: "22px" },
   bankActionCircle: { width: "56px", height: "56px", borderRadius: "50%", border: "none", background: "#202f4e", display: "flex", alignItems: "center", justifyContent: "center" },
+  
+  // No Bank Account Added State Styles
+  noBankContainer: { width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "20px", flexWrap: "wrap" },
+  noBankContent: { display: "flex", alignItems: "center", gap: "16px", flex: 1 },
+  noBankTitle: { fontSize: "20px", fontWeight: "800", color: "#f59e0b", margin: "0 0 4px 0" },
+  noBankDesc: { fontSize: "15px", color: "#94a3b8", margin: 0 },
+  addBankBtn: { background: "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)", color: "#000000", border: "none", padding: "12px 20px", borderRadius: "12px", fontSize: "16px", fontWeight: "800", cursor: "pointer" },
+
   historySectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", width: "100%" },
   superGlassContainer: { width: "100%", padding: "35px 25px", borderRadius: "28px", background: "#0a1122", border: "2px solid #22375e", boxSizing: "border-box", boxShadow: "0 15px 35px rgba(0,0,0,0.4)" },
   superSectionTitle: { margin: 0, fontSize: "26px", fontWeight: "950", letterSpacing: "0.5px" },
@@ -621,7 +645,6 @@ const styles = {
   superDivider: { width: "2.5px", backgroundColor: "#202f4e", height: "45px", alignSelf: "center" },
   superTrustTitle: { fontSize: "17px", fontWeight: "950", margin: "16px 0 0 0", whiteSpace: "nowrap", letterSpacing: "0.3px" },
 
-  // ফিল্টার সেকশন স্টাইল
   filterWrapper: { display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px", background: "#020716", padding: "20px", borderRadius: "18px", border: "1.5px solid #202f4e" },
   typeFilterGroup: { display: "flex", gap: "10px" },
   filterTabBtn: { flex: 1, padding: "12px", border: "1.5px solid", borderRadius: "10px", cursor: "pointer", fontSize: "16px", fontWeight: "700", transition: "all 0.2s" },
@@ -630,20 +653,18 @@ const styles = {
   dateLabel: { fontSize: "14px", fontWeight: "700", color: "#94a3b8" },
   dateInput: { background: "#0a1122", border: "1.5px solid #202f4e", color: "#ffffff", padding: "10px", borderRadius: "8px", fontSize: "15px", outline: "none", width: "100%", boxSizing: "border-box" },
 
-  // ইউআই লিস্ট স্টাইলস
   historyListContainer: { display: "flex", flexDirection: "column", gap: "2px" },
   historyRowItem: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 14px", borderBottom: "1.5px solid #202f4e", cursor: "pointer", borderRadius: "12px" },
   historyLeftSection: { display: "flex", alignItems: "center", gap: "18px" },
   avatarCircle: { width: "56px", height: "56px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: "800" },
   historyHolderName: { fontSize: "22px", fontWeight: "700", color: "#ffffff" },
-  historyDateText: { fontSize: "15px", color: "#94a3b8", marginTop: "4px" },
+  historyDateText: { fontSize: "15px", color: "#a8bccc", marginTop: "4px" },
   tagBadge: { display: "inline-block", padding: "4px 10px", borderRadius: "8px", fontSize: "14px", fontWeight: "700", marginTop: "8px" },
   historyRightSection: { textAlign: "right" },
   historyAmtText: { fontSize: "24px", fontWeight: "900" },
   fromBankText: { fontSize: "14px", color: "#64748b", marginTop: "4px" },
   viewMoreBtn: { width: "100%", background: "#202f4e", color: "#ffffff", border: "none", padding: "16px", borderRadius: "12px", cursor: "pointer", fontSize: "18px", fontWeight: "700", marginTop: "16px", textAlign: "center", transition: "background 0.2s" },
   
-  // রসিদ মোডাল ডিজাইন 
   modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px", overflowY: "auto" },
   modalContentWrapper: { width: "100%", maxWidth: "450px", display: "flex", flexDirection: "column", gap: "16px" },
   newReceiptCard: { width: "100%", backgroundColor: "#ffffff", borderRadius: "32px", padding: "30px 24px", boxSizing: "border-box", color: "#000000", position: "relative" },
