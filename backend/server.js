@@ -39,6 +39,7 @@ const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
 const AutoWithdraw = require("./models/AutoWithdraw");
+const Coupon = require("./models/Coupon");
 
 
 
@@ -443,6 +444,32 @@ async function checkKYC(email) {
   };
 
 }
+
+
+// আলাদা কুপন চেক করার ফাংশন
+async function validateAndApplyCoupon(couponCode, investmentAmount) {
+  if (!couponCode) return { discountApplied: 0 };
+
+  const upperCode = couponCode.trim().toUpperCase();
+  const coupon = await Coupon.findOne({ code: upperCode, isActive: true });
+
+  if (!coupon) {
+    return { error: "Invalid or expired coupon code" };
+  }
+
+  // কুপনের মেয়াদ (Validity) চেক
+  if (new Date() > new Date(coupon.expiryDate)) {
+    return { error: "This coupon code has expired" };
+  }
+
+  // ইনভেস্টমেন্ট অ্যামাউন্ট ডিসকাউন্টের সমান বা কম হলে
+  if (investmentAmount <= coupon.discountAmount) {
+    return { error: `Investment amount must be greater than ₹${coupon.discountAmount}` };
+  }
+
+  return { discountApplied: coupon.discountAmount };
+}
+
 
 
 
@@ -1662,287 +1689,65 @@ app.post("/invest", async (req, res) => {
 
 app.post("/start-invest", async (req, res) => {
   try {
-    const {
-      email,
-      amount,
-      years,
-      rate      
-    } = req.body;
+    const { email, amount, couponCode, years, rate, totalPlanAmount, totalInterest, maturityAmount } = req.body;
 
-    const investAmount = Number(amount);
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        msg: "Email required"
-      });
-    }
-
-    if (!investAmount || investAmount < 2000) {
-      return res.status(400).json({
-        success: false,
-        msg: "Minimum investment is ₹2000"
-      });
-    }
-
+    // টোকেন বা ইউজার ভ্যালিডেশন
     const user = await User.findOne({ email });
-
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        msg: "User not found"
-      });
+      return res.json({ success: false, msg: "User not found" });
     }
 
-    // KYC Approved Required
-if (
-  String(user.kycStatus || "").toLowerCase() !== "approved"
-) {
-  return res.status(403).json({
-    success: false,
-    msg: "Your KYC is not approved. Please Complete KYC First."
-  });
-}
-
-    const walletBalance = Number(
-      user.balance ??
-      user.wallet ??
-      user.walletBalance ??
-      user.amount ??
-      0
-    );
-
-    if (walletBalance < investAmount) {
-      return res.status(400).json({
-        success: false,
-        msg: "Insufficient wallet balance"
-      });
+    // ==========================================================
+    // আলাদা কুপন ভ্যালিডেশন ফাংশন কল করা হলো
+    // ==========================================================
+    const couponResult = await validateAndApplyCoupon(couponCode, Number(amount));
+    
+    if (couponResult.error) {
+      return res.json({ success: false, msg: couponResult.error });
     }
 
-    // Balance deduct
-    const newBalance = walletBalance - investAmount;
+    const discountApplied = couponResult.discountApplied || 0;
+    const finalDeductedAmount = Math.max(0, Number(amount) - discountApplied);
 
-    user.balance = newBalance;
-    user.wallet = newBalance;
-    user.walletBalance = newBalance;
+    // ওয়ালেট ব্যালেন্স চেক (ডিসকাউন্টের পরের ফাইনাল অ্যামাউন্ট দিয়ে)
+    if (user.wallet < finalDeductedAmount) {
+      return res.json({ success: false, msg: "Insufficient wallet balance" });
+    }
 
+    // ওয়ালেট থেকে ফাইনাল টাকা কাটা
+    user.wallet -= finalDeductedAmount;
     await user.save();
 
-    const certificateNo =
-      "SM-CERT-" + Date.now();
-
-    const slipNo =
-      "SM-SLIP-" + Date.now();
-
-    const startDate = new Date();
-
-    const nextRenewDate = new Date(startDate);
-    nextRenewDate.setDate(
-      nextRenewDate.getDate() + 30
-    );
-
-            const monthly = investAmount;
-
-const annualRate = Number(rate || 0);
-
-const totalYears = Number(years || 1);
-
-const r = annualRate / 100 / 12;
-
-const n = totalYears * 12;
-
-
-let maturityAmount = 0;
-
-let totalInterest = 0;
-
-
-if (r > 0) {
-
-  maturityAmount =
-    monthly *
-    (
-      ((Math.pow(1 + r, n) - 1) / r)
-      *
-      (1 + r)
-    );
-
-  totalInterest =
-    maturityAmount -
-    (monthly * n);
-
-} else {
-
-  maturityAmount =
-    monthly * n;
-
-  totalInterest = 0;
-
-}
-
-    const investment = await Investment.create({
-
-  email,
-
-  planName: "Save Money SIP",
-
-  monthlyAmount: investAmount,
-
-  amount: investAmount,
-
-  years: Number(years || 1),
-
-  monthsPaid: 1,
-
-  rate: Number(rate || 0),
-
-  totalInterest,
-
-  maturityAmount,
-
-  certificateNo,
-
-  slipNo,
-
-  startDate,
-
-  nextRenewDate,
-
-  renewCount: 0,
-
-  renewStatus: "Waiting",
-
-  status: "Active",
-
-  lastRenewDate: startDate,
-
-  history: [
-    {
-      type: "START SIP",
-      amount: investAmount,
-      date: startDate,
-      slipNo
-    }
-  ]
-
-});
-
-    user.activeStatus = "Active";
-    if (!user.firstInvestmentDone) {
-    user.firstInvestmentDone = true;
-    user.teamBonusEnabled = true;
-    }
-
-if (!user.performanceStartDate) {
-
-    const start = new Date();
-
-    const expire = new Date(start);
-
-    expire.setDate(expire.getDate() + 30);
-
-    user.performanceStartDate = start;
-
-    user.performanceExpireDate = expire;
-
-    user.performanceStatus = "Pending";
-}
-
-await user.save();
-
-    if(!user.performanceStartDate){
-
-const start = new Date();
-
-const expire = new Date(start);
-
-expire.setDate(
-
-expire.getDate()+30
-
-);
-
-
-user.performanceStartDate=start;
-
-user.performanceExpireDate=expire;
-
-
-user.performanceStatus="Pending";
-
-
-await user.save();
-
-    }
-
-
-
-try{
-
-await processFirstInvestmentBonuses(
-    email,
-    investment
-);
-
-// Performance Task Check
-await updatePerformanceStatus(email);
-
-await payTeamBonus(
-  email,
-  investment
-);
-
-await payRoyaltyBonus(
-    email,
-    investAmount
-);
-
-}catch(err){
-
-console.log(
-"BONUS ERROR:",
-err
-);
-
-}
-
-   await WalletHistory.create({
-  email,
-  amount: investAmount,
-  type: "Debit",
-  status: "Success",
-  description: "Save Money SIP Started",
-  date: new Date()
-});
-
-    return res.status(200).json({
-      success: true,
-      msg: "Investment Started Successfully",
-
-      investmentId:
-        investment._id,
-
-      certificateNo,
-      slipNo,
-
-      walletBalance: newBalance,
-
-      investment
+    // আপনার মূল ইনভেস্টমেন্ট সেভ করার লজিক
+    const newInvestment = new Investment({
+      email,
+      amount: Number(amount),
+      discountApplied: Number(discountApplied),
+      finalDeductedAmount: Number(finalDeductedAmount),
+      monthlyReturn: Number(amount),
+      years: Number(years),
+      rate: Number(rate),
+      totalPlanAmount: Number(totalPlanAmount),
+      totalInterest: Number(totalInterest),
+      maturityAmount: Number(maturityAmount),
+      createdAt: new Date()
+    });
+
+    await newInvestment.save();
+
+    res.json({ 
+      success: true, 
+      msg: "SIP Plan Started Successfully! 🌱",
+      discountApplied,
+      finalDeductedAmount
     });
 
   } catch (err) {
-    console.log(
-      "START INVEST ERROR:",
-      err
-    );
-
-    return res.status(500).json({
-      success: false,
-      msg: "Server error",
-      error: err.message
-    });
+    console.log("START SIP SYSTEM REJECTION DISPATCH ERROR:", err);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+  
 
 
 app.post("/renew-invest", async (req, res) => {
