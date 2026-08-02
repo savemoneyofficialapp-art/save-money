@@ -3,6 +3,41 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { API } from "../config";
 
+const INDIAN_BANKS = [
+  "State Bank of India (SBI)",
+  "HDFC Bank",
+  "ICICI Bank",
+  "Axis Bank",
+  "Punjab National Bank (PNB)",
+  "Bank of Baroda",
+  "Canara Bank",
+  "Union Bank of India",
+  "Bank of India",
+  "Indian Bank",
+  "Central Bank of India",
+  "Indian Overseas Bank",
+  "UCO Bank",
+  "Bank of Maharashtra",
+  "Punjab & Sind Bank",
+  "IDBI Bank",
+  "Kotak Mahindra Bank",
+  "IndusInd Bank",
+  "Yes Bank",
+  "Federal Bank",
+  "IDFC First Bank",
+  "RBL Bank",
+  "South Indian Bank",
+  "Bandhan Bank",
+  "City Union Bank",
+  "Karur Vysya Bank",
+  "Karnataka Bank",
+  "DCB Bank",
+  "Airtel Payments Bank",
+  "India Post Payments Bank",
+  "Fino Payments Bank",
+  "Paytm Payments Bank"
+];
+
 export default function BankDetails() {
   const navigate = useNavigate();
   const email = localStorage.getItem("email") || "";
@@ -20,6 +55,10 @@ export default function BankDetails() {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [editMode, setEditMode] = useState(true);
+
+  // Bank Searchable Dropdown States
+  const [bankDropdownOpen, setBankDropdownOpen] = useState(false);
+  const [bankSearch, setBankSearch] = useState("");
 
   useEffect(() => {
     loadBankDetails();
@@ -58,6 +97,12 @@ export default function BankDetails() {
 
   const change = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const selectBank = (bankName) => {
+    setForm({ ...form, bankName });
+    setBankDropdownOpen(false);
+    setBankSearch("");
   };
 
   const save = async () => {
@@ -111,6 +156,10 @@ export default function BankDetails() {
   };
 
   const disabled = saved && !editMode;
+
+  const filteredBanks = INDIAN_BANKS.filter((bank) =>
+    bank.toLowerCase().includes(bankSearch.toLowerCase())
+  );
 
   return (
     <div style={styles.page}>
@@ -178,14 +227,65 @@ export default function BankDetails() {
             disabled={disabled}
           />
 
-          <Input
-            icon="🏦"
-            label="Institution / Bank Name"
-            name="bankName"
-            value={form.bankName}
-            onChange={change}
-            disabled={disabled}
-          />
+          {/* 🏦 Institution / Bank Name Searchable Dropdown */}
+          <div style={styles.row}>
+            <div style={styles.labelWrapper}>
+              <span style={styles.inlineIcon}>🏦</span>
+              <label style={styles.label}>
+                Institution / Bank Name <span style={{ color: "#f87171" }}>*</span>
+              </label>
+            </div>
+
+            <div style={{ position: "relative" }}>
+              <input
+                style={{
+                  ...styles.input,
+                  background: disabled ? "#0f172a" : "#020617",
+                  borderColor: disabled ? "#1e293b" : "#475569",
+                  color: disabled ? "#94a3b8" : "#f8fafc",
+                  cursor: disabled ? "not-allowed" : "pointer"
+                }}
+                value={bankDropdownOpen ? bankSearch : form.bankName}
+                onChange={(e) => {
+                  setBankSearch(e.target.value);
+                  if (!bankDropdownOpen) setBankDropdownOpen(true);
+                }}
+                onClick={() => {
+                  if (!disabled) {
+                    setBankDropdownOpen(true);
+                    setBankSearch(form.bankName);
+                  }
+                }}
+                disabled={disabled}
+                placeholder="Search or select your bank name..."
+              />
+
+              {bankDropdownOpen && !disabled && (
+                <div style={styles.dropdownList}>
+                  {filteredBanks.length > 0 ? (
+                    filteredBanks.map((bank, index) => (
+                      <div
+                        key={index}
+                        onClick={() => selectBank(bank)}
+                        style={{
+                          ...styles.dropdownItem,
+                          borderBottom: index < filteredBanks.length - 1 ? "1px solid #1e293b" : "none"
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#1e293b")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      >
+                        {bank}
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: "12px 18px", color: "#94a3b8", fontSize: "14px" }}>
+                      No bank found
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
 
           <Input
             icon="💳"
@@ -524,6 +624,27 @@ const styles = {
     outline: "none",
     boxSizing: "border-box",
     transition: "all 0.2s"
+  },
+  dropdownList: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    maxHeight: "220px",
+    overflowY: "auto",
+    background: "#0f172a",
+    border: "1px solid #475569",
+    borderRadius: "12px",
+    marginTop: "6px",
+    zIndex: 1000,
+    boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+  },
+  dropdownItem: {
+    padding: "12px 18px",
+    fontSize: "15px",
+    color: "#f8fafc",
+    cursor: "pointer",
+    transition: "background 0.2s"
   },
   note: {
     margin: "24px",
