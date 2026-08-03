@@ -7384,226 +7384,49 @@ cron.schedule("0 0 * * *", async () => {
 
 // ================= AUTO MONTH WITHDRAWAL =================
 
-cron.schedule(
-
-'0 0 5 * *',
-
-async()=>{
-
-
-try{
-
-
-console.log(
-
-"AUTO WITHDRAW STARTED"
-
-);
-
-
-
-const investments =
-
-await Investment.find({
-
-
-status:"Active",
-
-
-renewStatus:{
-
-$nin:[
-
-"Due",
-
-"Overdue"
-
-]
-
-}
-
-
-});
-
-
-
-
-for(const inv of investments){
-
-
-
-const user =
-
-await User.findOne({
-
-email:
-inv.email.toLowerCase()
-
-});
-
-
-
-if(!user){
-
-continue;
-
-}
-
-
-
-
-if(
-
-user.activeStatus!=="Active"
-
-){
-
-continue;
-
-}
-
-
-
-
-const amount = Number(
-
-user.balance||
-
-user.wallet||
-
-user.walletBalance||
-
-0
-
-);
-
-
-
-
-if(amount<=0){
-
-continue;
-
-}
-
-
-
-
-if(
-
-!user.bankName ||
-
-!user.accountNumber ||
-
-!user.ifsc
-
-){
-
-continue;
-
-}
-
-
-
-
-const start = new Date();
-start.setHours(0,0,0,0);
-
-const end = new Date();
-end.setHours(23,59,59,999);
-
-
-const exists =
-await AutoWithdrawal.findOne({
-
-email:user.email,
-
-status:"Pending",
-
-createdAt:{
-$gte:start,
-$lte:end
-}
-
-});
-
-
-
-if(exists)
-
-continue;
-
-
-
-
-
-
-await AutoWithdrawal.create({
-
-email:user.email,
-
-name:user.name,
-
-walletId:user.walletId,
-
-amount,
-
-status:"Pending",
-
-bankDetails:{
-
-bankName:user.bankName,
-
-accountName:user.accountHolder,
-
-accountNumber:user.accountNumber,
-
-ifsc:user.ifsc,
-
-upiId:user.upiId
-
-}
-
-});
-
-
-
-
-console.log(
-
-`REQUEST CREATED ${user.email}`
-
-);
-
-
-}
-
-
-
-
-console.log(
-
-"AUTO WITHDRAW COMPLETED"
-
-);
-
-
-
-}catch(err){
-
-
-console.log(
-
-"AUTO WITHDRAW ERROR",
-
-err
-
-);
-
-
-}
-
-
+// প্রতি মাসের ৫ তারিখ রাত ১২:০০ টায় রান করার ক্রন এক্সপ্রেশন: '0 0 5 * *'
+cron.schedule("0 0 5 * *", async () => {
+  console.log("AUTO WITHDRAW STARTED");
+
+  try {
+    // সব ইউজার বা যাদের স্ট্যাটাস active তাদের খুঁজুন
+    const users = await User.find({ status: "active" });
+
+    for (let user of users) {
+      // ইউজারের মেইন ওয়ালেট বা ব্যালেন্স ডেটা ফেচ করুন
+      const wallet = await Wallet.findOne({ email: user.email });
+      if (!wallet) continue;
+
+      const mainBalance = wallet.balance || 0;
+      const threshold = 2000; // ন্যূনতম যে পরিমাণ ব্যালেন্স রেখে দিতে হবে
+
+      // যদি ব্যালেন্স ২০০০ টাকার বেশি হয়, তবেই অতিরিক্ত অংশ অটো উইথড্র হবে
+      if (mainBalance > threshold) {
+        const withdrawAmount = mainBalance - threshold;
+
+        // AutoWithdraw মডেলে নতুন রিকোয়েস্ট এন্ট্রি করুন
+        await AutoWithdraw.create({
+          name: user.name,
+          email: user.email,
+          walletId: wallet.walletId || user._id,
+          amount: withdrawAmount,
+          status: "Pending",
+          bankDetails: user.bankDetails || {},
+          createdAt: new Date()
+        });
+
+        // মূল ওয়ালেট থেকে উইথড্র হওয়া অ্যামাউন্ট বাদ দিয়ে বাকি ২০০০ টাকা বা threshold সেট করুন
+        wallet.balance = threshold;
+        await wallet.save();
+
+        console.log(`Auto withdraw request created for: ${user.email}, Amount: ${withdrawAmount}`);
+      }
+    }
+
+    console.log("AUTO WITHDRAW COMPLETED");
+  } catch (err) {
+    console.log("AUTO WITHDRAW ERROR:", err);
+  }
 });
 
 
