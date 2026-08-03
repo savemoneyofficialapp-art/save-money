@@ -8,6 +8,7 @@ const INDIAN_BANKS = [
   "HDFC Bank",
   "ICICI Bank",
   "Axis Bank",
+  "AU Small Finance Bank",
   "Punjab National Bank (PNB)",
   "Bank of Baroda",
   "Canara Bank",
