@@ -22,3 +22,10 @@ const p2pReviewSchema = new mongoose.Schema({
 
 const P2PReview = mongoose.model("P2PReview", p2pReviewSchema);
 
+
+module.exports = {
+  P2PUser,
+  P2PReview
+};
+
+
