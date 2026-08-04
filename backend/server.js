@@ -2478,6 +2478,28 @@ app.post("/register-p2p", async (req, res) => {
   }
 });
 
+// ৪. P2P রেজিস্ট্রেশন আন্ডু (Undo) করার API
+app.post("/undo-p2p", async (req, res) => {
+  try {
+    const { email, walletId } = req.body;
+
+    // ডাটাবেজ থেকে ইউজারের P2P রেজিস্ট্রেশন ডিলিট বা রিমুভ করা
+    const deletedUser = await P2PUser.findOneAndDelete({ 
+      $or: [{ email }, { walletId }] 
+    });
+
+    if (!deletedUser) {
+      return res.status(404).json({ success: false, msg: "You are not registered in P2P!" });
+    }
+
+    res.json({ success: true, msg: "Successfully removed from P2P senders." });
+  } catch (err) {
+    console.error("P2P Undo Error:", err);
+    res.status(500).json({ success: false, msg: "Server error during P2P undo" });
+  }
+});
+
+
 // ২. সকল P2P ইউজার এবং তাদের রিভিউগুলো লিস্ট আকারে ফেচ করার API
 app.get("/p2p-users", async (req, res) => {
   try {
