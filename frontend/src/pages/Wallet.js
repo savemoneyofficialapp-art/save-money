@@ -730,7 +730,7 @@ export default function Wallet() {
           </div>
         </section>
 
-        {/* --- রিডিজাইন করা এবং ইন্টারেক্টিভ ওয়ালেট হিস্টোরি সেকশন --- */}
+        {/* --- ওয়ালেট হিস্টোরি সেকশন --- */}
         <section style={styles.historyCard}>
           <div style={styles.historyHeader}>
             <div>
@@ -917,7 +917,6 @@ export default function Wallet() {
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
                             <h4 style={{ margin: "0 0 2px 0", fontSize: "16px" }}>{user.name}</h4>
-                            {/* প্লে স্টোরের মতো রেটিং স্টার ডিসপ্লে */}
                             <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
                               <span style={{ fontSize: "12px", fontWeight: "800", color: "#f59e0b" }}>★ {avgRating}</span>
                               <span style={{ fontSize: "11px", color: "#64748b" }}>({uReviews.length} reviews)</span>
@@ -927,7 +926,6 @@ export default function Wallet() {
                           </div>
                           
                           <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                            {/* রিভিউ টেক্সট-এ ক্লিক করলে সব রিভিউ দেখা যাবে */}
                             <button 
                               style={styles.reviewTextClickable}
                               onClick={() => {
@@ -955,7 +953,6 @@ export default function Wallet() {
                 </div>
               )}
 
-              {/* পপআপ ক্লোজ করার জন্য নিচের বোতাম */}
               <button style={styles.popupBottomCloseBtn} onClick={() => setP2pModalOpen(false)}>
                 Close
               </button>
@@ -1027,7 +1024,7 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- html2canvas সম্বলিত প্রিমিয়াম ডিজিটাল ট্রানজ্যাকশন রিসিপ্ট মডাল --- */}
+        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল --- */}
         {selectedTxn && (
           <div style={styles.modalOverlay}>
             <div style={styles.receiptContainer}>
@@ -1251,7 +1248,6 @@ function IncomeCard({ icon, title, amount, color }) {
 }
 
 const styles = {
-  // --- কাস্টম রিসিপ্ট ও নতুন রো ডিজাইনের চমৎকার স্টাইলশিট ---
   p2pMainBtn: {
     minWidth: "120px",
     height: "54px",
@@ -1338,10 +1334,7 @@ const styles = {
     borderBottom: "1px solid #eef2ff",
     cursor: "pointer",
     transition: "all 0.2s ease",
-    borderRadius: "12px",
-    ":hover": {
-      background: "#f8fafc"
-    }
+    borderRadius: "12px"
   },
 
   receiptContainer: {
@@ -1518,8 +1511,7 @@ const styles = {
     zIndex: 100000,
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    animation: "fadeIn 0.2s ease-out"
+    justifyContent: "center"
   },
 
   statusOverlayCard: {
@@ -2016,14 +2008,6 @@ const styles = {
     borderBottom: "1px solid #eef2ff"
   },
 
-  historyRow: {
-    display: "grid",
-    gridTemplateColumns: "70px 1.6fr 1fr 1fr 1.2fr",
-    alignItems: "center",
-    padding: "14px 0",
-    borderBottom: "1px solid #eef2ff"
-  },
-
   typeCircle: {
     width: "46px",
     height: "46px",
@@ -2105,32 +2089,6 @@ const styles = {
     padding: "26px",
     color: "#071747",
     boxShadow: "0 25px 50px rgba(0,0,0,.25)"
-  },
-
-  modalInput: {
-    width: "100%",
-    height: "55px",
-    borderRadius: "15px",
-    border: "1px solid #dbe3ef",
-    padding: "0 15px",
-    fontSize: "18px",
-    outline: "none"
-  },
-
-  upiGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginTop: "18px"
-  },
-
-  upiBtn: {
-    height: "48px",
-    border: "none",
-    borderRadius: "14px",
-    background: "linear-gradient(135deg,#2563eb,#7c3aed)",
-    color: "white",
-    fontWeight: "900"
   },
 
   closeBtn: {
