@@ -39,6 +39,8 @@ const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
 const AutoWithdraw = require("./models/AutoWithdraw");
+const { P2PUser, P2PReview } = require('./p2p'); // ফাইলের নাম অনুযায়ী পাথ ঠিক করে নেবেন
+
 
 
 
@@ -2395,6 +2397,117 @@ app.post("/wallet-data", auth, async (req, res) => {
     });
   }
 });
+
+
+// ১. P2P ইউজার রেজিস্ট্রেশন API (রিয়েল ডাটা ফেচ সহ)
+app.post("/register-p2p", async (req, res) => {
+  try {
+    const { email, walletId } = req.body;
+
+    // ইউজার ইতিমধ্যে P2P তে রেজিস্টার্ড কি না চেক করা
+    const alreadyP2p = await P2PUser.findOne({ email });
+    if (alreadyP2p) {
+      return res.status(400).json({ success: false, msg: "You are already registered for P2P!" });
+    }
+
+    // মূল User মডেল বা ডাটাবেজ থেকে ইউজারের রিয়েল নাম, মোবাইল ও ব্যালেন্স বের করা
+    // (আপনার প্রজেক্টের মেইন ইউজার মডেলের নাম অনুযায়ী 'User' পরিবর্তন করে নিতে পারেন)
+    const userRealData = await User.findOne({ email }); 
+    
+    if (!userRealData) {
+      return res.status(404).json({ success: false, msg: "User profile not found in database" });
+    }
+
+    // ব্যালেন্স ২০০০ টাকার বেশি আছে কিনা চেক করা
+    const currentBalance = Number(userRealData.balance || 0);
+    if (currentBalance <= 2000) {
+      return res.status(400).json({ success: false, msg: "Your wallet balance must be greater than ₹2,000!" });
+    }
+
+    // ডেটাবেজে রিয়েল ইনফরমেশন দিয়ে সেভ করা
+    const newP2pUser = new P2PUser({
+      email: userRealData.email,
+      walletId: userRealData.walletId || walletId,
+      name: userRealData.name || "Wallet User",
+      mobile: userRealData.mobile || userRealData.phone || "N/A",
+      balance: currentBalance
+    });
+
+    await newP2pUser.save();
+
+    res.json({ success: true, msg: "Successfully registered for P2P! 🎉" });
+  } catch (err) {
+    console.error("P2P Register Error:", err);
+    res.status(500).json({ success: false, msg: "Server error during P2P registration" });
+  }
+});
+
+// ২. সকল P2P ইউজার এবং তাদের রিভিউগুলো লিস্ট আকারে ফেচ করার API
+app.get("/p2p-users", async (req, res) => {
+  try {
+    // রেজিস্টার্ড সকল P2P ইউজারের লেটেস্ট ব্যালেন্স মূল ইউজার টেবিল থেকে আপডেট করে বা সরাসরি ফেচ করা
+    const users = await P2PUser.find().lean();
+    
+    // প্রতিটি ইউজারের রিয়েল ব্যালেন্স মূল ওয়ালেট/ইউজার টেবিল থেকে সিংক্রোনাইজ করে নেওয়া
+    for (let u of users) {
+      const liveUser = await User.findOne({ email: u.email });
+      if (liveUser) {
+        u.balance = Number(liveUser.balance || 0);
+        // যদি ব্যালেন্স ২০০০ বা তার নিচে নেমে যায়, তবে অটো রিমুভ বা আপডেট করতে পারেন
+      }
+    }
+
+    // সকল রিভিউ ফেচ করা
+    const allReviews = await P2PReview.find();
+    
+    // রিভিউগুলোকে walletId অনুযায়ী অবজেক্ট ফরম্যাটে সাজানো
+    const reviewsMap = {};
+    allReviews.forEach(rev => {
+      if (!reviewsMap[rev.senderWalletId]) {
+        reviewsMap[rev.senderWalletId] = [];
+      }
+      reviewsMap[rev.senderWalletId].push({
+        reviewer: rev.reviewerEmail ? rev.reviewerEmail.split('@')[0] : "Anonymous",
+        comment: rev.comment,
+        date: rev.createdAt
+      });
+    });
+
+    res.json({
+      success: true,
+      users: users,
+      reviews: reviewsMap
+    });
+  } catch (err) {
+    console.error("P2P Users Fetch Error:", err);
+    res.status(500).json({ success: false, msg: "Failed to fetch P2P users" });
+  }
+});
+
+// ৩. P2P রিভিউ সাবমিট করার API
+app.post("/p2p-review", async (req, res) => {
+  try {
+    const { senderWalletId, reviewerEmail, review } = req.body;
+
+    if (!review || !review.trim()) {
+      return res.status(400).json({ success: false, msg: "Review text cannot be empty" });
+    }
+
+    const newReview = new P2PReview({
+      senderWalletId,
+      reviewerEmail: reviewerEmail || "Anonymous",
+      comment: review.trim()
+    });
+
+    await newReview.save();
+
+    res.json({ success: true, msg: "Review submitted successfully! ⭐" });
+  } catch (err) {
+    console.error("P2P Review Error:", err);
+    res.status(500).json({ success: false, msg: "Failed to submit review" });
+  }
+});
+
 
 
 // নতুন ডিপোজিট এপিআই (স্ক্রিনশট ছাড়া, শুধু ট্রানজেকশন আইডি দিয়ে)
