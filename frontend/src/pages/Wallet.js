@@ -33,8 +33,10 @@ export default function Wallet() {
   const [p2pModalOpen, setP2pModalOpen] = useState(false);
   const [p2pUserList, setP2pUserList] = useState([]);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [viewAllReviewsModalOpen, setViewAllReviewsModalOpen] = useState(false);
   const [selectedP2pUser, setSelectedP2pUser] = useState(null);
   const [reviewText, setReviewText] = useState("");
+  const [ratingStars, setRatingStars] = useState(5);
   const [reviewsList, setReviewsList] = useState({});
 
   const [receiverWalletId, setReceiverWalletId] = useState("");
@@ -201,13 +203,15 @@ export default function Wallet() {
         body: JSON.stringify({
           senderWalletId: selectedP2pUser.walletId,
           reviewerEmail: email,
-          review: reviewText.trim()
+          review: reviewText.trim(),
+          rating: ratingStars
         })
       });
       const data = await res.json();
       if (data.success) {
         triggerStatusOverlay("success", "Review submitted successfully! ⭐");
         setReviewText("");
+        setRatingStars(5);
         setReviewModalOpen(false);
         loadP2pUsers();
       } else {
@@ -877,14 +881,37 @@ export default function Wallet() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   {p2pUserList.map((user, idx) => {
                     const uReviews = reviewsList[user.walletId] || [];
+                    
+                    // প্লে স্টোরের মতো গড় রেটিং ও স্টার হিসাব করা
+                    const avgRating = uReviews.length > 0 
+                      ? (uReviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) / uReviews.length).toFixed(1)
+                      : "5.0";
+
                     return (
                       <div key={idx} style={styles.p2pUserCard}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
-                            <h4 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>{user.name}</h4>
+                            <h4 style={{ margin: "0 0 2px 0", fontSize: "16px" }}>{user.name}</h4>
                             <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#64748b" }}>📱 {user.mobile || "N/A"}</p>
-                            <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#16a34a" }}>Balance: ₹{Number(user.balance).toLocaleString()}</p>
+                            
+                            {/* --- সেন্ডারের নিচে প্লে স্টোরের মতো রেটিং ও স্টার --- */}
+                            <div 
+                              style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", marginTop: "2px" }}
+                              onClick={() => {
+                                setSelectedP2pUser(user);
+                                setViewAllReviewsModalOpen(true);
+                              }}
+                            >
+                              <span style={{ fontSize: "13px", fontWeight: "800", color: "#0f172a" }}>{avgRating}</span>
+                              <span style={{ color: "#f59e0b", fontSize: "13px" }}>★</span>
+                              <span style={{ fontSize: "12px", color: "#2563eb", textDecoration: "underline" }}>
+                                Review ({uReviews.length})
+                              </span>
+                            </div>
+
+                            <p style={{ margin: "6px 0 0 0", fontSize: "13px", fontWeight: "700", color: "#16a34a" }}>Balance: ₹{Number(user.balance).toLocaleString()}</p>
                           </div>
+
                           <button 
                             style={styles.reviewActionBtn}
                             onClick={() => {
@@ -892,22 +919,8 @@ export default function Wallet() {
                               setReviewModalOpen(true);
                             }}
                           >
-                            ⭐ Give Review
+                            Review
                           </button>
-                        </div>
-                        <div style={{ marginTop: "10px", borderTop: "1px dashed #e2e8f0", paddingTop: "8px" }}>
-                          <p style={{ fontSize: "12px", fontWeight: "700", color: "#475569", margin: "0 0 4px 0" }}>Secure Reviews ({uReviews.length}):</p>
-                          {uReviews.length === 0 ? (
-                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>No reviews yet.</span>
-                          ) : (
-                            <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "80px", overflowY: "auto" }}>
-                              {uReviews.map((rev, rIdx) => (
-                                <div key={rIdx} style={{ fontSize: "11px", background: "#f1f5f9", padding: "4px 8px", borderRadius: "6px" }}>
-                                  💬 {rev.comment} <span style={{ color: "#94a3b8", fontSize: "10px" }}>({rev.reviewer})</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       </div>
                     );
@@ -918,17 +931,58 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- রিভিউ সাবমিট মডাল --- */}
+        {/* --- সব রিভিউ দেখার মডাল (প্লে স্টোর স্টাইল) --- */}
+        {viewAllReviewsModalOpen && selectedP2pUser && (
+          <div style={styles.modalOverlay}>
+            <div style={{ ...styles.modal, maxWidth: "450px", maxHeight: "80vh", overflowY: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h3 style={{ margin: 0 }}>Reviews for {selectedP2pUser.name}</h3>
+                <button style={styles.depositCloseX} onClick={() => setViewAllReviewsModalOpen(false)}>×</button>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "15px" }}>
+                {(!reviewsList[selectedP2pUser.walletId] || reviewsList[selectedP2pUser.walletId].length === 0) ? (
+                  <p style={{ textAlign: "center", color: "#64748b", padding: "20px" }}>No reviews given yet.</p>
+                ) : (
+                  reviewsList[selectedP2pUser.walletId].map((rev, rIdx) => (
+                    <div key={rIdx} style={{ background: "#f8fafc", padding: "12px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>{rev.reviewer || "User"}</span>
+                        <span style={{ color: "#f59e0b", fontSize: "13px" }}>{"★".repeat(Number(rev.rating) || 5)}</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: "13px", color: "#1e293b" }}>{rev.comment}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- রিভিউ সাবমিট মডাল (স্টার ও কমেন্ট সহ) --- */}
         {reviewModalOpen && selectedP2pUser && (
           <div style={styles.modalOverlay}>
             <div style={styles.modal}>
               <h2>Give Review for {selectedP2pUser.name}</h2>
               <p style={{ fontSize: "13px", color: "#64748b" }}>Wallet ID: {selectedP2pUser.walletId}</p>
               
-              <label style={{ ...styles.depositLabel, marginTop: "15px" }}>Your Review / Security Feedback</label>
+              <label style={{ ...styles.depositLabel, marginTop: "15px" }}>Select Star Rating</label>
+              <div style={{ display: "flex", gap: "10px", fontSize: "28px", cursor: "pointer", marginBottom: "10px" }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    onClick={() => setRatingStars(star)}
+                    style={{ color: star <= ratingStars ? "#f59e0b" : "#cbd5e1" }}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+
+              <label style={styles.depositLabel}>Your Review Comment</label>
               <textarea
                 style={{ ...styles.depositInput, height: "90px", padding: "10px", resize: "none" }}
-                placeholder="Write how secure and fast this P2P sender was..."
+                placeholder="Write your experience..."
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
               />
@@ -2186,7 +2240,7 @@ const styles = {
     alignItems: "center",
     background: "#f4f0ff",
     border: "1px dashed #8b5cf6",
-    borderRadius: 15,
+    borderRadius: "15px",
     padding: "12px 10px"
   },
 
