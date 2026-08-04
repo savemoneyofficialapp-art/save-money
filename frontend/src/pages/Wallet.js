@@ -29,6 +29,14 @@ export default function Wallet() {
 
   const [withdrawOpen, setWithdrawOpen] = useState(false);
 
+  // --- নতুন P2P সংক্রান্ত স্টেট ---
+  const [p2pModalOpen, setP2pModalOpen] = useState(false);
+  const [p2pUserList, setP2pUserList] = useState([]);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedP2pUser, setSelectedP2pUser] = useState(null);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewsList, setReviewsList] = useState({});
+
   const [receiverWalletId, setReceiverWalletId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
   const [receiverInfo, setReceiverInfo] = useState(null);
@@ -56,6 +64,7 @@ export default function Wallet() {
   useEffect(() => {
     loadWallet();
     loadWithdrawStatus();
+    loadP2pUsers();
   }, []);
 
   // মাঝখানে মেসেজ ট্রিপ করার হেল্পার ফাংশন (২ সেকেন্ড পর ভ্যানিশ হয়ে যাবে)
@@ -129,6 +138,84 @@ export default function Wallet() {
       }
     } catch (err) {
       console.log("WITHDRAW STATUS ERROR", err);
+    }
+  };
+
+  // --- P2P ইউজার এবং রেজিস্টার লোড করার ফাংশন ---
+  const loadP2pUsers = async () => {
+    try {
+      const res = await fetch(`${API}/p2p-users`, {
+        method: "GET",
+        headers: { authorization: token || "" }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setP2pUserList(data.users || []);
+        if (data.reviews) setReviewsList(data.reviews);
+      }
+    } catch (err) {
+      console.log("P2P LOAD ERROR:", err);
+    }
+  };
+
+  // --- "I want P2P" রেজিস্ট্রেশন হ্যান্ডলার (ব্যালেন্স ২০০০ এর বেশি চেক সহ) ---
+  const handleIWantP2P = async () => {
+    if (Number(wallet.balance) <= 2000) {
+      return triggerStatusOverlay("warning", "Your wallet balance must be greater than ₹2,000 to register for P2P!");
+    }
+
+    try {
+      const res = await fetch(`${API}/register-p2p`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({ email, walletId: wallet.walletId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerStatusOverlay("success", "Successfully registered for P2P! 🎉");
+        loadP2pUsers();
+      } else {
+        triggerStatusOverlay("error", data.msg || "P2P Registration failed");
+      }
+    } catch (err) {
+      console.log("P2P REGISTRATION ERROR:", err);
+      triggerStatusOverlay("error", "Server error during P2P registration");
+    }
+  };
+
+  // --- P2P سینডারকে রিভিউ সাবমিট করার ফাংশন ---
+  const submitP2pReview = async () => {
+    if (!reviewText.trim()) {
+      return triggerStatusOverlay("warning", "Please write a review comment");
+    }
+    try {
+      const res = await fetch(`${API}/p2p-review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({
+          senderWalletId: selectedP2pUser.walletId,
+          reviewerEmail: email,
+          review: reviewText.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerStatusOverlay("success", "Review submitted successfully! ⭐");
+        setReviewText("");
+        setReviewModalOpen(false);
+        loadP2pUsers();
+      } else {
+        triggerStatusOverlay("error", data.msg || "Failed to submit review");
+      }
+    } catch (err) {
+      console.log("REVIEW ERROR:", err);
+      triggerStatusOverlay("error", "Server connection error");
     }
   };
 
@@ -470,6 +557,14 @@ export default function Wallet() {
               >
                 💳 Withdraw
               </button>
+
+              {/* --- নতুন P2P বোতাম --- */}
+              <button
+                style={styles.p2pMainBtn}
+                onClick={() => setP2pModalOpen(true)}
+              >
+                🤝 P2P
+              </button>
             </div>
           </div>
 
@@ -755,6 +850,95 @@ export default function Wallet() {
           </div>
         </section>
 
+        {/* --- P2P মডাল উইন্ডো --- */}
+        {p2pModalOpen && (
+          <div style={styles.modalOverlay}>
+            <div style={{ ...styles.modal, maxWidth: "600px", maxHeight: "85vh", overflowY: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+                <h2 style={{ margin: 0, fontSize: "24px" }}>🤝 P2P Marketplace</h2>
+                <button style={styles.depositCloseX} onClick={() => setP2pModalOpen(false)}>×</button>
+              </div>
+              
+              <div style={{ background: "#f8fafc", padding: "15px", borderRadius: "16px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <h4 style={{ margin: "0 0 5px 0" }}>Want to become a P2P Sender?</h4>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Requires minimum ₹2,000 wallet balance.</p>
+                </div>
+                <button style={styles.iWantP2pBtn} onClick={handleIWantP2P}>
+                  I want P2P
+                </button>
+              </div>
+
+              <h3 style={{ fontSize: "18px", marginBottom: "10px" }}>Available P2P Senders</h3>
+              
+              {p2pUserList.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#64748b", padding: "20px" }}>No P2P registered users found.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {p2pUserList.map((user, idx) => {
+                    const uReviews = reviewsList[user.walletId] || [];
+                    return (
+                      <div key={idx} style={styles.p2pUserCard}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <div>
+                            <h4 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>{user.name}</h4>
+                            <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#64748b" }}>📱 {user.mobile || "N/A"}</p>
+                            <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#16a34a" }}>Balance: ₹{Number(user.balance).toLocaleString()}</p>
+                          </div>
+                          <button 
+                            style={styles.reviewActionBtn}
+                            onClick={() => {
+                              setSelectedP2pUser(user);
+                              setReviewModalOpen(true);
+                            }}
+                          >
+                            ⭐ Give Review
+                          </button>
+                        </div>
+                        <div style={{ marginTop: "10px", borderTop: "1px dashed #e2e8f0", paddingTop: "8px" }}>
+                          <p style={{ fontSize: "12px", fontWeight: "700", color: "#475569", margin: "0 0 4px 0" }}>Secure Reviews ({uReviews.length}):</p>
+                          {uReviews.length === 0 ? (
+                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>No reviews yet.</span>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "80px", overflowY: "auto" }}>
+                              {uReviews.map((rev, rIdx) => (
+                                <div key={rIdx} style={{ fontSize: "11px", background: "#f1f5f9", padding: "4px 8px", borderRadius: "6px" }}>
+                                  💬 {rev.comment} <span style={{ color: "#94a3b8", fontSize: "10px" }}>({rev.reviewer})</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* --- রিভিউ সাবমিট মডাল --- */}
+        {reviewModalOpen && selectedP2pUser && (
+          <div style={styles.modalOverlay}>
+            <div style={styles.modal}>
+              <h2>Give Review for {selectedP2pUser.name}</h2>
+              <p style={{ fontSize: "13px", color: "#64748b" }}>Wallet ID: {selectedP2pUser.walletId}</p>
+              
+              <label style={{ ...styles.depositLabel, marginTop: "15px" }}>Your Review / Security Feedback</label>
+              <textarea
+                style={{ ...styles.depositInput, height: "90px", padding: "10px", resize: "none" }}
+                placeholder="Write how secure and fast this P2P sender was..."
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+              />
+
+              <button style={styles.sendMoneyBtn} onClick={submitP2pReview}>Submit Review</button>
+              <button style={styles.cancelBtn} onClick={() => setReviewModalOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
+
         {/* --- html2canvas সম্বলিত প্রিমিয়াম ডিজিটাল ট্রানজ্যাকশন রিসিপ্ট মডাল --- */}
         {selectedTxn && (
           <div style={styles.modalOverlay}>
@@ -980,6 +1164,48 @@ function IncomeCard({ icon, title, amount, color }) {
 
 const styles = {
   // --- কাস্টম রিসিপ্ট ও নতুন রো ডিজাইনের চমৎকার স্টাইলশিট ---
+  p2pMainBtn: {
+    minWidth: "120px",
+    height: "54px",
+    border: "none",
+    borderRadius: "18px",
+    background: "linear-gradient(135deg,#06b6d4,#2563eb)",
+    color: "white",
+    fontWeight: "900",
+    fontSize: "16px",
+    boxShadow: "0 12px 25px rgba(6,182,212,.3)"
+  },
+
+  iWantP2pBtn: {
+    padding: "10px 16px",
+    border: "none",
+    borderRadius: "12px",
+    background: "linear-gradient(135deg,#10b981,#059669)",
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: "13px",
+    cursor: "pointer"
+  },
+
+  p2pUserCard: {
+    background: "#fff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "16px",
+    padding: "14px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
+  },
+
+  reviewActionBtn: {
+    padding: "6px 12px",
+    borderRadius: "10px",
+    border: "none",
+    background: "#ede9fe",
+    color: "#7c3aed",
+    fontWeight: "700",
+    fontSize: "12px",
+    cursor: "pointer"
+  },
+
   clickableHistoryRow: {
     display: "grid",
     gridTemplateColumns: "70px 1.6fr 1fr 1fr 1.2fr",
@@ -1066,7 +1292,7 @@ const styles = {
     width: "20px",
     height: "20px",
     borderRadius: "50%",
-    background: "rgba(0,0,0,0.45)" // মডাল ওভারলে ব্যাকগ্রাউন্ড কালার ম্যাচিং
+    background: "rgba(0,0,0,0.45)"
   },
 
   receiptNotchRight: {
@@ -1341,11 +1567,12 @@ const styles = {
   heroActions: {
     display: "flex",
     gap: "16px",
-    marginTop: "22px"
+    marginTop: "22px",
+    flexWrap: "wrap"
   },
 
   addCashBtn: {
-    minWidth: "145px",
+    minWidth: "135px",
     height: "54px",
     border: "none",
     borderRadius: "18px",
@@ -1357,7 +1584,7 @@ const styles = {
   },
 
   withdrawBtn: {
-    minWidth: "145px",
+    minWidth: "135px",
     height: "54px",
     border: "none",
     borderRadius: "18px",
@@ -1954,7 +2181,7 @@ const styles = {
   },
 
   depositAddressBox: {
-    display: "flex",
+    data: "flex",
     gap: 8,
     alignItems: "center",
     background: "#f4f0ff",
@@ -1995,7 +2222,7 @@ const styles = {
 
   fileBox: {
     height: 54,
-    borderRadius: 16,
+    borderRadius: "16px",
     border: "2px dashed #60a5fa",
     background: "#eff6ff",
     display: "flex",
@@ -2003,20 +2230,20 @@ const styles = {
     justifyContent: "center",
     color: "#2563eb",
     fontWeight: 900,
-    fontSize: 14,
+    fontSize: "14px",
     cursor: "pointer"
   },
 
   submitDepositBtn: {
     width: "100%",
-    height: 54,
+    height: "54px",
     border: "none",
-    borderRadius: 17,
-    marginTop: 18,
+    borderRadius: "17px",
+    marginTop: "18px",
     background: "linear-gradient(135deg,#2563eb,#7c3aed,#ec4899)",
     color: "#fff",
-    fontSize: 16,
-    fontWeight: 900,
+    fontSize: "16px",
+    fontWeight: "900",
     boxShadow: "0 16px 35px rgba(124,58,237,.35)"
   }
 };
