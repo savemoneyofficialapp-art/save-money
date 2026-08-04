@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import html2canvas from "html2canvas";
@@ -2186,7 +2185,7 @@ const styles = {
     alignItems: "center",
     background: "#f4f0ff",
     border: "1px dashed #8b5cf6",
-    borderRadius: 15,
+    borderRadius: "15px",
     padding: "12px 10px"
   },
 
