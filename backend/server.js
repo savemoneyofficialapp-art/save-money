@@ -39,7 +39,8 @@ const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
 const AutoWithdraw = require("./models/AutoWithdraw");
-const { P2PUser, P2PReview } = require('./p2p'); // ফাইলের নাম অনুযায়ী পাথ ঠিক করে নেবেন
+const { P2PUser, P2PReview } = require("./models/p2p");
+
 
 
 
