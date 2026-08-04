@@ -33,10 +33,10 @@ export default function Wallet() {
   const [p2pModalOpen, setP2pModalOpen] = useState(false);
   const [p2pUserList, setP2pUserList] = useState([]);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [viewAllReviewsModalOpen, setViewAllReviewsModalOpen] = useState(false);
+  const [allReviewsModalOpen, setAllReviewsModalOpen] = useState(false);
   const [selectedP2pUser, setSelectedP2pUser] = useState(null);
   const [reviewText, setReviewText] = useState("");
-  const [ratingStars, setRatingStars] = useState(5);
+  const [reviewRating, setReviewRating] = useState(5);
   const [reviewsList, setReviewsList] = useState({});
 
   const [receiverWalletId, setReceiverWalletId] = useState("");
@@ -188,6 +188,30 @@ export default function Wallet() {
     }
   };
 
+  // --- P2P রেজিস্ট্রেশন আন্ডু (Undo) করার হ্যান্ডলার ---
+  const handleUndoP2P = async () => {
+    try {
+      const res = await fetch(`${API}/undo-p2p`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify({ email, walletId: wallet.walletId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerStatusOverlay("success", "Successfully removed from P2P senders.");
+        loadP2pUsers();
+      } else {
+        triggerStatusOverlay("error", data.msg || "Failed to undo P2P");
+      }
+    } catch (err) {
+      console.log("P2P UNDO ERROR:", err);
+      triggerStatusOverlay("error", "Server error during P2P undo");
+    }
+  };
+
   // --- P2P سینডারকে রিভিউ সাবমিট করার ফাংশন ---
   const submitP2pReview = async () => {
     if (!reviewText.trim()) {
@@ -204,14 +228,14 @@ export default function Wallet() {
           senderWalletId: selectedP2pUser.walletId,
           reviewerEmail: email,
           review: reviewText.trim(),
-          rating: ratingStars
+          rating: reviewRating
         })
       });
       const data = await res.json();
       if (data.success) {
         triggerStatusOverlay("success", "Review submitted successfully! ⭐");
         setReviewText("");
-        setRatingStars(5);
+        setReviewRating(5);
         setReviewModalOpen(false);
         loadP2pUsers();
       } else {
@@ -868,9 +892,14 @@ export default function Wallet() {
                   <h4 style={{ margin: "0 0 5px 0" }}>Want to become a P2P Sender?</h4>
                   <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Requires minimum ₹2,000 wallet balance.</p>
                 </div>
-                <button style={styles.iWantP2pBtn} onClick={handleIWantP2P}>
-                  I want P2P
-                </button>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button style={styles.iWantP2pBtn} onClick={handleIWantP2P}>
+                    I want P2P
+                  </button>
+                  <button style={styles.undoP2pBtn} onClick={handleUndoP2P}>
+                    Undo
+                  </button>
+                </div>
               </div>
 
               <h3 style={{ fontSize: "18px", marginBottom: "10px" }}>Available P2P Senders</h3>
@@ -881,85 +910,90 @@ export default function Wallet() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   {p2pUserList.map((user, idx) => {
                     const uReviews = reviewsList[user.walletId] || [];
+                    const avgRating = uReviews.length > 0 ? (uReviews.reduce((acc, r) => acc + (r.rating || 5), 0) / uReviews.length).toFixed(1) : "5.0";
                     
-                    // প্লে স্টোরের মতো গড় রেটিং ও স্টার হিসাব করা
-                    const avgRating = uReviews.length > 0 
-                      ? (uReviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) / uReviews.length).toFixed(1)
-                      : "5.0";
-
                     return (
                       <div key={idx} style={styles.p2pUserCard}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
                             <h4 style={{ margin: "0 0 2px 0", fontSize: "16px" }}>{user.name}</h4>
+                            {/* প্লে স্টোরের মতো রেটিং স্টার ডিসপ্লে */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "12px", fontWeight: "800", color: "#f59e0b" }}>★ {avgRating}</span>
+                              <span style={{ fontSize: "11px", color: "#64748b" }}>({uReviews.length} reviews)</span>
+                            </div>
                             <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#64748b" }}>📱 {user.mobile || "N/A"}</p>
-                            
-                            {/* --- সেন্ডারের নিচে প্লে স্টোরের মতো রেটিং ও স্টার --- */}
-                            <div 
-                              style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", marginTop: "2px" }}
+                            <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#16a34a" }}>Balance: ₹{Number(user.balance).toLocaleString()}</p>
+                          </div>
+                          
+                          <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                            {/* রিভিউ টেক্সট-এ ক্লিক করলে সব রিভিউ দেখা যাবে */}
+                            <button 
+                              style={styles.reviewTextClickable}
                               onClick={() => {
                                 setSelectedP2pUser(user);
-                                setViewAllReviewsModalOpen(true);
+                                setAllReviewsModalOpen(true);
                               }}
                             >
-                              <span style={{ fontSize: "13px", fontWeight: "800", color: "#0f172a" }}>{avgRating}</span>
-                              <span style={{ color: "#f59e0b", fontSize: "13px" }}>★</span>
-                              <span style={{ fontSize: "12px", color: "#2563eb", textDecoration: "underline" }}>
-                                Review ({uReviews.length})
-                              </span>
-                            </div>
-
-                            <p style={{ margin: "6px 0 0 0", fontSize: "13px", fontWeight: "700", color: "#16a34a" }}>Balance: ₹{Number(user.balance).toLocaleString()}</p>
+                              Review
+                            </button>
+                            
+                            <button 
+                              style={styles.reviewActionBtn}
+                              onClick={() => {
+                                setSelectedP2pUser(user);
+                                setReviewModalOpen(true);
+                              }}
+                            >
+                              Give Review
+                            </button>
                           </div>
-
-                          <button 
-                            style={styles.reviewActionBtn}
-                            onClick={() => {
-                              setSelectedP2pUser(user);
-                              setReviewModalOpen(true);
-                            }}
-                          >
-                            Review
-                          </button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               )}
+
+              {/* পপআপ ক্লোজ করার জন্য নিচের বোতাম */}
+              <button style={styles.popupBottomCloseBtn} onClick={() => setP2pModalOpen(false)}>
+                Close
+              </button>
             </div>
           </div>
         )}
 
-        {/* --- সব রিভিউ দেখার মডাল (প্লে স্টোর স্টাইল) --- */}
-        {viewAllReviewsModalOpen && selectedP2pUser && (
+        {/* --- সব রিভিউ দেখার পপআপ মডাল --- */}
+        {allReviewsModalOpen && selectedP2pUser && (
           <div style={styles.modalOverlay}>
-            <div style={{ ...styles.modal, maxWidth: "450px", maxHeight: "80vh", overflowY: "auto" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h3 style={{ margin: 0 }}>Reviews for {selectedP2pUser.name}</h3>
-                <button style={styles.depositCloseX} onClick={() => setViewAllReviewsModalOpen(false)}>×</button>
+            <div style={{ ...styles.modal, maxWidth: "450px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+                <h2 style={{ margin: 0, fontSize: "20px" }}>Reviews for {selectedP2pUser.name}</h2>
+                <button style={styles.depositCloseX} onClick={() => setAllReviewsModalOpen(false)}>×</button>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "15px" }}>
+              <div style={{ maxHeight: "250px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
                 {(!reviewsList[selectedP2pUser.walletId] || reviewsList[selectedP2pUser.walletId].length === 0) ? (
-                  <p style={{ textAlign: "center", color: "#64748b", padding: "20px" }}>No reviews given yet.</p>
+                  <p style={{ textAlign: "center", color: "#64748b", padding: "20px" }}>No reviews available yet.</p>
                 ) : (
                   reviewsList[selectedP2pUser.walletId].map((rev, rIdx) => (
-                    <div key={rIdx} style={{ background: "#f8fafc", padding: "12px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+                    <div key={rIdx} style={{ background: "#f8fafc", padding: "10px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>{rev.reviewer || "User"}</span>
-                        <span style={{ color: "#f59e0b", fontSize: "13px" }}>{"★".repeat(Number(rev.rating) || 5)}</span>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#1e293b" }}>{rev.reviewer || "User"}</span>
+                        <span style={{ fontSize: "12px", color: "#f59e0b" }}>{"★".repeat(rev.rating || 5)}</span>
                       </div>
-                      <p style={{ margin: 0, fontSize: "13px", color: "#1e293b" }}>{rev.comment}</p>
+                      <p style={{ margin: 0, fontSize: "13px", color: "#475569" }}>{rev.comment}</p>
                     </div>
                   ))
                 )}
               </div>
+
+              <button style={styles.closeBtn} onClick={() => setAllReviewsModalOpen(false)}>Close</button>
             </div>
           </div>
         )}
 
-        {/* --- রিভিউ সাবমিট মডাল (স্টার ও কমেন্ট সহ) --- */}
+        {/* --- রিভিউ সাবমিট মডাল --- */}
         {reviewModalOpen && selectedP2pUser && (
           <div style={styles.modalOverlay}>
             <div style={styles.modal}>
@@ -967,22 +1001,22 @@ export default function Wallet() {
               <p style={{ fontSize: "13px", color: "#64748b" }}>Wallet ID: {selectedP2pUser.walletId}</p>
               
               <label style={{ ...styles.depositLabel, marginTop: "15px" }}>Select Star Rating</label>
-              <div style={{ display: "flex", gap: "10px", fontSize: "28px", cursor: "pointer", marginBottom: "10px" }}>
+              <div style={{ display: "flex", gap: "10px", fontSize: "24px", marginBottom: "10px", cursor: "pointer" }}>
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <span
-                    key={star}
-                    onClick={() => setRatingStars(star)}
-                    style={{ color: star <= ratingStars ? "#f59e0b" : "#cbd5e1" }}
+                  <span 
+                    key={star} 
+                    onClick={() => setReviewRating(star)}
+                    style={{ color: star <= reviewRating ? "#f59e0b" : "#cbd5e1" }}
                   >
                     ★
                   </span>
                 ))}
               </div>
 
-              <label style={styles.depositLabel}>Your Review Comment</label>
+              <label style={styles.depositLabel}>Your Review / Security Feedback</label>
               <textarea
                 style={{ ...styles.depositInput, height: "90px", padding: "10px", resize: "none" }}
-                placeholder="Write your experience..."
+                placeholder="Write how secure and fast this P2P sender was..."
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
               />
@@ -1231,13 +1265,24 @@ const styles = {
   },
 
   iWantP2pBtn: {
-    padding: "10px 16px",
+    padding: "8px 12px",
     border: "none",
-    borderRadius: "12px",
+    borderRadius: "10px",
     background: "linear-gradient(135deg,#10b981,#059669)",
     color: "#fff",
     fontWeight: "800",
-    fontSize: "13px",
+    fontSize: "12px",
+    cursor: "pointer"
+  },
+
+  undoP2pBtn: {
+    padding: "8px 12px",
+    border: "none",
+    borderRadius: "10px",
+    background: "#ef4444",
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: "12px",
     cursor: "pointer"
   },
 
@@ -1249,6 +1294,18 @@ const styles = {
     boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
   },
 
+  reviewTextClickable: {
+    background: "none",
+    border: "none",
+    color: "#2563eb",
+    fontWeight: "700",
+    fontSize: "13px",
+    cursor: "pointer",
+    padding: 0,
+    textAlign: "right",
+    textDecoration: "underline"
+  },
+
   reviewActionBtn: {
     padding: "6px 12px",
     borderRadius: "10px",
@@ -1257,6 +1314,19 @@ const styles = {
     color: "#7c3aed",
     fontWeight: "700",
     fontSize: "12px",
+    cursor: "pointer"
+  },
+
+  popupBottomCloseBtn: {
+    width: "100%",
+    height: "46px",
+    marginTop: "16px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#f1f5f9",
+    color: "#334155",
+    fontWeight: "800",
+    fontSize: "14px",
     cursor: "pointer"
   },
 
@@ -2234,33 +2304,6 @@ const styles = {
     margin: "12px 0 7px"
   },
 
-  depositAddressBox: {
-    data: "flex",
-    gap: 8,
-    alignItems: "center",
-    background: "#f4f0ff",
-    border: "1px dashed #8b5cf6",
-    borderRadius: "15px",
-    padding: "12px 10px"
-  },
-
-  depositAddress: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: 800,
-    color: "#4c1d95",
-    wordBreak: "break-all"
-  },
-
-  copyBtn: {
-    border: "none",
-    borderRadius: 12,
-    padding: "9px 12px",
-    background: "linear-gradient(135deg,#6d28d9,#ec4899)",
-    color: "#fff",
-    fontWeight: 900
-  },
-
   depositInput: {
     width: "100%",
     height: 50,
@@ -2272,20 +2315,6 @@ const styles = {
     fontWeight: 700,
     background: "#fff",
     boxSizing: "border-box"
-  },
-
-  fileBox: {
-    height: 54,
-    borderRadius: "16px",
-    border: "2px dashed #60a5fa",
-    background: "#eff6ff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#2563eb",
-    fontWeight: 900,
-    fontSize: "14px",
-    cursor: "pointer"
   },
 
   submitDepositBtn: {
