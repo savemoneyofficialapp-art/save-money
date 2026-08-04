@@ -373,6 +373,41 @@ cloudinary.config({
 });
 
 
+const submitP2pReview = async (ratingVal) => {
+  if (!reviewText.trim()) {
+    return triggerStatusOverlay("warning", "Please write a review comment");
+  }
+  try {
+    const res = await fetch(`${API}/p2p-review`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: token || ""
+      },
+      body: JSON.stringify({
+        senderWalletId: selectedP2pUser.walletId,
+        reviewerEmail: email,
+        rating: Number(ratingVal),
+        review: reviewText.trim()
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      triggerStatusOverlay("success", "Review submitted successfully! ⭐");
+      setReviewText("");
+      setReviewModalOpen(false);
+      loadP2pUsers();
+    } else {
+      triggerStatusOverlay("error", data.msg || "Failed to submit review");
+    }
+  } catch (err) {
+    console.log("REVIEW ERROR:", err);
+    triggerStatusOverlay("error", "Server connection error");
+  }
+};
+
+
+
 
 async function payRoyaltyBonus(newInvestorEmail, amount) {
 
