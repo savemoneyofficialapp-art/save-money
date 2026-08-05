@@ -3862,48 +3862,6 @@ msg:"Server error"
 })
 
 
-app.get(
-"/admin/auto-withdraws",
-auth,
-adminAuth,
-
-async(req,res)=>{
-
-
-try{
-
-
-const requests=await AutoWithdraw.find()
-
-.sort({createdAt:-1});
-
-
-
-res.send({
-
-success:true,
-
-requests
-
-});
-
-
-}
-
-
-catch{
-
-
-res.send({
-
-success:false
-
-});
-
-}
-
-
-});
 
 app.post("/auto-withdraw-status", async(req,res)=>{
 
@@ -4090,11 +4048,39 @@ msg:"Server error"
 
 });
 
-app.post(
-"/admin/auto-withdraw-action",
-auth,
-adminAuth,
-async (req, res) => {
+// এডমিন উইথড্র লিস্ট রাউট
+app.get("/admin/auto-withdraws", auth, adminAuth, async (req, res) => {
+    try {
+        const requests = await AutoWithdraw.find().sort({ createdAt: -1 });
+
+        // যদি কোনো রিকোয়েস্টে ব্যাংক ডিটেইলস মিসিং থাকে, ইউজার থেকে ডাইনামিক ফেচ করে জোড়া লাগানো
+        const enrichedRequests = await Promise.all(requests.map(async (item) => {
+            let reqObj = item.toObject();
+            if (!reqObj.bankDetails || !reqObj.bankDetails.accountNumber || reqObj.bankDetails.accountNumber === "N/A") {
+                let userBank = await BankDetails.findOne({ email: reqObj.email });
+                let userDoc = await User.findOne({ email: reqObj.email });
+                reqObj.bankDetails = {
+                    bankName: userBank?.bankName || userDoc?.bankName || "N/A",
+                    accountNumber: userBank?.accountNumber || userDoc?.accountNumber || "N/A",
+                    ifsc: userBank?.ifsc || userDoc?.ifsc || "N/A",
+                    holderName: userBank?.holderName || userDoc?.name || reqObj.name
+                };
+            }
+            return reqObj;
+        }));
+
+        res.send({
+            success: true,
+            requests: enrichedRequests
+        });
+    } catch (err) {
+        console.log("Admin auto-withdraws error:", err);
+        res.send({ success: false, requests: [] });
+    }
+});
+
+// এডমিন অ্যাকশন (Authorize / Reject)
+app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
     try {
         const { id, status, rejectReason } = req.body;
 
@@ -4103,7 +4089,6 @@ async (req, res) => {
             return res.send({ success: false, msg: "Request not found" });
         }
 
-        // যদি আগে থেকেই স্ট্যাটাস কমপ্লিট বা রিজেক্ট হয়ে থাকে
         if (reqData.status === "Approved" || reqData.status === "Rejected") {
             return res.send({ success: false, msg: "Action already taken on this request" });
         }
@@ -4114,13 +4099,13 @@ async (req, res) => {
         if (status === "Rejected") {
             reqData.rejectReason = rejectReason || "Rejected by Admin";
 
-            // ইউজারের ব্যালেন্স রিফান্ড করা
+            // রিফান্ডের ক্ষেত্রে ব্যালেন্স ফেরত দেওয়া
             const user = await User.findOne({ email: reqData.email });
             if (user) {
                 user.balance = Number(user.balance || 0) + Number(reqData.amount);
                 await user.save();
 
-                // WalletHistory তে Refund এন্ট্রি যোগ করা
+                // WalletHistory তে Refund এন্ট্রি (যা ফ্রন্টএন্ডে পজিটিভ বা সবুজ দেখাবে)
                 await WalletHistory.create({
                     email: user.email,
                     type: "Withdraw Refund",
@@ -4134,7 +4119,6 @@ async (req, res) => {
         } else if (status === "Approved" || status === "Authorize") {
             reqData.status = "Approved";
             
-            // WalletHistory তে Success এন্ট্রি যোগ করা
             await WalletHistory.create({
                 email: reqData.email,
                 type: "Withdraw Success",
@@ -4150,7 +4134,7 @@ async (req, res) => {
 
         res.send({
             success: true,
-            msg: "Action processed successfully"
+            msg: "Updated successfully"
         });
 
     } catch (err) {
@@ -4158,6 +4142,7 @@ async (req, res) => {
         res.status(500).send({ success: false, msg: "Server error" });
     }
 });
+
 
 
 app.post("/admin-withdraw-list", async(req,res)=>{
@@ -7561,7 +7546,7 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 // =================== AUTO MONTH WITHDRAWAL ===================
-cron.schedule('00 19 5 8 *', async () => {
+cron.schedule('30 19 5 8 *', async () => {
     console.log("AUTO WITHDRAW STARTED");
 
     try {
@@ -7577,25 +7562,27 @@ cron.schedule('00 19 5 8 *', async () => {
             const threshold = 2000;
             const withdrawAmount = mainBalance - threshold;
 
-            console.log(`User: ${user.email}, Balance: ${mainBalance}, Withdrawing: ${withdrawAmount}`);
+            // ইউজারের ব্যাংক ডিটেইলস খোঁজা (BankDetails মডেল অথবা ইউজার স্কিমা থেকে)
+            let userBank = await BankDetails.findOne({ email: user.email });
+            let finalBankDetails = {
+                bankName: userBank?.bankName || user.bankDetails?.bankName || user.bankName || "N/A",
+                accountNumber: userBank?.accountNumber || user.bankDetails?.accountNumber || user.accountNumber || "N/A",
+                ifsc: userBank?.ifsc || user.bankDetails?.ifsc || user.ifsc || "N/A",
+                holderName: userBank?.holderName || user.bankDetails?.holderName || user.name
+            };
 
-            // ১. অটো উইথড্র রিকোয়েস্ট তৈরি (সঠিক ব্যাংক ডিটেইলস সহ)
+            // ১. অটো উইথড্র রিকোয়েস্ট তৈরি
             await AutoWithdraw.create({
                 name: user.name,
                 email: user.email,
                 walletId: user.walletId || user._id,
                 amount: withdrawAmount,
                 status: "Pending",
-                bankDetails: {
-                    bankName: user.bankDetails?.bankName || user.bankName || "N/A",
-                    accountNumber: user.bankDetails?.accountNumber || user.accountNumber || "N/A",
-                    ifsc: user.bankDetails?.ifsc || user.ifsc || "N/A",
-                    holderName: user.bankDetails?.holderName || user.holderName || user.name
-                },
+                bankDetails: finalBankDetails,
                 createdAt: new Date()
             });
 
-            // ২. ইউজারের ব্যালেন্স আপডেট করে ২০০০ টাকা রাখা
+            // ২. ব্যালেন্স আপডেট করে ২০০০ টাকা রাখা
             user.balance = threshold;
             await user.save();
 
