@@ -7564,7 +7564,7 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 // =================== AUTO MONTH WITHDRAWAL ===================
-cron.schedule('00 21 5 8 *', async () => {
+cron.schedule("0 0 5 * *", async () => {
     console.log("AUTO WITHDRAW STARTED");
 
     try {
