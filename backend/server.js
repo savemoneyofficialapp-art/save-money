@@ -5275,7 +5275,7 @@ async (req, res) => {
 });
 
 
-App.get("/latest-news", async (req, res) => {
+app.get("/latest-news", async (req, res) => {
   try {
     // অ্যাডমিন প্যানেল থেকে পাঠানো টাইটেল বা নির্দিষ্ট ক্যাটাগরির লেটেস্ট নোটিফিকেশন খুঁজবে
     const latest = await Notification.findOne({
