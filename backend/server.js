@@ -5275,6 +5275,23 @@ async (req, res) => {
 });
 
 
+app.get("/latest-news", async (req, res) => {
+  try {
+    const latest = await Notification.findOne().sort({ createdAt: -1 });
+    
+    if (!latest) {
+      return res.json({ success: true, message: "No new announcement" });
+    }
+
+    res.json({ success: true, message: latest.message || latest.title });
+  } catch (err) {
+    console.log("Latest news fetch error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+
 app.post("/send-notification", async (req, res) => {
 
   const { email, text } = req.body;
