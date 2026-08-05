@@ -5275,20 +5275,30 @@ async (req, res) => {
 });
 
 
-app.get("/latest-news", async (req, res) => {
+App.get("/latest-news", async (req, res) => {
   try {
-    const latest = await Notification.findOne().sort({ createdAt: -1 });
+    // অ্যাডমিন প্যানেল থেকে পাঠানো টাইটেল বা নির্দিষ্ট ক্যাটাগরির লেটেস্ট নোটিফিকেশন খুঁজবে
+    const latest = await Notification.findOne({
+      $or: [
+        { title: "App Latest Update" },
+        { title: { $regex: /update|announcement|latest/i } }
+      ]
+    }).sort({ createdAt: -1 });
     
-    if (!latest) {
+    // যদি নির্দিষ্ট ফরম্যাটের না পাওয়া যায়, তবে একদম সর্বশেষ যে নোটিফিকেশনটি তৈরি হয়েছে সেটি দেখাবে
+    const fallbackLatest = latest || await Notification.findOne().sort({ createdAt: -1 });
+
+    if (!fallbackLatest) {
       return res.json({ success: true, message: "No new announcement" });
     }
 
-    res.json({ success: true, message: latest.message || latest.title });
+    res.json({ success: true, message: fallbackLatest.message || fallbackLatest.title });
   } catch (err) {
     console.log("Latest news fetch error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 
 
@@ -5319,8 +5329,7 @@ app.post("/get-notifications", auth, async (req, res) => {
         { email: email },
         { email: "all" },
         { email: "ALL" },
-        { sendTo: "all" },
-        { type: "broadcast" }
+      
       ]
     }).sort({ createdAt: -1 });
 
