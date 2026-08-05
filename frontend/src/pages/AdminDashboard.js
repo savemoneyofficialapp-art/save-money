@@ -26,7 +26,6 @@ export default function AdminDashboard() {
   const [transactionFrom, setTransactionFrom] = useState("");
   const [transactionTo, setTransactionTo] = useState("");
 
-  // New state for Auto Withdraw History Modal and Date Filtering
   const [autoHistoryPopup, setAutoHistoryPopup] = useState(false);
   const [autoHistoryFilter, setAutoHistoryFilter] = useState("today");
   const [autoHistoryFrom, setAutoHistoryFrom] = useState("");
@@ -35,7 +34,7 @@ export default function AdminDashboard() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   
-  // New State for Latest App Update Section
+  // Latest App Update State
   const [latestUpdateText, setLatestUpdateText] = useState("");
 
   const [error, setError] = useState("");
@@ -240,15 +239,13 @@ export default function AdminDashboard() {
     setMessage("");
   };
 
-  // Handler for sending App Latest Update
+  // Updated Handler for sending App Latest Update / /latest-news synced
   const handleSendLatestUpdate = async () => {
     if (!latestUpdateText.trim()) {
       toast.info("Please enter latest update text");
       return;
     }
 
-    // Using broadcast route or a dedicated endpoint if configured. 
-    // Here we send it via /broadcast with a specific title so it creates a Notification record fetched by /latest-news
     const d = await apiPost("/broadcast", { 
       title: "App Latest Update", 
       message: latestUpdateText 
@@ -334,7 +331,7 @@ export default function AdminDashboard() {
     return true;
   });
 
-  const autoWithdrawHistoryList = autoWithdraws.filter((item) => {
+  const autoHistoryList = autoWithdraws.filter((item) => {
     const d = new Date(item.createdAt || item.date || Date.now());
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -450,7 +447,7 @@ export default function AdminDashboard() {
         </ResponsiveContainer>
       </div>
 
-      {/* 🚀 LATEST APP UPDATE CONTROL SECTION */}
+      {/* LATEST APP UPDATE CONTROL SECTION */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>📢 App Latest Update Control</h2>
         <p style={{ color: "#cbd5e1", fontSize: "14px", margin: "-10px 0 15px 0", fontWeight: "600" }}>
@@ -827,15 +824,15 @@ export default function AdminDashboard() {
             <div style={styles.popupSummary}>
               <div style={styles.summaryMini}>
                 <span style={{ color: "#cbd5e1", fontSize: "15px" }}>Total Records Found</span>
-                <h3 style={{ margin: "5px 0 0 0", fontSize: "20px" }}>{autoWithdrawHistoryList.length} Units</h3>
+                <h3 style={{ margin: "5px 0 0 0", fontSize: "20px" }}>{autoHistoryList.length} Units</h3>
               </div>
             </div>
 
             <div style={{ marginTop: 20, maxHeight: "45vh", overflowY: "auto", paddingRight: "5px" }}>
-              {autoWithdrawHistoryList.length === 0 ? (
+              {autoHistoryList.length === 0 ? (
                 <p style={styles.emptyText}>No history found matching the selected parameters.</p>
               ) : (
-                autoWithdrawHistoryList.map((item) => (
+                autoHistoryList.map((item) => (
                   <div key={item._id} style={styles.transactionItem}>
                     <div>
                       <b style={{ fontSize: "16px", color: "#fff" }}>{item.name || "User Node"}</b>
