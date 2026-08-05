@@ -594,6 +594,18 @@ export default function Home() {
         HELP OTHER FOR EARN MORE 💸
       </h1>
 
+      {/* ANIMATED LATEST NEWS / UPDATE SECTION (BOTTOM) */}
+      <section style={styles.bottomAnimatedNewsSection}>
+        <div style={styles.bottomNewsIcon}>🚀</div>
+        <div style={styles.bottomNewsTextBox}>
+          <div style={styles.bottomMarqueeWrapper}>
+            <p style={styles.bottomMarqueeText}>
+              {latestUpdate}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer style={styles.footer}>
         <h2>
@@ -1353,6 +1365,46 @@ const styles = {
     fontSize: "22px",
     fontWeight: "900",
     marginTop: "22px"
+  },
+
+  bottomAnimatedNewsSection: {
+    marginTop: "20px",
+    borderRadius: "18px",
+    padding: "14px 16px",
+    background: "linear-gradient(135deg,#0f172a,#1e293b,#0f172a)",
+    border: "2px solid #38bdf8",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    boxShadow: "0 0 20px rgba(56,189,248,0.25)"
+  },
+
+  bottomNewsIcon: {
+    fontSize: "24px",
+    flexShrink: 0
+  },
+
+  bottomNewsTextBox: {
+    flex: 1,
+    minWidth: 0,
+    overflow: "hidden"
+  },
+
+  bottomMarqueeWrapper: {
+    width: "100%",
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    boxSizing: "border-box"
+  },
+
+  bottomMarqueeText: {
+    display: "inline-block",
+    paddingLeft: "100%",
+    animation: "marquee 14s linear infinite",
+    margin: 0,
+    fontSize: "14px",
+    fontWeight: "800",
+    color: "#38bdf8"
   },
 
   footer: {
