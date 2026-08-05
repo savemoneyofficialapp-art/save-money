@@ -99,7 +99,6 @@ export default function Home() {
     }
   };
 
-  // Connected with your backend GET /latest-news route
   const loadLatestUpdate = async () => {
     try {
       const res = await fetch(`${API}/latest-news`, {
@@ -369,8 +368,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LATEST UPDATE (MARQUEE SCROLLING EFFECT) */}
-      <section style={styles.latestCard} onClick={() => go("/notifications")}>
+      {/* LATEST UPDATE (MARQUEE SCROLLING EFFECT) - Non-clickable */}
+      <section style={styles.latestCard}>
         <div style={styles.latestLeft}>
           <div style={styles.latestIcon}>
             📢
@@ -384,10 +383,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-        <button style={styles.latestArrow}>
-          ›
-        </button>
       </section>
 
       {/* STATS CARDS */}
@@ -1042,8 +1037,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    boxShadow: "0 0 25px rgba(255,183,3,0.45)",
-    cursor: "pointer"
+    boxShadow: "0 0 25px rgba(255,183,3,0.45)"
   },
 
   latestLeft: {
@@ -1081,16 +1075,6 @@ const styles = {
     fontSize: "13px",
     fontWeight: "700",
     color: "#fff"
-  },
-
-  latestArrow: {
-    background: "transparent",
-    border: "none",
-    color: "white",
-    fontSize: "40px",
-    cursor: "pointer",
-    flexShrink: 0,
-    marginLeft: "8px"
   },
 
   statsGrid: {
