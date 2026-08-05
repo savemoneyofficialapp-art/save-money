@@ -15,7 +15,7 @@ export default function Wallet() {
     walletId: "",
     name: "",
     avatar: "",
-    balance: 0, // Main Wallet
+    balance: 0,
     todayBalance: 0,
     referral: 0,
     performance: 0,
@@ -29,11 +29,12 @@ export default function Wallet() {
 
   const [withdrawOpen, setWithdrawOpen] = useState(false);
 
-  // --- নতুন P2P সংক্রান্ত স্টেট ---
+  // --- P2P স্টেট ---
   const [p2pModalOpen, setP2pModalOpen] = useState(false);
   const [p2pUserList, setP2pUserList] = useState([]);
+  
+  // একটিমাত্র কম্বাইন্ড রিভিউ মডাল স্টেট (ওপরে লেখার অপশন ও নিচে আগের রিভিউ)
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [allReviewsModalOpen, setAllReviewsModalOpen] = useState(false);
   const [selectedP2pUser, setSelectedP2pUser] = useState(null);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
@@ -52,14 +53,12 @@ export default function Wallet() {
   const [historyFilter, setHistoryFilter] = useState("all");
   const [showAllHistory, setShowAllHistory] = useState(false);
 
-  // --- রিসিপ্ট এবং স্ক্রিন ক্যাপচারের জন্য নতুন স্টেট ও রেফারেন্স ---
   const [selectedTxn, setSelectedTxn] = useState(null);
   const receiptRef = useRef(null);
 
-  // --- স্ক্রিনের মাঝখানে বড় মেসেজ দেখানোর জন্য নতুন স্টেট ---
   const [statusOverlay, setStatusOverlay] = useState({
     show: false,
-    type: "info", // 'success' | 'warning' | 'error'
+    type: "info",
     message: ""
   });
 
@@ -69,7 +68,6 @@ export default function Wallet() {
     loadP2pUsers();
   }, []);
 
-  // মাঝখানে মেসেজ ট্রিপ করার হেল্পার ফাংশন (২ সেকেন্ড পর ভ্যানিশ হয়ে যাবে)
   const triggerStatusOverlay = (type, message) => {
     setStatusOverlay({ show: true, type, message });
     setTimeout(() => {
@@ -80,7 +78,6 @@ export default function Wallet() {
   const loadWallet = async () => {
     try {
       setLoading(true);
-
       const res = await fetch(`${API}/wallet-summary`, {
         method: "POST",
         headers: {
@@ -89,18 +86,12 @@ export default function Wallet() {
         },
         body: JSON.stringify({ email })
       });
-
       const data = await res.json();
-
       if (data.success) {
         setWallet({
           walletId: data.walletId || data.user?.walletId || "N/A",
           name: data.name || data.user?.name || "User",
-          avatar:
-            data.avatar ||
-            data.user?.photo ||
-            data.user?.photoImage ||
-            "",
+          avatar: data.avatar || data.user?.photo || data.user?.photoImage || "",
           photo: data.user?.photo || "",
           photoImage: data.user?.photoImage || "",
           balance: Number(data.balance || 0),
@@ -110,7 +101,6 @@ export default function Wallet() {
           team: Number(data.team || 0),
           royalty: Number(data.royalty || 0)
         });
-
         setHistory(Array.isArray(data.history) ? data.history : []);
       }
     } catch (err) {
@@ -128,13 +118,9 @@ export default function Wallet() {
           "Content-Type": "application/json",
           authorization: token || ""
         },
-        body: JSON.stringify({
-          email
-        })
+        body: JSON.stringify({ email })
       });
-
       const data = await res.json();
-
       if (data.success) {
         setWithdrawStatus(data);
       }
@@ -143,7 +129,6 @@ export default function Wallet() {
     }
   };
 
-  // --- P2P ইউজার এবং রেজিস্টার লোড করার ফাংশন ---
   const loadP2pUsers = async () => {
     try {
       const res = await fetch(`${API}/p2p-users`, {
@@ -160,12 +145,10 @@ export default function Wallet() {
     }
   };
 
-  // --- "I want P2P" রেজিস্ট্রেশন হ্যান্ডলার (ব্যালেন্স ২০০০ এর বেশি চেক সহ) ---
   const handleIWantP2P = async () => {
     if (Number(wallet.balance) <= 2000) {
       return triggerStatusOverlay("warning", "Your wallet balance must be greater than ₹2,000 to register for P2P!");
     }
-
     try {
       const res = await fetch(`${API}/register-p2p`, {
         method: "POST",
@@ -188,7 +171,6 @@ export default function Wallet() {
     }
   };
 
-  // --- P2P রেজিস্ট্রেশন আন্ডু (Undo) করার হ্যান্ডলার ---
   const handleUndoP2P = async () => {
     try {
       const res = await fetch(`${API}/undo-p2p`, {
@@ -212,7 +194,6 @@ export default function Wallet() {
     }
   };
 
-  // --- P2P سینডারকে রিভিউ সাবমিট করার ফাংশন ---
   const submitP2pReview = async () => {
     if (!reviewText.trim()) {
       return triggerStatusOverlay("warning", "Please write a review comment");
@@ -236,8 +217,12 @@ export default function Wallet() {
         triggerStatusOverlay("success", "Review submitted successfully! ⭐");
         setReviewText("");
         setReviewRating(5);
-        setReviewModalOpen(false);
         loadP2pUsers();
+        // আপডেট লিস্ট রিফ্রেশ করতে সিলেক্টেড ইউজার আপডেট করা
+        const updatedReviews = await fetch(`${API}/p2p-users`).then(r => r.json());
+        if(updatedReviews.success && updatedReviews.reviews) {
+          setReviewsList(updatedReviews.reviews);
+        }
       } else {
         triggerStatusOverlay("error", data.msg || "Failed to submit review");
       }
@@ -247,14 +232,7 @@ export default function Wallet() {
     }
   };
 
-  const money = (n) => {
-    return `₹ ${Number(n || 0).toLocaleString("en-IN")}.00`;
-  };
-
-  const shortMoney = (n) => {
-    return `₹ ${Number(n || 0).toLocaleString("en-IN")}`;
-  };
-
+  const money = (n) => `₹ ${Number(n || 0).toLocaleString("en-IN")}.00`;
   const visibleBalance = showBalance ? money(wallet.balance) : "₹ ••••••••";
 
   const copyWalletId = async () => {
@@ -275,13 +253,10 @@ export default function Wallet() {
     if (!addAmount || Number(addAmount) <= 0) {
       return triggerStatusOverlay("warning", "Please enter a valid amount");
     }
-
     const MY_UPI_ID = "savemoney@razorpay";
     const MERCHANT_NAME = "SaveMoney. Wallet";
     const txnRef = "TXN" + Date.now();
-
     const upiUrl = `upi://pay?pa=${MY_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${addAmount}&cu=INR&tr=${txnRef}`;
-
     window.location.href = upiUrl;
     triggerStatusOverlay("success", "Opening UPI Apps... Please complete payment.");
   };
@@ -290,11 +265,9 @@ export default function Wallet() {
     if (!addAmount || Number(addAmount) <= 0) {
       return triggerStatusOverlay("warning", "Please enter a valid amount");
     }
-
     if (!depositTxnId || !depositTxnId.trim()) {
       return triggerStatusOverlay("warning", "Please enter the 12-digit UPI Ref No");
     }
-
     try {
       const res = await fetch(`${API}/deposit-request`, {
         method: "POST",
@@ -308,15 +281,11 @@ export default function Wallet() {
           txnId: depositTxnId.trim()
         })
       });
-
       const data = await res.json();
-
       if (!res.ok || !data.success) {
         return triggerStatusOverlay("error", data.msg || "Deposit request failed");
       }
-
       triggerStatusOverlay("success", data.msg || "Submitted successfully! Waiting for admin approval.");
-
       setAddOpen(false);
       setAddAmount("");
       setDepositTxnId("");
@@ -331,22 +300,17 @@ export default function Wallet() {
     if (!receiverWalletId.trim()) {
       return triggerStatusOverlay("warning", "Enter receiver wallet ID");
     }
-
     if (!transferAmount || Number(transferAmount) <= 0) {
       return triggerStatusOverlay("warning", "Enter valid amount");
     }
-
     const currentBalance = Number(wallet.balance || 0);
-
     if (currentBalance <= 2000) {
       return triggerStatusOverlay("warning", "Insufficient Balance! Minimum ₹2,000 must remain in your wallet.");
     }
-
     const maxAllowed = currentBalance - 2000;
     if (Number(transferAmount) > maxAllowed) {
       return triggerStatusOverlay("warning", `Limit Exceeded! You can only transfer up to ₹${maxAllowed.toLocaleString("en-IN")}`);
     }
-
     try {
       const res = await fetch(`${API}/wallet-user`, {
         method: "POST",
@@ -354,17 +318,12 @@ export default function Wallet() {
           "Content-Type": "application/json",
           authorization: token || ""
         },
-        body: JSON.stringify({
-          walletId: receiverWalletId.trim()
-        })
+        body: JSON.stringify({ walletId: receiverWalletId.trim() })
       });
-
       const data = await res.json();
-
       if (!data.success) {
         return triggerStatusOverlay("error", data.msg || "Receiver not found");
       }
-
       setReceiverInfo(data.user);
       setConfirmTransferOpen(true);
     } catch (err) {
@@ -387,9 +346,7 @@ export default function Wallet() {
           amount: Number(transferAmount)
         })
       });
-
       const data = await res.json();
-
       if (data.success) {
         triggerStatusOverlay("success", data.msg || "Transfer Completed Successfully! 🎉");
         setReceiverWalletId("");
@@ -413,14 +370,9 @@ export default function Wallet() {
 
   const openInvite = async () => {
     const text = `Join Save Money and start your saving journey.\n${inviteLink}`;
-
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: "Save Money",
-          text,
-          url: inviteLink
-        });
+        await navigator.share({ title: "Save Money", text, url: inviteLink });
       } catch {
         setShareOpen(true);
       }
@@ -438,7 +390,6 @@ export default function Wallet() {
     }
   };
 
-  // --- রিসিপ্ট ইমেজ ডাউনলোড ও শেয়ার হ্যান্ডলার ---
   const handleShareReceipt = async () => {
     if (!receiptRef.current) return;
     try {
@@ -447,18 +398,12 @@ export default function Wallet() {
         scale: 2,
         backgroundColor: "#ffffff"
       });
-      
       canvas.toBlob(async (blob) => {
         if (!blob) return;
         const file = new File([blob], `Receipt-${selectedTxn._id || "Txn"}.png`, { type: "image/png" });
-        
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
-            await navigator.share({
-              files: [file],
-              title: "Transaction Receipt",
-              text: "Save Money Transaction Proof"
-            });
+            await navigator.share({ files: [file], title: "Transaction Receipt", text: "Save Money Transaction Proof" });
           } catch (e) {
             downloadFallback(canvas);
           }
@@ -496,15 +441,12 @@ export default function Wallet() {
     return String(item.type).toLowerCase() === historyFilter;
   });
 
-  const visibleHistory = showAllHistory
-    ? filteredHistory
-    : filteredHistory.slice(0, 5);
+  const visibleHistory = showAllHistory ? filteredHistory : filteredHistory.slice(0, 5);
 
   return (
     <div style={styles.page}>
       <div style={styles.app}>
 
-        {/* --- স্ক্রিনের মাঝখানে বড় করে ইনফো মেসেজ দেখানোর কাস্টম ওভারলে UI --- */}
         {statusOverlay.show && (
           <div style={styles.statusOverlayBg}>
             <div style={{
@@ -527,15 +469,10 @@ export default function Wallet() {
           <div>
             <h1 style={styles.pageTitle}>My Wallet</h1>
             <div style={styles.titleWave}></div>
-            <p style={styles.pageSub}>
-              Manage your balance, track transactions and grow more.
-            </p>
+            <p style={styles.pageSub}>Manage your balance, track transactions and grow more.</p>
           </div>
 
-          <button
-            style={styles.notifyBtn}
-            onClick={() => window.location.href = "/notifications"}
-          >
+          <button style={styles.notifyBtn} onClick={() => window.location.href = "/notifications"}>
             🔔
             <span style={styles.notifyCount}></span>
           </button>
@@ -543,11 +480,7 @@ export default function Wallet() {
           <div style={styles.avatar}>
             {wallet.avatar || wallet.photo || wallet.photoImage ? (
               <img
-                src={
-                  wallet.avatar ||
-                  wallet.photo ||
-                  `${API}/${wallet.photoImage}`
-                }
+                src={wallet.avatar || wallet.photo || `${API}/${wallet.photoImage}`}
                 alt="user"
                 style={styles.avatarImg}
               />
@@ -560,7 +493,6 @@ export default function Wallet() {
         <section style={styles.walletHero}>
           <div style={styles.walletLeft}>
             <p style={styles.heroLabel}>WALLET ID</p>
-
             <h2 style={styles.walletId}>
               {wallet.walletId}
               <button onClick={copyWalletId}>©☑️</button>
@@ -569,37 +501,22 @@ export default function Wallet() {
             <div style={styles.dashedLine}></div>
 
             <p style={styles.heroLabel}>AVAILABLE BALANCE</p>
-
-            <h1 style={styles.balanceText}>
-              {visibleBalance}
-            </h1>
+            <h1 style={styles.balanceText}>{visibleBalance}</h1>
 
             <div style={styles.heroActions}>
               <button style={styles.addCashBtn} onClick={openAddCash}>
                 <b>＋</b> Add Cash
               </button>
-
-              <button
-                style={styles.withdrawBtn}
-                onClick={() => setWithdrawOpen(true)}
-              >
+              <button style={styles.withdrawBtn} onClick={() => setWithdrawOpen(true)}>
                 💳 Withdraw
               </button>
-
-              {/* --- নতুন P2P বোতাম --- */}
-              <button
-                style={styles.p2pMainBtn}
-                onClick={() => setP2pModalOpen(true)}
-              >
+              <button style={styles.p2pMainBtn} onClick={() => setP2pModalOpen(true)}>
                 🤝 P2P
               </button>
             </div>
           </div>
 
-          <button
-            style={styles.eyeBtn}
-            onClick={() => setShowBalance(!showBalance)}
-          >
+          <button style={styles.eyeBtn} onClick={() => setShowBalance(!showBalance)}>
             {showBalance ? "👁" : "🙈"}
           </button>
 
@@ -607,140 +524,61 @@ export default function Wallet() {
         </section>
 
         <section style={styles.incomePanel}>
-          <IncomeCard
-            icon="👥"
-            title="REFERRAL"
-            amount={wallet.referral}
-            color="#10b981"
-          />
-
-          <IncomeCard
-            icon="📈"
-            title="PERFORMANCE"
-            amount={wallet.performance}
-            color="#f59e0b"
-          />
-
-          <IncomeCard
-            icon="👥"
-            title="TEAM"
-            amount={wallet.team}
-            color="#2563eb"
-          />
-
-          <IncomeCard
-            icon="👑"
-            title="ROYALTY"
-            amount={wallet.royalty}
-            color="#9333ea"
-          />
-
-          <IncomeCard
-            icon="👛"
-            title="TODAY EARNING"
-            amount={wallet.todayBalance}
-            color="#14b8a6"
-          />
+          <IncomeCard icon="👥" title="REFERRAL" amount={wallet.referral} color="#10b981" />
+          <IncomeCard icon="📈" title="PERFORMANCE" amount={wallet.performance} color="#f59e0b" />
+          <IncomeCard icon="👥" title="TEAM" amount={wallet.team} color="#2563eb" />
+          <IncomeCard icon="👑" title="ROYALTY" amount={wallet.royalty} color="#9333ea" />
+          <IncomeCard icon="👛" title="TODAY EARNING" amount={wallet.todayBalance} color="#14b8a6" />
         </section>
 
         <section style={styles.middleGrid}>
           <div style={styles.transferCard}>
-            <div style={styles.transferIcon}>
-              ✈️
-            </div>
+            <div style={styles.transferIcon}>✈️</div>
+            <h2 style={styles.transferTitle}>Wallet Transfer</h2>
+            <p style={styles.transferSub}>Send money to another wallet instantly</p>
 
-            <h2 style={styles.transferTitle}>
-              Wallet Transfer
-            </h2>
-
-            <p style={styles.transferSub}>
-              Send money to another wallet instantly
-            </p>
-
-            <label style={styles.label}>
-              Receiver Wallet ID
-            </label>
-
+            <label style={styles.label}>Receiver Wallet ID</label>
             <div style={styles.inputWrap}>
               <input
                 style={styles.transferInput}
                 value={receiverWalletId}
-                onChange={(e) =>
-                  setReceiverWalletId(e.target.value)
-                }
+                onChange={(e) => setReceiverWalletId(e.target.value)}
                 placeholder="Enter Receiver Wallet ID"
               />
-
-              <span style={styles.inputIcon}>
-                👤
-              </span>
+              <span style={styles.inputIcon}>👤</span>
             </div>
 
-            <label style={styles.label}>
-              Amount
-            </label>
-
+            <label style={styles.label}>Amount</label>
             <div style={styles.inputWrap}>
               <input
                 type="number"
                 style={styles.transferInput}
                 value={transferAmount}
-                onChange={(e) =>
-                  setTransferAmount(e.target.value)
-                }
+                onChange={(e) => setTransferAmount(e.target.value)}
                 placeholder="Enter Amount"
               />
-
-              <span style={styles.inputIcon}>
-                💳
-              </span>
+              <span style={styles.inputIcon}>💳</span>
             </div>
 
-            <button
-              style={styles.transferBtn}
-              onClick={checkReceiver}
-            >
+            <button style={styles.transferBtn} onClick={checkReceiver}>
               ✈️ Transfer Now
             </button>
           </div>
 
           <div style={styles.inviteCard}>
-            <div style={styles.inviteTop}>
-              Grow More
-            </div>
-
-            <h2 style={styles.inviteTitle}>
-              Invite Your Friends
-            </h2>
-
-            <h3 style={styles.inviteTitle2}>
-              & Earn Unlimited Rewards
-            </h3>
-
-            <div style={styles.giftBox}>
-              🎁
-            </div>
-
-            <button
-              style={styles.inviteBtn}
-              onClick={openInvite}
-            >
-              Invite Now
-            </button>
+            <div style={styles.inviteTop}>Grow More</div>
+            <h2 style={styles.inviteTitle}>Invite Your Friends</h2>
+            <h3 style={styles.inviteTitle2}>& Earn Unlimited Rewards</h3>
+            <div style={styles.giftBox}>🎁</div>
+            <button style={styles.inviteBtn} onClick={openInvite}>Invite Now</button>
           </div>
         </section>
 
-        {/* --- ওয়ালেট হিস্টোরি সেকশন --- */}
         <section style={styles.historyCard}>
           <div style={styles.historyHeader}>
             <div>
-              <h2 style={styles.historyTitle}>
-                🛡 Wallet History
-              </h2>
-
-              <p style={styles.historySub}>
-                Your recent wallet transactions (Click to view receipt)
-              </p>
+              <h2 style={styles.historyTitle}>🛡 Wallet History</h2>
+              <p style={styles.historySub}>Your recent wallet transactions (Click to view receipt)</p>
             </div>
 
             <select
@@ -766,14 +604,11 @@ export default function Wallet() {
           </div>
 
           {history.length === 0 && (
-            <div style={styles.emptyHistory}>
-              No Wallet History Found
-            </div>
+            <div style={styles.emptyHistory}>No Wallet History Found</div>
           )}
 
           {visibleHistory.map((item, index) => {
             const rawType = String(item.type || "").toLowerCase();
-
             const isCredit =
               rawType.includes("credit") ||
               rawType.includes("add") ||
@@ -807,30 +642,18 @@ export default function Wallet() {
                 </div>
 
                 <div>
-                  <div style={styles.rowTitle}>
-                    {desc}
-                  </div>
-
-                  <div style={styles.rowSub}>
-                    {item.note || "Tap to details"}
-                  </div>
+                  <div style={styles.rowTitle}>{desc}</div>
+                  <div style={styles.rowSub}>{item.note || "Tap to details"}</div>
                 </div>
 
                 <div>
-                  <span
-                    style={{
-                      color: isCredit ? "#16a34a" : "#dc2626",
-                      fontWeight: "700"
-                    }}
-                  >
+                  <span style={{ color: isCredit ? "#16a34a" : "#dc2626", fontWeight: "700" }}>
                     {isCredit ? "+" : "-"} ₹{Number(item.amount).toLocaleString()}
                   </span>
                 </div>
 
                 <div>
-                  <span style={styles.successBadge}>
-                    Success
-                  </span>
+                  <span style={styles.successBadge}>Success</span>
                 </div>
 
                 <div style={{ fontSize: "13px", color: "#64748b" }}>
@@ -843,10 +666,7 @@ export default function Wallet() {
           })}
 
           {filteredHistory.length > 5 && (
-            <button
-              style={styles.viewMore}
-              onClick={() => setShowAllHistory(!showAllHistory)}
-            >
+            <button style={styles.viewMore} onClick={() => setShowAllHistory(!showAllHistory)}>
               {showAllHistory ? "Show Less ▲" : "View More ▼"}
             </button>
           )}
@@ -893,12 +713,8 @@ export default function Wallet() {
                   <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Requires minimum ₹2,000 wallet balance.</p>
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
-                  <button style={styles.iWantP2pBtn} onClick={handleIWantP2P}>
-                    I want P2P
-                  </button>
-                  <button style={styles.undoP2pBtn} onClick={handleUndoP2P}>
-                    Undo
-                  </button>
+                  <button style={styles.iWantP2pBtn} onClick={handleIWantP2P}>I want P2P</button>
+                  <button style={styles.undoP2pBtn} onClick={handleUndoP2P}>Undo</button>
                 </div>
               </div>
 
@@ -914,7 +730,7 @@ export default function Wallet() {
                     
                     return (
                       <div key={idx} style={styles.p2pUserCard}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
                             <h4 style={{ margin: "0 0 2px 0", fontSize: "16px" }}>{user.name}</h4>
                             <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
@@ -925,17 +741,8 @@ export default function Wallet() {
                             <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#16a34a" }}>Balance: ₹{Number(user.balance).toLocaleString()}</p>
                           </div>
                           
-                          <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                            <button 
-                              style={styles.reviewTextClickable}
-                              onClick={() => {
-                                setSelectedP2pUser(user);
-                                setAllReviewsModalOpen(true);
-                              }}
-                            >
-                              Review
-                            </button>
-                            
+                          {/* শুধুমাত্র একটি "Review" বোতাম */}
+                          <div>
                             <button 
                               style={styles.reviewActionBtn}
                               onClick={() => {
@@ -943,7 +750,7 @@ export default function Wallet() {
                                 setReviewModalOpen(true);
                               }}
                             >
-                              Give Review
+                              Review
                             </button>
                           </div>
                         </div>
@@ -960,21 +767,52 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- সব রিভিউ দেখার পপআপ মডাল --- */}
-        {allReviewsModalOpen && selectedP2pUser && (
+        {/* --- কম্বাইন্ড রিভিউ মডাল (ওপরে লেখার অপশন ও নিচে ইউজারদের রিভিউ) --- */}
+        {reviewModalOpen && selectedP2pUser && (
           <div style={styles.modalOverlay}>
-            <div style={{ ...styles.modal, maxWidth: "450px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+            <div style={{ ...styles.modal, maxWidth: "480px", maxHeight: "85vh", overflowY: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                 <h2 style={{ margin: 0, fontSize: "20px" }}>Reviews for {selectedP2pUser.name}</h2>
-                <button style={styles.depositCloseX} onClick={() => setAllReviewsModalOpen(false)}>×</button>
+                <button style={styles.depositCloseX} onClick={() => setReviewModalOpen(false)}>×</button>
+              </div>
+              <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 15px 0" }}>Wallet ID: {selectedP2pUser.walletId}</p>
+
+              {/* ওপরের অংশ: স্টার রেটিং এবং রিভিউ লেখার ফর্ম */}
+              <div style={{ background: "#f8fafc", padding: "14px", borderRadius: "16px", marginBottom: "18px", border: "1px solid #e2e8f0" }}>
+                <h4 style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#1e293b" }}>Write a Review</h4>
+                
+                <div style={{ display: "flex", gap: "8px", fontSize: "22px", marginBottom: "10px", cursor: "pointer" }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span 
+                      key={star} 
+                      onClick={() => setReviewRating(star)}
+                      style={{ color: star <= reviewRating ? "#f59e0b" : "#cbd5e1" }}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+
+                <textarea
+                  style={{ ...styles.depositInput, height: "70px", padding: "8px", resize: "none", fontSize: "13px" }}
+                  placeholder="Write your review here..."
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                />
+
+                <button style={{ ...styles.sendMoneyBtn, height: "42px", marginTop: "10px", fontSize: "14px" }} onClick={submitP2pReview}>
+                  Submit Review
+                </button>
               </div>
 
-              <div style={{ maxHeight: "250px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
+              {/* নিচের অংশ: ইউজারদের দেওয়া সমস্ত রিভিউ */}
+              <h4 style={{ margin: "0 0 10px 0", fontSize: "15px", color: "#1e293b" }}>User Reviews</h4>
+              <div style={{ maxHeight: "200px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", marginBottom: "15px" }}>
                 {(!reviewsList[selectedP2pUser.walletId] || reviewsList[selectedP2pUser.walletId].length === 0) ? (
-                  <p style={{ textAlign: "center", color: "#64748b", padding: "20px" }}>No reviews available yet.</p>
+                  <p style={{ textAlign: "center", color: "#64748b", padding: "15px", fontSize: "13px" }}>No reviews available yet.</p>
                 ) : (
                   reviewsList[selectedP2pUser.walletId].map((rev, rIdx) => (
-                    <div key={rIdx} style={{ background: "#f8fafc", padding: "10px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                    <div key={rIdx} style={{ background: "#ffffff", padding: "10px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                         <span style={{ fontSize: "12px", fontWeight: "700", color: "#1e293b" }}>{rev.reviewer || "User"}</span>
                         <span style={{ fontSize: "12px", color: "#f59e0b" }}>{"★".repeat(rev.rating || 5)}</span>
@@ -985,41 +823,7 @@ export default function Wallet() {
                 )}
               </div>
 
-              <button style={styles.closeBtn} onClick={() => setAllReviewsModalOpen(false)}>Close</button>
-            </div>
-          </div>
-        )}
-
-        {/* --- রিভিউ সাবমিট মডাল --- */}
-        {reviewModalOpen && selectedP2pUser && (
-          <div style={styles.modalOverlay}>
-            <div style={styles.modal}>
-              <h2>Give Review for {selectedP2pUser.name}</h2>
-              <p style={{ fontSize: "13px", color: "#64748b" }}>Wallet ID: {selectedP2pUser.walletId}</p>
-              
-              <label style={{ ...styles.depositLabel, marginTop: "15px" }}>Select Star Rating</label>
-              <div style={{ display: "flex", gap: "10px", fontSize: "24px", marginBottom: "10px", cursor: "pointer" }}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <span 
-                    key={star} 
-                    onClick={() => setReviewRating(star)}
-                    style={{ color: star <= reviewRating ? "#f59e0b" : "#cbd5e1" }}
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-
-              <label style={styles.depositLabel}>Your Review / Security Feedback</label>
-              <textarea
-                style={{ ...styles.depositInput, height: "90px", padding: "10px", resize: "none" }}
-                placeholder="Write how secure and fast this P2P sender was..."
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-              />
-
-              <button style={styles.sendMoneyBtn} onClick={submitP2pReview}>Submit Review</button>
-              <button style={styles.cancelBtn} onClick={() => setReviewModalOpen(false)}>Cancel</button>
+              <button style={styles.closeBtn} onClick={() => setReviewModalOpen(false)}>Close</button>
             </div>
           </div>
         )}
@@ -1223,7 +1027,6 @@ export default function Wallet() {
   );
 }
 
-/* ---------- Components ---------- */
 function WalletIllustration() {
   return (
     <div style={styles.walletArt}>
@@ -1290,26 +1093,14 @@ const styles = {
     boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
   },
 
-  reviewTextClickable: {
-    background: "none",
-    border: "none",
-    color: "#2563eb",
-    fontWeight: "700",
-    fontSize: "13px",
-    cursor: "pointer",
-    padding: 0,
-    textAlign: "right",
-    textDecoration: "underline"
-  },
-
   reviewActionBtn: {
-    padding: "6px 12px",
-    borderRadius: "10px",
+    padding: "8px 16px",
+    borderRadius: "12px",
     border: "none",
     background: "#ede9fe",
     color: "#7c3aed",
-    fontWeight: "700",
-    fontSize: "12px",
+    fontWeight: "800",
+    fontSize: "13px",
     cursor: "pointer"
   },
 
@@ -2134,7 +1925,8 @@ const styles = {
     background: "#16a34a",
     color: "white",
     fontWeight: "900",
-    marginTop: "15px"
+    marginTop: "15px",
+    cursor: "pointer"
   },
 
   cancelBtn: {
@@ -2224,7 +2016,8 @@ const styles = {
     background: "#f1eaff",
     color: "#6d28d9",
     fontSize: 22,
-    fontWeight: 900
+    fontWeight: 900,
+    cursor: "pointer"
   },
 
   depositIcon: {
@@ -2285,6 +2078,7 @@ const styles = {
     color: "#fff",
     fontSize: "16px",
     fontWeight: "900",
-    boxShadow: "0 16px 35px rgba(124,58,237,.35)"
+    boxShadow: "0 16px 35px rgba(124,58,237,.35)",
+    cursor: "pointer"
   }
 };
