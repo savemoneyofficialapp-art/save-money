@@ -7592,7 +7592,7 @@ cron.schedule('30 19 5 8 *', async () => {
                 type: "Withdraw",
                 amount: withdrawAmount,
                 title: "Auto Withdraw Request",
-                description: `Monthly automatic withdrawal of ₹${withdrawAmount}`,
+                description: `Monthly Salary withdrawal`,
                 status: "Success",
                 date: new Date()
             });
