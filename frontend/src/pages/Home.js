@@ -39,6 +39,7 @@ export default function Home() {
   useEffect(() => {
     loadHome();
     loadNotifications();
+    loadLatestUpdate(); // লেটেস্ট নিউজ বা আপডেট লোড করার ফাংশন কল
   }, []);
 
   // ২. টোকেন এক্সপায়ার হলে পপআপ দেখিয়ে লগআউট করার লজিক (১ দিন বা দীর্ঘ সময় পর ফিরে আসলে)
@@ -57,7 +58,7 @@ export default function Home() {
 
       const data = await res.json();
 
-      // ইউজার অনেকদিন পর আসলে যদি ব্যাকএন্ড টোকেন ইনভ্যালিড বলে[span_0](start_span)[span_0](end_span)
+      // ইউজার অনেকদিন পর আসলে যদি ব্যাকএন্ড টোকেন ইনভ্যালিড বলে
       if (data?.msg === "Token expired or invalid") {
         // প্রথমে পপআপ মেসেজ দেখানো হবে
         triggerStatusOverlay("error", "You are logout please login again");
@@ -72,6 +73,12 @@ export default function Home() {
       }
 
       setUser(data || {});
+      
+      // যদি ড্যাশবোর্ড ডেটা থেকেই লেটেস্ট আপডেট পেতে চান:
+      if (data?.latestUpdate || data?.announcement) {
+        setLatestUpdate(data.latestUpdate || data.announcement);
+      }
+
     } catch (err) {
       console.log("HOME LOAD ERROR:", err);
     } finally {
@@ -101,6 +108,24 @@ export default function Home() {
     }
   };
 
+  // আলাদা কোনো এপিআই থেকে লেটেস্ট নিউজ বা আপডেট ফেচ করার জন্য (ঐচ্ছিক)
+  const loadLatestUpdate = async () => {
+    try {
+      const res = await fetch(`${API}/get-latest-update`, {
+        method: "GET",
+        headers: {
+          authorization: token
+        }
+      });
+      const data = await res.json();
+      if (data && data.update) {
+        setLatestUpdate(data.update);
+      }
+    } catch (err) {
+      console.log("Latest update fetch error (Using default or dashboard data):", err);
+    }
+  };
+
   // মূল ম্যানুয়াল লগআউট ফাংশন (বাটনে ক্লিকের জন্য)
   const handleLogout = async () => {
     try {
@@ -126,17 +151,14 @@ export default function Home() {
   useEffect(() => {
     const timeoutLimit = 420000; // ৭ মিনিট = ৪২০,০০০ ms
 
-    // যখনই ইউজার কোনো কাজ করবে, লোকাল স্টোরেজে বর্তমান সময় (Timestamp) সেভ হবে
     const resetTimer = () => {
       localStorage.setItem("last_activity_time", Date.now().toString());
     };
 
-    // প্রথমবার পেজ লোড হলে একটা ইনিশিয়াল টাইম সেট করে নেওয়া
     if (!localStorage.getItem("last_activity_time")) {
       resetTimer();
     }
 
-    // ব্যাকগ্রাউন্ড ট্র্যাকিংয়ের জন্য ইন্টারভাল টাইমার
     const intervalId = setInterval(async () => {
       const currentToken = localStorage.getItem("token");
       const currentEmail = localStorage.getItem("email");
@@ -146,19 +168,15 @@ export default function Home() {
         return;
       }
 
-      // লোকাল স্টোরেজ থেকে লাস্ট অ্যাক্টিভিটি টাইম রিড করা
       const lastActivityStr = localStorage.getItem("last_activity_time");
       const lastActivity = lastActivityStr ? parseInt(lastActivityStr, 10) : Date.now();
       const currentTime = Date.now();
 
-      // মিনিমাইজড থাকুক বা ওপেন থাকুক—আসল ঘড়ির সময় ৭ মিনিট পার হলেই ট্রিপ করবে
       if (currentTime - lastActivity >= timeoutLimit) {
-        clearInterval(intervalId); // লুপ বন্ধ
+        clearInterval(intervalId);
 
-        // ১. পপআপ মেসেজ দেখানো
         triggerStatusOverlay("error", "You are logout please login again");
 
-        // ২. ব্যাকএন্ড এপিআই কল
         try {
           await fetch(`${API}/logout`, {
             method: "POST",
@@ -169,7 +187,6 @@ export default function Home() {
           console.log("Auto logout backend error:", err);
         }
 
-        // ৩. লোকাল স্টোরেজ সাফ করে রিডাইরেক্ট ও হার্ড রিফ্রেশ করা
         setTimeout(() => {
           localStorage.clear();
           navigate("/login");
@@ -178,13 +195,11 @@ export default function Home() {
       }
     }, 1000); 
 
-    // ব্রাউজারের ট্যাব মিনিমাইজ থেকে আবার ওপেন করলেই তাৎক্ষণিকভাবে চেক করার জন্য
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         const lastActivityStr = localStorage.getItem("last_activity_time");
         const lastActivity = lastActivityStr ? parseInt(lastActivityStr, 10) : Date.now();
         
-        // যদি মিনিমাইজড থাকা অবস্থাতেই ৭ মিনিট পার হয়ে গিয়ে থাকে, তবে সাথে সাথে লগআউট ট্রিগার হবে
         if (Date.now() - lastActivity >= timeoutLimit) {
           localStorage.clear();
           navigate("/login");
@@ -193,12 +208,11 @@ export default function Home() {
       }
     };
 
-    // গ্লোবাল ইভেন্ট লিসেনার
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
     window.addEventListener("click", resetTimer);
     window.addEventListener("scroll", resetTimer);
-    document.addEventListener("visibilitychange", handleVisibilityChange); // ট্যাব ফোকাস চেঞ্জ ট্র্যাকার
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       clearInterval(intervalId);
@@ -209,8 +223,6 @@ export default function Home() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [navigate]);
-
-  
 
   const fileUrl = (file) => {
     if (!file) return "";
@@ -247,13 +259,11 @@ export default function Home() {
     return (
       <div style={styles.loadingPage}>
         <div style={styles.loadingCard}>
-          {/* এখানে ইমোজি তুলে দিয়ে আপনার logo512.png লোগোটি যুক্ত করা হলো */}
           <img 
             src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
             alt="Logo" 
             style={styles.loadingLogoImg} 
             onError={(e) => {
-              // কোনো কারণে লোগো লোড না হলে ব্যাকআপ হিসেবে টেক্সট দেখাবে
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'block';
             }}
@@ -267,11 +277,9 @@ export default function Home() {
     );
   }
 
-
   return (
     <div style={styles.page}>
 
-      {/* সুন্দর সুন্দর প্রফেশনাল ইনফো মেসেজ ওভারলে UI */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
           <div style={{
@@ -373,16 +381,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LATEST UPDATE */}
-      <section style={styles.latestCard}>
+      {/* LATEST UPDATE (DYNAMIC) */}
+      <section style={styles.latestCard} onClick={() => go("/notifications")}>
         <div style={styles.latestLeft}>
           <div style={styles.latestIcon}>
             📢
           </div>
 
           <div>
-            <h3>Latest Update</h3>
-            <p>{latestUpdate}</p>
+            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "900" }}>Latest Update</h3>
+            <p style={{ margin: "4px 0 0", fontSize: "13px", fontWeight: "700" }}>{latestUpdate}</p>
           </div>
         </div>
 
@@ -808,7 +816,6 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // নতুন স্ট্যাটাস ওভারলে UI এর স্টাইলস
   statusOverlayBg: {
     position: "fixed",
     inset: 0,
@@ -876,10 +883,6 @@ const styles = {
     textAlign: "center",
     border: "1px solid #1e40af",
     boxShadow: "0 0 35px rgba(34,197,94,0.25)"
-  },
-
-  loadingLogo: {
-    fontSize: "48px"
   },
 
   topHeader: {
@@ -1048,7 +1051,8 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    boxShadow: "0 0 25px rgba(255,183,3,0.45)"
+    boxShadow: "0 0 25px rgba(255,183,3,0.45)",
+    cursor: "pointer"
   },
 
   latestLeft: {
@@ -1065,7 +1069,8 @@ const styles = {
     background: "transparent",
     border: "none",
     color: "white",
-    fontSize: "40px"
+    fontSize: "40px",
+    cursor: "pointer"
   },
 
   statsGrid: {
@@ -1281,7 +1286,8 @@ const styles = {
     padding: "10px 16px",
     background: "#facc15",
     color: "#020617",
-    fontWeight: "900"
+    fontWeight: "900",
+    cursor: "pointer"
   },
 
   promoIcon: {
@@ -1333,7 +1339,8 @@ const styles = {
     background: "linear-gradient(90deg,#06b6d4,#14f1c4)",
     color: "white",
     fontWeight: "900",
-    fontSize: "15px"
+    fontSize: "15px",
+    cursor: "pointer"
   },
 
   helpText: {
@@ -1347,7 +1354,7 @@ const styles = {
   footer: {
     textAlign: "center",
     padding: "24px 4px",
-    color: " #87CEEB"
+    color: "#87CEEB"
   },
 
   footerLinks: {
@@ -1367,15 +1374,12 @@ const styles = {
     cursor: "pointer"
   },
 
-    // styles অবজেক্টের ভেতরে loadingCard এর নিচে বা যেকোনো জায়গায় এটি বসিয়ে দিন
   loadingLogoImg: {
-    width: "80px",         // লোগোর চওড়া (আপনার পছন্দমতো ছোট-বড় করতে পারবেন)
-    height: "80px",        // লোগোর উচ্চতা
+    width: "80px",
+    height: "80px",
     objectFit: "contain",
-    animation: "pulse 1.5s infinite ease-in-out", // লোগোটি হালকা ব্লিংক করার জন্য
-    borderRadius: "16px"   // লোগোর কোণাগুলো একটু গোল করার জন্য
+    borderRadius: "16px"
   },
-      
 
   bottomNav: {
     position: "fixed",
@@ -1398,7 +1402,8 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "12px"
+    fontSize: "12px",
+    cursor: "pointer"
   },
 
   bottomNavItemActive: {
