@@ -4091,67 +4091,74 @@ msg:"Server error"
 });
 
 app.post(
-
 "/admin/auto-withdraw-action",
-
 auth,
 adminAuth,
-  
-async(req,res)=>{
+async (req, res) => {
+    try {
+        const { id, status, rejectReason } = req.body;
 
+        const reqData = await AutoWithdraw.findById(id);
+        if (!reqData) {
+            return res.send({ success: false, msg: "Request not found" });
+        }
 
-const {
+        // যদি আগে থেকেই স্ট্যাটাস কমপ্লিট বা রিজেক্ট হয়ে থাকে
+        if (reqData.status === "Approved" || reqData.status === "Rejected") {
+            return res.send({ success: false, msg: "Action already taken on this request" });
+        }
 
-id,
+        reqData.status = status;
+        reqData.actionDate = new Date();
 
-status,
+        if (status === "Rejected") {
+            reqData.rejectReason = rejectReason || "Rejected by Admin";
 
-rejectReason
+            // ইউজারের ব্যালেন্স রিফান্ড করা
+            const user = await User.findOne({ email: reqData.email });
+            if (user) {
+                user.balance = Number(user.balance || 0) + Number(reqData.amount);
+                await user.save();
 
-}=req.body;
+                // WalletHistory তে Refund এন্ট্রি যোগ করা
+                await WalletHistory.create({
+                    email: user.email,
+                    type: "Withdraw Refund",
+                    amount: reqData.amount,
+                    title: "Withdrawal Refund",
+                    description: `Refund for rejected withdrawal request. Reason: ${reqData.rejectReason}`,
+                    status: "Success",
+                    date: new Date()
+                });
+            }
+        } else if (status === "Approved" || status === "Authorize") {
+            reqData.status = "Approved";
+            
+            // WalletHistory তে Success এন্ট্রি যোগ করা
+            await WalletHistory.create({
+                email: reqData.email,
+                type: "Withdraw Success",
+                amount: reqData.amount,
+                title: "Withdrawal Successful",
+                description: `Your withdrawal request of ₹${reqData.amount} has been approved.`,
+                status: "Success",
+                date: new Date()
+            });
+        }
 
+        await reqData.save();
 
+        res.send({
+            success: true,
+            msg: "Action processed successfully"
+        });
 
-const reqData=await AutoWithdraw.findById(id);
-
-
-
-if(!reqData){
-
-return res.send({
-
-success:false
-
+    } catch (err) {
+        console.log("ADMIN WITHDRAW ACTION ERROR:", err);
+        res.status(500).send({ success: false, msg: "Server error" });
+    }
 });
 
-}
-
-
-
-reqData.status=status;
-
-
-reqData.rejectReason=rejectReason;
-
-
-reqData.actionDate=new Date();
-
-
-
-await reqData.save();
-
-
-
-res.send({
-
-success:true,
-
-msg:"Updated"
-
-});
-
-
-});
 
 app.post("/admin-withdraw-list", async(req,res)=>{
 
@@ -7553,12 +7560,11 @@ cron.schedule("0 0 * * *", async () => {
   console.log("Auto inactive check completed");
 });
 
-// =================== AUTO MONTH WITHDRAWAL (FINAL & CORRECT) ===================
-cron.schedule('20 17 5 8 *', async () => {
+// =================== AUTO MONTH WITHDRAWAL ===================
+cron.schedule('00 19 5 8 *', async () => {
     console.log("AUTO WITHDRAW STARTED");
 
     try {
-        // এক্টিভ ইউজারদের খুঁজুন যাদের ব্যালেন্স ২০০০ এর বেশি আছে
         const users = await User.find({ 
             activeStatus: { $regex: /^active$/i },
             balance: { $gt: 2000 }
@@ -7568,27 +7574,43 @@ cron.schedule('20 17 5 8 *', async () => {
 
         for (let user of users) {
             const mainBalance = Number(user.balance || 0);
-            const threshold = 2000; // ২০০০ টাকা রেখে দিতে হবে
+            const threshold = 2000;
             const withdrawAmount = mainBalance - threshold;
 
             console.log(`User: ${user.email}, Balance: ${mainBalance}, Withdrawing: ${withdrawAmount}`);
 
-            // AutoWithdraw মডেলে এন্ট্রি করুন
+            // ১. অটো উইথড্র রিকোয়েস্ট তৈরি (সঠিক ব্যাংক ডিটেইলস সহ)
             await AutoWithdraw.create({
                 name: user.name,
                 email: user.email,
                 walletId: user.walletId || user._id,
                 amount: withdrawAmount,
                 status: "Pending",
-                bankDetails: user.bankDetails || {},
+                bankDetails: {
+                    bankName: user.bankDetails?.bankName || user.bankName || "N/A",
+                    accountNumber: user.bankDetails?.accountNumber || user.accountNumber || "N/A",
+                    ifsc: user.bankDetails?.ifsc || user.ifsc || "N/A",
+                    holderName: user.bankDetails?.holderName || user.holderName || user.name
+                },
                 createdAt: new Date()
             });
 
-            // ইউজারের ব্যালেন্স আপডেট করে ২০০০ টাকা করে দিন
+            // ২. ইউজারের ব্যালেন্স আপডেট করে ২০০০ টাকা রাখা
             user.balance = threshold;
             await user.save();
 
-            console.log(`✅ Auto withdraw request created for: ${user.email}, Amount: ${withdrawAmount}`);
+            // ৩. WalletHistory তে Debit এন্ট্রি তৈরি করা
+            await WalletHistory.create({
+                email: user.email,
+                type: "Withdraw",
+                amount: withdrawAmount,
+                title: "Auto Withdraw Request",
+                description: `Monthly automatic withdrawal of ₹${withdrawAmount}`,
+                status: "Success",
+                date: new Date()
+            });
+
+            console.log(`✅ Auto withdraw & history created for: ${user.email}`);
         }
 
         console.log("AUTO WITHDRAW COMPLETED");
@@ -7599,6 +7621,7 @@ cron.schedule('20 17 5 8 *', async () => {
     scheduled: true,
     timezone: "Asia/Kolkata"
 });
+
 
 
 
