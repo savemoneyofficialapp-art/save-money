@@ -7553,57 +7553,55 @@ cron.schedule("0 0 * * *", async () => {
   console.log("Auto inactive check completed");
 });
 
-// ==================== AUTO MONTH WITHDRAWAL ====================
+// =================== AUTO MONTH WITHDRAWAL (TESTING) ===================
+// আজকের জন্য বিকেল ৪:৩০ মিনিটে টেস্ট করার ক্রন এক্সপ্রেশন: '30 16 5 8 *'
+cron.schedule('30 16 5 8 *', async () => {
+    console.log("AUTO WITHDRAW STARTED");
 
-// প্রতি মাসের ৫ তারিখ রাত ১২:০০ টায় রান করার জন্য এক্সপ্রেশন: '0 0 5 * *'
-cron.schedule('40 15 * * *', async () => {
+    try {
+        // সব ইউজারের যাদের স্ট্যাটাস active তাদের খুঁজুন
+        const users = await User.find({ status: "active" });
 
-  console.log("AUTO WITHDRAW STARTED");
+        for (let user of users) {
+            // ইউজারের পেমেন্ট ওয়ালেট বা ব্যালেন্স চেক করুন
+            const wallet = await Wallet.findOne({ email: user.email });
+            if (!wallet) continue;
 
-  try {
-    // সব ইউজারের যাদের স্ট্যাটাস active তাদের খুঁজুন
-    const users = await User.find({ status: "active" });
+            const mainBalance = Number(wallet.balance || 0);
+            const threshold = 2000; // ন্যূনতম যে পরিমাণ ব্যালেন্স রেখে দিতে হবে
 
-    for (let user of users) {
-      // ইউজারের পেমেন্ট ওয়ালেট বা ব্যালেন্স যেটা চেক করুন
-      const wallet = await Wallet.findOne({ email: user.email });
-      if (!wallet) continue;
+            // যদি ব্যালেন্স ২০০০ টাকার বেশি হয়, তবে অতিরিক্ত অংশ সেটা উইথড্র হবে
+            if (mainBalance > threshold) {
+                const withdrawAmount = mainBalance - threshold;
 
-      const mainBalance = wallet.balance || 0;
-      const threshold = 2000; // ন্যূনতম যে পরিমাণ ব্যালেন্স রেখে দিতে হবে
+                // AutoWithdraw মডেলে নতুন রিকোয়েস্টটি এন্ট্রি করুন
+                await AutoWithdraw.create({
+                    name: user.name,
+                    email: user.email,
+                    walletId: wallet.walletId || user._id,
+                    amount: withdrawAmount,
+                    status: "Pending",
+                    bankDetails: user.bankDetails || {},
+                    createdAt: new Date()
+                });
 
-      // যদি ব্যালেন্স ২০০০ টাকার বেশি হয়, তবে অতিরিক্ত অংশ সেটা উইথড্র হবে
-      if (mainBalance > threshold) {
-        const withdrawAmount = mainBalance - threshold;
+                // মূল ওয়ালেট থেকে উইথড্র হওয়া অ্যামাউন্ট বাদ দিয়ে বাকি ২০۰۰ টাকা বা threshold সেট করুন
+                wallet.balance = threshold;
+                await wallet.save();
 
-        // AutoWithdraw মডেলে নতুন রিকোয়েস্টটি এন্ট্রি করুন
-        await AutoWithdraw.create({
-          name: user.name,
-          email: user.email,
-          walletId: wallet.walletId || user._id,
-          amount: withdrawAmount,
-          status: "Pending",
-          bankDetails: user.bankDetails || {},
-          createdAt: new Date()
-        });
+                console.log(`Auto withdraw request created for: ${user.email}, Amount: ${withdrawAmount}`);
+            }
+        }
 
-        // মূল ওয়ালেট থেকে উইথড্র হওয়া অ্যামাউন্ট বাদ দিয়ে বাকি ২০০০ টাকা বা threshold সেট করুন
-        wallet.balance = threshold;
-        await wallet.save();
-
-        console.log(`Auto withdraw request created for: ${user.email}, Amount: ${withdrawAmount}`);
-      }
+        console.log("AUTO WITHDRAW COMPLETED");
+    } catch (err) {
+        console.log("AUTO WITHDRAW ERROR:", err);
     }
-
-    console.log("AUTO WITHDRAW COMPLETED");
-  } catch (err) {
-    console.log("AUTO WITHDRAW ERROR:", err);
-  }
-
 }, {
-  scheduled: true,
-  timezone: "Asia/Kolkata"
+    scheduled: true,
+    timezone: "Asia/Kolkata"
 });
+
 
 
 
