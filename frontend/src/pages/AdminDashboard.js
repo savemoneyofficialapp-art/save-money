@@ -19,6 +19,9 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [withdraws, setWithdraws] = useState([]);
   const [autoWithdraws, setAutoWithdraws] = useState([]);
+  
+  // New state for Latest News / Announcement API
+  const [latestNews, setLatestNews] = useState("");
 
   const [openWithdrawId, setOpenWithdrawId] = useState(null);
   const [transactionPopup, setTransactionPopup] = useState(false);
@@ -38,6 +41,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     load();
+    fetchLatestNews(); // Fetch latest news on component mount
   }, []);
 
   const safeJson = async (res) => {
@@ -86,6 +90,22 @@ export default function AdminDashboard() {
     const d = await safeJson(res);
     if (checkAuthError(d)) return null;
     return d;
+  };
+
+  // Function to fetch latest news/announcement
+  const fetchLatestNews = async () => {
+    try {
+      const res = await fetch(`${API}/latest-news`);
+      const d = await safeJson(res);
+      if (d?.success) {
+        setLatestNews(d.message);
+      } else {
+        setLatestNews("No new announcement");
+      }
+    } catch (err) {
+      console.log("Latest news error:", err);
+      setLatestNews("Failed to load latest news");
+    }
   };
 
   const load = async () => {
@@ -207,7 +227,6 @@ export default function AdminDashboard() {
     if (!d) return;
 
     if (d.success) {
-      // Instantly remove processed item from active list and refresh data from server
       setAutoWithdraws((prev) => prev.filter((item) => item._id !== id));
       toast.success(d.msg || `Auto withdraw ${status}`);
       await load();
@@ -235,6 +254,7 @@ export default function AdminDashboard() {
     toast.success(d.msg || "Broadcast Sent");
     setTitle("");
     setMessage("");
+    fetchLatestNews(); // Refresh latest news banner after sending a new broadcast
   };
 
   const fileUrl = (file) => {
@@ -270,8 +290,6 @@ export default function AdminDashboard() {
   }
 
   const pendingWithdraws = withdraws.filter((w) => w.status === "Pending");
-  
-  // Separate active pending auto withdraws from completed ones if backend returns all
   const pendingAutoWithdraws = autoWithdraws.filter((item) => item.status === "Pending");
 
   const now = new Date();
@@ -313,9 +331,7 @@ export default function AdminDashboard() {
     return true;
   });
 
-  // Filter logic for Auto Withdraw All History (Approve/Reject list with date-to-date calendar options)
   const autoWithdrawHistoryList = autoWithdraws.filter((item) => {
-    // If status is still Pending, usually it belongs to queue, but let's include completed ones or filter correctly based on requirement
     const d = new Date(item.createdAt || item.date || Date.now());
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -362,6 +378,12 @@ export default function AdminDashboard() {
       <h1 style={styles.title}>⚙️ Admin Command Center</h1>
 
       {error && <div style={styles.error}>⚠️ {error}</div>}
+
+      {/* Latest News / Live Announcement Ticker */}
+      <div style={styles.tickerBox}>
+        <span style={styles.tickerBadge}>📢 Latest Announcement:</span>
+        <span style={styles.tickerText}>{latestNews || "Loading announcement..."}</span>
+      </div>
 
       {/* Quick Navigation Link Row */}
       <div style={styles.quick}>
@@ -766,7 +788,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Auto Withdraw All History Popup Modal (Approve / Reject history with calendar date-to-date filtering) */}
+      {/* Auto Withdraw All History Popup Modal */}
       {autoHistoryPopup && (
         <div style={styles.popupOverlay}>
           <div style={styles.popupBox}>
@@ -876,8 +898,34 @@ const styles = {
     fontSize: "34px",
     fontWeight: "800",
     color: "#ffffff",
-    margin: "0 0 35px 0",
+    margin: "0 0 25px 0",
     textShadow: "0 2px 10px rgba(255,255,255,0.1)"
+  },
+  tickerBox: {
+    background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)",
+    border: "1.5px solid #4f46e5",
+    padding: "14px 20px",
+    borderRadius: "16px",
+    marginBottom: "25px",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    boxShadow: "0 4px 15px rgba(79, 70, 229, 0.15)"
+  },
+  tickerBadge: {
+    color: "#818cf8",
+    fontWeight: "700",
+    fontSize: "14px",
+    whiteSpace: "nowrap",
+    textTransform: "uppercase"
+  },
+  tickerText: {
+    color: "#f1f5f9",
+    fontSize: "15px",
+    fontWeight: "500",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
   },
   error: {
     background: "rgba(239, 68, 68, 0.2)",
@@ -1298,7 +1346,7 @@ const styles = {
     padding: "18px",
     marginTop: "12px",
     display: "flex",
-    justifyContent: "space-between",
+    justifyContent: "space-space-between",
     gap: "14px",
     alignItems: "center"
   }
