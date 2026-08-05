@@ -99,17 +99,18 @@ export default function Home() {
     }
   };
 
+  // Connected with your backend GET /latest-news route
   const loadLatestUpdate = async () => {
     try {
-      const res = await fetch(`${API}/get-latest-update`, {
+      const res = await fetch(`${API}/latest-news`, {
         method: "GET",
         headers: {
           authorization: token
         }
       });
       const data = await res.json();
-      if (data && data.update) {
-        setLatestUpdate(data.update);
+      if (data && data.message) {
+        setLatestUpdate(data.message);
       }
     } catch (err) {
       console.log("Latest update fetch error:", err);
@@ -378,7 +379,6 @@ export default function Home() {
           <div style={styles.latestTextBox}>
             <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "900", color: "#fff" }}>Latest Update</h3>
             
-            {/* ডানে থেকে বাঁদিকে টেক্সট স্ক্রোল করার জন্য মারকিউ ট্যাগ বা স্টাইল */}
             <div style={styles.marqueeWrapper}>
               <p style={styles.marqueeText}>{latestUpdate}</p>
             </div>
@@ -1441,7 +1441,6 @@ const styles = {
   }
 };
 
-// CSS অ্যানিমেশনের জন্য গ্লোবাল স্টাইল ইনজেকশন (মারকিউ ইফেক্টের জন্য)
 const styleSheet = document.styleSheets[0];
 const keyframes = `
 @keyframes marquee {
@@ -1451,6 +1450,4 @@ const keyframes = `
 `;
 try {
   styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
-} catch (e) {
-  // যদি অলরেডি ইনজেক্টেড থাকে বা কোনো রেস্ট্রিকশন থাকে
-}
+} catch (e) {}
