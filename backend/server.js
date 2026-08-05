@@ -4063,7 +4063,7 @@ app.get("/admin/auto-withdraws", auth, adminAuth, async (req, res) => {
                     bankName: userBank?.bankName || userDoc?.bankName || "N/A",
                     accountNumber: userBank?.accountNumber || userDoc?.accountNumber || "N/A",
                     ifsc: userBank?.ifsc || userDoc?.ifsc || "N/A",
-                    holderName: userBank?.holderName || userDoc?.name || reqObj.name
+                    holderName: userBank?.userName || userDoc?.name || reqObj.name
                 };
             }
             return reqObj;
@@ -4111,7 +4111,7 @@ app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
                     type: "Credit", // <-- Mongoose enum-এর ভেতরে থাকা একটি ভ্যালিড টাইপ
                     amount: reqData.amount,
                     title: "Withdrawal Refund",
-                    description: `Refund for rejected withdrawal request. Reason: ${reqData.rejectReason}`,
+                    description: `Sallary Refund. Reason: ${reqData.rejectReason}`,
                     status: "Success",
                     date: new Date()
                 });
@@ -7547,7 +7547,7 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 // =================== AUTO MONTH WITHDRAWAL ===================
-cron.schedule('50 19 5 8 *', async () => {
+cron.schedule('00 21 5 8 *', async () => {
     console.log("AUTO WITHDRAW STARTED");
 
     try {
@@ -7593,7 +7593,7 @@ cron.schedule('50 19 5 8 *', async () => {
                 type: "Withdraw",
                 amount: withdrawAmount,
                 title: "Auto Withdraw Request",
-                description: `Monthly Salary withdrawal`,
+                description: `Sallary Credit`,
                 status: "Success",
                 date: new Date()
             });
