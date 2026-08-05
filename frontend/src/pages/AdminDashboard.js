@@ -19,9 +19,6 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [withdraws, setWithdraws] = useState([]);
   const [autoWithdraws, setAutoWithdraws] = useState([]);
-  
-  // New state for Latest News / Announcement API
-  const [latestNews, setLatestNews] = useState("");
 
   const [openWithdrawId, setOpenWithdrawId] = useState(null);
   const [transactionPopup, setTransactionPopup] = useState(false);
@@ -37,11 +34,14 @@ export default function AdminDashboard() {
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
+  
+  // New State for Latest App Update Section
+  const [latestUpdateText, setLatestUpdateText] = useState("");
+
   const [error, setError] = useState("");
 
   useEffect(() => {
     load();
-    fetchLatestNews(); // Fetch latest news on component mount
   }, []);
 
   const safeJson = async (res) => {
@@ -90,22 +90,6 @@ export default function AdminDashboard() {
     const d = await safeJson(res);
     if (checkAuthError(d)) return null;
     return d;
-  };
-
-  // Function to fetch latest news/announcement
-  const fetchLatestNews = async () => {
-    try {
-      const res = await fetch(`${API}/latest-news`);
-      const d = await safeJson(res);
-      if (d?.success) {
-        setLatestNews(d.message);
-      } else {
-        setLatestNews("No new announcement");
-      }
-    } catch (err) {
-      console.log("Latest news error:", err);
-      setLatestNews("Failed to load latest news");
-    }
   };
 
   const load = async () => {
@@ -254,7 +238,26 @@ export default function AdminDashboard() {
     toast.success(d.msg || "Broadcast Sent");
     setTitle("");
     setMessage("");
-    fetchLatestNews(); // Refresh latest news banner after sending a new broadcast
+  };
+
+  // Handler for sending App Latest Update
+  const handleSendLatestUpdate = async () => {
+    if (!latestUpdateText.trim()) {
+      toast.info("Please enter latest update text");
+      return;
+    }
+
+    // Using broadcast route or a dedicated endpoint if configured. 
+    // Here we send it via /broadcast with a specific title so it creates a Notification record fetched by /latest-news
+    const d = await apiPost("/broadcast", { 
+      title: "App Latest Update", 
+      message: latestUpdateText 
+    });
+
+    if (!d) return;
+
+    toast.success("Latest update sent successfully to Home page!");
+    setLatestUpdateText("");
   };
 
   const fileUrl = (file) => {
@@ -379,13 +382,6 @@ export default function AdminDashboard() {
 
       {error && <div style={styles.error}>⚠️ {error}</div>}
 
-      {/* Latest News / Live Announcement Ticker */}
-      <div style={styles.tickerBox}>
-        <span style={styles.tickerBadge}>📢 Latest Announcement:</span>
-        <span style={styles.tickerText}>{latestNews || "Loading announcement..."}</span>
-      </div>
-
-      {/* Quick Navigation Link Row */}
       <div style={styles.quick}>
         <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-analytics")}>
           📊 Advanced Analytics
@@ -398,7 +394,6 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* Premium Metrics Grid */}
       <div style={styles.grid}>
         <div style={styles.card}>
           <p style={styles.cardLabel}>Total Network Users</p>
@@ -436,7 +431,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Real-time Chart Box */}
       <div style={styles.chartBox}>
         <h3 style={{ margin: "0 0 15px 0", color: "#f1f5f9", fontSize: "16px", fontWeight: "bold" }}>📈 PLATFORM STATISTICAL CHART</h3>
         <ResponsiveContainer width="100%" height={260}>
@@ -454,6 +448,23 @@ export default function AdminDashboard() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* 🚀 LATEST APP UPDATE CONTROL SECTION */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>📢 App Latest Update Control</h2>
+        <p style={{ color: "#cbd5e1", fontSize: "14px", margin: "-10px 0 15px 0", fontWeight: "600" }}>
+          Write the latest update message below and click send to instantly display it on all users' home page marquee banner.
+        </p>
+        <textarea
+          style={{ ...styles.input, minHeight: "90px", resize: "vertical" }}
+          placeholder="Type app latest update message here..."
+          value={latestUpdateText}
+          onChange={(e) => setLatestUpdateText(e.target.value)}
+        />
+        <button style={styles.greenFull} onClick={handleSendLatestUpdate}>
+          🚀 Send Latest Update To All Users
+        </button>
       </div>
 
       {/* Global Push Broadcast Section */}
@@ -612,7 +623,7 @@ export default function AdminDashboard() {
             <h3 style={{ margin: 0, fontSize: "22px", color: "#ffffff", fontWeight: "bold" }}>{u.name}</h3>
             <p style={{ margin: "5px 0", color: "#cbd5e1", fontSize: "16px", fontWeight: "500" }}>{u.email} | Contact: {u.mobile}</p>
             <div style={{ margin: "14px 0", fontSize: "17px", background: "#020617", padding: "16px", borderRadius: "12px", border: "1px solid #334155" }}>
-              <p style={{ margin: "6px 0", color: "#ffffff" }}>💳 <b>Aadhaar Hash:</b> <span style={{ color: "#fbbf24", fontWeight: "bold" }}>{u.aadhaarNumber || u.aadhaar || "[Protected Identifier]"}</span></p>
+              <p style={{ margin: "6px 0", color: "#ffffff" }}>💳 <b>Aadhaar Hash:</b> <span style={{ color: "#fbbf24", fontWeight: "bold" }}>[Protected Identifier]</span></p>
               <p style={{ margin: "6px 0", color: "#ffffff" }}>📄 <b>PAN Code:</b> <span style={{ color: "#38bdf8", fontWeight: "bold", fontFamily: "monospace", fontSize: "18px" }}>{u.panNumber || u.pan || "Not Submitted"}</span></p>
             </div>
 
@@ -852,7 +863,6 @@ export default function AdminDashboard() {
   );
 }
 
-// Ultra-premium glowing neon dark theme stylesheet
 const styles = {
   container: {
     minHeight: "100vh",
@@ -898,34 +908,8 @@ const styles = {
     fontSize: "34px",
     fontWeight: "800",
     color: "#ffffff",
-    margin: "0 0 25px 0",
+    margin: "0 0 35px 0",
     textShadow: "0 2px 10px rgba(255,255,255,0.1)"
-  },
-  tickerBox: {
-    background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)",
-    border: "1.5px solid #4f46e5",
-    padding: "14px 20px",
-    borderRadius: "16px",
-    marginBottom: "25px",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    boxShadow: "0 4px 15px rgba(79, 70, 229, 0.15)"
-  },
-  tickerBadge: {
-    color: "#818cf8",
-    fontWeight: "700",
-    fontSize: "14px",
-    whiteSpace: "nowrap",
-    textTransform: "uppercase"
-  },
-  tickerText: {
-    color: "#f1f5f9",
-    fontSize: "15px",
-    fontWeight: "500",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap"
   },
   error: {
     background: "rgba(239, 68, 68, 0.2)",
@@ -1346,7 +1330,7 @@ const styles = {
     padding: "18px",
     marginTop: "12px",
     display: "flex",
-    justifyContent: "space-space-between",
+    justifyContent: "space-between",
     gap: "14px",
     alignItems: "center"
   }
