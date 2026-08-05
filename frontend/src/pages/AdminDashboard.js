@@ -26,6 +26,12 @@ export default function AdminDashboard() {
   const [transactionFrom, setTransactionFrom] = useState("");
   const [transactionTo, setTransactionTo] = useState("");
 
+  // New state for Auto Withdraw History Modal and Date Filtering
+  const [autoHistoryPopup, setAutoHistoryPopup] = useState(false);
+  const [autoHistoryFilter, setAutoHistoryFilter] = useState("today");
+  const [autoHistoryFrom, setAutoHistoryFrom] = useState("");
+  const [autoHistoryTo, setAutoHistoryTo] = useState("");
+
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -159,7 +165,7 @@ export default function AdminDashboard() {
     let rejectReason = "";
 
     if (status === "Rejected") {
-      rejectReason = prompt("Reject reason লিখুন") || "Rejected by admin";
+      rejectReason = prompt("Enter rejection reason") || "Rejected by admin";
     }
 
     const d = await apiPost("/admin/withdraw-action", {
@@ -192,10 +198,22 @@ export default function AdminDashboard() {
   };
 
   const autoWithdrawAction = async (id, status) => {
-    const d = await apiPost("/admin/auto-withdraw-action", { id, status });
+    let rejectReason = "";
+    if (status === "Rejected") {
+      rejectReason = prompt("Enter rejection reason") || "Rejected by admin";
+    }
+
+    const d = await apiPost("/admin/auto-withdraw-action", { id, status, rejectReason });
     if (!d) return;
-    toast.success(d.msg || "Updated");
-    await load();
+
+    if (d.success) {
+      // Instantly remove processed item from active list and refresh data from server
+      setAutoWithdraws((prev) => prev.filter((item) => item._id !== id));
+      toast.success(d.msg || `Auto withdraw ${status}`);
+      await load();
+    } else {
+      toast.error(d?.msg || "Auto withdraw action failed");
+    }
   };
 
   const banUser = async (id) => {
@@ -252,6 +270,9 @@ export default function AdminDashboard() {
   }
 
   const pendingWithdraws = withdraws.filter((w) => w.status === "Pending");
+  
+  // Separate active pending auto withdraws from completed ones if backend returns all
+  const pendingAutoWithdraws = autoWithdraws.filter((item) => item.status === "Pending");
 
   const now = new Date();
   const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -292,6 +313,30 @@ export default function AdminDashboard() {
     return true;
   });
 
+  // Filter logic for Auto Withdraw All History (Approve/Reject list with date-to-date calendar options)
+  const autoWithdrawHistoryList = autoWithdraws.filter((item) => {
+    // If status is still Pending, usually it belongs to queue, but let's include completed ones or filter correctly based on requirement
+    const d = new Date(item.createdAt || item.date || Date.now());
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (autoHistoryFilter === "today" && d < todayStart) return false;
+    if (autoHistoryFilter === "success" && item.status !== "Success") return false;
+    if (autoHistoryFilter === "rejected" && item.status !== "Rejected") return false;
+
+    if (autoHistoryFrom) {
+      const from = new Date(autoHistoryFrom);
+      if (d < from) return false;
+    }
+
+    if (autoHistoryTo) {
+      const to = new Date(autoHistoryTo);
+      to.setHours(23, 59, 59, 999);
+      if (d > to) return false;
+    }
+
+    return true;
+  });
+
   const pendingWithdrawAmount = pendingWithdraws.reduce(
     (sum, w) => sum + Number(w.amount || 0),
     0
@@ -318,7 +363,7 @@ export default function AdminDashboard() {
 
       {error && <div style={styles.error}>⚠️ {error}</div>}
 
-      {/* 🧭 কুইক নেভিগেশন লিংক রো */}
+      {/* Quick Navigation Link Row */}
       <div style={styles.quick}>
         <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-analytics")}>
           📊 Advanced Analytics
@@ -331,7 +376,7 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* 📊 প্রিমিয়াম মেট্রিক্স গ্রিড */}
+      {/* Premium Metrics Grid */}
       <div style={styles.grid}>
         <div style={styles.card}>
           <p style={styles.cardLabel}>Total Network Users</p>
@@ -369,7 +414,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* 📈 রিয়েল-тайম চার্টবক্স */}
+      {/* Real-time Chart Box */}
       <div style={styles.chartBox}>
         <h3 style={{ margin: "0 0 15px 0", color: "#f1f5f9", fontSize: "16px", fontWeight: "bold" }}>📈 PLATFORM STATISTICAL CHART</h3>
         <ResponsiveContainer width="100%" height={260}>
@@ -389,7 +434,7 @@ export default function AdminDashboard() {
         </ResponsiveContainer>
       </div>
 
-      {/* 📣 ব্রডকাস্ট মেসেজ সেকশন */}
+      {/* Global Push Broadcast Section */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>📣 Global Push Broadcast</h2>
         <input
@@ -409,7 +454,7 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* 💸 ম্যানুয়াল উইথড্র রিকোয়েস্ট সেকশন */}
+      {/* Manual Withdraw Request Section */}
       <div style={styles.section}>
         <div style={styles.sectionTop}>
           <div>
@@ -492,13 +537,22 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* ⚡ অটো উইথড্র সেকশন */}
+      {/* Auto Withdraw Section with History Button */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>⚡ Automated Webhook Gateways</h2>
-        {autoWithdraws.length === 0 ? (
+        <div style={styles.sectionTop}>
+          <div>
+            <h2 style={styles.sectionTitle}>⚡ Automated Webhook Gateways</h2>
+            <p style={{ color: "#cbd5e1", fontSize: "14px", margin: "4px 0 0 0", fontWeight: "600" }}>Manage automated webhook withdrawals.</p>
+          </div>
+          <button style={styles.viewTransactionBtn} onClick={() => setAutoHistoryPopup(true)}>
+            📜 Auto Withdraw History
+          </button>
+        </div>
+
+        {pendingAutoWithdraws.length === 0 ? (
           <p style={styles.emptyText}>💤 Autonomous pipeline is completely clear.</p>
         ) : (
-          autoWithdraws.map((item) => (
+          pendingAutoWithdraws.map((item) => (
             <div key={item._id} style={styles.withdrawMiniCard}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
@@ -527,7 +581,7 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* 🆔 পেন্ডিং কেওয়াইসি ভেরিফিকেশন সেকশন */}
+      {/* Identity Auditing (KYC Queue) Section */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>🆔 Identity Auditing (KYC Queue)</h2>
         {kyc.length === 0 && <p style={styles.emptyText}>😎 Universal user identities are verified. No pending audits.</p>}
@@ -570,7 +624,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* 📥 ক্যাশ ডিপোজিট রিকোয়েস্ট টেবিল */}
+      {/* Automated Peer UPI Top-up Requests Table */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>📥 Automated Peer UPI Top-up Requests</h2>
         {cash.length === 0 ? (
@@ -628,7 +682,7 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* 👥 ইউজার ব্লক/লিস্ট সেকশন */}
+      {/* Core Network Directory Matrix Section */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>👥 Core Network Directory Matrix</h2>
         {users.length === 0 && <p style={styles.emptyText}>No register assets found.</p>}
@@ -645,7 +699,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* 📑 পপআপ মডাল লেজার খাতা */}
+      {/* Comprehensive Remittance Ledger Popup Modal */}
       {transactionPopup && (
         <div style={styles.popupOverlay}>
           <div style={styles.popupBox}>
@@ -711,11 +765,72 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Auto Withdraw All History Popup Modal (Approve / Reject history with calendar date-to-date filtering) */}
+      {autoHistoryPopup && (
+        <div style={styles.popupOverlay}>
+          <div style={styles.popupBox}>
+            <div style={styles.popupTop}>
+              <h2 style={{ margin: 0, fontSize: "24px" }}>📜 Auto Withdraw All History</h2>
+              <button style={styles.closePopup} onClick={() => setAutoHistoryPopup(false)}>✕ Close</button>
+            </div>
+
+            <div style={styles.transactionFilterBox}>
+              <select style={styles.filterInput} value={autoHistoryFilter} onChange={(e) => setAutoHistoryFilter(e.target.value)}>
+                <option value="today">Today History</option>
+                <option value="all">All History</option>
+                <option value="success">Approved Only</option>
+                <option value="rejected">Rejected Only</option>
+              </select>
+
+              <input style={styles.filterInput} type="date" value={autoHistoryFrom} onChange={(e) => setAutoHistoryFrom(e.target.value)} />
+              <input style={styles.filterInput} type="date" value={autoHistoryTo} onChange={(e) => setAutoHistoryTo(e.target.value)} />
+
+              <button style={styles.resetBtn} onClick={() => { setAutoHistoryFilter("today"); setAutoHistoryFrom(""); setAutoHistoryTo(""); }}>
+                🔄 Clear Filter
+              </button>
+            </div>
+
+            <div style={styles.popupSummary}>
+              <div style={styles.summaryMini}>
+                <span style={{ color: "#cbd5e1", fontSize: "15px" }}>Total Records Found</span>
+                <h3 style={{ margin: "5px 0 0 0", fontSize: "20px" }}>{autoWithdrawHistoryList.length} Units</h3>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 20, maxHeight: "45vh", overflowY: "auto", paddingRight: "5px" }}>
+              {autoWithdrawHistoryList.length === 0 ? (
+                <p style={styles.emptyText}>No history found matching the selected parameters.</p>
+              ) : (
+                autoWithdrawHistoryList.map((item) => (
+                  <div key={item._id} style={styles.transactionItem}>
+                    <div>
+                      <b style={{ fontSize: "16px", color: "#fff" }}>{item.name || "User Node"}</b>
+                      <p style={{ margin: "4px 0", color: "#cbd5e1", fontSize: "14px" }}>{item.email}</p>
+                      <b style={{ color: "#22c55e", fontSize: "18px" }}>{money(item.amount)}</b>
+                      <br />
+                      <small style={{ color: "#94a3b8", fontSize: "12px" }}>{item.createdAt ? new Date(item.createdAt).toLocaleString("en-IN") : "N/A"}</small>
+                    </div>
+
+                    <span style={{
+                      ...styles.statusPill, fontSize: "13px", padding: "6px 12px",
+                      background: item.status === "Success" ? "rgba(22,163,74,0.2)" : item.status === "Rejected" ? "rgba(225,29,72,0.2)" : "rgba(234,179,8,0.2)",
+                      color: item.status === "Success" ? "#22c55e" : item.status === "Rejected" ? "#f87171" : "#facc15"
+                    }}>
+                      {item.status}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// 💎 আল্ট্রা-প্রিমিয়াম গ্লোয়িং নিওন ডার্ক থিম স্টাইলশিট (বড় ফন্ট ও হাই-কন্ট্রাস্ট ক্লিয়ার ভিউ সহ)
+// Ultra-premium glowing neon dark theme stylesheet
 const styles = {
   container: {
     minHeight: "100vh",
@@ -1172,7 +1287,7 @@ const styles = {
   },
   popupSummary: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "1fr",
     gap: "14px",
     marginTop: "20px"
   },
