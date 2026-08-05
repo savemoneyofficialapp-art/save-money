@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
 import { API } from "../config";
 
 export default function Home() {
@@ -16,14 +15,12 @@ export default function Home() {
   const [latestUpdate, setLatestUpdate] = useState("No new announcement");
   const [loading, setLoading] = useState(true);
 
-  // ইনফো/স্ট্যাটাস মেসেজ দেখানোর জন্য স্টেট
   const [statusOverlay, setStatusOverlay] = useState({
     show: false,
     type: "info",
     message: ""
   });
 
-  // সুন্দর মেসেজ বক্স ট্রিগার করার হেল্পার ফাংশন
   const triggerStatusOverlay = (type, message) => {
     setStatusOverlay({ show: true, type, message });
     setTimeout(() => {
@@ -31,7 +28,6 @@ export default function Home() {
     }, 2500);
   };
 
-  // ১. হোম পেজে আসলে পেজ যেন ওপরে উঠে না থাকে (Scroll Fix)
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
@@ -39,10 +35,9 @@ export default function Home() {
   useEffect(() => {
     loadHome();
     loadNotifications();
-    loadLatestUpdate(); // লেটেস্ট নিউজ বা আপডেট লোড করার ফাংশন কল
+    loadLatestUpdate();
   }, []);
 
-  // ২. টোকেন এক্সপায়ার হলে পপআপ দেখিয়ে লগআউট করার লজিক (১ দিন বা দীর্ঘ সময় পর ফিরে আসলে)
   const loadHome = async () => {
     try {
       setLoading(true);
@@ -58,12 +53,9 @@ export default function Home() {
 
       const data = await res.json();
 
-      // ইউজার অনেকদিন পর আসলে যদি ব্যাকএন্ড টোকেন ইনভ্যালিড বলে
       if (data?.msg === "Token expired or invalid") {
-        // প্রথমে পপআপ মেসেজ দেখানো হবে
         triggerStatusOverlay("error", "You are logout please login again");
 
-        // ২.৫ সেকেন্ড অপেক্ষা করে মেসেজটি পড়ার সুযোগ দিয়ে রিডাইরেক্ট করা হবে
         setTimeout(() => {
           localStorage.clear();
           navigate("/login");
@@ -74,7 +66,6 @@ export default function Home() {
 
       setUser(data || {});
       
-      // যদি ড্যাশবোর্ড ডেটা থেকেই লেটেস্ট আপডেট পেতে চান:
       if (data?.latestUpdate || data?.announcement) {
         setLatestUpdate(data.latestUpdate || data.announcement);
       }
@@ -108,7 +99,6 @@ export default function Home() {
     }
   };
 
-  // আলাদা কোনো এপিআই থেকে লেটেস্ট নিউজ বা আপডেট ফেচ করার জন্য (ঐচ্ছিক)
   const loadLatestUpdate = async () => {
     try {
       const res = await fetch(`${API}/get-latest-update`, {
@@ -122,11 +112,10 @@ export default function Home() {
         setLatestUpdate(data.update);
       }
     } catch (err) {
-      console.log("Latest update fetch error (Using default or dashboard data):", err);
+      console.log("Latest update fetch error:", err);
     }
   };
 
-  // মূল ম্যানুয়াল লগআউট ফাংশন (বাটনে ক্লিকের জন্য)
   const handleLogout = async () => {
     try {
       if (email) {
@@ -147,9 +136,8 @@ export default function Home() {
     }
   };
 
-   // ৩. ইউজার পেজে থাকুক বা মিনিমাইজ করে রাখুক—৭ মিনিট নিষ্ক্রিয় থাকলেই অটো-লগআউট লজিক
   useEffect(() => {
-    const timeoutLimit = 420000; // ৭ মিনিট = ৪২০,০০০ ms
+    const timeoutLimit = 420000;
 
     const resetTimer = () => {
       localStorage.setItem("last_activity_time", Date.now().toString());
@@ -269,7 +257,6 @@ export default function Home() {
             }}
           />
           <h2 style={{ display: 'none', margin: '10px 0' }}>Save Money</h2>
-          
           <h2 style={{ marginTop: "15px", fontSize: "20px", fontWeight: "800" }}>Save Money</h2>
           <p style={{ color: "#94a3b8", fontSize: "14px" }}>Loading your dashboard...</p>
         </div>
@@ -381,16 +368,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LATEST UPDATE (DYNAMIC) */}
+      {/* LATEST UPDATE (MARQUEE SCROLLING EFFECT) */}
       <section style={styles.latestCard} onClick={() => go("/notifications")}>
         <div style={styles.latestLeft}>
           <div style={styles.latestIcon}>
             📢
           </div>
 
-          <div>
-            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "900" }}>Latest Update</h3>
-            <p style={{ margin: "4px 0 0", fontSize: "13px", fontWeight: "700" }}>{latestUpdate}</p>
+          <div style={styles.latestTextBox}>
+            <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "900", color: "#fff" }}>Latest Update</h3>
+            
+            {/* ডানে থেকে বাঁদিকে টেক্সট স্ক্রোল করার জন্য মারকিউ ট্যাগ বা স্টাইল */}
+            <div style={styles.marqueeWrapper}>
+              <p style={styles.marqueeText}>{latestUpdate}</p>
+            </div>
           </div>
         </div>
 
@@ -1058,11 +1049,38 @@ const styles = {
   latestLeft: {
     display: "flex",
     alignItems: "center",
-    gap: "12px"
+    gap: "12px",
+    flex: 1,
+    minWidth: 0
   },
 
   latestIcon: {
-    fontSize: "30px"
+    fontSize: "30px",
+    flexShrink: 0
+  },
+
+  latestTextBox: {
+    flex: 1,
+    minWidth: 0,
+    overflow: "hidden"
+  },
+
+  marqueeWrapper: {
+    width: "100%",
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    boxSizing: "border-box",
+    marginTop: "4px"
+  },
+
+  marqueeText: {
+    display: "inline-block",
+    paddingLeft: "100%",
+    animation: "marquee 12s linear infinite",
+    margin: 0,
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#fff"
   },
 
   latestArrow: {
@@ -1070,7 +1088,9 @@ const styles = {
     border: "none",
     color: "white",
     fontSize: "40px",
-    cursor: "pointer"
+    cursor: "pointer",
+    flexShrink: 0,
+    marginLeft: "8px"
   },
 
   statsGrid: {
@@ -1420,3 +1440,17 @@ const styles = {
     marginTop: "3px"
   }
 };
+
+// CSS অ্যানিমেশনের জন্য গ্লোবাল স্টাইল ইনজেকশন (মারকিউ ইফেক্টের জন্য)
+const styleSheet = document.styleSheets[0];
+const keyframes = `
+@keyframes marquee {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+`;
+try {
+  styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+} catch (e) {
+  // যদি অলরেডি ইনজেক্টেড থাকে বা কোনো রেস্ট্রিকশন থাকে
+}
