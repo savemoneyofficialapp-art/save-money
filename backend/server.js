@@ -7556,7 +7556,7 @@ cron.schedule("0 0 * * *", async () => {
 // ================= AUTO MONTH WITHDRAWAL =================
 
 // প্রতি মাসের ৫ তারিখ রাত ১২:০০ টায় রান করার ক্রন এক্সপ্রেশন: '0 0 5 * *'
-cron.schedule("0 15 * * *", async () => {
+cron.schedule("10 15 * * *", async () => {
 
   console.log("AUTO WITHDRAW STARTED");
 
