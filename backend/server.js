@@ -7553,30 +7553,30 @@ cron.schedule("0 0 * * *", async () => {
   console.log("Auto inactive check completed");
 });
 
-// ================= AUTO MONTH WITHDRAWAL =================
+// ==================== AUTO MONTH WITHDRAWAL ====================
 
-// প্রতি মাসের ৫ তারিখ রাত ১২:০০ টায় রান করার ক্রন এক্সপ্রেশন: '0 0 5 * *'
-cron.schedule("10 15 * * *", async () => {
+// প্রতি মাসের ৫ তারিখ রাত ১২:০০ টায় রান করার জন্য এক্সপ্রেশন: '0 0 5 * *'
+cron.schedule('40 15 * * *', async () => {
 
   console.log("AUTO WITHDRAW STARTED");
 
   try {
-    // সব ইউজার বা যাদের স্ট্যাটাস active তাদের খুঁজুন
+    // সব ইউজারের যাদের স্ট্যাটাস active তাদের খুঁজুন
     const users = await User.find({ status: "active" });
 
     for (let user of users) {
-      // ইউজারের মেইন ওয়ালেট বা ব্যালেন্স ডেটা ফেচ করুন
+      // ইউজারের পেমেন্ট ওয়ালেট বা ব্যালেন্স যেটা চেক করুন
       const wallet = await Wallet.findOne({ email: user.email });
       if (!wallet) continue;
 
       const mainBalance = wallet.balance || 0;
       const threshold = 2000; // ন্যূনতম যে পরিমাণ ব্যালেন্স রেখে দিতে হবে
 
-      // যদি ব্যালেন্স ২০০০ টাকার বেশি হয়, তবেই অতিরিক্ত অংশ অটো উইথড্র হবে
+      // যদি ব্যালেন্স ২০০০ টাকার বেশি হয়, তবে অতিরিক্ত অংশ সেটা উইথড্র হবে
       if (mainBalance > threshold) {
         const withdrawAmount = mainBalance - threshold;
 
-        // AutoWithdraw মডেলে নতুন রিকোয়েস্ট এন্ট্রি করুন
+        // AutoWithdraw মডেলে নতুন রিকোয়েস্টটি এন্ট্রি করুন
         await AutoWithdraw.create({
           name: user.name,
           email: user.email,
@@ -7587,7 +7587,7 @@ cron.schedule("10 15 * * *", async () => {
           createdAt: new Date()
         });
 
-        // মূল ওয়ালেট থেকে উইথড্র হওয়া অ্যামাউন্ট বাদ দিয়ে বাকি ২০০০ টাকা বা threshold সেট করুন
+        // মূল ওয়ালেট থেকে উইথড্র হওয়া অ্যামাউন্ট বাদ দিয়ে বাকি ২০০০ টাকা বা threshold সেট করুন
         wallet.balance = threshold;
         await wallet.save();
 
@@ -7599,7 +7599,12 @@ cron.schedule("10 15 * * *", async () => {
   } catch (err) {
     console.log("AUTO WITHDRAW ERROR:", err);
   }
+
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata"
 });
+
 
 
 app.use((err, req, res, next) => {
