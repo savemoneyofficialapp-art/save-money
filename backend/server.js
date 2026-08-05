@@ -4104,14 +4104,14 @@ app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
                 user.balance = Number(user.balance || 0) + Number(reqData.amount);
                 await user.save();
 
-                // WalletHistory তে টাইপ "Refund" বা "Withdraw Refund" দেওয়া হলো
-                // যাতে ফ্রন্টএন্ডের isCredit লজিক এটিকে পজিটিভ (+) ও সবুজ রঙ হিসেবে ধরে নেয়।
+                // এখানে type এ "Credit" দেওয়া হয়েছে যা মঙ্গুজ এনামের বাইরে যাবে না।
+                // আর description বা title এ "refund" রাখা হয়েছে যাতে ফ্রন্টএন্ডের isCredit (refund keyword) একে পজিটিভ ধরে।
                 await WalletHistory.create({
                     email: user.email,
-                    type: "Refund", // <-- এখানে "Refund" রাখা হয়েছে যাতে ফ্রন্টএন্ড পজিটিভ হিসেবে ধরে
+                    type: "Credit", // <-- Mongoose enum-এর ভেতরে থাকা একটি ভ্যালিড টাইপ
                     amount: reqData.amount,
                     title: "Withdrawal Refund",
-                    description: `withdrawal Refund. Reason: ${reqData.rejectReason}`,
+                    description: `Refund for rejected withdrawal request. Reason: ${reqData.rejectReason}`,
                     status: "Success",
                     date: new Date()
                 });
@@ -4119,10 +4119,9 @@ app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
         } else if (status === "Approved" || status === "Authorize") {
             reqData.status = "Approved";
             
-            // সফল উইথড্রলের ক্ষেত্রে ডেবিট বা মাইনাস (-) হিসেবে দেখানোর জন্য type "Withdraw" বা "Debit" রাখা নিরাপদ
             await WalletHistory.create({
                 email: user.email,
-                type: "Withdraw Success",
+                type: "Debit", // অথবা আপনার স্কিমার নিয়মানুযায়ী অন্য কোনো ভ্যালিড টাইপ
                 amount: reqData.amount,
                 title: "Withdrawal Successful",
                 description: `Your withdrawal request of ₹${reqData.amount} has been approved.`,
