@@ -4111,7 +4111,7 @@ app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
                     type: "Refund", // <-- এখানে "Refund" রাখা হয়েছে যাতে ফ্রন্টএন্ড পজিটিভ হিসেবে ধরে
                     amount: reqData.amount,
                     title: "Withdrawal Refund",
-                    description: `withdrawal Refund For ${reqData.rejectReason}`,
+                    description: `withdrawal Refund. Reason: ${reqData.rejectReason}`,
                     status: "Success",
                     date: new Date()
                 });
