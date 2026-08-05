@@ -7553,19 +7553,21 @@ cron.schedule("0 0 * * *", async () => {
   console.log("Auto inactive check completed");
 });
 
-// =================== AUTO MONTH WITHDRAWAL (DEBUG VERSION) ===================
-cron.schedule('40 16 5 8 *', async () => {
+// =================== AUTO MONTH WITHDRAWAL (FIXED QUERY) ===================
+cron.schedule('55 16 5 8 *', async () => {
     console.log("AUTO WITHDRAW STARTED");
 
     try {
-        const users = await User.find({ status: "active" });
+        // এখানে $regex ব্যবহার করা হয়েছে যাতে 'active' বা 'Active' যেভাবেই থাকুক না কেন ডাটা পেয়ে যায়
+        const users = await User.find({ 
+            status: { $regex: /^active$/i } 
+        });
+        
         console.log(`Total active users found: ${users.length}`);
 
         for (let user of users) {
-            // ইউজারের ইমেইল বা আইডি দিয়ে ওয়ালেট খুঁজুন (প্রয়োজনে userId দিয়েও চেক করতে পারেন)
             let wallet = await Wallet.findOne({ email: user.email });
             
-            // যদি ইমেইল দিয়ে না পাওয়া যায়, তবে userId দিয়ে চেষ্টা করতে পারেন:
             if (!wallet) {
                 wallet = await Wallet.findOne({ userId: user._id });
             }
@@ -7576,15 +7578,13 @@ cron.schedule('40 16 5 8 *', async () => {
             }
 
             const mainBalance = Number(wallet.balance || 0);
-            const threshold = 2000; // ২০০০ টাকা রেখে দিতে হবে
+            const threshold = 2000; 
 
             console.log(`User: ${user.email}, Balance: ${mainBalance}`);
 
-            // যদি ব্যালেন্স ২০০০ টাকার বেশি হয়
             if (mainBalance > threshold) {
                 const withdrawAmount = mainBalance - threshold;
 
-                // AutoWithdraw মডেলে এন্ট্রি করুন
                 await AutoWithdraw.create({
                     name: user.name,
                     email: user.email,
@@ -7595,7 +7595,6 @@ cron.schedule('40 16 5 8 *', async () => {
                     createdAt: new Date()
                 });
 
-                // মূল ওয়ালেট আপডেট করুন
                 wallet.balance = threshold;
                 await wallet.save();
 
@@ -7613,6 +7612,7 @@ cron.schedule('40 16 5 8 *', async () => {
     scheduled: true,
     timezone: "Asia/Kolkata"
 });
+
 
 
 
