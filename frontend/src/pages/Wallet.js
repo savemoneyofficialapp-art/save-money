@@ -218,7 +218,6 @@ export default function Wallet() {
         setReviewText("");
         setReviewRating(5);
         loadP2pUsers();
-        // আপডেট লিস্ট রিফ্রেশ করতে সিলেক্টেড ইউজার আপডেট করা
         const updatedReviews = await fetch(`${API}/p2p-users`).then(r => r.json());
         if(updatedReviews.success && updatedReviews.reviews) {
           setReviewsList(updatedReviews.reviews);
@@ -741,7 +740,6 @@ export default function Wallet() {
                             <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#16a34a" }}>Balance: ₹{Number(user.balance).toLocaleString()}</p>
                           </div>
                           
-                          {/* শুধুমাত্র একটি "Review" বোতাম */}
                           <div>
                             <button 
                               style={styles.reviewActionBtn}
@@ -767,7 +765,7 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- কম্বাইন্ড রিভিউ মডাল (ওপরে লেখার অপশন ও নিচে ইউজারদের রিভিউ) --- */}
+        {/* --- কম্বাইন্ড রিভিউ মডাল --- */}
         {reviewModalOpen && selectedP2pUser && (
           <div style={styles.modalOverlay}>
             <div style={{ ...styles.modal, maxWidth: "480px", maxHeight: "85vh", overflowY: "auto" }}>
@@ -777,7 +775,6 @@ export default function Wallet() {
               </div>
               <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 15px 0" }}>Wallet ID: {selectedP2pUser.walletId}</p>
 
-              {/* ওপরের অংশ: স্টার রেটিং এবং রিভিউ লেখার ফর্ম */}
               <div style={{ background: "#f8fafc", padding: "14px", borderRadius: "16px", marginBottom: "18px", border: "1px solid #e2e8f0" }}>
                 <h4 style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#1e293b" }}>Write a Review</h4>
                 
@@ -805,7 +802,6 @@ export default function Wallet() {
                 </button>
               </div>
 
-              {/* নিচের অংশ: ইউজারদের দেওয়া সমস্ত রিভিউ */}
               <h4 style={{ margin: "0 0 10px 0", fontSize: "15px", color: "#1e293b" }}>User Reviews</h4>
               <div style={{ maxHeight: "200px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", marginBottom: "15px" }}>
                 {(!reviewsList[selectedP2pUser.walletId] || reviewsList[selectedP2pUser.walletId].length === 0) ? (
@@ -834,14 +830,12 @@ export default function Wallet() {
             <div style={styles.receiptContainer}>
               <div ref={receiptRef} style={styles.receiptCard}>
                 <div style={styles.receiptHeader}>
-                  <div style={{...styles.receiptIconCircle, background: selectedTxn.isCredit ? "#e6fcf5" : "#fff5f5"}}>
-                    <span style={{color: selectedTxn.isCredit ? "#0ca678" : "#fa5252", fontSize: "28px"}}>
-                      {selectedTxn.isCredit ? "✓" : "⇱"}
-                    </span>
+                  <div style={styles.receiptPulseIconCircle}>
+                    <span style={styles.receiptCheckMark}>✓</span>
                   </div>
                   <h3 style={styles.receiptStatusText}>Transaction Successful</h3>
                   <h1 style={{...styles.receiptAmountDisplay, color: selectedTxn.isCredit ? "#0ca678" : "#fa5252"}}>
-                    {selectedTxn.isCredit ? "+" : "-"} ₹{Number(selectedTxn.amount).toLocaleString("en-IN")}.00
+                    ₹{Number(selectedTxn.amount).toLocaleString("en-IN")}.00
                   </h1>
                   <p style={styles.receiptTypeTag}>{selectedTxn.desc.toUpperCase()}</p>
                 </div>
@@ -1151,14 +1145,22 @@ const styles = {
     background: "#ffffff"
   },
 
-  receiptIconCircle: {
+  receiptPulseIconCircle: {
     width: "60px",
     height: "60px",
     borderRadius: "50%",
+    background: "#dcfce7",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    margin: "0 auto 12px auto"
+    margin: "0 auto 12px auto",
+    animation: "pulseIcon 1.5s infinite ease-in-out"
+  },
+
+  receiptCheckMark: {
+    color: "#16a34a",
+    fontSize: "30px",
+    fontWeight: "900"
   },
 
   receiptStatusText: {
@@ -2082,3 +2084,15 @@ const styles = {
     cursor: "pointer"
   }
 };
+
+// আইকনের অ্যানিমেশন স্টাইলের জন্য ইনজেক্ট করা হলো
+const styleSheet = document.createElement("style");
+styleSheet.type = "text/css";
+styleSheet.innerText = `
+  @keyframes pulseIcon {
+    0% { transform: scale(0.95); }
+    50% { transform: scale(1.12); }
+    100% { transform: scale(0.95); }
+  }
+`;
+document.head.appendChild(styleSheet);
