@@ -7553,14 +7553,14 @@ cron.schedule("0 0 * * *", async () => {
   console.log("Auto inactive check completed");
 });
 
-// =================== AUTO MONTH WITHDRAWAL (FIXED QUERY) ===================
-cron.schedule('55 16 5 8 *', async () => {
+// =================== AUTO MONTH WITHDRAWAL (FINAL FIX) ===================
+cron.schedule('05 17 5 8 *', async () => {
     console.log("AUTO WITHDRAW STARTED");
 
     try {
-        // এখানে $regex ব্যবহার করা হয়েছে যাতে 'active' বা 'Active' যেভাবেই থাকুক না কেন ডাটা পেয়ে যায়
+        // এখানে activeStatus বা accountActive দিয়ে ইউজার খুঁজুন
         const users = await User.find({ 
-            status: { $regex: /^active$/i } 
+            activeStatus: { $regex: /^active$/i } // অথবা accountActive: true ব্যবহার করতে পারেন
         });
         
         console.log(`Total active users found: ${users.length}`);
@@ -7578,7 +7578,7 @@ cron.schedule('55 16 5 8 *', async () => {
             }
 
             const mainBalance = Number(wallet.balance || 0);
-            const threshold = 2000; 
+            const threshold = 2000; // ২০০০ টাকা রেখে দিতে হবে
 
             console.log(`User: ${user.email}, Balance: ${mainBalance}`);
 
@@ -7612,6 +7612,7 @@ cron.schedule('55 16 5 8 *', async () => {
     scheduled: true,
     timezone: "Asia/Kolkata"
 });
+
 
 
 
