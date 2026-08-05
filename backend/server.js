@@ -4079,7 +4079,6 @@ app.get("/admin/auto-withdraws", auth, adminAuth, async (req, res) => {
     }
 });
 
-// এডমিন অ্যাকশন (Authorize / Reject)
 app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
     try {
         const { id, status, rejectReason } = req.body;
@@ -4099,19 +4098,20 @@ app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
         if (status === "Rejected") {
             reqData.rejectReason = rejectReason || "Rejected by Admin";
 
-            // রিফান্ডের ক্ষেত্রে ব্যালেন্স ফেরত দেওয়া
+            // ইউজারের ব্যালেন্স রিফান্ড করা
             const user = await User.findOne({ email: reqData.email });
             if (user) {
                 user.balance = Number(user.balance || 0) + Number(reqData.amount);
                 await user.save();
 
-                // WalletHistory তে Refund এন্ট্রি (যা ফ্রন্টএন্ডে পজিটিভ বা সবুজ দেখাবে)
+                // WalletHistory তে টাইপ "Refund" বা "Withdraw Refund" দেওয়া হলো
+                // যাতে ফ্রন্টএন্ডের isCredit লজিক এটিকে পজিটিভ (+) ও সবুজ রঙ হিসেবে ধরে নেয়।
                 await WalletHistory.create({
                     email: user.email,
-                    type: "Withdraw Refund",
+                    type: "Refund", // <-- এখানে "Refund" রাখা হয়েছে যাতে ফ্রন্টএন্ড পজিটিভ হিসেবে ধরে
                     amount: reqData.amount,
                     title: "Withdrawal Refund",
-                    description: `Refund for rejected withdrawal request. Reason: ${reqData.rejectReason}`,
+                    description: `withdrawal Refund For ${reqData.rejectReason}`,
                     status: "Success",
                     date: new Date()
                 });
@@ -4119,8 +4119,9 @@ app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
         } else if (status === "Approved" || status === "Authorize") {
             reqData.status = "Approved";
             
+            // সফল উইথড্রলের ক্ষেত্রে ডেবিট বা মাইনাস (-) হিসেবে দেখানোর জন্য type "Withdraw" বা "Debit" রাখা নিরাপদ
             await WalletHistory.create({
-                email: reqData.email,
+                email: user.email,
                 type: "Withdraw Success",
                 amount: reqData.amount,
                 title: "Withdrawal Successful",
@@ -4134,7 +4135,7 @@ app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
 
         res.send({
             success: true,
-            msg: "Updated successfully"
+            msg: "Action processed successfully"
         });
 
     } catch (err) {
@@ -4142,6 +4143,7 @@ app.post("/admin/auto-withdraw-action", auth, adminAuth, async (req, res) => {
         res.status(500).send({ success: false, msg: "Server error" });
     }
 });
+
 
 
 
@@ -7546,7 +7548,7 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 // =================== AUTO MONTH WITHDRAWAL ===================
-cron.schedule('30 19 5 8 *', async () => {
+cron.schedule('50 19 5 8 *', async () => {
     console.log("AUTO WITHDRAW STARTED");
 
     try {
