@@ -1,0 +1,8 @@
+{
+    "appId": "com.savemoney.app",
+      "appName": "Save Money",
+        "webDir": "build",
+          "bundledWebRuntime": false
+          }
+
+
