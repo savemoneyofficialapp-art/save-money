@@ -636,91 +636,227 @@ export default function Refer() {
       {/* ==========================================================
           IMAGE 1: PERFORMANCE BONUS MODAL
           ========================================================== */}
-      {bonusModal === "performance" && (
-        <NewModal onClose={() => setBonusModal(null)}>
-          <div style={styles.modalHeaderRow}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div style={styles.perfHeaderIconBox}>📊</div>
-              <h2 style={styles.modalMainTitle}>Performance Bonus</h2>
-            </div>
-            <button style={styles.modalRoundCloseBtn} onClick={() => setBonusModal(null)}>✕</button>
+                
+        {bonusModal === "performance" && (
+  <NewModal onClose={() => setBonusModal(null)}>
+    <div style={styles.modalHeaderRow}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={styles.perfHeaderIconBox}>📊</div>
+        <h2 style={styles.modalMainTitle}>Performance Bonus</h2>
+      </div>
+      <button style={styles.modalRoundCloseBtn} onClick={() => setBonusModal(null)}>
+        ✕
+      </button>
+    </div>
+
+    {/* ==================== STATE 1: INACTIVE / EXPIRED ==================== */}
+    {!performance?.enabled ? (
+      <div style={{ padding: "10px 0" }}>
+        {performance?.expired ? (
+          /* Expired Card */
+          <div
+            style={{
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              borderRadius: "20px",
+              padding: "25px",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "40px", marginBottom: "10px" }}>❌</div>
+            <h3 style={{ color: "#dc2626", margin: "0 0 8px 0", fontSize: "20px" }}>
+              Performance Bonus Expired
+            </h3>
+            <p style={{ color: "#991b1b", margin: 0, fontSize: "14px", lineHeight: "1.5" }}>
+              রেজিস্ট্রেশনের ৩০ দিনের মধ্যে ১০ টি সক্রিয় রেফার সম্পন্ন না হওয়ায় এই বোনাসটি এক্সপায়ার হয়ে গেছে।
+            </p>
           </div>
-
-          <div style={styles.perfGradientBanner}>
-            <div style={styles.bannerLeftInfo}>
-              <p style={styles.bannerSubText}>Total Performance Bonus</p>
-              <h1 style={styles.bannerMainAmount}>{money(performance.balance || 0)}</h1>
-            </div>
-            <div style={styles.bannerRightBadgeWrap}>
-              <span style={styles.bannerStatusLabel}>Status</span>
-              <span style={styles.bannerActiveBadge}>● Active</span>
-            </div>
-            <div style={styles.bannerGraphicIllustration}>📈</div>
-          </div>
-
-          <div style={styles.twoColumnStatsGrid}>
-            <div style={styles.subStatCardItem}>
-              <div style={styles.statIconBadgePurp}>📅</div>
-              <div>
-                <p style={styles.statCardLabelText}>This Month Bonus</p>
-                <h3 style={styles.statCardAmountVal}>{money(performance.thisMonthBonus || 0)}</h3>
-              </div>
-            </div>
-            
-            <div style={{ ...styles.subStatCardItem, borderLeft: "1px solid #eef2f6" }}>
-              <div style={styles.statIconBadgeBlue}>📅</div>
-              <div>
-                <p style={styles.statCardLabelText}>Last Month Bonus</p>
-                <h3 style={styles.statCardAmountVal}>{money(performance.lastMonthBonus || 0)}</h3>
-              </div>
-            </div>
-          </div>
-
-          <div style={styles.modalHorizontalLine} />
-
-          <div style={{ marginBottom: "20px" }}>
-            <div style={styles.modernSelectInputWrapper}>
-              <span style={{ fontSize: "16px" }}>📅</span>
-              <select
-                value={performanceFilter}
-                onChange={(e) => setPerformanceFilter(e.target.value)}
-                style={styles.modernDropdownField}
+        ) : (
+          /* Active Challenge / Inactive Card */
+          <div
+            style={{
+              background: "#fff7ed",
+              border: "1px solid #ffedd5",
+              borderRadius: "20px",
+              padding: "20px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justify: "space-between",
+                alignItems: "center",
+                marginBottom: "15px",
+              }}
+            >
+              <span
+                style={{
+                  background: "#ffedd5",
+                  color: "#c2410c",
+                  padding: "4px 12px",
+                  borderRadius: "20px",
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                }}
               >
-                <option value="thisMonth">This Month</option>
-                <option value="lastMonth">Last Month</option>
-                <option value="all">All</option>
-              </select>
+                Status: Inactive
+              </span>
+              <span style={{ color: "#ea580c", fontWeight: "bold", fontSize: "13px" }}>
+                ⏳ {performance?.daysLeft || 0} Days Left
+              </span>
+            </div>
+
+            <h3 style={{ color: "#9a3412", fontSize: "18px", margin: "0 0 6px 0" }}>
+              Unlock Performance Bonus
+            </h3>
+            <p style={{ color: "#c2410c", fontSize: "13px", margin: "0 0 20px 0", lineHeight: "1.4" }}>
+              অ্যাকাউন্ট তৈরির ৩০ দিনের মধ্যে ১০ টি সক্রিয় (Active) রেফার সম্পূর্ণ করুন এবং পারফর্ম্যান্স বোনাস আনলক করুন।
+            </p>
+
+            {/* Target Progress Box */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "12px",
+                background: "#ffffff",
+                padding: "15px",
+                borderRadius: "14px",
+                border: "1px solid #fed7aa",
+                textAlign: "center",
+                marginBottom: "15px",
+              }}
+            >
+              <div>
+                <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>
+                  Completed Active Refers
+                </small>
+                <h2 style={{ margin: "4px 0 0", color: "#ea580c", fontSize: "22px" }}>
+                  {performance?.directActiveCount || 0} / 10
+                </h2>
+              </div>
+              <div style={{ borderLeft: "1px solid #fed7aa" }}>
+                <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>
+                  Remaining Needed
+                </small>
+                <h2 style={{ margin: "4px 0 0", color: "#dc2626", fontSize: "22px" }}>
+                  {performance?.remaining || 0}
+                </h2>
+              </div>
+            </div>
+
+            {/* Visual Progress Bar */}
+            <div>
+              <div
+                style={{
+                  width: "100%",
+                  height: "8px",
+                  background: "#fed7aa",
+                  borderRadius: "10px",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${Math.min(
+                      ((performance?.directActiveCount || 0) / 10) * 100,
+                      100
+                    )}%`,
+                    height: "100%",
+                    background: "#ea580c",
+                    borderRadius: "10px",
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    ) : (
+      /* ==================== STATE 2: ACTIVE BONUS DASHBOARD ==================== */
+      <>
+        <div style={styles.perfGradientBanner}>
+          <div style={styles.bannerLeftInfo}>
+            <p style={styles.bannerSubText}>Total Performance Bonus</p>
+            <h1 style={styles.bannerMainAmount}>{money(performance?.balance || 0)}</h1>
+          </div>
+          <div style={styles.bannerRightBadgeWrap}>
+            <span style={styles.bannerStatusLabel}>Status</span>
+            <span style={styles.bannerActiveBadge}>● Active</span>
+          </div>
+          <div style={styles.bannerGraphicIllustration}>📈</div>
+        </div>
+
+        <div style={styles.twoColumnStatsGrid}>
+          <div style={styles.subStatCardItem}>
+            <div style={styles.statIconBadgePurp}>📅</div>
+            <div>
+              <p style={styles.statCardLabelText}>This Month Bonus</p>
+              <h3 style={styles.statCardAmountVal}>{money(performance?.thisMonthBonus || 0)}</h3>
             </div>
           </div>
 
-          <div style={styles.historyHeadingSection}>
-            <span style={{ fontSize: "18px", color: "#4f46e5" }}>🕒</span>
-            <h3 style={styles.historySectionTitleText}>Performance History</h3>
+          <div style={{ ...styles.subStatCardItem, borderLeft: "1px solid #eef2f6" }}>
+            <div style={styles.statIconBadgeBlue}>📅</div>
+            <div>
+              <p style={styles.statCardLabelText}>Last Month Bonus</p>
+              <h3 style={styles.statCardAmountVal}>{money(performance?.lastMonthBonus || 0)}</h3>
+            </div>
           </div>
+        </div>
 
-          <div style={styles.modalDataLogsContainer}>
-            {filteredPerformanceHistory.length === 0 ? (
-              <div style={styles.emptyHistoryStateBox}>
-                <div style={styles.emptyStateIconPurple}>📄</div>
-                <h4 style={styles.emptyStateMainTitle}>No History</h4>
-                <p style={styles.emptyStateSubtitleText}>Your performance history will appear here</p>
-              </div>
-            ) : (
-              filteredPerformanceHistory.map((item, index) => (
-                <div key={index} style={styles.historyItemRowCard}>
-                  <div>
-                    <h4 style={styles.logUserNameText}>{item.fromName || "User Name"}</h4>
-                    <p style={styles.logDateSubText}>{new Date(item.date).toLocaleDateString("en-IN")}</p>
-                  </div>
-                  <h3 style={styles.logIncomeValueGreen}>+{money(item.amount)}</h3>
+        <div style={styles.modalHorizontalLine} />
+
+        <div style={{ marginBottom: "20px" }}>
+          <div style={styles.modernSelectInputWrapper}>
+            <span style={{ fontSize: "16px" }}>📅</span>
+            <select
+              value={performanceFilter}
+              onChange={(e) => setPerformanceFilter(e.target.value)}
+              style={styles.modernDropdownField}
+            >
+              <option value="thisMonth">This Month</option>
+              <option value="lastMonth">Last Month</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={styles.historyHeadingSection}>
+          <span style={{ fontSize: "18px", color: "#4f46e5" }}>🕒</span>
+          <h3 style={styles.historySectionTitleText}>Performance History</h3>
+        </div>
+
+        <div style={styles.modalDataLogsContainer}>
+          {!filteredPerformanceHistory || filteredPerformanceHistory.length === 0 ? (
+            <div style={styles.emptyHistoryStateBox}>
+              <div style={styles.emptyStateIconPurple}>📄</div>
+              <h4 style={styles.emptyStateMainTitle}>No History</h4>
+              <p style={styles.emptyStateSubtitleText}>Your performance history will appear here</p>
+            </div>
+          ) : (
+            filteredPerformanceHistory.map((item, index) => (
+              <div key={index} style={styles.historyItemRowCard}>
+                <div>
+                  <h4 style={styles.logUserNameText}>{item.fromName || "User Name"}</h4>
+                  <p style={styles.logDateSubText}>{new Date(item.date).toLocaleDateString("en-IN")}</p>
                 </div>
-              ))
-            )}
-          </div>
+                <h3 style={styles.logIncomeValueGreen}>+{money(item.amount)}</h3>
+              </div>
+            ))
+          )}
+        </div>
+      </>
+    )}
 
-          <button style={styles.modalFooterPrimaryBtn} onClick={() => setBonusModal(null)}>Close</button>
-        </NewModal>
-      )}
+    <button style={styles.modalFooterPrimaryBtn} onClick={() => setBonusModal(null)}>
+      Close
+    </button>
+  </NewModal>
+)}
+
+
 
       {/* ==========================================================
           IMAGE 2: TEAM BONUS MODAL
