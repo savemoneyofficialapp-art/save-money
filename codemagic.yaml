@@ -11,8 +11,6 @@ workflows:
           npm install
       - name: Build Android APK
         script: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleRelease
+          npx react-native build-android --mode=release
     artifacts:
       - android/app/build/outputs/apk/release/*.apk
