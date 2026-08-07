@@ -637,7 +637,7 @@ export default function Refer() {
           IMAGE 1: PERFORMANCE BONUS MODAL
           ========================================================== */}
                 
-        {bonusModal === "performance" && (
+         {bonusModal === "performance" && (
   <NewModal onClose={() => setBonusModal(null)}>
     <div style={styles.modalHeaderRow}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -668,7 +668,7 @@ export default function Refer() {
               Performance Bonus Expired
             </h3>
             <p style={{ color: "#991b1b", margin: 0, fontSize: "14px", lineHeight: "1.5" }}>
-              রেজিস্ট্রেশনের ৩০ দিনের মধ্যে ১০ টি সক্রিয় রেফার সম্পন্ন না হওয়ায় এই বোনাসটি এক্সপায়ার হয়ে গেছে।
+              You failed to complete 10 active referrals within 30 days of registration.
             </p>
           </div>
         ) : (
@@ -710,7 +710,7 @@ export default function Refer() {
               Unlock Performance Bonus
             </h3>
             <p style={{ color: "#c2410c", fontSize: "13px", margin: "0 0 20px 0", lineHeight: "1.4" }}>
-              অ্যাকাউন্ট তৈরির ৩০ দিনের মধ্যে ১০ টি সক্রিয় (Active) রেফার সম্পূর্ণ করুন এবং পারফর্ম্যান্স বোনাস আনলক করুন।
+              Complete 10 active referrals within 30 days of account creation to unlock your performance bonus.
             </p>
 
             {/* Target Progress Box */}
@@ -855,7 +855,7 @@ export default function Refer() {
     </button>
   </NewModal>
 )}
-
+            
 
 
       {/* ==========================================================
