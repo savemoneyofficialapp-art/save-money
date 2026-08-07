@@ -1,6 +1,6 @@
 workflows:
-  react-native-android:
-    name: React Native Android APK
+  capacitor-android:
+    name: Capacitor Android APK
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
@@ -9,8 +9,18 @@ workflows:
       - name: Install dependencies
         script: |
           npm install
+          npm install -g @capacitor/cli vite
+      - name: Build Web App
+        script: |
+          npm run build
+      - name: Add Android platform and Sync
+        script: |
+          npx cap add android || true
+          npx cap sync android
       - name: Build Android APK
         script: |
-          npx react-native build-android --mode=release
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
     artifacts:
       - android/app/build/outputs/apk/release/*.apk
