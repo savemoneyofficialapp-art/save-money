@@ -118,14 +118,14 @@ export default function SaveMoney() {
     }
 
     // ডেমো কুপন লজিক: 'SAVE300' কোড দিলে ৩০০ টাকা ছাড় পাবে
-    if (code === "SAVE300") {
+    if (code === "SAVEE300") {
       const sipAmt = Number(amount || 0);
       if (sipAmt <= 300) {
         showStatusMsg("error", "SIP amount must be greater than discount amount");
         return;
       }
       setDiscountAmount(300);
-      setAppliedCouponName("SAVE300");
+      setAppliedCouponName("SAVE3000");
       showStatusMsg("success", "Coupon Applied Successfully! ₹300 OFF 🎉");
     } else {
       showStatusMsg("error", "Invalid or expired coupon code");
