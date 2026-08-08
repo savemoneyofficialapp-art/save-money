@@ -15,6 +15,9 @@ export default function Home() {
   const [latestUpdate, setLatestUpdate] = useState("No new announcement");
   const [loading, setLoading] = useState(true);
 
+  // 👇 পপআপ মোডালের স্টেট
+  const [showOfferPopup, setShowOfferPopup] = useState(false);
+
   const [statusOverlay, setStatusOverlay] = useState({
     show: false,
     type: "info",
@@ -36,6 +39,13 @@ export default function Home() {
     loadHome();
     loadNotifications();
     loadLatestUpdate();
+
+    // 👇 লগইন করে আসার পর পপআপ শো করার চেক
+    const flag = localStorage.getItem("showLoginPopup");
+    if (flag === "true") {
+      setShowOfferPopup(true);
+      localStorage.removeItem("showLoginPopup"); // একবার দেখানোর পর রিমুভ করে দেওয়া হচ্ছে
+    }
   }, []);
 
   const loadHome = async () => {
@@ -266,6 +276,38 @@ export default function Home() {
 
   return (
     <div style={styles.page}>
+
+      {/* 👇 PHOTO POPUP MODAL (স্ক্রিনের মিডিল পপআপ) */}
+      {showOfferPopup && (
+        <div style={styles.popupOverlay}>
+          <div style={styles.popupCard}>
+            <button
+              style={styles.popupCloseBtn}
+              onClick={() => setShowOfferPopup(false)}
+            >
+              ✕
+            </button>
+
+            <img
+              src="https://via.placeholder.com/500x300" // 👈 আপনার ছবি/অফারের URL দিন
+              alt="Latest Update / Offer"
+              style={styles.popupImage}
+            />
+
+            <h3 style={styles.popupTitle}>🎉 নতুন অফার ও আপডেট!</h3>
+            <p style={styles.popupSub}>
+              আমাদের অ্যাপে যোগ হয়েছে আকর্ষণীয় বোনাস ফিচার। এখনই দেখে নিন!
+            </p>
+
+            <button
+              style={styles.popupActionBtn}
+              onClick={() => setShowOfferPopup(false)}
+            >
+              ঠিক আছে
+            </button>
+          </div>
+        </div>
+      )}
 
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
@@ -802,6 +844,80 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
+  // 👇 পপআপ মোডালের স্টাইল
+  popupOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(2, 6, 23, 0.75)",
+    backdropFilter: "blur(6px)",
+    zIndex: 100001,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "16px"
+  },
+  popupCard: {
+    background: "#0f172a",
+    borderRadius: "24px",
+    padding: "20px",
+    maxWidth: "420px",
+    width: "100%",
+    position: "relative",
+    boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+    border: "1px solid #1e293b",
+    textAlign: "center"
+  },
+  popupCloseBtn: {
+    position: "absolute",
+    top: "12px",
+    right: "12px",
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    border: "none",
+    background: "#1e293b",
+    color: "#ffffff",
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2
+  },
+  popupImage: {
+    width: "100%",
+    maxHeight: "260px",
+    objectFit: "cover",
+    borderRadius: "16px",
+    marginBottom: "14px"
+  },
+  popupTitle: {
+    fontSize: "18px",
+    fontWeight: "800",
+    color: "#ffffff",
+    margin: "6px 0"
+  },
+  popupSub: {
+    fontSize: "13px",
+    color: "#94a3b8",
+    margin: "0 0 16px"
+  },
+  popupActionBtn: {
+    width: "100%",
+    padding: "12px",
+    border: "none",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #38bdf8, #2563eb)",
+    color: "#ffffff",
+    fontWeight: "800",
+    fontSize: "15px",
+    cursor: "pointer"
+  },
+
   statusOverlayBg: {
     position: "fixed",
     inset: 0,
