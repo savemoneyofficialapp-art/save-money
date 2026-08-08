@@ -39,6 +39,7 @@ export default function Login() {
     if (role === "admin") {
       navigate("/admin", { replace: true });
     } else {
+      localStorage.setItem("showLoginPopup", "true");
       navigate("/home", { replace: true });
     }
   };
