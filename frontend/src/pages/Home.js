@@ -289,7 +289,8 @@ export default function Home() {
             </button>
 
             <img
-              src="https://via.placeholder.com/500x300" // 👈 আপনার ছবি/অফারের URL দিন
+              src="https://drive.google.com/uc?export=view&id=1eOUZ-gQ4NjvHjoxLRQ_aaZUEghVv59E4
+" // 👈 আপনার ছবি/অফারের URL দিন
               alt="Latest Update / Offer"
               style={styles.popupImage}
             />
