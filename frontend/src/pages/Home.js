@@ -294,9 +294,9 @@ export default function Home() {
               style={styles.popupImage}
             />
 
-            <h3 style={styles.popupTitle}>🎉 নতুন অফার ও আপডেট!</h3>
+            <h3 style={styles.popupTitle}>🎉 NEW OFFER & UPDATE!</h3>
             <p style={styles.popupSub}>
-              আমাদের অ্যাপে যোগ হয়েছে আকর্ষণীয় বোনাস ফিচার। এখনই দেখে নিন!
+            
             </p>
 
             <button
