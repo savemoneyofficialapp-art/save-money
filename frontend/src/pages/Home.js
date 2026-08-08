@@ -303,7 +303,7 @@ export default function Home() {
               style={styles.popupActionBtn}
               onClick={() => setShowOfferPopup(false)}
             >
-              🥰
+             O🥰K
             </button>
           </div>
         </div>
