@@ -308,15 +308,10 @@ export default function Home() {
             </button>
 
             <img
-              src="/INDEPENDENCE OFFER.png" // 👈 আপনার ছবি/অফারের URL দিন
+              src="/INDEPENDENCE OFFER.png"
               alt="INDEPENDENCE OFFER"
               style={styles.popupImage}
             />
-
-            <h3 style={styles.popupTitle}></h3>
-            <p style={styles.popupSub}>
-            
-            </p>
 
             {/* 👇 ডাউনলোড বাটন */}
             <button
@@ -324,13 +319,6 @@ export default function Home() {
               onClick={() => handleDownloadImage("/INDEPENDENCE OFFER.png")}
             >
               📥 Download Offer Image
-            </button>
-
-            <button
-              style={styles.popupActionBtn}
-              onClick={() => setShowOfferPopup(false)}
-            >
-             
             </button>
           </div>
         </div>
@@ -437,7 +425,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LATEST UPDATE (MARQUEE SCROLLING EFFECT) - Non-clickable */}
+      {/* LATEST UPDATE (MARQUEE SCROLLING EFFECT) */}
       <section style={styles.latestCard}>
         <div style={styles.latestLeft}>
           <div style={styles.latestIcon}>
@@ -922,17 +910,6 @@ const styles = {
     borderRadius: "16px",
     marginBottom: "14px"
   },
-  popupTitle: {
-    fontSize: "18px",
-    fontWeight: "800",
-    color: "#ffffff",
-    margin: "6px 0"
-  },
-  popupSub: {
-    fontSize: "13px",
-    color: "#94a3b8",
-    margin: "0 0 16px"
-  },
   popupDownloadBtn: {
     width: "100%",
     padding: "12px",
@@ -943,23 +920,11 @@ const styles = {
     fontWeight: "800",
     fontSize: "15px",
     cursor: "pointer",
-    marginBottom: "10px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "8px",
     boxShadow: "0 4px 14px rgba(34, 197, 94, 0.35)"
-  },
-  popupActionBtn: {
-    width: "100%",
-    padding: "12px",
-    border: "none",
-    borderRadius: "14px",
-    background: "linear-gradient(135deg, #38bdf8, #2563eb)",
-    color: "#ffffff",
-    fontWeight: "800",
-    fontSize: "15px",
-    cursor: "pointer"
   },
 
   statusOverlayBg: {
