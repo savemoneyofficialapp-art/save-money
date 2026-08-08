@@ -31,6 +31,25 @@ export default function Home() {
     }, 2500);
   };
 
+  // 👇 পপআপ ফটো ডাউনলোডের হ্যান্ডলার
+  const handleDownloadImage = async (imageUrl) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "INDEPENDENCE_OFFER.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.log("Image download error:", error);
+      window.open(imageUrl, "_blank");
+    }
+  };
+
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
@@ -289,8 +308,7 @@ export default function Home() {
             </button>
 
             <img
-              src="/INDEPENDENCE OFFER.png
-" // 👈 আপনার ছবি/অফারের URL দিন
+              src="/INDEPENDENCE OFFER.png" // 👈 আপনার ছবি/অফারের URL দিন
               alt="INDEPENDENCE OFFER"
               style={styles.popupImage}
             />
@@ -299,6 +317,14 @@ export default function Home() {
             <p style={styles.popupSub}>
             
             </p>
+
+            {/* 👇 ডাউনলোড বাটন */}
+            <button
+              style={styles.popupDownloadBtn}
+              onClick={() => handleDownloadImage("/INDEPENDENCE OFFER.png")}
+            >
+              📥 Download Offer Image
+            </button>
 
             <button
               style={styles.popupActionBtn}
@@ -906,6 +932,23 @@ const styles = {
     fontSize: "13px",
     color: "#94a3b8",
     margin: "0 0 16px"
+  },
+  popupDownloadBtn: {
+    width: "100%",
+    padding: "12px",
+    border: "none",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #22c55e, #16a34a)",
+    color: "#ffffff",
+    fontWeight: "800",
+    fontSize: "15px",
+    cursor: "pointer",
+    marginBottom: "10px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    boxShadow: "0 4px 14px rgba(34, 197, 94, 0.35)"
   },
   popupActionBtn: {
     width: "100%",
