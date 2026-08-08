@@ -289,13 +289,13 @@ export default function Home() {
             </button>
 
             <img
-              src="https://drive.google.com/uc?export=view&id=1eOUZ-gQ4NjvHjoxLRQ_aaZUEghVv59E4
+              src="https://i.postimg.cc/NMS36bBF/file-0000000084c08207bee1e936c8846f31.png
 " // 👈 আপনার ছবি/অফারের URL দিন
               alt="Latest Update / Offer"
               style={styles.popupImage}
             />
 
-            <h3 style={styles.popupTitle}>🎉 NEW OFFER & UPDATE!</h3>
+            <h3 style={styles.popupTitle}></h3>
             <p style={styles.popupSub}>
             
             </p>
@@ -304,7 +304,7 @@ export default function Home() {
               style={styles.popupActionBtn}
               onClick={() => setShowOfferPopup(false)}
             >
-             O🥰K
+             
             </button>
           </div>
         </div>
