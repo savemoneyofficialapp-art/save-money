@@ -289,9 +289,9 @@ export default function Home() {
             </button>
 
             <img
-              src="https://i.postimg.cc/NMS36bBF/file-0000000084c08207bee1e936c8846f31.png
+              src="/INDEPENDENCE OFFER.png
 " // 👈 আপনার ছবি/অফারের URL দিন
-              alt="Latest Update / Offer"
+              alt="INDEPENDENCE OFFER"
               style={styles.popupImage}
             />
 
