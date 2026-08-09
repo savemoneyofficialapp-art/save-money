@@ -620,7 +620,7 @@ export default function AdminDashboard() {
             <h3 style={{ margin: 0, fontSize: "22px", color: "#ffffff", fontWeight: "bold" }}>{u.name}</h3>
             <p style={{ margin: "5px 0", color: "#cbd5e1", fontSize: "16px", fontWeight: "500" }}>{u.email} | Contact: {u.mobile}</p>
             <div style={{ margin: "14px 0", fontSize: "17px", background: "#020617", padding: "16px", borderRadius: "12px", border: "1px solid #334155" }}>
-              <p style={{ margin: "6px 0", color: "#ffffff" }}>💳 <b>Aadhaar Hash:</b> <span style={{ color: "#fbbf24", fontWeight: "bold" }}>[Protected Identifier]</span></p>
+              <p style={{ margin: "6px 0", color: "#ffffff" }}>💳 <b>Aadhaar Number:</b> <span style={{ color: "#fbbf24", fontWeight: "bold", fontFamily: "monospace", fontSize: "18px" }}>{u.aadhaarNumber || u.aadhaarCard || u.aadhaar || "Not Submitted"}</span></p>
               <p style={{ margin: "6px 0", color: "#ffffff" }}>📄 <b>PAN Code:</b> <span style={{ color: "#38bdf8", fontWeight: "bold", fontFamily: "monospace", fontSize: "18px" }}>{u.panNumber || u.pan || "Not Submitted"}</span></p>
             </div>
 
