@@ -849,13 +849,15 @@ export default function Wallet() {
             ? wallet.name
             : (selectedTxn.receiverName || selectedTxn.toName || selectedTxn.toUser || selectedTxn.receiver || "Wallet User");
 
-          const senderName = selectedTxn.isCredit
-            ? (selectedTxn.senderName || selectedTxn.fromName || selectedTxn.fromUser || "Wallet User")
-            : wallet.name;
+          // আগের কোড পরিবর্তন করে এটি দিন:
+const senderName = selectedTxn.isCredit
+  ? (selectedTxn.senderName || selectedTxn.fromName || selectedTxn.fromUser || "Wallet User")
+  : wallet.name;
 
-          const senderWalletId = selectedTxn.isCredit
-            ? (selectedTxn.senderWalletId || selectedTxn.fromWalletId || selectedTxn.senderId || "N/A")
-            : wallet.walletId;
+const senderWalletId = selectedTxn.isCredit
+  ? (selectedTxn.senderWalletId || selectedTxn.fromWalletId || selectedTxn.senderId || extractedWalletId || "N/A")
+  : wallet.walletId;
+
 
           const typeTagText = selectedTxn.isCredit 
             ? `RECEIVED FROM ${senderWalletId !== "N/A" ? senderWalletId : senderName}`
