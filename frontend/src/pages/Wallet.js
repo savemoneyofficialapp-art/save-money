@@ -840,23 +840,24 @@ export default function Wallet() {
           const extractedWalletMatch = fullText.match(/WAL\d+/i);
           const extractedWalletId = extractedWalletMatch ? extractedWalletMatch[0].toUpperCase() : null;
 
-          let foundReceiverWalletId = selectedTxn.isCredit
-            ? wallet.walletId
-            : (selectedTxn.receiverWalletId || selectedTxn.toWalletId || selectedTxn.receiverId || selectedTxn.toUserWalletId || selectedTxn.toWallet || selectedTxn.to || extractedWalletId || "N/A");
+          // রিসিভারের নাম ও আইডি বের করার জন্য
+let foundReceiverWalletId = selectedTxn.isCredit
+  ? wallet.walletId
+  : (selectedTxn.receiverWalletId || selectedTxn.toWalletId || extractedWalletId || "N/A");
 
-          // এখানে receiverInfo?.name সরিয়ে দেওয়া হয়েছে যাতে হিস্টরি ক্লিক করলে ভুল নাম না দেখায়
-          let foundReceiverName = selectedTxn.isCredit
-            ? wallet.name
-            : (selectedTxn.receiverName || selectedTxn.toName || selectedTxn.toUser || selectedTxn.receiver || "Wallet User");
+let foundReceiverName = selectedTxn.isCredit
+  ? wallet.name
+  : (selectedTxn.receiverName || selectedTxn.toName || selectedTxn.receiver || "Wallet User");
 
-          // আগের কোড পরিবর্তন করে এটি দিন:
+// সেন্ডারের নাম ও আইডি বের করার জন্য
 const senderName = selectedTxn.isCredit
-  ? (selectedTxn.senderName || selectedTxn.fromName || selectedTxn.fromUser || "Wallet User")
+  ? (selectedTxn.senderName || selectedTxn.fromName || selectedTxn.sender || "Wallet User")
   : wallet.name;
 
 const senderWalletId = selectedTxn.isCredit
-  ? (selectedTxn.senderWalletId || selectedTxn.fromWalletId || selectedTxn.senderId || extractedWalletId || "N/A")
+  ? (selectedTxn.senderWalletId || selectedTxn.fromWalletId || extractedWalletId || "N/A")
   : wallet.walletId;
+
 
 
           const typeTagText = selectedTxn.isCredit 
