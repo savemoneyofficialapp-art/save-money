@@ -341,12 +341,26 @@ export default function Wallet() {
         body: JSON.stringify({
           senderEmail: email,
           receiverWalletId: receiverWalletId.trim(),
+          receiverName: receiverInfo?.name || "", // রিসিভার নেম পাঠানো নিশ্চিত করা হলো
           amount: Number(transferAmount)
         })
       });
       const data = await res.json();
       if (data.success) {
         triggerStatusOverlay("success", data.msg || "Transfer Completed Successfully! 🎉");
+        
+        // অটো রিসিপ্ট মডাল ওপেন (রিসিভার নেম সহ)
+        setSelectedTxn({
+          _id: data.txnId || "TXN" + Date.now(),
+          amount: Number(transferAmount),
+          createdAt: new Date().toISOString(),
+          desc: `sent to ${receiverWalletId.trim()}`,
+          note: `sent to ${receiverWalletId.trim()}`,
+          receiverName: receiverInfo?.name || "Wallet User",
+          receiverWalletId: receiverWalletId.trim(),
+          isCredit: false
+        });
+
         setReceiverWalletId("");
         setTransferAmount("");
         setReceiverInfo(null);
@@ -823,26 +837,22 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (FULL UPDATED LOGIC FOR PAST & NEW HISTORIES) --- */}
+        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (UPDATED NAME RESOLVER) --- */}
         {selectedTxn && (() => {
-          // ১. সব ধরনের টেক্সট ফিল্ড একত্র করা
           const fullText = `${selectedTxn.desc || ''} ${selectedTxn.note || ''} ${selectedTxn.message || ''} ${selectedTxn.type || ''}`.toUpperCase();
 
-          // ২. টেক্সট বা নোটিফিকেশন থেকে WAL.... ওয়ালেট আইডি এক্সট্র্যাক্ট করা
           const extractedWalletMatch = fullText.match(/WAL\d+/i);
           const extractedWalletId = extractedWalletMatch ? extractedWalletMatch[0].toUpperCase() : null;
 
-          // ৩. ব্যাকএন্ডের সম্ভাব্য সব রিসিভার ওয়ালেট আইডি ফিল্ড চেক
           let foundReceiverWalletId = selectedTxn.isCredit
             ? wallet.walletId
             : (selectedTxn.receiverWalletId || selectedTxn.toWalletId || selectedTxn.receiverId || selectedTxn.toUserWalletId || selectedTxn.toWallet || selectedTxn.to || extractedWalletId || "N/A");
 
-          // ৪. ব্যাকএন্ডের সম্ভাব্য সব রিসিভার নেম ফিল্ড চেক
+          // রিসিভার নাম চেক (প্রথমে ব্যাকএন্ড, তারপর লোকাল receiverInfo, না থাকলে Wallet User)
           let foundReceiverName = selectedTxn.isCredit
             ? wallet.name
             : (selectedTxn.receiverName || selectedTxn.toName || selectedTxn.toUser || selectedTxn.receiver || receiverInfo?.name || "Wallet User");
 
-          // ৫. সেন্ডার ডিটেইলস নির্ধারণ
           const senderName = selectedTxn.isCredit
             ? (selectedTxn.senderName || selectedTxn.fromName || selectedTxn.fromUser || "Wallet User")
             : wallet.name;
@@ -851,7 +861,6 @@ export default function Wallet() {
             ? (selectedTxn.senderWalletId || selectedTxn.fromWalletId || selectedTxn.senderId || "N/A")
             : wallet.walletId;
 
-          // ৬. রিসিপ্টের সাব-টাইটেল ট্যাগ (যেমন: SENT TO WAL849807)
           const typeTagText = selectedTxn.isCredit 
             ? `RECEIVED FROM ${senderWalletId !== "N/A" ? senderWalletId : senderName}`
             : `SENT TO ${foundReceiverWalletId !== "N/A" ? foundReceiverWalletId : foundReceiverName}`;
@@ -894,7 +903,9 @@ export default function Wallet() {
                     <div style={styles.receiptSectionHeader}>RECEIVER DETAILS</div>
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Receiver Name</span>
-                      <span style={styles.receiptValueText}>{foundReceiverName}</span>
+                      <span style={{...styles.receiptValueText, color: foundReceiverName !== "Wallet User" ? "#1e293b" : "#64748b"}}>
+                        {foundReceiverName}
+                      </span>
                     </div>
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Receiver Wallet ID</span>
@@ -2146,7 +2157,6 @@ const styles = {
   }
 };
 
-// অ্যানিমেশন ইনজেকশন
 if (typeof document !== "undefined") {
   const styleSheet = document.createElement("style");
   styleSheet.type = "text/css";
