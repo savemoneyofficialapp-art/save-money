@@ -2955,7 +2955,7 @@ app.post("/wallet-transfer", async (req, res) => {
       amount: transferAmount,
       title: "Wallet Transfer Received",
       description: ` received from ${sender.walletId}`,
-      senderName: sender.name,
+      senderName: sender.name || "Wallet User", 
       senderWalletId: sender.walletId,  
       status: "Success",
       date: new Date()
