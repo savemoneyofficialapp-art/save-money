@@ -2920,13 +2920,13 @@ app.post('/wallet-transfer', async (req, res) => {
     });
     await receiver.save();
 
-    // ৩. মূল WalletHistory মডেলেও রেকর্ড তৈরি করুন (যা দিয়ে ফ্রন্টএন্ডের টেবিল লোড হয়)
+        // মূল WalletHistory মডেলে সঠিক তথ্যসহ রেকর্ড তৈরি করুন
     await WalletHistory.create({
       email: sender.email,
       type: "Transfer Sent",
       amount: Number(amount),
       title: "Transfer Sent",
-      description: `sent to ${receiver.walletId}`,
+      description: `sent to ${receiver.walletId} (${receiver.name})`,
       status: "Success",
       date: timestamp
     });
@@ -2936,10 +2936,11 @@ app.post('/wallet-transfer', async (req, res) => {
       type: "Transfer Received",
       amount: Number(amount),
       title: "Transfer Received",
-      description: `received from ${sender.walletId}`,
+      description: `received from ${sender.walletId} (${sender.name})`,
       status: "Success",
       date: timestamp
     });
+
 
     return res.json({ success: true, msg: "Transfer Completed Successfully! 🎉", txnId });
   } catch (err) {
