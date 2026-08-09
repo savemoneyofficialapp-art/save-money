@@ -33,7 +33,7 @@ export default function Wallet() {
   const [p2pModalOpen, setP2pModalOpen] = useState(false);
   const [p2pUserList, setP2pUserList] = useState([]);
   
-  // একটিমাত্র কম্বাইন্ড রিভিউ মডাল স্টেট (ওপরে লেখার অপশন ও নিচে আগের রিভিউ)
+  // কম্বাইন্ড রিভিউ মডাল স্টেট
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedP2pUser, setSelectedP2pUser] = useState(null);
   const [reviewText, setReviewText] = useState("");
@@ -641,7 +641,7 @@ export default function Wallet() {
 
                 <div>
                   <div style={styles.rowTitle}>{desc}</div>
-                  <div style={styles.rowSub}>{item.note || "Tap to details"}</div>
+                  <div style={styles.rowSub}>{item.note || "Tap for details"}</div>
                 </div>
 
                 <div>
@@ -823,24 +823,38 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (UPDATED WITH SENDER & RECEIVER DETAILS) --- */}
+        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (FULL UPDATED LOGIC FOR PAST & NEW HISTORIES) --- */}
         {selectedTxn && (() => {
-          // Sender & Receiver ডায়নামিক তথ্য ক্যালকুলেশন
-          const senderName = selectedTxn.isCredit 
+          // ১. সব ধরনের টেক্সট ফিল্ড একত্র করা
+          const fullText = `${selectedTxn.desc || ''} ${selectedTxn.note || ''} ${selectedTxn.message || ''} ${selectedTxn.type || ''}`.toUpperCase();
+
+          // ২. টেক্সট বা নোটিফিকেশন থেকে WAL.... ওয়ালেট আইডি এক্সট্র্যাক্ট করা
+          const extractedWalletMatch = fullText.match(/WAL\d+/i);
+          const extractedWalletId = extractedWalletMatch ? extractedWalletMatch[0].toUpperCase() : null;
+
+          // ৩. ব্যাকএন্ডের সম্ভাব্য সব রিসিভার ওয়ালেট আইডি ফিল্ড চেক
+          let foundReceiverWalletId = selectedTxn.isCredit
+            ? wallet.walletId
+            : (selectedTxn.receiverWalletId || selectedTxn.toWalletId || selectedTxn.receiverId || selectedTxn.toUserWalletId || selectedTxn.toWallet || selectedTxn.to || extractedWalletId || "N/A");
+
+          // ৪. ব্যাকএন্ডের সম্ভাব্য সব রিসিভার নেম ফিল্ড চেক
+          let foundReceiverName = selectedTxn.isCredit
+            ? wallet.name
+            : (selectedTxn.receiverName || selectedTxn.toName || selectedTxn.toUser || selectedTxn.receiver || receiverInfo?.name || "Wallet User");
+
+          // ৫. সেন্ডার ডিটেইলস নির্ধারণ
+          const senderName = selectedTxn.isCredit
             ? (selectedTxn.senderName || selectedTxn.fromName || selectedTxn.fromUser || "Wallet User")
             : wallet.name;
-          
+
           const senderWalletId = selectedTxn.isCredit
             ? (selectedTxn.senderWalletId || selectedTxn.fromWalletId || selectedTxn.senderId || "N/A")
             : wallet.walletId;
 
-          const receiverName = selectedTxn.isCredit
-            ? wallet.name
-            : (selectedTxn.receiverName || selectedTxn.toName || selectedTxn.toUser || receiverInfo?.name || "Wallet User");
-
-          const receiverWalletIdVal = selectedTxn.isCredit
-            ? wallet.walletId
-            : (selectedTxn.receiverWalletId || selectedTxn.toWalletId || selectedTxn.receiverId || receiverWalletId || "N/A");
+          // ৬. রিসিপ্টের সাব-টাইটেল ট্যাগ (যেমন: SENT TO WAL849807)
+          const typeTagText = selectedTxn.isCredit 
+            ? `RECEIVED FROM ${senderWalletId !== "N/A" ? senderWalletId : senderName}`
+            : `SENT TO ${foundReceiverWalletId !== "N/A" ? foundReceiverWalletId : foundReceiverName}`;
 
           return (
             <div style={styles.modalOverlay}>
@@ -854,7 +868,7 @@ export default function Wallet() {
                     <h1 style={{...styles.receiptAmountDisplay, color: selectedTxn.isCredit ? "#0ca678" : "#fa5252"}}>
                       ₹{Number(selectedTxn.amount).toLocaleString("en-IN")}.00
                     </h1>
-                    <p style={styles.receiptTypeTag}>{selectedTxn.desc.toUpperCase()}</p>
+                    <p style={styles.receiptTypeTag}>{typeTagText}</p>
                   </div>
                   
                   <div style={styles.receiptDivider}>
@@ -880,11 +894,13 @@ export default function Wallet() {
                     <div style={styles.receiptSectionHeader}>RECEIVER DETAILS</div>
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Receiver Name</span>
-                      <span style={styles.receiptValueText}>{receiverName}</span>
+                      <span style={styles.receiptValueText}>{foundReceiverName}</span>
                     </div>
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Receiver Wallet ID</span>
-                      <span style={styles.receiptValueText}>{receiverWalletIdVal}</span>
+                      <span style={{...styles.receiptValueText, color: foundReceiverWalletId !== "N/A" ? "#1e293b" : "#94a3b8"}}>
+                        {foundReceiverWalletId}
+                      </span>
                     </div>
 
                     <div style={{ margin: "4px 0", borderTop: "1px dashed #f1f5f9" }}></div>
@@ -892,7 +908,7 @@ export default function Wallet() {
                     {/* TRANSACTION DETAILS */}
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Transaction ID</span>
-                      <span style={{...styles.receiptValueText, color: "#7c3aed"}}>{selectedTxn._id || selectedTxn.txnId || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
+                      <span style={{...styles.receiptValueText, color: "#7c3aed"}}>{selectedTxn._id || selectedTxn.txnId || selectedTxn.id || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
                     </div>
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Date & Time</span>
@@ -904,7 +920,7 @@ export default function Wallet() {
                     </div>
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Remarks</span>
-                      <span style={styles.receiptValueText}>{selectedTxn.note || "Wallet Transaction"}</span>
+                      <span style={styles.receiptValueText}>{selectedTxn.note || selectedTxn.desc || "Wallet Transaction"}</span>
                     </div>
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Status</span>
@@ -2130,14 +2146,16 @@ const styles = {
   }
 };
 
-// আইকনের অ্যানিমেশন স্টাইলের জন্য ইনজেক্ট করা হলো
-const styleSheet = document.createElement("style");
-styleSheet.type = "text/css";
-styleSheet.innerText = `
-  @keyframes pulseIcon {
-    0% { transform: scale(0.95); }
-    50% { transform: scale(1.12); }
-    100% { transform: scale(0.95); }
-  }
-`;
-document.head.appendChild(styleSheet);
+// অ্যানিমেশন ইনজেকশন
+if (typeof document !== "undefined") {
+  const styleSheet = document.createElement("style");
+  styleSheet.type = "text/css";
+  styleSheet.innerText = `
+    @keyframes pulseIcon {
+      0% { transform: scale(0.95); }
+      50% { transform: scale(1.12); }
+      100% { transform: scale(0.95); }
+    }
+  `;
+  document.head.appendChild(styleSheet);
+}
