@@ -2863,7 +2863,8 @@ app.post("/user-dashboard-chart", auth, async (req, res) => {
 
 app.post("/wallet-transfer", async (req, res) => {
   try {
-    const { senderEmail, receiverWalletId, amount } = req.body;
+    const { senderEmail, receiverWalletId, receiverName, amount } = req.body;
+
     const transferAmount = Number(amount);
 
     if (!senderEmail || !receiverWalletId || transferAmount <= 0) {
@@ -2938,30 +2939,32 @@ app.post("/wallet-transfer", async (req, res) => {
     await receiver.save();
 
     // ওয়ালেট হিস্টরি তৈরি
-    await WalletHistory.create({
+// ১. যে টাকা পাঠাচ্ছে তার জন্য (Debit History)
+await WalletHistory.create({
   email: sender.email,
   type: 'Debit',
   amount: transferAmount,
   title: 'Wallet Transfer Sent',
   description: `sent to ${receiverWalletId}`,
-  receiverName: receiverName || "Wallet User", // <--- রিসিভারের নাম সেভ করুন
-  receiverWalletId: receiverWalletId,       // <--- রিসিভারের ওয়ালেট আইডি সেভ করুন
+  receiverName: receiverName || receiver.name || "Wallet User", // এখানে নাম সুরক্ষিত করা হলো
+  receiverWalletId: receiverWalletId,
   status: 'Success',
   date: new Date()
 });
 
-
-    await WalletHistory.create({
+// ২. যে টাকা পাচ্ছে তার জন্য (Credit History)
+await WalletHistory.create({
   email: receiver.email,
   type: 'Credit',
   amount: transferAmount,
   title: 'Wallet Transfer Received',
   description: `received from ${sender.walletId}`,
-  senderName: sender.name || "Wallet User",     // <--- সেন্ডারের নাম সেভ করুন
-  senderWalletId: sender.walletId,             // <--- সেন্ডারের ওয়ালেট আইডি সেভ করুন
+  senderName: sender.name || "Wallet User",
+  senderWalletId: sender.walletId,
   status: 'Success',
   date: new Date()
 });
+
 
 
     res.json({
