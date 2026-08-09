@@ -198,6 +198,11 @@ balance: {
   default: 0 
 },
 
+  history: {
+    type: Array,
+    default: []
+  },
+
 // এই দুটি ফিল্ড নতুন যোগ করুন 
 todayBalance: {
   type: Number,
