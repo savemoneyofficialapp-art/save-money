@@ -417,10 +417,10 @@ export default function Wallet() {
           try {
             await navigator.share({ files: [file], title: "Transaction Receipt", text: "Save Money Transaction Proof" });
           } catch (e) {
-            downloadFallback(canvas);
+            console.log("Share cancelled or failed", e);
           }
         } else {
-          downloadFallback(canvas);
+          toast.info("Direct file sharing is not supported on this browser.");
         }
       }, "image/png");
     } catch (err) {
@@ -429,12 +429,23 @@ export default function Wallet() {
     }
   };
 
-  const downloadFallback = (canvas) => {
-    const link = document.createElement("a");
-    link.download = `Receipt-${selectedTxn?._id || "transaction"}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-    toast.success("Receipt Image Saved!");
+  const handleDownloadReceipt = async () => {
+    if (!receiptRef.current) return;
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: "#ffffff"
+      });
+      const link = document.createElement("a");
+      link.download = `Receipt-${selectedTxn?._id || "transaction"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast.success("Receipt Image Saved!");
+    } catch (err) {
+      console.error("Download Error:", err);
+      toast.error("Failed to download receipt");
+    }
   };
 
   if (loading) {
@@ -840,7 +851,6 @@ export default function Wallet() {
           const extractedWalletMatch = fullText.match(/WAL\d+/i);
           const extractedWalletId = extractedWalletMatch ? extractedWalletMatch[0].toUpperCase() : null;
 
-          // সেন্ডার এবং রিসিভারের তথ্য নিখুঁতভাবে নির্ধারণ
           const senderName = selectedTxn.senderName || (selectedTxn.isCredit ? ("Wallet User") : wallet.name);
           const senderWalletId = selectedTxn.senderWalletId || (selectedTxn.isCredit ? (extractedWalletId || "N/A") : wallet.walletId);
 
@@ -929,7 +939,10 @@ export default function Wallet() {
 
                 <div style={styles.receiptActionContainer}>
                   <button style={styles.receiptShareBtn} onClick={handleShareReceipt}>
-                    📸 Share / Save Receipt Image
+                    📤 Share Receipt
+                  </button>
+                  <button style={{ ...styles.receiptShareBtn, background: "linear-gradient(135deg,#0ea5e9,#2563eb)" }} onClick={handleDownloadReceipt}>
+                    📥 Download Receipt
                   </button>
                   <button style={styles.receiptCloseBtn} onClick={() => setSelectedTxn(null)}>
                     Close Window
