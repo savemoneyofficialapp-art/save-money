@@ -4,6 +4,26 @@ import { toast } from "react-toastify";
 import html2canvas from "html2canvas";
 import { API } from "../config";
 
+// সংখ্যাকে কথায় প্রকাশ করার জন্য হেল্পার ফাংশন (Number to Words)
+function numberToWords(num) {
+  const a = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+  ];
+  const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  if ((num = num.toString()).length > 9) return "Overflow";
+  let n = ("000000000" + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+  if (!n) return "";
+  let str = "";
+  str += n[1] != 0 ? (a[Number(n[1])] || b[n[1][0]] + " " + a[n[1][1]]) + " Crore " : "";
+  str += n[2] != 0 ? (a[Number(n[2])] || b[n[2][0]] + " " + a[n[2][1]]) + " Lakh " : "";
+  str += n[3] != 0 ? (a[Number(n[3])] || b[n[3][0]] + " " + a[n[3][1]]) + " Thousand " : "";
+  str += n[4] != 0 ? (a[Number(n[4])] || b[n[4][0]] + " " + a[n[4][1]]) + " Hundred " : "";
+  str += n[5] != 0 ? (str != "" ? "and " : "") + (a[Number(n[5])] || b[n[5][0]] + " " + a[n[5][1]]) : "";
+  return str.trim() ? `Rupees ${str.trim()} Only` : "Rupees Zero Only";
+}
+
 export default function Wallet() {
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
@@ -33,7 +53,6 @@ export default function Wallet() {
   const [p2pModalOpen, setP2pModalOpen] = useState(false);
   const [p2pUserList, setP2pUserList] = useState([]);
   
-  // একটিমাত্র কম্বাইন্ড রিভিউ মডাল স্টেট (ওপরে লেখার অপশন ও নিচে আগের রিভিউ)
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedP2pUser, setSelectedP2pUser] = useState(null);
   const [reviewText, setReviewText] = useState("");
@@ -45,7 +64,6 @@ export default function Wallet() {
   const [receiverInfo, setReceiverInfo] = useState(null);
   const [confirmTransferOpen, setConfirmTransferOpen] = useState(false);
   const [depositTxnId, setDepositTxnId] = useState("");
-  const [depositScreenshot, setDepositScreenshot] = useState(null);
 
   const [shareOpen, setShareOpen] = useState(false);
   const [withdrawStatus, setWithdrawStatus] = useState(null);
@@ -91,6 +109,7 @@ export default function Wallet() {
         setWallet({
           walletId: data.walletId || data.user?.walletId || "N/A",
           name: data.name || data.user?.name || "User",
+          email: data.user?.email || email,
           avatar: data.avatar || data.user?.photo || data.user?.photoImage || "",
           photo: data.user?.photo || "",
           photoImage: data.user?.photoImage || "",
@@ -253,7 +272,7 @@ export default function Wallet() {
       return triggerStatusOverlay("warning", "Please enter a valid amount");
     }
     const MY_UPI_ID = "savemoney@razorpay";
-    const MERCHANT_NAME = "SaveMoney. Wallet";
+    const MERCHANT_NAME = "SaveMoney Wallet";
     const txnRef = "TXN" + Date.now();
     const upiUrl = `upi://pay?pa=${MY_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${addAmount}&cu=INR&tr=${txnRef}`;
     window.location.href = upiUrl;
@@ -422,6 +441,15 @@ export default function Wallet() {
     link.href = canvas.toDataURL("image/png");
     link.click();
     toast.success("Receipt Image Saved!");
+  };
+
+  const copyRefNo = async (txnId) => {
+    try {
+      await navigator.clipboard.writeText(txnId);
+      toast.success("Ref No Copied!");
+    } catch {
+      toast.error("Copy failed");
+    }
   };
 
   if (loading) {
@@ -612,7 +640,8 @@ export default function Wallet() {
               rawType.includes("credit") ||
               rawType.includes("add") ||
               rawType.includes("deposit") ||
-              rawType.includes("bonus");
+              rawType.includes("bonus") ||
+              rawType.includes("receive");
 
             const desc =
               item.description ||
@@ -824,70 +853,125 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল --- */}
+        {/* --- ২য় স্ক্রিনশট স্টাইলের আধুনিক ট্রানজ্যাকশন রিসিপ্ট মডাল --- */}
         {selectedTxn && (
           <div style={styles.modalOverlay}>
-            <div style={styles.receiptContainer}>
-              <div ref={receiptRef} style={styles.receiptCard}>
-                <div style={styles.receiptHeader}>
-                  <div style={styles.receiptPulseIconCircle}>
-                    <span style={styles.receiptCheckMark}>✓</span>
-                  </div>
-                  <h3 style={styles.receiptStatusText}>Transaction Successful</h3>
-                  <h1 style={{...styles.receiptAmountDisplay, color: selectedTxn.isCredit ? "#0ca678" : "#fa5252"}}>
-                    ₹{Number(selectedTxn.amount).toLocaleString("en-IN")}.00
-                  </h1>
-                  <p style={styles.receiptTypeTag}>{selectedTxn.desc.toUpperCase()}</p>
-                </div>
+            <div style={styles.newReceiptContainer}>
+              <div ref={receiptRef} style={styles.newReceiptCard}>
                 
-                <div style={styles.receiptDivider}>
-                  <div style={styles.receiptNotchLeft}></div>
-                  <div style={styles.receiptNotchRight}></div>
+                {/* Header Actions */}
+                <div style={styles.newReceiptHeaderNav}>
+                  <button style={styles.navBackBtn} onClick={() => setSelectedTxn(null)}>←</button>
+                  <h3 style={styles.navTitle}>
+                    {selectedTxn.isCredit ? "Money Received" : "Money Sent"}
+                  </h3>
+                  <div style={styles.navRightActions}>
+                    <span style={styles.actionTextBtn} onClick={handleShareReceipt}>Share</span>
+                    <span style={styles.actionTextBtn} onClick={() => toast.info("Help Center: Contact Support")}>Help</span>
+                  </div>
                 </div>
 
-                <div style={styles.receiptBody}>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Wallet ID</span>
-                    <span style={styles.receiptValueText}>{wallet.walletId}</span>
+                <div style={styles.newReceiptInnerBox}>
+                  {/* Amount Block */}
+                  <div style={styles.amountBlock}>
+                    <p style={styles.amountLabel}>Amount</p>
+                    <div style={styles.amountValueRow}>
+                      <span style={styles.bigAmountText}>₹{Number(selectedTxn.amount).toLocaleString("en-IN")}</span>
+                      <span style={styles.greenCheckBadge}>✓</span>
+                    </div>
+                    <p style={styles.amountInWords}>{numberToWords(selectedTxn.amount)}</p>
+                    
+                    <div style={styles.statusPill}>
+                      💵 {selectedTxn.isCredit ? "Money Received" : "Money Sent"}
+                    </div>
                   </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>User Name</span>
-                    <span style={styles.receiptValueText}>{wallet.name}</span>
+
+                  <div style={styles.receiptSectionDivider}></div>
+
+                  {/* Sender (From) Section */}
+                  <div style={styles.userDetailRow}>
+                    <div style={styles.userTextCol}>
+                      <span style={styles.roleLabel}>From</span>
+                      <h4 style={styles.userNameText}>
+                        {selectedTxn.senderName || selectedTxn.fromName || (selectedTxn.isCredit ? "Sender Account" : wallet.name)}
+                        <span style={styles.blueCheck}>✓</span>
+                      </h4>
+                      <p style={styles.userSubText}>
+                        {selectedTxn.senderEmail || selectedTxn.fromEmail || (selectedTxn.isCredit ? (selectedTxn.fromWalletId || "Wallet User") : wallet.email)}
+                      </p>
+                    </div>
+                    <div style={styles.avatarCircle}>
+                      {selectedTxn.senderPhoto || selectedTxn.fromPhoto ? (
+                        <img src={selectedTxn.senderPhoto || selectedTxn.fromPhoto} alt="sender" style={styles.avatarCircleImg} />
+                      ) : (
+                        <span style={styles.avatarInitials}>
+                          {(selectedTxn.senderName || selectedTxn.fromName || (selectedTxn.isCredit ? "S" : wallet.name)).slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Transaction ID</span>
-                    <span style={{...styles.receiptValueText, color: "#7c3aed"}}>{selectedTxn._id || selectedTxn.txnId || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
+
+                  <div style={styles.receiptSectionDivider}></div>
+
+                  {/* Receiver (To) Section */}
+                  <div style={styles.userDetailRow}>
+                    <div style={styles.userTextCol}>
+                      <span style={styles.roleLabel}>To</span>
+                      <h4 style={styles.userNameText}>
+                        {selectedTxn.receiverName || selectedTxn.toName || (!selectedTxn.isCredit ? "Receiver Account" : wallet.name)}
+                      </h4>
+                      <p style={styles.userSubText}>
+                        {selectedTxn.receiverEmail || selectedTxn.toEmail || (!selectedTxn.isCredit ? (selectedTxn.toWalletId || "Wallet User") : wallet.email)}
+                      </p>
+                      <p style={styles.walletSubText}>
+                        Save Money Wallet - {selectedTxn.toWalletId || selectedTxn.receiverWalletId || wallet.walletId}
+                      </p>
+                    </div>
+                    <div style={styles.avatarCircle}>
+                      {selectedTxn.receiverPhoto || selectedTxn.toPhoto || wallet.avatar ? (
+                        <img src={selectedTxn.receiverPhoto || selectedTxn.toPhoto || wallet.avatar} alt="receiver" style={styles.avatarCircleImg} />
+                      ) : (
+                        <span style={styles.avatarInitials}>
+                          {(!selectedTxn.isCredit ? (selectedTxn.receiverName || "R") : wallet.name).slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Date & Time</span>
-                    <span style={styles.receiptValueText}>
-                      {selectedTxn.createdAt || selectedTxn.date
-                        ? new Date(selectedTxn.createdAt || selectedTxn.date).toLocaleString("en-IN")
+
+                  {/* Transaction Footnote Box */}
+                  <div style={styles.transactionMetaBox}>
+                    <p style={styles.metaTimeText}>
+                      Received at {selectedTxn.createdAt || selectedTxn.date
+                        ? new Date(selectedTxn.createdAt || selectedTxn.date).toLocaleString("en-IN", {
+                            hour: "numeric",
+                            minute: "numeric",
+                            hour12: true,
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric"
+                          })
                         : "N/A"}
-                    </span>
+                    </p>
+                    <div style={styles.refRow}>
+                      <span style={styles.refText}>
+                        Ref No: {selectedTxn._id || selectedTxn.txnId || "TXN"+Math.floor(100000000+Math.random()*900000000)}
+                      </span>
+                      <button 
+                        style={styles.copyInlineBtn} 
+                        onClick={() => copyRefNo(selectedTxn._id || selectedTxn.txnId || "TXN123456")}
+                      >
+                        Copy
+                      </button>
+                    </div>
                   </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Remarks</span>
-                    <span style={styles.receiptValueText}>{selectedTxn.note || "Wallet Transaction"}</span>
-                  </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Status</span>
-                    <span style={styles.receiptStatusBadge}>COMPLETED</span>
-                  </div>
+
                 </div>
 
-                <div style={styles.receiptFooter}>
-                  <p style={styles.receiptBrand}>🛡 Powered by SaveMoney Secure</p>
-                </div>
-              </div>
+                {/* Bottom Close Button */}
+                <button style={styles.modalCloseFooterBtn} onClick={() => setSelectedTxn(null)}>
+                  Close
+                </button>
 
-              <div style={styles.receiptActionContainer}>
-                <button style={styles.receiptShareBtn} onClick={handleShareReceipt}>
-                  📸 Share / Save Receipt Image
-                </button>
-                <button style={styles.receiptCloseBtn} onClick={() => setSelectedTxn(null)}>
-                  Close Window
-                </button>
               </div>
             </div>
           </div>
@@ -1045,6 +1129,226 @@ function IncomeCard({ icon, title, amount, color }) {
 }
 
 const styles = {
+  // --- ২য় স্ক্রিনশটের নতুন রিসিপ্ট স্টাইলস ---
+  newReceiptContainer: {
+    width: "100%",
+    maxWidth: "420px",
+    padding: "12px"
+  },
+
+  newReceiptCard: {
+    background: "#ffffff",
+    borderRadius: "28px",
+    padding: "20px",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    boxShadow: "0 25px 60px rgba(0, 0, 0, 0.2)"
+  },
+
+  newReceiptHeaderNav: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "18px"
+  },
+
+  navBackBtn: {
+    border: "none",
+    background: "none",
+    fontSize: "20px",
+    cursor: "pointer",
+    color: "#334155"
+  },
+
+  navTitle: {
+    margin: 0,
+    fontSize: "17px",
+    fontWeight: "700",
+    color: "#0f172a"
+  },
+
+  navRightActions: {
+    display: "flex",
+    gap: "14px"
+  },
+
+  actionTextBtn: {
+    fontSize: "14px",
+    color: "#2563eb",
+    fontWeight: "600",
+    cursor: "pointer"
+  },
+
+  newReceiptInnerBox: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "22px",
+    padding: "20px 18px",
+    background: "#ffffff"
+  },
+
+  amountBlock: {
+    textAlign: "center"
+  },
+
+  amountLabel: {
+    margin: "0 0 6px 0",
+    fontSize: "13px",
+    color: "#64748b"
+  },
+
+  amountValueRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "6px"
+  },
+
+  bigAmountText: {
+    fontSize: "36px",
+    fontWeight: "900",
+    color: "#0f172a"
+  },
+
+  greenCheckBadge: {
+    color: "#16a34a",
+    fontSize: "22px",
+    fontWeight: "bold"
+  },
+
+  amountInWords: {
+    fontSize: "13px",
+    color: "#64748b",
+    margin: "4px 0 12px 0"
+  },
+
+  statusPill: {
+    display: "inline-block",
+    background: "#f0fdf4",
+    color: "#166534",
+    padding: "6px 14px",
+    borderRadius: "20px",
+    fontSize: "12px",
+    fontWeight: "700",
+    border: "1px solid #bbf7d0"
+  },
+
+  receiptSectionDivider: {
+    height: "1px",
+    background: "#f1f5f9",
+    margin: "16px 0"
+  },
+
+  userDetailRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+
+  userTextCol: {
+    flex: 1
+  },
+
+  roleLabel: {
+    fontSize: "12px",
+    color: "#64748b"
+  },
+
+  userNameText: {
+    margin: "2px 0 2px 0",
+    fontSize: "15px",
+    fontWeight: "800",
+    color: "#0f172a",
+    display: "flex",
+    alignItems: "center",
+    gap: "4px"
+  },
+
+  blueCheck: {
+    color: "#2563eb",
+    fontSize: "13px"
+  },
+
+  userSubText: {
+    margin: "0 0 2px 0",
+    fontSize: "13px",
+    color: "#64748b"
+  },
+
+  walletSubText: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#94a3b8"
+  },
+
+  avatarCircle: {
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    background: "#dbeafe",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden"
+  },
+
+  avatarCircleImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
+  },
+
+  avatarInitials: {
+    color: "#1d4ed8",
+    fontWeight: "800",
+    fontSize: "16px"
+  },
+
+  transactionMetaBox: {
+    background: "#f8fafc",
+    borderRadius: "14px",
+    padding: "14px",
+    marginTop: "18px"
+  },
+
+  metaTimeText: {
+    margin: "0 0 8px 0",
+    fontSize: "12px",
+    color: "#64748b"
+  },
+
+  refRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+
+  refText: {
+    fontSize: "12px",
+    color: "#475569",
+    fontWeight: "600"
+  },
+
+  copyInlineBtn: {
+    border: "none",
+    background: "none",
+    color: "#2563eb",
+    fontWeight: "700",
+    fontSize: "12px",
+    cursor: "pointer"
+  },
+
+  modalCloseFooterBtn: {
+    width: "100%",
+    height: "48px",
+    borderRadius: "18px",
+    border: "none",
+    background: "#f1f5f9",
+    color: "#334155",
+    fontWeight: "800",
+    fontSize: "14px",
+    marginTop: "16px",
+    cursor: "pointer"
+  },
+
   p2pMainBtn: {
     minWidth: "120px",
     height: "54px",
@@ -1120,180 +1424,6 @@ const styles = {
     cursor: "pointer",
     transition: "all 0.2s ease",
     borderRadius: "12px"
-  },
-
-  receiptContainer: {
-    width: "100%",
-    maxWidth: "380px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    padding: "10px"
-  },
-
-  receiptCard: {
-    background: "#ffffff",
-    borderRadius: "24px",
-    boxShadow: "0 20px 50px rgba(0,0,0,0.15)",
-    overflow: "hidden",
-    fontFamily: "Arial, sans-serif"
-  },
-
-  receiptHeader: {
-    padding: "30px 20px 20px 20px",
-    textAlign: "center",
-    background: "#ffffff"
-  },
-
-  receiptPulseIconCircle: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
-    background: "#dcfce7",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    margin: "0 auto 12px auto",
-    animation: "pulseIcon 1.5s infinite ease-in-out"
-  },
-
-  receiptCheckMark: {
-    color: "#16a34a",
-    fontSize: "30px",
-    fontWeight: "900"
-  },
-
-  receiptStatusText: {
-    fontSize: "15px",
-    color: "#868e96",
-    margin: "0 0 8px 0",
-    fontWeight: "600"
-  },
-
-  receiptAmountDisplay: {
-    fontSize: "34px",
-    fontWeight: "800",
-    margin: "0 0 6px 0"
-  },
-
-  receiptTypeTag: {
-    display: "inline-block",
-    background: "#f1f3f5",
-    color: "#495057",
-    padding: "4px 12px",
-    borderRadius: "20px",
-    fontSize: "11px",
-    fontWeight: "700",
-    letterSpacing: "0.5px",
-    margin: 0
-  },
-
-  receiptDivider: {
-    position: "relative",
-    borderTop: "2px dashed #dee2e6",
-    margin: "0 12px",
-    height: "0"
-  },
-
-  receiptNotchLeft: {
-    position: "absolute",
-    left: "-20px",
-    top: "-10px",
-    width: "20px",
-    height: "20px",
-    borderRadius: "50%",
-    background: "rgba(0,0,0,0.45)"
-  },
-
-  receiptNotchRight: {
-    position: "absolute",
-    right: "-20px",
-    top: "-10px",
-    width: "20px",
-    height: "20px",
-    borderRadius: "50%",
-    background: "rgba(0,0,0,0.45)"
-  },
-
-  receiptBody: {
-    padding: "24px 24px 16px 24px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    background: "#ffffff"
-  },
-
-  receiptRowItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-
-  receiptLabelText: {
-    fontSize: "14px",
-    color: "#868e96",
-    fontWeight: "500"
-  },
-
-  receiptValueText: {
-    fontSize: "14px",
-    color: "#212529",
-    fontWeight: "700",
-    textAlign: "right"
-  },
-
-  receiptStatusBadge: {
-    background: "#e6fcf5",
-    color: "#0ca678",
-    padding: "4px 10px",
-    borderRadius: "6px",
-    fontSize: "12px",
-    fontWeight: "700"
-  },
-
-  receiptFooter: {
-    background: "#f8fafc",
-    padding: "16px",
-    textAlign: "center",
-    borderTop: "1px dashed #e9ecef"
-  },
-
-  receiptBrand: {
-    fontSize: "12px",
-    color: "#adb5bd",
-    margin: 0,
-    fontWeight: "600"
-  },
-
-  receiptActionContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px"
-  },
-
-  receiptShareBtn: {
-    width: "100%",
-    height: "52px",
-    border: "none",
-    borderRadius: "16px",
-    background: "linear-gradient(135deg,#7c3aed,#9333ea)",
-    color: "#ffffff",
-    fontWeight: "800",
-    fontSize: "15px",
-    boxShadow: "0 8px 20px rgba(124,58,237,0.3)",
-    cursor: "pointer"
-  },
-
-  receiptCloseBtn: {
-    width: "100%",
-    height: "48px",
-    border: "none",
-    borderRadius: "16px",
-    background: "#ffffff",
-    color: "#495057",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer"
   },
 
   statusOverlayBg: {
@@ -2084,15 +2214,3 @@ const styles = {
     cursor: "pointer"
   }
 };
-
-// আইকনের অ্যানিমেশন স্টাইলের জন্য ইনজেক্ট করা হলো
-const styleSheet = document.createElement("style");
-styleSheet.type = "text/css";
-styleSheet.innerText = `
-  @keyframes pulseIcon {
-    0% { transform: scale(0.95); }
-    50% { transform: scale(1.12); }
-    100% { transform: scale(0.95); }
-  }
-`;
-document.head.appendChild(styleSheet);
