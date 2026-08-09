@@ -341,7 +341,7 @@ export default function Wallet() {
         body: JSON.stringify({
           senderEmail: email,
           receiverWalletId: receiverWalletId.trim(),
-          receiverName: receiverInfo?.name || "", // রিসিভার নেম পাঠানো নিশ্চিত করা হলো
+          receiverName: receiverInfo?.name || "", 
           amount: Number(transferAmount)
         })
       });
@@ -349,7 +349,6 @@ export default function Wallet() {
       if (data.success) {
         triggerStatusOverlay("success", data.msg || "Transfer Completed Successfully! 🎉");
         
-        // অটো রিসিপ্ট মডাল ওপেন (রিসিভার নেম সহ)
         setSelectedTxn({
           _id: data.txnId || "TXN" + Date.now(),
           amount: Number(transferAmount),
@@ -710,7 +709,6 @@ export default function Wallet() {
           </div>
         </section>
 
-        {/* --- P2P মডাল উইন্ডো --- */}
         {p2pModalOpen && (
           <div style={styles.modalOverlay}>
             <div style={{ ...styles.modal, maxWidth: "600px", maxHeight: "85vh", overflowY: "auto" }}>
@@ -778,7 +776,6 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- কম্বাইন্ড রিভিউ মডাল --- */}
         {reviewModalOpen && selectedP2pUser && (
           <div style={styles.modalOverlay}>
             <div style={{ ...styles.modal, maxWidth: "480px", maxHeight: "85vh", overflowY: "auto" }}>
@@ -837,7 +834,6 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (UPDATED NAME RESOLVER) --- */}
         {selectedTxn && (() => {
           const fullText = `${selectedTxn.desc || ''} ${selectedTxn.note || ''} ${selectedTxn.message || ''} ${selectedTxn.type || ''}`.toUpperCase();
 
@@ -848,10 +844,10 @@ export default function Wallet() {
             ? wallet.walletId
             : (selectedTxn.receiverWalletId || selectedTxn.toWalletId || selectedTxn.receiverId || selectedTxn.toUserWalletId || selectedTxn.toWallet || selectedTxn.to || extractedWalletId || "N/A");
 
-          // রিসিভার নাম চেক (প্রথমে ব্যাকএন্ড, তারপর লোকাল receiverInfo, না থাকলে Wallet User)
+          // এখানে receiverInfo?.name সরিয়ে দেওয়া হয়েছে যাতে হিস্টরি ক্লিক করলে ভুল নাম না দেখায়
           let foundReceiverName = selectedTxn.isCredit
             ? wallet.name
-            : (selectedTxn.receiverName || selectedTxn.toName || selectedTxn.toUser || selectedTxn.receiver || receiverInfo?.name || "Wallet User");
+            : (selectedTxn.receiverName || selectedTxn.toName || selectedTxn.toUser || selectedTxn.receiver || "Wallet User");
 
           const senderName = selectedTxn.isCredit
             ? (selectedTxn.senderName || selectedTxn.fromName || selectedTxn.fromUser || "Wallet User")
@@ -886,7 +882,6 @@ export default function Wallet() {
                   </div>
 
                   <div style={styles.receiptBody}>
-                    {/* SENDER DETAILS */}
                     <div style={styles.receiptSectionHeader}>SENDER DETAILS</div>
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Sender Name</span>
@@ -899,7 +894,6 @@ export default function Wallet() {
 
                     <div style={{ margin: "4px 0", borderTop: "1px dashed #f1f5f9" }}></div>
 
-                    {/* RECEIVER DETAILS */}
                     <div style={styles.receiptSectionHeader}>RECEIVER DETAILS</div>
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Receiver Name</span>
@@ -916,7 +910,6 @@ export default function Wallet() {
 
                     <div style={{ margin: "4px 0", borderTop: "1px dashed #f1f5f9" }}></div>
 
-                    {/* TRANSACTION DETAILS */}
                     <div style={styles.receiptRowItem}>
                       <span style={styles.receiptLabelText}>Transaction ID</span>
                       <span style={{...styles.receiptValueText, color: "#7c3aed"}}>{selectedTxn._id || selectedTxn.txnId || selectedTxn.id || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
@@ -957,7 +950,6 @@ export default function Wallet() {
           );
         })()}
 
-        {/* Add Cash Modal */}
         {addOpen && (
           <div style={styles.depositOverlay}>
             <div style={styles.depositModal}>
@@ -1003,7 +995,6 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* Withdraw Popup */}
         {withdrawOpen && (
           <div style={styles.modalOverlay}>
             <div style={styles.modal}>
@@ -1033,7 +1024,6 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* Transfer Confirm Modal */}
         {confirmTransferOpen && receiverInfo && (
           <div style={styles.modalOverlay}>
             <div style={styles.modal}>
@@ -1064,7 +1054,6 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* Share Modal */}
         {shareOpen && (
           <div style={styles.modalOverlay}>
             <div style={styles.modal}>
@@ -1120,7 +1109,6 @@ const styles = {
     fontSize: "16px",
     boxShadow: "0 12px 25px rgba(6,182,212,.3)"
   },
-
   iWantP2pBtn: {
     padding: "8px 12px",
     border: "none",
@@ -1131,7 +1119,6 @@ const styles = {
     fontSize: "12px",
     cursor: "pointer"
   },
-
   undoP2pBtn: {
     padding: "8px 12px",
     border: "none",
@@ -1142,7 +1129,6 @@ const styles = {
     fontSize: "12px",
     cursor: "pointer"
   },
-
   p2pUserCard: {
     background: "#fff",
     border: "1px solid #e2e8f0",
@@ -1150,7 +1136,6 @@ const styles = {
     padding: "14px",
     boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
   },
-
   reviewActionBtn: {
     padding: "8px 16px",
     borderRadius: "12px",
@@ -1161,7 +1146,6 @@ const styles = {
     fontSize: "13px",
     cursor: "pointer"
   },
-
   popupBottomCloseBtn: {
     width: "100%",
     height: "46px",
@@ -1174,7 +1158,6 @@ const styles = {
     fontSize: "14px",
     cursor: "pointer"
   },
-
   clickableHistoryRow: {
     display: "grid",
     gridTemplateColumns: "70px 1.6fr 1fr 1fr 1.2fr",
@@ -1185,7 +1168,6 @@ const styles = {
     transition: "all 0.2s ease",
     borderRadius: "12px"
   },
-
   receiptContainer: {
     width: "100%",
     maxWidth: "380px",
@@ -1194,7 +1176,6 @@ const styles = {
     gap: "16px",
     padding: "10px"
   },
-
   receiptCard: {
     background: "#ffffff",
     borderRadius: "24px",
@@ -1202,13 +1183,11 @@ const styles = {
     overflow: "hidden",
     fontFamily: "Arial, sans-serif"
   },
-
   receiptHeader: {
     padding: "30px 20px 20px 20px",
     textAlign: "center",
     background: "#ffffff"
   },
-
   receiptPulseIconCircle: {
     width: "60px",
     height: "60px",
@@ -1220,26 +1199,22 @@ const styles = {
     margin: "0 auto 12px auto",
     animation: "pulseIcon 1.5s infinite ease-in-out"
   },
-
   receiptCheckMark: {
     color: "#16a34a",
     fontSize: "30px",
     fontWeight: "900"
   },
-
   receiptStatusText: {
     fontSize: "15px",
     color: "#868e96",
     margin: "0 0 8px 0",
     fontWeight: "600"
   },
-
   receiptAmountDisplay: {
     fontSize: "34px",
     fontWeight: "800",
     margin: "0 0 6px 0"
   },
-
   receiptTypeTag: {
     display: "inline-block",
     background: "#f1f3f5",
@@ -1251,14 +1226,12 @@ const styles = {
     letterSpacing: "0.5px",
     margin: 0
   },
-
   receiptDivider: {
     position: "relative",
     borderTop: "2px dashed #dee2e6",
     margin: "0 12px",
     height: "0"
   },
-
   receiptNotchLeft: {
     position: "absolute",
     left: "-20px",
@@ -1268,7 +1241,6 @@ const styles = {
     borderRadius: "50%",
     background: "rgba(0,0,0,0.45)"
   },
-
   receiptNotchRight: {
     position: "absolute",
     right: "-20px",
@@ -1278,7 +1250,6 @@ const styles = {
     borderRadius: "50%",
     background: "rgba(0,0,0,0.45)"
   },
-
   receiptBody: {
     padding: "20px 24px 16px 24px",
     display: "flex",
@@ -1286,7 +1257,6 @@ const styles = {
     gap: "12px",
     background: "#ffffff"
   },
-
   receiptSectionHeader: {
     fontSize: "11px",
     fontWeight: "800",
@@ -1294,26 +1264,22 @@ const styles = {
     letterSpacing: "0.8px",
     marginBottom: "2px"
   },
-
   receiptRowItem: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center"
   },
-
   receiptLabelText: {
     fontSize: "13px",
     color: "#868e96",
     fontWeight: "500"
   },
-
   receiptValueText: {
     fontSize: "13px",
     color: "#212529",
     fontWeight: "700",
     textAlign: "right"
   },
-
   receiptStatusBadge: {
     background: "#e6fcf5",
     color: "#0ca678",
@@ -1322,27 +1288,23 @@ const styles = {
     fontSize: "12px",
     fontWeight: "700"
   },
-
   receiptFooter: {
     background: "#f8fafc",
     padding: "16px",
     textAlign: "center",
     borderTop: "1px dashed #e9ecef"
   },
-
   receiptBrand: {
     fontSize: "12px",
     color: "#adb5bd",
     margin: 0,
     fontWeight: "600"
   },
-
   receiptActionContainer: {
     display: "flex",
     flexDirection: "column",
     gap: "10px"
   },
-
   receiptShareBtn: {
     width: "100%",
     height: "52px",
@@ -1355,7 +1317,6 @@ const styles = {
     boxShadow: "0 8px 20px rgba(124,58,237,0.3)",
     cursor: "pointer"
   },
-
   receiptCloseBtn: {
     width: "100%",
     height: "48px",
@@ -1367,7 +1328,6 @@ const styles = {
     fontSize: "14px",
     cursor: "pointer"
   },
-
   statusOverlayBg: {
     position: "fixed",
     inset: 0,
@@ -1378,7 +1338,6 @@ const styles = {
     alignItems: "center",
     justifyContent: "center"
   },
-
   statusOverlayCard: {
     background: "#ffffff",
     padding: "30px 40px",
@@ -1392,7 +1351,6 @@ const styles = {
     alignItems: "center",
     gap: "16px"
   },
-
   statusOverlayIcon: {
     width: "64px",
     height: "64px",
@@ -1403,7 +1361,6 @@ const styles = {
     fontSize: "32px",
     fontWeight: "bold"
   },
-
   statusOverlayText: {
     fontSize: "20px",
     color: "#0f172a",
@@ -1411,7 +1368,6 @@ const styles = {
     fontWeight: "800",
     lineHeight: "1.4"
   },
-
   loadingPage: {
     minHeight: "100vh",
     background: "#f4f7ff",
@@ -1420,7 +1376,6 @@ const styles = {
     justifyContent: "center",
     fontFamily: "Arial"
   },
-
   loadingCard: {
     background: "white",
     padding: "35px",
@@ -1428,11 +1383,9 @@ const styles = {
     textAlign: "center",
     boxShadow: "0 18px 35px rgba(15,23,42,.12)"
   },
-
   loadingIcon: {
     fontSize: "70px"
   },
-
   page: {
     minHeight: "100vh",
     background: "#f4f7ff",
@@ -1440,26 +1393,22 @@ const styles = {
     fontFamily: "Arial, sans-serif",
     color: "#071747"
   },
-
   app: {
     maxWidth: "1040px",
     margin: "0 auto"
   },
-
   header: {
     display: "flex",
     alignItems: "center",
     gap: "18px",
     marginBottom: "22px"
   },
-
   pageTitle: {
     margin: 0,
     fontSize: "38px",
     fontWeight: "900",
     color: "#071747"
   },
-
   titleWave: {
     width: "105px",
     height: "6px",
@@ -1467,13 +1416,11 @@ const styles = {
     background: "linear-gradient(90deg,#ff8a00,#ec4899,#7c3aed)",
     marginTop: "8px"
   },
-
   pageSub: {
     color: "#64748b",
     fontSize: "16px",
     marginTop: "9px"
   },
-
   notifyBtn: {
     marginLeft: "auto",
     width: "54px",
@@ -1485,7 +1432,6 @@ const styles = {
     fontSize: "24px",
     position: "relative"
   },
-
   avatar: {
     width: "58px",
     height: "58px",
@@ -1498,7 +1444,6 @@ const styles = {
     boxShadow: "0 10px 25px rgba(124,58,237,.15)",
     overflow: "hidden"
   },
-
   walletHero: {
     position: "relative",
     minHeight: "330px",
@@ -1511,20 +1456,17 @@ const styles = {
     boxShadow: "0 22px 42px rgba(94,42,210,.30)",
     marginBottom: "24px"
   },
-
   walletLeft: {
     width: "52%",
     position: "relative",
     zIndex: 5
   },
-
   heroLabel: {
     letterSpacing: "2px",
     fontSize: "13px",
     fontWeight: "900",
     opacity: 0.75
   },
-
   walletId: {
     fontSize: "30px",
     margin: "8px 0 0",
@@ -1533,25 +1475,21 @@ const styles = {
     alignItems: "center",
     gap: "10px"
   },
-
   dashedLine: {
     borderTop: "1px dashed rgba(255,255,255,.45)",
     margin: "22px 0"
   },
-
   balanceText: {
     fontSize: "46px",
     margin: "8px 0",
     fontWeight: "900"
   },
-
   heroActions: {
     display: "flex",
     gap: "16px",
     marginTop: "22px",
     flexWrap: "wrap"
   },
-
   addCashBtn: {
     minWidth: "135px",
     height: "54px",
@@ -1563,7 +1501,6 @@ const styles = {
     fontSize: "16px",
     boxShadow: "0 12px 25px rgba(0,0,0,.18)"
   },
-
   withdrawBtn: {
     minWidth: "135px",
     height: "54px",
@@ -1575,7 +1512,6 @@ const styles = {
     fontSize: "16px",
     boxShadow: "0 12px 25px rgba(255,80,90,.28)"
   },
-
   eyeBtn: {
     position: "absolute",
     top: "28px",
@@ -1589,7 +1525,6 @@ const styles = {
     fontSize: "20px",
     zIndex: 8
   },
-
   walletArt: {
     position: "absolute",
     right: "70px",
@@ -1598,7 +1533,6 @@ const styles = {
     height: "230px",
     zIndex: 2
   },
-
   moneyNote1: {
     position: "absolute",
     right: "78px",
@@ -1610,7 +1544,6 @@ const styles = {
     transform: "rotate(-16deg)",
     boxShadow: "0 15px 22px rgba(0,0,0,.18)"
   },
-
   moneyNote2: {
     position: "absolute",
     right: "28px",
@@ -1622,7 +1555,6 @@ const styles = {
     transform: "rotate(18deg)",
     boxShadow: "0 15px 22px rgba(0,0,0,.18)"
   },
-
   walletBag: {
     position: "absolute",
     right: "55px",
@@ -1639,7 +1571,6 @@ const styles = {
     justifyContent: "center",
     boxShadow: "inset -14px -12px 0 rgba(0,0,0,.14),0 24px 32px rgba(0,0,0,.25)"
   },
-
   coin1: {
     position: "absolute",
     right: "18px",
@@ -1655,7 +1586,6 @@ const styles = {
     fontWeight: "900",
     boxShadow: "0 12px 18px rgba(0,0,0,.18)"
   },
-
   coin2: {
     position: "absolute",
     right: "82px",
@@ -1671,7 +1601,6 @@ const styles = {
     fontWeight: "900",
     boxShadow: "0 12px 18px rgba(0,0,0,.18)"
   },
-
   incomePanel: {
     background: "white",
     borderRadius: "28px",
@@ -1682,13 +1611,11 @@ const styles = {
     boxShadow: "0 15px 30px rgba(15,23,42,.08)",
     marginBottom: "24px"
   },
-
   incomeCard: {
     textAlign: "center",
     padding: "12px 8px",
     borderRight: "1px dashed #d9e1f2"
   },
-
   incomeIcon: {
     width: "58px",
     height: "58px",
@@ -1701,20 +1628,17 @@ const styles = {
     fontSize: "26px",
     boxShadow: "0 10px 20px rgba(15,23,42,.12)"
   },
-
   incomeWave: {
     fontSize: "30px",
     fontWeight: "900",
     marginTop: "-6px"
   },
-
   middleGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "22px",
     marginBottom: "24px"
   },
-
   transferCard: {
     background: "#070a55",
     color: "white",
@@ -1722,7 +1646,6 @@ const styles = {
     padding: "30px",
     boxShadow: "0 18px 32px rgba(7,10,85,.22)"
   },
-
   transferIcon: {
     width: "60px",
     height: "60px",
@@ -1734,23 +1657,19 @@ const styles = {
     fontSize: "28px",
     marginBottom: "12px"
   },
-
   transferTitle: {
     margin: 0,
     fontSize: "28px"
   },
-
   transferSub: {
     color: "#aab1d6",
     marginBottom: "22px"
   },
-
   label: {
     display: "block",
     fontWeight: "900",
     marginBottom: "8px"
   },
-
   inputWrap: {
     height: "56px",
     borderRadius: "16px",
@@ -1760,7 +1679,6 @@ const styles = {
     padding: "0 15px",
     marginBottom: "18px"
   },
-
   transferInput: {
     flex: 1,
     border: "none",
@@ -1768,11 +1686,9 @@ const styles = {
     fontSize: "16px",
     color: "#000"
   },
-
   inputIcon: {
     fontSize: "22px"
   },
-
   transferBtn: {
     width: "100%",
     height: "58px",
@@ -1784,7 +1700,6 @@ const styles = {
     fontWeight: "900",
     boxShadow: "0 12px 24px rgba(236,22,142,.25)"
   },
-
   inviteCard: {
     background: "linear-gradient(135deg,#fff4d9,#ffffff)",
     borderRadius: "28px",
@@ -1793,30 +1708,25 @@ const styles = {
     overflow: "hidden",
     boxShadow: "0 15px 30px rgba(15,23,42,.08)"
   },
-
   inviteTop: {
     color: "#f59e0b",
     fontWeight: "900",
     fontSize: "18px"
   },
-
   inviteTitle: {
     fontSize: "32px",
     margin: "10px 0 0"
   },
-
   inviteTitle2: {
     color: "#6d28d9",
     fontSize: "24px",
     margin: "6px 0"
   },
-
   giftBox: {
     fontSize: "115px",
     textAlign: "right",
     filter: "drop-shadow(0 14px 18px rgba(245,158,11,.22))"
   },
-
   inviteBtn: {
     position: "absolute",
     left: "30px",
@@ -1830,7 +1740,6 @@ const styles = {
     fontWeight: "900",
     fontSize: "16px"
   },
-
   historyCard: {
     background: "white",
     borderRadius: "28px",
@@ -1838,23 +1747,19 @@ const styles = {
     boxShadow: "0 15px 30px rgba(15,23,42,.08)",
     marginBottom: "20px"
   },
-
   historyHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "18px"
   },
-
   historyTitle: {
     margin: 0,
     fontSize: "28px"
   },
-
   historySub: {
     color: "#64748b"
   },
-
   filterSelect: {
     height: "44px",
     borderRadius: "14px",
@@ -1862,7 +1767,6 @@ const styles = {
     padding: "0 14px",
     fontWeight: "900"
   },
-
   tableHead: {
     display: "grid",
     gridTemplateColumns: "70px 1.6fr 1fr 1fr 1.2fr",
@@ -1872,7 +1776,6 @@ const styles = {
     padding: "12px 0",
     borderBottom: "1px solid #eef2ff"
   },
-
   typeCircle: {
     width: "46px",
     height: "46px",
@@ -1882,17 +1785,14 @@ const styles = {
     justifyContent: "center",
     fontSize: "22px"
   },
-
   rowTitle: {
     fontWeight: "900",
     color: "#071747"
   },
-
   rowSub: {
     color: "#64748b",
     fontSize: "13px"
   },
-
   successBadge: {
     display: "inline-block",
     background: "#dcfce7",
@@ -1902,14 +1802,12 @@ const styles = {
     fontWeight: "900",
     fontSize: "13px"
   },
-
   emptyHistory: {
     textAlign: "center",
     padding: "35px",
     color: "#64748b",
     fontWeight: "900"
   },
-
   viewMore: {
     textAlign: "center",
     color: "#6d28d9",
@@ -1919,7 +1817,6 @@ const styles = {
     border: "none",
     cursor: "pointer"
   },
-
   bottomFeatures: {
     background: "white",
     borderRadius: "22px",
@@ -1929,13 +1826,11 @@ const styles = {
     gap: "15px",
     boxShadow: "0 12px 25px rgba(15,23,42,.07)"
   },
-
   featureItem: {
     display: "flex",
     alignItems: "center",
     gap: "12px"
   },
-
   modalOverlay: {
     position: "fixed",
     inset: 0,
@@ -1945,7 +1840,6 @@ const styles = {
     alignItems: "center",
     justifyContent: "center"
   },
-
   modal: {
     width: "90%",
     maxWidth: "430px",
@@ -1955,7 +1849,6 @@ const styles = {
     color: "#071747",
     boxShadow: "0 25px 50px rgba(0,0,0,.25)"
   },
-
   closeBtn: {
     width: "100%",
     height: "50px",
@@ -1966,11 +1859,9 @@ const styles = {
     color: "#071747",
     fontWeight: "900"
   },
-
   confirmTop: {
     textAlign: "center"
   },
-
   confirmAvatar: {
     width: "70px",
     height: "70px",
@@ -1982,7 +1873,6 @@ const styles = {
     margin: "0 auto",
     fontSize: "34px"
   },
-
   receiverCard: {
     background: "#f8fafc",
     borderRadius: "18px",
@@ -1990,7 +1880,6 @@ const styles = {
     marginTop: "16px",
     textAlign: "center"
   },
-
   sendMoneyBtn: {
     width: "100%",
     height: "52px",
@@ -2002,7 +1891,6 @@ const styles = {
     marginTop: "15px",
     cursor: "pointer"
   },
-
   cancelBtn: {
     width: "100%",
     height: "48px",
@@ -2013,13 +1901,11 @@ const styles = {
     fontWeight: "900",
     marginTop: "10px"
   },
-
   shareGrid: {
     display: "grid",
     gap: "12px",
     marginTop: "18px"
   },
-
   shareBtn: {
     height: "50px",
     borderRadius: "15px",
@@ -2032,7 +1918,6 @@ const styles = {
     justifyContent: "center",
     textDecoration: "none"
   },
-
   notifyCount: {
     position: "absolute",
     top: "-5px",
@@ -2048,14 +1933,12 @@ const styles = {
     justifyContent: "center",
     fontWeight: "900"
   },
-
   avatarImg: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
     borderRadius: "50%"
   },
-
   depositOverlay: {
     position: "fixed",
     inset: 0,
@@ -2067,7 +1950,6 @@ const styles = {
     justifyContent: "center",
     padding: 18
   },
-
   depositModal: {
     width: "100%",
     maxWidth: 390,
@@ -2078,7 +1960,6 @@ const styles = {
     position: "relative",
     border: "1px solid rgba(255,255,255,0.8)"
   },
-
   depositCloseX: {
     position: "absolute",
     top: 14,
@@ -2093,7 +1974,6 @@ const styles = {
     fontWeight: 900,
     cursor: "pointer"
   },
-
   depositIcon: {
     width: 62,
     height: 62,
@@ -2106,21 +1986,18 @@ const styles = {
     color: "#fff",
     marginBottom: 12
   },
-
   depositTitle: {
     margin: 0,
     fontSize: 26,
     fontWeight: 900,
     color: "#101a44"
   },
-
   depositSub: {
     margin: "6px 0 18px",
     color: "#6b7280",
     fontSize: 13,
     lineHeight: 1.4
   },
-
   depositLabel: {
     display: "block",
     fontSize: 13,
@@ -2128,7 +2005,6 @@ const styles = {
     color: "#18204a",
     margin: "12px 0 7px"
   },
-
   depositInput: {
     width: "100%",
     height: 50,
@@ -2141,7 +2017,6 @@ const styles = {
     background: "#fff",
     boxSizing: "border-box"
   },
-
   submitDepositBtn: {
     width: "100%",
     height: "54px",
