@@ -2861,125 +2861,69 @@ app.post("/user-dashboard-chart", auth, async (req, res) => {
 
 });
 
-app.post("/wallet-transfer", async (req, res) => {
+app.post('/wallet-transfer', async (req, res) => {
   try {
-    const { senderEmail, receiverWalletId, receiverName, amount } = req.body;
+    const { senderEmail, receiverWalletId, amount } = req.body;
 
-    const transferAmount = Number(amount);
+    // ১. সেন্ডার ও রিসিভার খুঁজে বের করুন
+    const sender = await User.findOne({ email: senderEmail });
+    const receiver = await User.findOne({ walletId: receiverWalletId });
 
-    if (!senderEmail || !receiverWalletId || transferAmount <= 0) {
-      return res.json({
-        success: false,
-        msg: "Invalid transfer data"
-      });
+    if (!sender || !receiver) {
+      return res.status(400).json({ success: false, msg: "Sender or Receiver not found" });
     }
 
-    const sender = await User.findOne({
-      email: senderEmail.toLowerCase()
+    if (sender.walletId === receiver.walletId) {
+      return res.status(400).json({ success: false, msg: "You cannot transfer to yourself" });
+    }
+
+    if (sender.balance < Number(amount)) {
+      return res.status(400).json({ success: false, msg: "Insufficient balance" });
+    }
+
+    const txnId = "TXN" + Date.now() + Math.floor(Math.random() * 1000);
+    const timestamp = new Date();
+
+    // ২. সেন্ডারের ব্যালেন্স কমান এবং হিস্টরি যোগ করুন (Debit)
+    sender.balance -= Number(amount);
+    sender.history.unshift({
+      _id: txnId,
+      type: "debit",
+      amount: Number(amount),
+      senderName: sender.name,
+      senderWalletId: sender.walletId,
+      receiverName: receiver.name,
+      receiverWalletId: receiver.walletId,
+      desc: `sent to ${receiver.walletId}`,
+      note: `Transfer to ${receiver.name} (${receiver.walletId})`,
+      createdAt: timestamp
     });
-
-    if (!sender) {
-      return res.json({
-        success: false,
-        msg: "Sender not found"
-      });
-    }
-
-    const receiver = await User.findOne({
-      $or: [
-        { walletId: receiverWalletId },
-        { referralCode: receiverWalletId },
-        {
-          _id: mongoose.Types.ObjectId.isValid(receiverWalletId)
-            ? receiverWalletId
-            : null
-        }
-      ]
-    });
-
-    if (!receiver) {
-      return res.json({
-        success: false,
-        msg: "Receiver not found"
-      });
-    }
-
-    if (sender.email === receiver.email) {
-      return res.json({
-        success: false,
-        msg: "You cannot transfer to your own wallet"
-      });
-    }
-
-    const senderBalance = Number(sender.balance || sender.wallet || 0);
-
-    // ১. চেক করা হচ্ছে ব্যালেন্স ২০০০ টাকার কম কিনা
-    if (senderBalance <= 2000) {
-      return res.json({
-        success: false,
-        msg: "You must keep a minimum balance of ₹2,000 in your wallet"
-      });
-    }
-
-    // ২. সর্বোচ্চ কত টাকা ট্রান্সফার করা সম্ভব তা নির্ধারণ করা হচ্ছে
-    const maxTransferableAmount = senderBalance - 2000;
-
-    if (transferAmount > maxTransferableAmount) {
-      return res.json({
-        success: false,
-        msg: `You can transfer a maximum of ₹${maxTransferableAmount.toLocaleString("en-IN")} (Keeping ₹2,000 main balance)`
-      });
-    }
-
-    // ব্যালেন্স আপডেট
-    sender.balance = senderBalance - transferAmount;
-    receiver.balance = Number(receiver.balance || receiver.wallet || 0) + transferAmount;
-
     await sender.save();
+
+    // ৩. রিসিভারের ব্যালেন্স বাড়ান এবং হিস্টরি যোগ করুন (Credit)
+    receiver.balance += Number(amount);
+    receiver.history.unshift({
+      _id: txnId,
+      type: "credit",
+      amount: Number(amount),
+      senderName: sender.name,
+      senderWalletId: sender.walletId,
+      receiverName: receiver.name,
+      receiverWalletId: receiver.walletId,
+      desc: `received from ${sender.walletId}`,
+      note: `Received from ${sender.name} (${sender.walletId})`,
+      createdAt: timestamp
+    });
     await receiver.save();
 
-    // ওয়ালেট হিস্টরি তৈরি
-// ১. যে টাকা পাঠাচ্ছে তার জন্য (Debit History)
-await WalletHistory.create({
-  email: sender.email,
-  type: 'Debit',
-  amount: transferAmount,
-  title: 'Wallet Transfer Sent',
-  description: `sent to ${receiverWalletId}`,
-  receiverName: receiverName || receiver.name || "Wallet User", // এখানে নাম সুরক্ষিত করা হলো
-  receiverWalletId: receiverWalletId,
-  status: 'Success',
-  date: new Date()
-});
-
-// ২. যে টাকা পাচ্ছে তার জন্য (Credit History)
-await WalletHistory.create({
-  email: receiver.email,
-  type: 'Credit',
-  amount: transferAmount,
-  title: 'Wallet Transfer Received',
-  description: `received from ${sender.walletId}`,
-  senderName: sender.name || "Wallet User",
-  senderWalletId: sender.walletId,
-  status: 'Success',
-  date: new Date()
-});
-
-
-
-    res.json({
-      success: true,
-      msg: "Transfer successful"
-    });
-
+    return res.json({ success: true, msg: "Transfer Completed Successfully! 🎉", txnId });
   } catch (err) {
-    console.log("WALLET TRANSFER ERROR:", err);
-    res.status(500).json({
-      success: false,
-      msg: "Server error"
-    });
+    console.error("Transfer Error:", err);
+    return res.status(500).json({ success: false, msg: "Server error during transfer" });
   }
 });
+
+
 
 
 app.post("/my-plan", auth, async (req, res) => {
