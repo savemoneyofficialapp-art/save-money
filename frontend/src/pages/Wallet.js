@@ -341,7 +341,6 @@ export default function Wallet() {
         body: JSON.stringify({
           senderEmail: email,
           receiverWalletId: receiverWalletId.trim(),
-          receiverName: receiverInfo?.name || "", 
           amount: Number(transferAmount)
         })
       });
@@ -355,6 +354,8 @@ export default function Wallet() {
           createdAt: new Date().toISOString(),
           desc: `sent to ${receiverWalletId.trim()}`,
           note: `sent to ${receiverWalletId.trim()}`,
+          senderName: wallet.name,
+          senderWalletId: wallet.walletId,
           receiverName: receiverInfo?.name || "Wallet User",
           receiverWalletId: receiverWalletId.trim(),
           isCredit: false
@@ -836,29 +837,15 @@ export default function Wallet() {
 
         {selectedTxn && (() => {
           const fullText = `${selectedTxn.desc || ''} ${selectedTxn.note || ''} ${selectedTxn.message || ''} ${selectedTxn.type || ''}`.toUpperCase();
-
           const extractedWalletMatch = fullText.match(/WAL\d+/i);
           const extractedWalletId = extractedWalletMatch ? extractedWalletMatch[0].toUpperCase() : null;
 
-          // রিসিভারের নাম ও আইডি বের করার জন্য
-let foundReceiverWalletId = selectedTxn.isCredit
-  ? wallet.walletId
-  : (selectedTxn.receiverWalletId || selectedTxn.toWalletId || extractedWalletId || "N/A");
+          // সেন্ডার এবং রিসিভারের তথ্য নিখুঁতভাবে নির্ধারণ
+          const senderName = selectedTxn.senderName || (selectedTxn.isCredit ? ("Wallet User") : wallet.name);
+          const senderWalletId = selectedTxn.senderWalletId || (selectedTxn.isCredit ? (extractedWalletId || "N/A") : wallet.walletId);
 
-let foundReceiverName = selectedTxn.isCredit
-  ? wallet.name
-  : (selectedTxn.receiverName || selectedTxn.toName || selectedTxn.receiver || "Wallet User");
-
-// সেন্ডারের নাম ও আইডি বের করার জন্য
-const senderName = selectedTxn.isCredit
-  ? (selectedTxn.senderName || selectedTxn.fromName || selectedTxn.sender || "Wallet User")
-  : wallet.name;
-
-const senderWalletId = selectedTxn.isCredit
-  ? (selectedTxn.senderWalletId || selectedTxn.fromWalletId || extractedWalletId || "N/A")
-  : wallet.walletId;
-
-
+          const foundReceiverName = selectedTxn.receiverName || (selectedTxn.isCredit ? wallet.name : ("Wallet User"));
+          const foundReceiverWalletId = selectedTxn.receiverWalletId || (selectedTxn.isCredit ? wallet.walletId : (extractedWalletId || "N/A"));
 
           const typeTagText = selectedTxn.isCredit 
             ? `RECEIVED FROM ${senderWalletId !== "N/A" ? senderWalletId : senderName}`
