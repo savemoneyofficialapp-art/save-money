@@ -2865,7 +2865,6 @@ app.post('/wallet-transfer', async (req, res) => {
   try {
     const { senderEmail, receiverWalletId, amount } = req.body;
 
-    // ১. সেন্ডার ও রিসিভার খুঁজে বের করুন
     const sender = await User.findOne({ email: senderEmail });
     const receiver = await User.findOne({ walletId: receiverWalletId });
 
@@ -2884,8 +2883,11 @@ app.post('/wallet-transfer', async (req, res) => {
     const txnId = "TXN" + Date.now() + Math.floor(Math.random() * 1000);
     const timestamp = new Date();
 
-    // ২. সেন্ডারের ব্যালেন্স কমান এবং হিস্টরি যোগ করুন (Debit)
+    // ১. সেন্ডারের ব্যালেন্স কমান
     sender.balance -= Number(amount);
+    
+    // যদি ইউজারের ভেতরে embedded history অ্যারে রাখতে চান
+    if (!sender.history) sender.history = [];
     sender.history.unshift({
       _id: txnId,
       type: "debit",
@@ -2900,8 +2902,10 @@ app.post('/wallet-transfer', async (req, res) => {
     });
     await sender.save();
 
-    // ৩. রিসিভারের ব্যালেন্স বাড়ান এবং হিস্টরি যোগ করুন (Credit)
+    // ২. রিসিভারের ব্যালেন্স বাড়ান
     receiver.balance += Number(amount);
+    
+    if (!receiver.history) receiver.history = [];
     receiver.history.unshift({
       _id: txnId,
       type: "credit",
@@ -2915,6 +2919,27 @@ app.post('/wallet-transfer', async (req, res) => {
       createdAt: timestamp
     });
     await receiver.save();
+
+    // ৩. মূল WalletHistory মডেলেও রেকর্ড তৈরি করুন (যা দিয়ে ফ্রন্টএন্ডের টেবিল লোড হয়)
+    await WalletHistory.create({
+      email: sender.email,
+      type: "Transfer Sent",
+      amount: Number(amount),
+      title: "Transfer Sent",
+      description: `sent to ${receiver.walletId}`,
+      status: "Success",
+      date: timestamp
+    });
+
+    await WalletHistory.create({
+      email: receiver.email,
+      type: "Transfer Received",
+      amount: Number(amount),
+      title: "Transfer Received",
+      description: `received from ${sender.walletId}`,
+      status: "Success",
+      date: timestamp
+    });
 
     return res.json({ success: true, msg: "Transfer Completed Successfully! 🎉", txnId });
   } catch (err) {
