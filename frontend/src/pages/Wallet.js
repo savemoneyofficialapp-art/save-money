@@ -849,17 +849,13 @@ export default function Wallet() {
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Receiver Name</span>
                     <span style={styles.receiptValueText}>
-                      {selectedTxn.type === 'Debit' 
-                        ? (selectedTxn.receiverName || "transaction.receiverName") 
-                        : (selectedTxn.receiverName || wallet.name)}
+                      {selectedTxn.receiverName || wallet.name}
                     </span>
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Sender Name</span>
                     <span style={styles.receiptValueText}>
-                      {selectedTxn.type === 'Debit' 
-                        ? (selectedTxn.senderName || wallet.name) 
-                        : (selectedTxn.senderName || "transaction.senderName")}
+                      {selectedTxn.senderName || wallet.name}
                     </span>
                   </div>
                   <div style={styles.receiptRowItem}>
