@@ -7404,9 +7404,10 @@ cron.schedule("0 0 * * *", async () => {
     console.log(`Midnight Settlement successfully moved remaining balances for ${bulkUserOps.length} users.`);
   } catch (err) {
     console.error("Cron Job Error:", err);
-  },
+  }
+  },{
               
-  {scheduled: true,
+  scheduled: true,
     timezone: "Asia/Kolkata" 
 });
 
