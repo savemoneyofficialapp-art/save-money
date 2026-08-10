@@ -7383,7 +7383,7 @@ cron.schedule("0 0 * * *", async () => {
         // ২. ওয়ালেট হিস্ট্রিতে সেটেলমেন্ট ট্র্যাকিং এন্ট্রি
         historyOps.push({
           email: userEmail,
-          type: "Credit",
+          type: "From Today Wallet",
           amount: remainingBalance,
           note: "Today Wallet Settlement",
           status: "Success",
@@ -7404,7 +7404,10 @@ cron.schedule("0 0 * * *", async () => {
     console.log(`Midnight Settlement successfully moved remaining balances for ${bulkUserOps.length} users.`);
   } catch (err) {
     console.error("Cron Job Error:", err);
-  }
+  },
+              
+  {scheduled: true,
+    timezone: "Asia/Kolkata" 
 });
 
 
