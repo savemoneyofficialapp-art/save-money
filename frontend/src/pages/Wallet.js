@@ -850,7 +850,7 @@ export default function Wallet() {
                     <span style={styles.receiptLabelText}>Receiver Name</span>
                     <span style={styles.receiptValueText}>
                       {selectedTxn.type === 'Debit' 
-                        ? (selectedTxn.receiverName || "Authorized Receiver") 
+                        ? (selectedTxn.receiverName || "transaction.receiverName") 
                         : (selectedTxn.receiverName || wallet.name)}
                     </span>
                   </div>
@@ -859,7 +859,7 @@ export default function Wallet() {
                     <span style={styles.receiptValueText}>
                       {selectedTxn.type === 'Debit' 
                         ? (selectedTxn.senderName || wallet.name) 
-                        : (selectedTxn.senderName || "Authorized Sender")}
+                        : (selectedTxn.senderName || "transaction.senderName")}
                     </span>
                   </div>
                   <div style={styles.receiptRowItem}>
