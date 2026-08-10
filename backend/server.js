@@ -2943,7 +2943,7 @@ app.post('/wallet-transfer', async (req, res) => {
             type: "Debit",
             amount: transferAmount,
             title: "Wallet Transfer Sent",
-            description: `Sent to ${receiver.walletId}`,
+            description: `Sent to ${receiver.walletId} (${sender.name})`,
             status: "Success",
             date: new Date()
         });
@@ -2953,7 +2953,7 @@ app.post('/wallet-transfer', async (req, res) => {
             type: "Credit",
             amount: transferAmount,
             title: "Wallet Transfer Received",
-            description: `Received from ${sender.walletId}`,
+            description: `Received from ${sender.walletId} (${receiver.name})`,
             status: "Success",
             date: new Date()
         });
