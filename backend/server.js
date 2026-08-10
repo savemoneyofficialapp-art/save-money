@@ -2944,8 +2944,8 @@ await WalletHistory.create({
   amount: transferAmount,
   title: 'Wallet Transfer Sent',
   description: `Sent to ${receiver.walletId}`,
-  receiverName:  receiver.name, // এটি যোগ করুন
-  senderName: sender.name,     // এটি যোগ করুন
+  receiverName:  `${receiver.name}`, // এটি যোগ করুন
+  senderName: ` ${sender.name}`,     // এটি যোগ করুন
   status: 'Success',
   date: new Date()
 });
@@ -2957,8 +2957,8 @@ await WalletHistory.create({
   amount: transferAmount,
   title: 'Wallet Transfer Received',
   description: `Received from ${sender.walletId} `,
-  senderName: sender.name,     // এটি যোগ করুন
-  receiverName:  receiver.name, // এটি যোগ করুন
+  receiverName:  `${receiver.name}`,  // এটি যোগ করুন
+  senderName: ` ${sender.name}`,     // এটি যোগ করুন
   status: 'Success',
   date: new Date()
 });
