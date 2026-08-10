@@ -824,7 +824,8 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (Corrected Placeholders) --- */}
+
+        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (Updated Receiver/Sender Fix) --- */}
         {selectedTxn && (
           <div style={styles.modalOverlay}>
             <div style={styles.receiptContainer}>
@@ -850,7 +851,7 @@ export default function Wallet() {
                     <span style={styles.receiptLabelText}>Receiver Name</span>
                     <span style={styles.receiptValueText}>
                       {selectedTxn.type === 'Debit' 
-                        ? (selectedTxn.receiverName || "N/A") 
+                        ? (selectedTxn.receiverName || selectedTxn.desc?.match(/\(([^)]+)\)/)?.[1] || "N/A") 
                         : (selectedTxn.receiverName || wallet.name)}
                     </span>
                   </div>
@@ -859,7 +860,7 @@ export default function Wallet() {
                     <span style={styles.receiptValueText}>
                       {selectedTxn.type === 'Debit' 
                         ? (selectedTxn.senderName || wallet.name) 
-                        : (selectedTxn.senderName || "N/A")}
+                        : (selectedTxn.senderName || selectedTxn.desc?.match(/\(([^)]+)\)/)?.[1] || "N/A")}
                     </span>
                   </div>
                   <div style={styles.receiptRowItem}>
@@ -898,6 +899,7 @@ export default function Wallet() {
             </div>
           </div>
         )}
+
 
         {/* Add Cash Modal */}
         {addOpen && (
