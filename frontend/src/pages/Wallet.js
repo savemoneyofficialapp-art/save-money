@@ -824,7 +824,7 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (প্রিমিয়াম ইনভেস্টমেন্ট প্ল্যাটফর্ম লুক) --- */}
+        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (Updated with correct fields) --- */}
         {selectedTxn && (
           <div style={styles.modalOverlay}>
             <div style={styles.receiptContainer}>
@@ -848,7 +848,12 @@ export default function Wallet() {
                 <div style={styles.receiptBody}>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Receiver Name</span>
-                    <span style={styles.receiptValueText}>{selectedTxn.receiverName || selectedTxn.receiver || "Authorized Receiver"}</span>
+                    <span style={styles.receiptValueText}>
+                      {selectedTxn.receiverName || 
+                       selectedTxn.receiver || 
+                       (selectedTxn.desc.includes("SENT TO") ? selectedTxn.desc.match(/\(([^)]+)\)/)?.[1] : null) || 
+                       "Authorized Receiver"}
+                    </span>
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Sender Name</span>
@@ -868,7 +873,7 @@ export default function Wallet() {
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Remarks</span>
-                    <span style={styles.receiptValueText}>{selectedTxn.note || "Investment Ledger Entry"}</span>
+                    <span style={styles.receiptValueText}>{selectedTxn.desc || selectedTxn.note || "wallet transaction"}</span>
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Status</span>
