@@ -395,7 +395,7 @@ export default function Wallet() {
       const canvas = await html2canvas(receiptRef.current, {
         useCORS: true,
         scale: 2,
-        backgroundColor: "#ffffff"
+        backgroundColor: "#0b0f19"
       });
       canvas.toBlob(async (blob) => {
         if (!blob) return;
@@ -824,7 +824,7 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল --- */}
+        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (প্রিমিয়াম ইনভেস্টমেন্ট প্ল্যাটফর্ম লুক) --- */}
         {selectedTxn && (
           <div style={styles.modalOverlay}>
             <div style={styles.receiptContainer}>
@@ -833,8 +833,8 @@ export default function Wallet() {
                   <div style={styles.receiptPulseIconCircle}>
                     <span style={styles.receiptCheckMark}>✓</span>
                   </div>
-                  <h3 style={styles.receiptStatusText}>Transaction Successful</h3>
-                  <h1 style={{...styles.receiptAmountDisplay, color: selectedTxn.isCredit ? "#0ca678" : "#fa5252"}}>
+                  <h3 style={styles.receiptStatusText}>Verified Investment Transfer</h3>
+                  <h1 style={{...styles.receiptAmountDisplay, color: selectedTxn.isCredit ? "#34d399" : "#f87171"}}>
                     ₹{Number(selectedTxn.amount).toLocaleString("en-IN")}.00
                   </h1>
                   <p style={styles.receiptTypeTag}>{selectedTxn.desc.toUpperCase()}</p>
@@ -847,16 +847,16 @@ export default function Wallet() {
 
                 <div style={styles.receiptBody}>
                   <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Wallet ID</span>
-                    <span style={styles.receiptValueText}>{wallet.walletId}</span>
+                    <span style={styles.receiptLabelText}>Receiver Name</span>
+                    <span style={styles.receiptValueText}>{selectedTxn.receiverName || selectedTxn.receiver || "Authorized Receiver"}</span>
                   </div>
                   <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>User Name</span>
+                    <span style={styles.receiptLabelText}>Sender Name</span>
                     <span style={styles.receiptValueText}>{wallet.name}</span>
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Transaction ID</span>
-                    <span style={{...styles.receiptValueText, color: "#7c3aed"}}>{selectedTxn._id || selectedTxn.txnId || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
+                    <span style={{...styles.receiptValueText, color: "#fbbf24"}}>{selectedTxn._id || selectedTxn.txnId || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Date & Time</span>
@@ -868,16 +868,16 @@ export default function Wallet() {
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Remarks</span>
-                    <span style={styles.receiptValueText}>{selectedTxn.note || "Wallet Transaction"}</span>
+                    <span style={styles.receiptValueText}>{selectedTxn.note || "Investment Ledger Entry"}</span>
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Status</span>
-                    <span style={styles.receiptStatusBadge}>COMPLETED</span>
+                    <span style={styles.receiptStatusBadge}>SECURE & VERIFIED</span>
                   </div>
                 </div>
 
                 <div style={styles.receiptFooter}>
-                  <p style={styles.receiptBrand}>🛡 Powered by SaveMoney Secure</p>
+                  <p style={styles.receiptBrand}>💎 Premium SaveMoney Asset Management</p>
                 </div>
               </div>
 
@@ -1132,24 +1132,27 @@ const styles = {
   },
 
   receiptCard: {
-    background: "#ffffff",
+    background: "linear-gradient(145deg, #0f172a, #090d16)",
     borderRadius: "24px",
-    boxShadow: "0 20px 50px rgba(0,0,0,0.15)",
+    boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.15)",
     overflow: "hidden",
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Arial, sans-serif",
+    border: "1px solid rgba(212, 175, 55, 0.25)",
+    color: "#f8fafc"
   },
 
   receiptHeader: {
     padding: "30px 20px 20px 20px",
     textAlign: "center",
-    background: "#ffffff"
+    background: "transparent"
   },
 
   receiptPulseIconCircle: {
     width: "60px",
     height: "60px",
     borderRadius: "50%",
-    background: "#dcfce7",
+    background: "rgba(16, 185, 129, 0.15)",
+    border: "1px solid rgba(16, 185, 129, 0.4)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1158,16 +1161,18 @@ const styles = {
   },
 
   receiptCheckMark: {
-    color: "#16a34a",
+    color: "#34d399",
     fontSize: "30px",
     fontWeight: "900"
   },
 
   receiptStatusText: {
-    fontSize: "15px",
-    color: "#868e96",
+    fontSize: "14px",
+    color: "#94a3b8",
     margin: "0 0 8px 0",
-    fontWeight: "600"
+    fontWeight: "600",
+    letterSpacing: "1px",
+    textTransform: "uppercase"
   },
 
   receiptAmountDisplay: {
@@ -1178,19 +1183,20 @@ const styles = {
 
   receiptTypeTag: {
     display: "inline-block",
-    background: "#f1f3f5",
-    color: "#495057",
+    background: "rgba(255,255,255,0.08)",
+    color: "#e2e8f0",
     padding: "4px 12px",
     borderRadius: "20px",
     fontSize: "11px",
     fontWeight: "700",
-    letterSpacing: "0.5px",
-    margin: 0
+    letterSpacing: "0.8px",
+    margin: 0,
+    border: "1px solid rgba(255,255,255,0.1)"
   },
 
   receiptDivider: {
     position: "relative",
-    borderTop: "2px dashed #dee2e6",
+    borderTop: "2px dashed rgba(255, 255, 255, 0.15)",
     margin: "0 12px",
     height: "0"
   },
@@ -1202,7 +1208,7 @@ const styles = {
     width: "20px",
     height: "20px",
     borderRadius: "50%",
-    background: "rgba(0,0,0,0.45)"
+    background: "#090d16"
   },
 
   receiptNotchRight: {
@@ -1212,7 +1218,7 @@ const styles = {
     width: "20px",
     height: "20px",
     borderRadius: "50%",
-    background: "rgba(0,0,0,0.45)"
+    background: "#090d16"
   },
 
   receiptBody: {
@@ -1220,7 +1226,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "16px",
-    background: "#ffffff"
+    background: "transparent"
   },
 
   receiptRowItem: {
@@ -1230,39 +1236,42 @@ const styles = {
   },
 
   receiptLabelText: {
-    fontSize: "14px",
-    color: "#868e96",
+    fontSize: "13px",
+    color: "#94a3b8",
     fontWeight: "500"
   },
 
   receiptValueText: {
     fontSize: "14px",
-    color: "#212529",
+    color: "#ffffff",
     fontWeight: "700",
     textAlign: "right"
   },
 
   receiptStatusBadge: {
-    background: "#e6fcf5",
-    color: "#0ca678",
+    background: "rgba(16, 185, 129, 0.2)",
+    color: "#34d399",
     padding: "4px 10px",
     borderRadius: "6px",
-    fontSize: "12px",
-    fontWeight: "700"
+    fontSize: "11px",
+    fontWeight: "800",
+    border: "1px solid rgba(16, 185, 129, 0.3)",
+    letterSpacing: "0.5px"
   },
 
   receiptFooter: {
-    background: "#f8fafc",
+    background: "rgba(0, 0, 0, 0.3)",
     padding: "16px",
     textAlign: "center",
-    borderTop: "1px dashed #e9ecef"
+    borderTop: "1px solid rgba(255, 255, 255, 0.08)"
   },
 
   receiptBrand: {
     fontSize: "12px",
-    color: "#adb5bd",
+    color: "#fbbf24",
     margin: 0,
-    fontWeight: "600"
+    fontWeight: "700",
+    letterSpacing: "0.5px"
   },
 
   receiptActionContainer: {
@@ -1276,11 +1285,11 @@ const styles = {
     height: "52px",
     border: "none",
     borderRadius: "16px",
-    background: "linear-gradient(135deg,#7c3aed,#9333ea)",
-    color: "#ffffff",
-    fontWeight: "800",
+    background: "linear-gradient(135deg,#d97706,#fbbf24)",
+    color: "#0f172a",
+    fontWeight: "900",
     fontSize: "15px",
-    boxShadow: "0 8px 20px rgba(124,58,237,0.3)",
+    boxShadow: "0 8px 20px rgba(251,191,36,0.3)",
     cursor: "pointer"
   },
 
@@ -1289,11 +1298,12 @@ const styles = {
     height: "48px",
     border: "none",
     borderRadius: "16px",
-    background: "#ffffff",
-    color: "#495057",
+    background: "rgba(255, 255, 255, 0.08)",
+    color: "#ffffff",
     fontWeight: "700",
     fontSize: "14px",
-    cursor: "pointer"
+    cursor: "pointer",
+    border: "1px solid rgba(255, 255, 255, 0.15)"
   },
 
   statusOverlayBg: {
