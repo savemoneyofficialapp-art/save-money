@@ -824,7 +824,7 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (Corrected Names) --- */}
+        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (Corrected Placeholders) --- */}
         {selectedTxn && (
           <div style={styles.modalOverlay}>
             <div style={styles.receiptContainer}>
@@ -849,18 +849,22 @@ export default function Wallet() {
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Receiver Name</span>
                     <span style={styles.receiptValueText}>
-                      {selectedTxn.receiverName || wallet.name}
+                      {selectedTxn.type === 'Debit' 
+                        ? (selectedTxn.receiverName || "N/A") 
+                        : (selectedTxn.receiverName || wallet.name)}
                     </span>
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Sender Name</span>
                     <span style={styles.receiptValueText}>
-                      {selectedTxn.senderName || wallet.name}
+                      {selectedTxn.type === 'Debit' 
+                        ? (selectedTxn.senderName || wallet.name) 
+                        : (selectedTxn.senderName || "N/A")}
                     </span>
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Transaction ID</span>
-                    <span style={{...styles.receiptValueText, color: "#fbbf24"}}>{selectedTxn._id || selectedTxn.txnId}</span>
+                    <span style={{...styles.receiptValueText, color: "#fbbf24"}}>{selectedTxn._id || selectedTxn.txnId || "N/A"}</span>
                   </div>
                   <div style={styles.receiptRowItem}>
                     <span style={styles.receiptLabelText}>Date & Time</span>
