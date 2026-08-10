@@ -2937,26 +2937,32 @@ app.post('/wallet-transfer', async (req, res) => {
         await sender.save();
         await receiver.save();
 
-        // একাউন্ট হিস্ট্রি তৈরি
-        await WalletHistory.create({
-            email: sender.email,
-            type: "Debit",
-            amount: transferAmount,
-            title: "Wallet Transfer Sent",
-            description: `Sent to ${receiver.walletId} (${receiver.name})`,
-            status: "Success",
-            date: new Date()
-        });
+        // ১. সেন্ডারের জন্য (Debit)
+await WalletHistory.create({
+  email: sender.email,
+  type: 'Debit',
+  amount: transferAmount,
+  title: 'Wallet Transfer Sent',
+  description: `Sent to ${receiver.walletId} (${receiver.name})`,
+  receiverName: receiver.name, // এটি যোগ করুন
+  senderName: sender.name,     // এটি যোগ করুন
+  status: 'Success',
+  date: new Date()
+});
 
-        await WalletHistory.create({
-            email: receiver.email,
-            type: "Credit",
-            amount: transferAmount,
-            title: "Wallet Transfer Received",
-            description: `Received from ${sender.walletId} (${sender.name})`,
-            status: "Success",
-            date: new Date()
-        });
+// ২. রিসিভারের জন্য (Credit)
+await WalletHistory.create({
+  email: receiver.email,
+  type: 'Credit',
+  amount: transferAmount,
+  title: 'Wallet Transfer Received',
+  description: `Received from ${sender.walletId} (${sender.name})`,
+  receiverName: receiver.name, // এটি যোগ করুন
+  senderName: sender.name,     // এটি যোগ করুন
+  status: 'Success',
+  date: new Date()
+});
+
 
         res.json({
             success: true,
