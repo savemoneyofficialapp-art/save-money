@@ -824,79 +824,83 @@ export default function Wallet() {
           </div>
         )}
 
-        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (Updated with correct fields) --- */}
-        {selectedTxn && (
-          <div style={styles.modalOverlay}>
-            <div style={styles.receiptContainer}>
-              <div ref={receiptRef} style={styles.receiptCard}>
-                <div style={styles.receiptHeader}>
-                  <div style={styles.receiptPulseIconCircle}>
-                    <span style={styles.receiptCheckMark}>✓</span>
-                  </div>
-                  <h3 style={styles.receiptStatusText}>Verified Investment Transfer</h3>
-                  <h1 style={{...styles.receiptAmountDisplay, color: selectedTxn.isCredit ? "#34d399" : "#f87171"}}>
-                    ₹{Number(selectedTxn.amount).toLocaleString("en-IN")}.00
-                  </h1>
-                  <p style={styles.receiptTypeTag}>{selectedTxn.desc.toUpperCase()}</p>
-                </div>
-                
-                <div style={styles.receiptDivider}>
-                  <div style={styles.receiptNotchLeft}></div>
-                  <div style={styles.receiptNotchRight}></div>
-                </div>
-
-                <div style={styles.receiptBody}>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Receiver Name</span>
-                    <span style={styles.receiptValueText}>
-                      {selectedTxn.receiverName || 
-                       selectedTxn.receiver || 
-                       (selectedTxn.desc.includes("SENT TO") ? selectedTxn.desc.match(/\(([^)]+)\)/)?.[1] : null) || 
-                       "Authorized Receiver"}
-                    </span>
-                  </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Sender Name</span>
-                    <span style={styles.receiptValueText}>{wallet.name}</span>
-                  </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Transaction ID</span>
-                    <span style={{...styles.receiptValueText, color: "#fbbf24"}}>{selectedTxn._id || selectedTxn.txnId || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
-                  </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Date & Time</span>
-                    <span style={styles.receiptValueText}>
-                      {selectedTxn.createdAt || selectedTxn.date
-                        ? new Date(selectedTxn.createdAt || selectedTxn.date).toLocaleString("en-IN")
-                        : "N/A"}
-                    </span>
-                  </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Remarks</span>
-                    <span style={styles.receiptValueText}>{selectedTxn.desc || selectedTxn.note || "wallet transaction"}</span>
-                  </div>
-                  <div style={styles.receiptRowItem}>
-                    <span style={styles.receiptLabelText}>Status</span>
-                    <span style={styles.receiptStatusBadge}>SECURE & VERIFIED</span>
-                  </div>
-                </div>
-
-                <div style={styles.receiptFooter}>
-                  <p style={styles.receiptBrand}>💎 Premium SaveMoney Asset Management</p>
-                </div>
-              </div>
-
-              <div style={styles.receiptActionContainer}>
-                <button style={styles.receiptShareBtn} onClick={handleShareReceipt}>
-                  📸 Share / Save Receipt Image
-                </button>
-                <button style={styles.receiptCloseBtn} onClick={() => setSelectedTxn(null)}>
-                  Close Window
-                </button>
-              </div>
-            </div>
+        {/* --- ট্রানজ্যাকশন রিসিপ্ট মডাল (Corrected) --- */}
+{selectedTxn && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.receiptContainer}>
+      <div ref={receiptRef} style={styles.receiptCard}>
+        <div style={styles.receiptHeader}>
+          <div style={styles.receiptPulseIconCircle}>
+            <span style={styles.receiptCheckMark}>✓</span>
           </div>
-        )}
+          <h3 style={styles.receiptStatusText}>Verified Investment Transfer</h3>
+          <h1 style={{...styles.receiptAmountDisplay, color: selectedTxn.isCredit ? "#34d399" : "#f87171"}}>
+            ₹{Number(selectedTxn.amount).toLocaleString("en-IN")}.00
+          </h1>
+          <p style={styles.receiptTypeTag}>{selectedTxn.desc.toUpperCase()}</p>
+        </div>
+        
+        <div style={styles.receiptDivider}>
+          <div style={styles.receiptNotchLeft}></div>
+          <div style={styles.receiptNotchRight}></div>
+        </div>
+
+        <div style={styles.receiptBody}>
+          <div style={styles.receiptRowItem}>
+            <span style={styles.receiptLabelText}>Receiver Name</span>
+            <span style={styles.receiptValueText}>
+              {
+                selectedTxn.receiverName || 
+                selectedTxn.receiver || 
+                (selectedTxn.desc.includes("(") && selectedTxn.desc.includes(")") 
+                  ? selectedTxn.desc.match(/\(([^)]+)\)/)?.[1] 
+                  : selectedTxn.desc)
+              }
+            </span>
+          </div>
+          <div style={styles.receiptRowItem}>
+            <span style={styles.receiptLabelText}>Sender Name</span>
+            <span style={styles.receiptValueText}>{wallet.name}</span>
+          </div>
+          <div style={styles.receiptRowItem}>
+            <span style={styles.receiptLabelText}>Transaction ID</span>
+            <span style={{...styles.receiptValueText, color: "#fbbf24"}}>{selectedTxn._id || selectedTxn.txnId || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
+          </div>
+          <div style={styles.receiptRowItem}>
+            <span style={styles.receiptLabelText}>Date & Time</span>
+            <span style={styles.receiptValueText}>
+              {selectedTxn.createdAt || selectedTxn.date
+                ? new Date(selectedTxn.createdAt || selectedTxn.date).toLocaleString("en-IN")
+                : "N/A"}
+            </span>
+          </div>
+          <div style={styles.receiptRowItem}>
+            <span style={styles.receiptLabelText}>Remarks</span>
+            <span style={styles.receiptValueText}>wallet transaction</span>
+          </div>
+          <div style={styles.receiptRowItem}>
+            <span style={styles.receiptLabelText}>Status</span>
+            <span style={styles.receiptStatusBadge}>SECURE & VERIFIED</span>
+          </div>
+        </div>
+
+        <div style={styles.receiptFooter}>
+          <p style={styles.receiptBrand}>💎 Premium SaveMoney Asset Management</p>
+        </div>
+      </div>
+
+      <div style={styles.receiptActionContainer}>
+        <button style={styles.receiptShareBtn} onClick={handleShareReceipt}>
+          📸 Share / Save Receipt Image
+        </button>
+        <button style={styles.receiptCloseBtn} onClick={() => setSelectedTxn(null)}>
+          Close Window
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
         {/* Add Cash Modal */}
         {addOpen && (
