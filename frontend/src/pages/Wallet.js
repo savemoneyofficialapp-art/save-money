@@ -845,44 +845,43 @@ export default function Wallet() {
           <div style={styles.receiptNotchRight}></div>
         </div>
 
-        <div style={styles.receiptBody}>
-          <div style={styles.receiptRowItem}>
-            <span style={styles.receiptLabelText}>Receiver Name</span>
-            <span style={styles.receiptValueText}>
-              {
-                selectedTxn.receiverName || 
-                selectedTxn.receiver || 
-                (selectedTxn.desc.includes("(") && selectedTxn.desc.includes(")") 
-                  ? selectedTxn.desc.match(/\(([^)]+)\)/)?.[1] 
-                  : selectedTxn.desc)
-              }
-            </span>
-          </div>
-          <div style={styles.receiptRowItem}>
-            <span style={styles.receiptLabelText}>Sender Name</span>
-            <span style={styles.receiptValueText}>{wallet.name}</span>
-          </div>
-          <div style={styles.receiptRowItem}>
-            <span style={styles.receiptLabelText}>Transaction ID</span>
-            <span style={{...styles.receiptValueText, color: "#fbbf24"}}>{selectedTxn._id || selectedTxn.txnId || "TXN"+Math.floor(100000+Math.random()*900000)}</span>
-          </div>
-          <div style={styles.receiptRowItem}>
-            <span style={styles.receiptLabelText}>Date & Time</span>
-            <span style={styles.receiptValueText}>
-              {selectedTxn.createdAt || selectedTxn.date
-                ? new Date(selectedTxn.createdAt || selectedTxn.date).toLocaleString("en-IN")
-                : "N/A"}
-            </span>
-          </div>
-          <div style={styles.receiptRowItem}>
-            <span style={styles.receiptLabelText}>Remarks</span>
-            <span style={styles.receiptValueText}>wallet transaction</span>
-          </div>
-          <div style={styles.receiptRowItem}>
-            <span style={styles.receiptLabelText}>Status</span>
-            <span style={styles.receiptStatusBadge}>SECURE & VERIFIED</span>
-          </div>
-        </div>
+        <<div style={styles.receiptBody}>
+  <div style={styles.receiptRowItem}>
+    <span style={styles.receiptLabelText}>Receiver Name</span>
+    <span style={styles.receiptValueText}>
+      {selectedTxn.type === 'Debit' 
+        ? (selectedTxn.receiverName || "Authorized Receiver") 
+        : (selectedTxn.senderName || wallet.name)}
+    </span>
+  </div>
+  <div style={styles.receiptRowItem}>
+    <span style={styles.receiptLabelText}>Sender Name</span>
+    <span style={styles.receiptValueText}>
+      {selectedTxn.type === 'Debit' 
+        ? (selectedTxn.senderName || wallet.name) 
+        : (selectedTxn.receiverName || "Authorized Receiver")}
+    </span>
+  </div>
+  <div style={styles.receiptRowItem}>
+    <span style={styles.receiptLabelText}>Transaction ID</span>
+    <span style={{...styles.receiptValueText, color: "#fbbf24"}}>{selectedTxn._id || selectedTxn.txnId}</span>
+  </div>
+  <div style={styles.receiptRowItem}>
+    <span style={styles.receiptLabelText}>Date & Time</span>
+    <span style={styles.receiptValueText}>
+      {new Date(selectedTxn.createdAt || selectedTxn.date).toLocaleString("en-IN")}
+    </span>
+  </div>
+  <div style={styles.receiptRowItem}>
+    <span style={styles.receiptLabelText}>Remarks</span>
+    <span style={styles.receiptValueText}>wallet transaction</span>
+  </div>
+  <div style={styles.receiptRowItem}>
+    <span style={styles.receiptLabelText}>Status</span>
+    <span style={styles.receiptStatusBadge}>SECURE & VERIFIED</span>
+  </div>
+</div>
+
 
         <div style={styles.receiptFooter}>
           <p style={styles.receiptBrand}>💎 Premium SaveMoney Asset Management</p>
