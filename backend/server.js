@@ -2922,23 +2922,29 @@ app.post('/wallet-transfer', async (req, res) => {
 
         // মূল WalletHistory মডেলে সঠিক তথ্যসহ রেকর্ড তৈরি করুন
     await WalletHistory.create({
-      email: sender.email,
-      type: "Transfer Sent",
+      _id: txnId,
+      type: "debit",
       amount: Number(amount),
-      title: "Transfer Sent",
-      description: `sent to ${receiver.walletId} (${receiver.name})`,
-      status: "Success",
-      date: timestamp
+      senderName: sender.name,
+      senderWalletId: sender.walletId,
+      receiverName: receiver.name,
+      receiverWalletId: receiver.walletId,
+      desc: `sent to ${receiver.walletId}`,
+      note: `Transfer to ${receiver.name} (${receiver.walletId})`,
+      createdAt: timestamp
     });
 
     await WalletHistory.create({
-      email: receiver.email,
-      type: "Transfer Received",
+      _id: txnId,
+      type: "credit",
       amount: Number(amount),
-      title: "Transfer Received",
-      description: `received from ${sender.walletId} (${sender.name})`,
-      status: "Success",
-      date: timestamp
+      senderName: sender.name,
+      senderWalletId: sender.walletId,
+      receiverName: receiver.name,
+      receiverWalletId: receiver.walletId,
+      desc: `received from ${sender.walletId}`,
+      note: `Received from ${sender.name} (${sender.walletId})`,
+      createdAt: timestamp
     });
 
 
