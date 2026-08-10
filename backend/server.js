@@ -50,10 +50,7 @@ const { P2PUser, P2PReview } = require("./models/p2p");
 
 const app = express();
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+
 
 console.log("SERVER VERSION: CORS TEST ACTIVE");
 
