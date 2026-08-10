@@ -4,7 +4,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-comp
 
 // ধাপ ১ থেকে পাওয়া আপনার Firebase Config এখানে বসান
 const firebaseConfig = {
-  apiKey: "AIzaSyDqgsE1mND4pl6ZxlExPOW7zecHW3x_H94",
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: "savemoney-a2615.firebaseapp.com",
   projectId: "savemoney-a2615",
   storageBucket: "savemoney-a2615.firebasestorage.app",
