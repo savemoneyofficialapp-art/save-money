@@ -115,16 +115,6 @@ export default function MyInvestment() {
     );
   };
 
-  const openStatement = (plan) => {
-    setSelectedPlan(plan);
-    setStatementOpen(true);
-  };
-
-  const openRenewInfo = (plan) => {
-    setSelectedPlan(plan);
-    setRenewOpen(true);
-  };
-
   const downloadSlip = (planId, historyId) => {
     window.open(`${API}/investment-slip/${planId}/${historyId}`, "_blank");
   };
@@ -179,7 +169,6 @@ export default function MyInvestment() {
     }
   };
 
-  // ব্রাউজার অ্যালার্ট রিমুভ করে সুন্দর কাস্টম ডিজাইন পপআপ করা হলো
   const viewDetails = (inv) => {
     const detailsContent = (
       <div style={{ textAlign: "left", marginTop: "10px" }}>
@@ -371,7 +360,6 @@ export default function MyInvestment() {
 
                   setRenewOpen(false);
 
-                  // রিনিউ রেসপন্স মেসেজ কাস্টম মডালে পাঠানো হলো
                   setCustomAlert({ 
                     show: true, 
                     title: "Notification", 
@@ -401,7 +389,6 @@ export default function MyInvestment() {
         </div>
       )}
 
-      {/* প্রিমিয়াম ইন্টেলিজেন্ট গ্লাস-ব্লুর কাস্টম পপআপ মডাল */}
       {customAlert.show && (
         <div style={{
           position: "fixed",
@@ -436,7 +423,6 @@ export default function MyInvestment() {
             animation: "popupBounceScale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"
           }}>
             
-            {/* টাইপ অনুযায়ী আকর্ষণীয় বড় আইকন */}
             <div style={{ fontSize: "56px", marginBottom: "12px", display: "inline-block" }}>
               {customAlert.type === "details" ? "📊" : "ℹ️"}
             </div>
@@ -445,7 +431,6 @@ export default function MyInvestment() {
               {customAlert.title}
             </h2>
             
-            {/* কন্টেন্ট বা ডেসক্রিপশন টেক্সট (খুবই চমৎকার ও বড় সাইজ) */}
             <div style={{ fontSize: "17px", fontWeight: "700", color: "#334155", marginBottom: "28px", lineHeight: "1.6" }}>
               {customAlert.message}
             </div>
@@ -592,8 +577,7 @@ function InvestmentCard({
   const status = inv.status || "Active";
   const totalReturn = inv.totalReturn || inv.returnAmount || 0;
   const maturityAmount = inv.maturityAmount || Number(amount) + Number(totalReturn);
-  const progress = inv.progress || 0;
-  const renewDateValue = inv?.renewDate || inv?.nextRenewDate;
+  const progress = inv.progress || 5;
 
   return (
     <section style={styles.card}>
@@ -608,62 +592,115 @@ function InvestmentCard({
           </h2>
 
           <div style={{ ...styles.activeBadge, color: theme.color, borderColor: theme.color }}>
-            ✅ Active Investment
+            🟢 ACTIVE INVESTMENT
           </div>
         </div>
 
-        <button style={styles.idBox} onClick={() => copyId(investmentId)}>
-          <p>Investment ID</p>
-          <b>{String(investmentId).slice(0, 14)}</b>
-          <span>📋 ›</span>
-        </button>
+        {/* আপডেট করা প্রিমিয়াম ডার্ক আইডি বক্স (২য় স্ক্রিনশট অনুযায়ী) */}
+        <div style={styles.darkIdBox} onClick={() => copyId(investmentId)}>
+          <div style={styles.idBoxTopText}>INVESTMENT ID</div>
+          <div style={styles.idBoxRow}>
+            <b>{String(investmentId)}</b>
+            <span style={styles.copyIcon}>📋</span>
+          </div>
+        </div>
       </div>
 
       <div style={styles.detailsGrid}>
-        <Info icon="💰" title="Required Investment" value={money(requiredInvestment || amount)} color={theme.color} />
-        <Info icon="🪙" title="Invested Amount" value={money(investedAmount || monthlyReturn)} color={theme.color} />
-        <Info icon="📅" title={isSave ? "EMI / Monthly Return" : "Monthly Return"} value={money(monthlyReturn)} color={theme.color} />
-        <Info icon="⌛" title="Years / Tenure" value={`${years} Years`} color={theme.color} />
-        <Info icon="🗓" title="Start Date" value={date(inv.startDate || inv.createdAt)} color="#8b5cf6" />
-        <Info icon="📅" title="End Date" value={date(inv.endDate || inv.maturityDate)} color="#ec4899" />
-        <Info icon="🔄" title="Renew Date" value={date(inv.renewDate || inv.endDate || inv.maturityDate)} color="#f59e0b" />
-        <Info icon="%" title="Return Rate" value={`${returnRate}%`} color={theme.color} />
-        <Info icon="🛡" title="Status" value={status} color={theme.color} />
-        <Info icon="💵" title="Total Return" value={money(totalReturn)} color={theme.color} />
+        <Info icon="💰" title="REQUIRED INVESTMENT" value={money(requiredInvestment || amount)} color={theme.color} />
+        <Info icon="🪙" title="INVESTED AMOUNT" value={money(investedAmount || monthlyReturn)} color={theme.color} />
+        <Info icon="📈" title="EMI / MONTHLY RETURN" value={money(monthlyReturn)} color={theme.color} />
+        <Info icon="⌛" title="YEARS / TENURE" value={`${years} Years`} color={theme.color} />
+        <Info icon="📅" title="START DATE" value={date(inv.startDate || inv.createdAt)} color="#2563eb" />
+        <Info icon="📅" title="END DATE" value={date(inv.endDate || inv.maturityDate)} color="#e11d48" />
+        <Info icon="🔄" title="RENEW DATE" value={date(inv.renewDate || inv.endDate || inv.maturityDate)} color="#d97706" />
+        <Info icon="%" title="RETURN RATE" value={`${returnRate}%`} color={theme.color} />
+        <Info icon="🛡" title="STATUS" value={status} color={theme.color} />
       </div>
 
-      <div style={{ ...styles.progressBox, background: theme.soft }}>
-        <div style={styles.progressTop}>
-          <span style={{ color: theme.color }}>📈 Your Investment is Growing Steadily</span>
-          <b style={{ background: theme.color }}>{progress}%</b>
+      {/* আপডেট করা টোটাল রিটার্ন ব্যানার (২য় স্ক্রিনশট অনুযায়ী) */}
+      <div style={styles.totalReturnBanner}>
+        <div style={styles.totalReturnLeft}>
+          <div style={styles.totalReturnIconBag}>💰</div>
+          <div>
+            <div style={styles.totalReturnTitle}>TOTAL RETURN</div>
+            <div style={styles.totalReturnAmount}>{money(totalReturn)}</div>
+          </div>
+        </div>
+        <div style={styles.totalReturnChartGraphic}>
+          <svg width="180" height="45" viewBox="0 0 180 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 38C35 35 50 15 80 25C110 35 130 10 175 5" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
+            <path d="M5 40C40 38 65 20 95 28C125 36 145 15 175 8" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
+            <circle cx="175" cy="8" r="4" fill="#a855f7"/>
+          </svg>
+          <div style={styles.chartCurrencyBadge}>₹</div>
+        </div>
+      </div>
+
+      {/* আপডেট করা ডার্ক প্রোগ্রেস ও ম্যাচিউরিটি সেকশন (২য় স্ক্রিনশট অনুযায়ী) */}
+      <div style={styles.darkGrowthBox}>
+        <div style={styles.growthLeftCol}>
+          <div style={styles.growthTextHeader}>
+            <span>Your Investment is</span>
+            <span style={{ color: "#22c55e", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              Growing Steadily 📈
+            </span>
+          </div>
+
+          <div style={styles.progressTrackDark}>
+            <div style={{ ...styles.progressFillDark, width: `${progress}%` }} />
+          </div>
+
+          <div style={styles.progressLabels}>
+            <span>0%</span>
+            <span>25%</span>
+            <span>50%</span>
+            <span>75%</span>
+            <span style={styles.fivePercentBadge}>5%</span>
+          </div>
         </div>
 
-        <div style={styles.progressTrack}>
-          <div style={{ ...styles.progressFill, width: `${progress}%`, background: theme.color }} />
-        </div>
-
-        <div style={styles.maturityBox}>
-          <p>Expected Maturity Amount</p>
-          <h2 style={{ color: theme.color }}>{money(maturityAmount)}</h2>
-          <div style={styles.daysLeftBox}>
-            {isOverdue(inv?.renewDate || inv?.nextRenewDate) ? (
-              <>⚠️ Renew overdue — Investment inactive</>
-            ) : (
-              <>
-                ⏳ Renew due on {new Date(inv?.renewDate || inv?.nextRenewDate).toLocaleDateString("en-GB")}
-                {" — "}
-                {daysLeft} Days Left
-              </>
-            )}
+        <div style={styles.growthRightCol}>
+          <div style={styles.expectedMaturityLabel}>Expected Maturity Amount</div>
+          <div style={styles.expectedMaturityValue}>{money(maturityAmount)}</div>
+          
+          {/* গ্রাফ লাইন ভিজ্যুয়াল */}
+          <div style={styles.maturityChartOverlay}>
+            <svg width="140" height="35" viewBox="0 0 140 35" fill="none">
+              <path d="M5 30C25 28 45 18 65 22C85 26 110 10 135 4" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="135" cy="4" r="3.5" fill="#fbbf24"/>
+            </svg>
           </div>
         </div>
       </div>
 
+      {/* রিনিউ কাউন্টডাউন নোটিশ */}
+      <div style={styles.daysLeftBoxDark}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span>⏳</span>
+          <span>Renew due on {new Date(inv?.renewDate || inv?.nextRenewDate).toLocaleDateString("en-GB")}</span>
+        </div>
+        <b>{daysLeft} Days Left</b>
+      </div>
+
+      {/* আপডেট করা অ্যাকশন বাটন (অ্যারো সহ) */}
       <div style={styles.actions}>
-        <button onClick={() => viewDetails(inv)}>👁 View Details</button>
-        <button style={styles.actionBtn} onClick={() => certificate(inv)}>🏅 Certificate</button>
-        <button style={styles.actionBtn} onClick={() => downloadStatement(inv)}>⬇️ Statement</button>
-        <button style={styles.renewBtn} onClick={() => renewNow(inv)}>🔄 Renew Now</button>
+        <button style={styles.actionBtnItem} onClick={() => viewDetails(inv)}>
+          <span>👁 VIEW DETAILS</span>
+          <span>›</span>
+        </button>
+        <button style={styles.actionBtnItem} onClick={() => certificate(inv)}>
+          <span>🏅 CERTIFICATE</span>
+          <span>›</span>
+        </button>
+        <button style={styles.actionBtnItem} onClick={() => downloadStatement(inv)}>
+          <span>⬇️ STATEMENT</span>
+          <span>›</span>
+        </button>
+        <button style={styles.renewBtnItem} onClick={() => renewNow(inv)}>
+          <span>🔄 RENEW NOW</span>
+          <span>›</span>
+        </button>
       </div>
     </section>
   );
@@ -674,8 +711,8 @@ function Info({ icon, title, value, color }) {
     <div style={styles.info}>
       <div style={{ ...styles.infoIcon, color }}>{icon}</div>
       <div>
-        <p>{title}</p>
-        <h3 style={{ color }}>{value}</h3>
+        <p style={styles.infoTitleText}>{title}</p>
+        <h3 style={{ color, fontSize: "15px", fontWeight: "800", marginTop: "2px" }}>{value}</h3>
       </div>
     </div>
   );
@@ -967,23 +1004,47 @@ const styles = {
   activeBadge: {
     display: "inline-block",
     marginTop: "8px",
-    padding: "8px 14px",
-    borderRadius: "12px",
+    padding: "6px 12px",
+    borderRadius: "8px",
     border: "1px solid",
     fontWeight: "900",
+    fontSize: "12px",
     background: "#f8fffb"
   },
 
-  idBox: {
-    width: "245px",
-    minHeight: "68px",
-    border: "1px solid #dbe3ef",
+  // ২য় স্ক্রিনশটের মতো প্রিমিয়াম ডার্ক আইডি বক্স স্টাইল
+  darkIdBox: {
+    width: "250px",
+    background: "linear-gradient(135deg, #071747 0%, #0c235c 100%)",
     borderRadius: "16px",
-    background: "#f9fbff",
-    textAlign: "left",
-    padding: "12px 14px",
+    padding: "12px 16px",
+    color: "white",
     cursor: "pointer",
-    position: "relative"
+    boxShadow: "0 6px 16px rgba(7,23,71,0.25)",
+    border: "1px solid rgba(255,255,255,0.1)"
+  },
+
+  idBoxTopText: {
+    fontSize: "10px",
+    fontWeight: "700",
+    letterSpacing: "0.8px",
+    color: "#94a3b8",
+    marginBottom: "4px"
+  },
+
+  idBoxRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: "14px",
+    fontWeight: "800"
+  },
+
+  copyIcon: {
+    fontSize: "14px",
+    background: "rgba(255,255,255,0.1)",
+    padding: "4px 8px",
+    borderRadius: "6px"
   },
 
   detailsGrid: {
@@ -999,57 +1060,232 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "13px",
-    padding: "18px",
+    padding: "16px",
     borderRight: "1px solid #e5eaf3",
     borderBottom: "1px solid #e5eaf3"
   },
 
+  infoTitleText: {
+    fontSize: "11px",
+    fontWeight: "700",
+    color: "#64748b",
+    letterSpacing: "0.3px"
+  },
+
   infoIcon: {
-    width: "44px",
-    height: "44px",
+    width: "42px",
+    height: "42px",
     borderRadius: "50%",
     background: "#f1f5f9",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "900"
+    fontSize: "18px"
   },
 
-  progressBox: {
+  // ২য় স্ক্রিনশটের টোটাল রিটার্ন ব্যানার স্টাইল
+  totalReturnBanner: {
     marginTop: "14px",
-    borderRadius: "16px",
-    padding: "14px"
-  },
-
-  progressTop: {
+    background: "linear-gradient(135deg, #f5f3ff 0%, #faf8ff 100%)",
+    border: "1px solid #ede9fe",
+    borderRadius: "18px",
+    padding: "16px 20px",
     display: "flex",
     justifyContent: "space-between",
-    fontWeight: "900"
+    alignItems: "center"
   },
 
-  progressTrack: {
-    marginTop: "10px",
+  totalReturnLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px"
+  },
+
+  totalReturnIconBag: {
+    fontSize: "36px",
+    background: "#ede9fe",
+    width: "56px",
+    height: "56px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  totalReturnTitle: {
+    fontSize: "11px",
+    fontWeight: "800",
+    color: "#6b21a8",
+    letterSpacing: "0.5px"
+  },
+
+  totalReturnAmount: {
+    fontSize: "24px",
+    fontWeight: "900",
+    color: "#5b21b6",
+    marginTop: "2px"
+  },
+
+  totalReturnChartGraphic: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center"
+  },
+
+  chartCurrencyBadge: {
+    position: "absolute",
+    right: "0",
+    top: "-10px",
+    width: "22px",
+    height: "22px",
+    borderRadius: "50%",
+    background: "#c084fc",
+    color: "white",
+    fontSize: "12px",
+    fontWeight: "900",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  // ২য় স্ক্রিনশটের ডার্ক প্রোগ্রেস ও ম্যাচিউরিটি বক্স স্টাইল
+  darkGrowthBox: {
+    marginTop: "14px",
+    background: "#071747",
+    borderRadius: "20px",
+    padding: "22px",
+    color: "white",
+    display: "grid",
+    gridTemplateColumns: "1.2fr 1fr",
+    gap: "20px",
+    alignItems: "center",
+    boxShadow: "0 10px 25px rgba(7,23,71,0.3)"
+  },
+
+  growthLeftCol: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px"
+  },
+
+  growthTextHeader: {
+    fontSize: "16px",
+    fontWeight: "800",
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px"
+  },
+
+  progressTrackDark: {
     height: "10px",
     borderRadius: "20px",
-    background: "#dbeafe",
-    overflow: "hidden"
+    background: "#1e293b",
+    overflow: "hidden",
+    position: "relative",
+    marginTop: "6px"
   },
 
-  progressFill: {
+  progressFillDark: {
     height: "100%",
-    borderRadius: "20px"
+    borderRadius: "20px",
+    background: "linear-gradient(90deg, #16c784, #22c55e)"
   },
 
-  maturityBox: {
+  progressLabels: {
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: "11px",
+    fontWeight: "700",
+    color: "#94a3b8",
+    marginTop: "2px"
+  },
+
+  fivePercentBadge: {
+    background: "#f59e0b",
+    color: "#071747",
+    padding: "1px 6px",
+    borderRadius: "6px",
+    fontWeight: "900",
+    fontSize: "10px"
+  },
+
+  growthRightCol: {
     textAlign: "right",
-    marginTop: "8px"
+    position: "relative",
+    paddingLeft: "15px",
+    borderLeft: "1px solid rgba(255,255,255,0.1)"
   },
 
+  expectedMaturityLabel: {
+    fontSize: "12px",
+    fontWeight: "700",
+    color: "#94a3b8"
+  },
+
+  expectedMaturityValue: {
+    fontSize: "24px",
+    fontWeight: "900",
+    color: "#4ade80",
+    marginTop: "4px"
+  },
+
+  maturityChartOverlay: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginTop: "2px"
+  },
+
+  daysLeftBoxDark: {
+    marginTop: "12px",
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "14px",
+    padding: "12px 16px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    color: "white",
+    fontSize: "14px",
+    fontWeight: "700"
+  },
+
+  // ২য় স্ক্রিনশটের অ্যাকশন বাটন স্টাইল (অ্যারো সহ)
   actions: {
     marginTop: "14px",
     display: "grid",
-    gridTemplateColumns: "1fr 1.4fr 1.4fr 1fr",
-    gap: "8px"
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "10px"
+  },
+
+  actionBtnItem: {
+    background: "#ffffff",
+    border: "1px solid #cbd5e1",
+    borderRadius: "14px",
+    padding: "12px 10px",
+    fontSize: "11px",
+    fontWeight: "900",
+    color: "#071747",
+    cursor: "pointer",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+    transition: "all 0.2s"
+  },
+
+  renewBtnItem: {
+    background: "#071747",
+    border: "1px solid #071747",
+    borderRadius: "14px",
+    padding: "12px 10px",
+    fontSize: "11px",
+    fontWeight: "900",
+    color: "white",
+    cursor: "pointer",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: "0 4px 12px rgba(7,23,71,0.25)"
   },
 
   bottomBanner: {
@@ -1205,17 +1441,6 @@ const styles = {
     color: "white",
     fontWeight: "900",
     cursor: "pointer"
-  },
-
-  daysLeftBox: {
-    marginTop: "12px",
-    background: "#fef3c7",
-    color: "#92400e",
-    border: "1px solid #facc15",
-    borderRadius: "14px",
-    padding: "12px",
-    fontWeight: "900",
-    textAlign: "center"
   },
 
   closeBtn: {
