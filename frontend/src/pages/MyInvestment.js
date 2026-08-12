@@ -449,12 +449,12 @@ function InvestmentCard({
   const totalReturn = inv.totalReturn || inv.returnAmount || 0;
   const maturityAmount = inv.maturityAmount || Number(amount) + Number(totalReturn);
   
-  // সঠিক হিসাব অনুযায়ী প্রোগ্রেস পার্সেন্টেজ (যেমন স্ক্রিনশটে ৫% বা সঠিক প্রোগ্রেস দেখাচ্ছে)
-  const calculatedProgress = inv.progress !== undefined ? Number(inv.progress) : 5;
+  // আপনার দেওয়া স্ক্রিনশট অনুযায়ী ফিক্সড ৫% প্রোগ্রেস
+  const calculatedProgress = 5;
 
   return (
     <section style={styles.cardContainer}>
-      {/* বামপাশের গোল্ডেন গাছ ও বার সেকশন (প্রতিটি ইনভেস্টমেন্ট স্লিপের সঙ্গে থাকবে) */}
+      {/* বামপাশের গোল্ডেন গাছ ও বার সেকশন (আপনার স্ক্রিনশট অনুযায়ী হুবহু গোল্ডেন থিম) */}
       <div style={styles.cardLeftSidebar}>
         <div style={styles.sidebarLogoWrap}>
           <div style={styles.sidebarTreeIcon}>🌳</div>
@@ -471,6 +471,7 @@ function InvestmentCard({
           </div>
           <div style={styles.sidebarPlantBox}>🌱</div>
           <div style={styles.sidebarCoinsStack}>
+            <div style={styles.sCoin}>₹</div>
             <div style={styles.sCoin}>₹</div>
             <div style={styles.sCoin}>₹</div>
           </div>
@@ -728,10 +729,10 @@ const styles = {
   sidebarBrandSub: { color: "#34d399", fontSize: "10px", fontWeight: "800", letterSpacing: "1.2px", marginTop: "4px" },
   sidebarGraphicArea: { position: "relative", height: "160px", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "5px" },
   sidebarChartBars: { display: "flex", alignItems: "flex-end", gap: "6px", position: "absolute", left: "10px", bottom: "10px" },
-  sBar: { width: "8px", background: "rgba(52, 211, 153, 0.25)", borderRadius: "3px 3px 0 0" },
-  sidebarPlantBox: { position: "absolute", left: "55px", bottom: "10px", fontSize: "36px" },
+  sBar: { width: "8px", background: "rgba(245, 158, 11, 0.25)", borderRadius: "3px 3px 0 0" },
+  sidebarPlantBox: { position: "absolute", left: "55px", bottom: "10px", fontSize: "36px", filter: "drop-shadow(0 0 4px rgba(245, 158, 11, 0.6))" },
   sidebarCoinsStack: { position: "absolute", left: "15px", bottom: "5px", display: "flex", flexDirection: "column" },
-  sCoin: { width: "26px", height: "26px", borderRadius: "50%", background: "#f59e0b", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "900", boxShadow: "0 3px 8px rgba(0,0,0,0.3)" },
+  sCoin: { width: "26px", height: "26px", borderRadius: "50%", background: "linear-gradient(135deg, #fde047, #d97706)", color: "#78350f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "900", boxShadow: "0 3px 8px rgba(0,0,0,0.3)" },
   
   cardRightContent: { flex: 1, padding: "22px", background: "linear-gradient(180deg,#ffffff,#f8fbff)" },
   cardHeader: { display: "flex", alignItems: "center", gap: "16px", marginBottom: "18px" },
@@ -757,7 +758,7 @@ const styles = {
   growthLeftCol: { display: "flex", flexDirection: "column", gap: "8px" },
   growthTextHeader: { fontSize: "15px", fontWeight: "800", display: "flex", flexDirection: "column", gap: "2px" },
   progressTrackDark: { height: "9px", borderRadius: "20px", background: "#1e293b", overflow: "hidden", position: "relative", marginTop: "4px" },
-  progressFillDark: { height: "100%", borderRadius: "20px", background: "linear-gradient(90deg, #16c784, #22c55e)" },
+  progressFillDark: { height: "100%", borderRadius: "20px", background: "linear-gradient(90deg, #f59e0b, #fbbf24)" },
   progressLabels: { display: "flex", justifyContent: "space-between", fontSize: "10px", fontWeight: "700", color: "#94a3b8", marginTop: "2px" },
   fivePercentBadge: { background: "#f59e0b", color: "#071747", padding: "1px 5px", borderRadius: "5px", fontWeight: "900", fontSize: "9px" },
   growthRightCol: { textAlign: "right", position: "relative", paddingLeft: "12px", borderLeft: "1px solid rgba(255,255,255,0.1)" },
