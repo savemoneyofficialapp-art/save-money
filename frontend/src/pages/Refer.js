@@ -22,7 +22,7 @@ export default function Refer() {
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [statusFilter, setStatusFilter] = useState("All");
   const [referBonus, setReferBonus] = useState({});
-  const [performanceTab, setPerformanceTab] = useState("thisMonth");
+  const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
   
   // ট্রানসাকশান ডিটেইলস পপআপের জন্য স্টেট
   const [selectedTx, setSelectedTx] = useState(null);
@@ -199,25 +199,18 @@ export default function Refer() {
   };
 
   const filteredPerformanceHistory = (performance.history || []).filter((item) => {
-    if (!item.date) return false;
+    if (performanceFilter === "all") return true;
     const d = new Date(item.date);
     const now = new Date();
-    if (performanceTab === "thisMonth") {
+    if (performanceFilter === "thisMonth") {
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }
-    if (performanceTab === "lastMonth") {
+    if (performanceFilter === "lastMonth") {
       const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       return d.getMonth() === last.getMonth() && d.getFullYear() === last.getFullYear();
     }
-    return true; // "total" tab shows all history
+    return true;
   });
-
-  const currentPerformanceBalance = 
-    performanceTab === "thisMonth" 
-      ? Number(performance.thisMonthBonus || performance.balance || 0)
-      : performanceTab === "lastMonth"
-      ? Number(performance.lastMonthBonus || 0)
-      : Number(performance.totalEarned || performance.balance || user.performanceIncome || 0);
 
   const money = (n) =>
     `₹${Number(n || 0).toLocaleString("en-IN", {
@@ -535,13 +528,11 @@ export default function Refer() {
                     <div style={styles.txMetaDetails}>
                       <h4 style={styles.txSenderName}>{item.fromName || "Save Money User"}</h4>
                       <p style={styles.txTimeStamp}>
-  {new Date(item.date).toDateString() === new Date().toDateString() 
-    ? `Received Today, ${new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
-    : `${new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, ${new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
-  }
-</p>
-
-                      
+                        {new Date(item.date).toDateString() === new Date().toDateString() 
+                          ? `Received Today, ${new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+                          : `${new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, ${new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+                        }
+                      </p>
                       <div style={styles.txTagBadge}>
                         💵 {item.bonusType || "Money Received"}
                       </div>
@@ -582,7 +573,6 @@ export default function Refer() {
         </div>
         <button style={styles.referNowBtn} onClick={shareWhatsapp}>🔗 Refer Now</button>
       </section>
-
 
       {/* 📸 রসিদ ইমেজ মোডাল পপআপ */}
       {selectedTx && (
@@ -648,183 +638,220 @@ export default function Refer() {
       )}
 
       {/* ==========================================================
-          IMAGE 1: PERFORMANCE BONUS MODAL (EXACT DESIGN MATCH)
+          IMAGE 1: PERFORMANCE BONUS MODAL (UPDATED & DYNAMIC)
           ========================================================== */}
-                
-         {bonusModal === "performance" && (
-  <NewModal onClose={() => setBonusModal(null)}>
-    <div style={styles.perfModalHeaderContainer}>
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={styles.perfHeaderIconBox}>📈</div>
-          <h2 style={styles.perfModalMainTitle}>Performance</h2>
-        </div>
-        <p style={styles.perfModalSubTitle}>Track your performance and earnings</p>
-      </div>
-      <button style={styles.modalRoundCloseBtn} onClick={() => setBonusModal(null)}>
-        ✕
-      </button>
-    </div>
-
-    {/* Top Navigation Tabs */}
-    <div style={styles.perfTabsContainer}>
-      <button 
-        style={{
-          ...styles.perfTabButton,
-          ...(performanceTab === "thisMonth" ? styles.perfTabButtonActive : {})
-        }}
-        onClick={() => setPerformanceTab("thisMonth")}
-      >
-        <span>📅</span> THIS MONTH
-      </button>
-      <button 
-        style={{
-          ...styles.perfTabButton,
-          ...(performanceTab === "lastMonth" ? styles.perfTabButtonActive : {})
-        }}
-        onClick={() => setPerformanceTab("lastMonth")}
-      >
-        <span>📅</span> LAST MONTH
-      </button>
-      <button 
-        style={{
-          ...styles.perfTabButton,
-          ...(performanceTab === "total" ? styles.perfTabButtonActive : {})
-        }}
-        onClick={() => setPerformanceTab("total")}
-      >
-        <span>📊</span> TOTAL PERFORMANCE
-      </button>
-    </div>
-
-    {/* Wallet Card */}
-    <div style={styles.perfWalletCard}>
-      <div style={styles.perfWalletLeft}>
-        <div style={styles.perfWalletIconFloat}>💳</div>
-        <div>
-          <h4 style={styles.perfWalletTitle}>Performance Wallet</h4>
-          <p style={styles.perfWalletSubLabel}>Available Balance</p>
-          <h2 style={styles.perfWalletAmountValue}>{money(currentPerformanceBalance)}</h2>
-        </div>
-      </div>
-      <div style={styles.perfWalletRight}>
-        <div style={styles.perfBagIconCircle}>💰</div>
-        <div>
-          <p style={styles.perfTotalEarnedLabel}>Total Earned</p>
-          <h3 style={styles.perfTotalEarnedVal}>{money(performance.totalEarned || performance.balance || user.performanceIncome || 0)}</h3>
-        </div>
-      </div>
-    </div>
-
-    {/* Two Columns Section: History & Eligible Performance */}
-    <div style={styles.perfColumnsGrid}>
-      
-      {/* Left Column: History */}
-      <div style={styles.perfColumnBox}>
-        <div style={styles.perfColumnHeaderRow}>
-          <div style={styles.perfColIconBlue}>📄</div>
-          <div>
-            <h3 style={styles.perfColTitle}>History</h3>
-            <p style={styles.perfColSub}>Performance Bonus History</p>
+      {bonusModal === "performance" && (
+        <NewModal onClose={() => setBonusModal(null)}>
+          <div style={styles.modalHeaderRow}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={styles.perfHeaderIconBox}>📊</div>
+              <h2 style={styles.modalMainTitle}>Performance Bonus</h2>
+            </div>
+            <button style={styles.modalRoundCloseBtn} onClick={() => setBonusModal(null)}>
+              ✕
+            </button>
           </div>
-        </div>
 
-        <div style={styles.perfItemsList}>
-          {filteredPerformanceHistory.length === 0 ? (
-            <p style={{ textAlign: "center", padding: "30px", color: "#64748b", fontSize: "14px" }}>No performance history found.</p>
-          ) : (
-            (showAllHistory ? filteredPerformanceHistory : filteredPerformanceHistory.slice(0, 4)).map((item, idx) => (
-              <div key={idx} style={styles.perfHistoryRow}>
-                <div style={styles.perfRowGiftIcon}>🎁</div>
-                <div style={{ flex: 1, marginLeft: "12px" }}>
-                  <h4 style={styles.perfRowMainTitle}>Performance Bonus</h4>
-                  <p style={styles.perfRowDateSub}>
-                    {item.date ? `${new Date(item.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}, ${new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : "-"}
+          {!performance?.enabled ? (
+            <div style={{ padding: "10px 0" }}>
+              {performance?.expired ? (
+                <div
+                  style={{
+                    background: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: "20px",
+                    padding: "25px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: "40px", marginBottom: "10px" }}>❌</div>
+                  <h3 style={{ color: "#dc2626", margin: "0 0 8px 0", fontSize: "20px" }}>
+                    Performance Bonus Expired
+                  </h3>
+                  <p style={{ color: "#991b1b", margin: 0, fontSize: "14px", lineHeight: "1.5" }}>
+                    You failed to complete 10 active referrals within 30 days of registration.
                   </p>
                 </div>
-                <h3 style={styles.perfRowAmountGreen}>+ {money(item.amount)}</h3>
-              </div>
-            ))
-          )}
-        </div>
+              ) : (
+                <div
+                  style={{
+                    background: "#fff7ed",
+                    border: "1px solid #ffedd5",
+                    borderRadius: "20px",
+                    padding: "20px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        background: "#ffedd5",
+                        color: "#c2410c",
+                        padding: "4px 12px",
+                        borderRadius: "20px",
+                        fontWeight: "bold",
+                        fontSize: "12px",
+                      }}
+                    >
+                      Status: Inactive
+                    </span>
+                    <span style={{ color: "#ea580c", fontWeight: "bold", fontSize: "13px" }}>
+                      ⏳ {performance?.daysLeft || 0} Days Left
+                    </span>
+                  </div>
 
-        <div style={styles.perfColumnFooterBtn} onClick={() => setShowAllHistory(!showAllHistory)}>
-          <span>{showAllHistory ? "Show Less" : "View All History"}</span>
-          <span>&gt;</span>
-        </div>
-      </div>
-
-      {/* Right Column: Eligible Performance */}
-      <div style={styles.perfColumnBox}>
-        <div style={styles.perfColumnHeaderRow}>
-          <div style={styles.perfColIconPurple}>👥</div>
-          <div>
-            <h3 style={styles.perfColTitle}>Eligible Performance</h3>
-            <p style={styles.perfColSub}>People from whom you will get performance every month</p>
-          </div>
-        </div>
-
-        <div style={styles.perfItemsList}>
-          {(!performance.eligibleList || performance.eligibleList.length === 0) ? (
-            // Fallback sample data matching the requested UI design if backend list is empty
-            [
-              { name: "Ankit Sharma", id: "876543", amount: 300, color: "#3b82f6" },
-              { name: "Pooja Singh", id: "765432", amount: 250, color: "#10b981" },
-              { name: "Rahul Kumar", id: "654321", amount: 200, color: "#f97316" },
-              { name: "Neha Bhatt", id: "543210", amount: 150, color: "#ec4899" },
-              { name: "Deepak Sharma", id: "432109", amount: 100, color: "#8b5cf6" },
-            ].map((person, idx) => (
-              <div key={idx} style={styles.perfEligibleRow}>
-                <div style={{ ...styles.perfUserAvatarBadge, background: person.color }}>
-                  {person.name.split(" ").map(n=>n[0]).join("")}
-                </div>
-                <div style={{ flex: 1, marginLeft: "12px" }}>
-                  <h4 style={styles.perfRowMainTitle}>{person.name}</h4>
-                  <p style={styles.perfRowDateSub}>ID: {person.id}</p>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <h3 style={styles.perfEligibleAmountText}>₹{person.amount.toFixed(2)} <span style={{fontSize: "11px", fontWeight: "normal", color: "#64748b"}}>/ month</span></h3>
-                </div>
-              </div>
-            ))
-          ) : (
-            performance.eligibleList.map((person, idx) => (
-              <div key={idx} style={styles.perfEligibleRow}>
-                <div style={styles.perfUserAvatarBadge}>
-                  {getInitials(person.name)}
-                </div>
-                <div style={{ flex: 1, marginLeft: "12px" }}>
-                  <h4 style={styles.perfRowMainTitle}>{person.name || "User"}</h4>
-                  <p style={styles.perfRowDateSub}>ID: {person.referCode || person.id || "123456"}</p>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <h3 style={styles.perfEligibleAmountText}>
-                    {money(person.bonusAmount || person.amount || 0)} <span style={{fontSize: "11px", fontWeight: "normal", color: "#64748b"}}>/ {person.duration || "1 year"}</span>
+                  <h3 style={{ color: "#9a3412", fontSize: "18px", margin: "0 0 6px 0" }}>
+                    Unlock Performance Bonus
                   </h3>
+                  <p style={{ color: "#c2410c", fontSize: "13px", margin: "0 0 20px 0", lineHeight: "1.4" }}>
+                    Complete 10 active referrals within 30 days of account creation to unlock your performance bonus.
+                  </p>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "12px",
+                      background: "#ffffff",
+                      padding: "15px",
+                      borderRadius: "14px",
+                      border: "1px solid #fed7aa",
+                      textAlign: "center",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    <div>
+                      <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>
+                        Completed Active Refers
+                      </small>
+                      <h2 style={{ margin: "4px 0 0", color: "#ea580c", fontSize: "22px" }}>
+                        {performance?.directActiveCount || 0} / 10
+                      </h2>
+                    </div>
+                    <div style={{ borderLeft: "1px solid #fed7aa" }}>
+                      <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>
+                        Remaining Needed
+                      </small>
+                      <h2 style={{ margin: "4px 0 0", color: "#dc2626", fontSize: "22px" }}>
+                        {performance?.remaining || 0}
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "8px",
+                        background: "#fed7aa",
+                        borderRadius: "10px",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${Math.min(
+                            ((performance?.directActiveCount || 0) / 10) * 100,
+                            100
+                          )}%`,
+                          height: "100%",
+                          background: "#ea580c",
+                          borderRadius: "10px",
+                          transition: "width 0.3s ease",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div style={styles.perfGradientBanner}>
+                <div style={styles.bannerLeftInfo}>
+                  <p style={styles.bannerSubText}>Total Performance Bonus</p>
+                  <h1 style={styles.bannerMainAmount}>{money(performance?.balance || 0)}</h1>
+                </div>
+                <div style={styles.bannerRightBadgeWrap}>
+                  <span style={styles.bannerStatusLabel}>Status</span>
+                  <span style={styles.bannerActiveBadge}>● Active</span>
+                </div>
+                <div style={styles.bannerGraphicIllustration}>📈</div>
+              </div>
+
+              <div style={styles.twoColumnStatsGrid}>
+                <div style={styles.subStatCardItem}>
+                  <div style={styles.statIconBadgePurp}>📅</div>
+                  <div>
+                    <p style={styles.statCardLabelText}>This Month Bonus</p>
+                    <h3 style={styles.statCardAmountVal}>{money(performance?.thisMonthBonus || 0)}</h3>
+                  </div>
+                </div>
+
+                <div style={{ ...styles.subStatCardItem, borderLeft: "1px solid #eef2f6" }}>
+                  <div style={styles.statIconBadgeBlue}>📅</div>
+                  <div>
+                    <p style={styles.statCardLabelText}>Last Month Bonus</p>
+                    <h3 style={styles.statCardAmountVal}>{money(performance?.lastMonthBonus || 0)}</h3>
+                  </div>
                 </div>
               </div>
-            ))
+
+              <div style={styles.modalHorizontalLine} />
+
+              <div style={{ marginBottom: "20px" }}>
+                <div style={styles.modernSelectInputWrapper}>
+                  <span style={{ fontSize: "16px" }}>📅</span>
+                  <select
+                    value={performanceFilter}
+                    onChange={(e) => setPerformanceFilter(e.target.value)}
+                    style={styles.modernDropdownField}
+                  >
+                    <option value="thisMonth">This Month</option>
+                    <option value="lastMonth">Last Month</option>
+                    <option value="all">All</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={styles.historyHeadingSection}>
+                <span style={{ fontSize: "18px", color: "#4f46e5" }}>🕒</span>
+                <h3 style={styles.historySectionTitleText}>Performance History</h3>
+              </div>
+
+              <div style={styles.modalDataLogsContainer}>
+                {!filteredPerformanceHistory || filteredPerformanceHistory.length === 0 ? (
+                  <div style={styles.emptyHistoryStateBox}>
+                    <div style={styles.emptyStateIconPurple}>📄</div>
+                    <h4 style={styles.emptyStateMainTitle}>No History</h4>
+                    <p style={styles.emptyStateSubtitleText}>Your performance history will appear here</p>
+                  </div>
+                ) : (
+                  filteredPerformanceHistory.map((item, index) => (
+                    <div key={index} style={styles.historyItemRowCard}>
+                      <div>
+                        <h4 style={styles.logUserNameText}>{item.fromName || "User Name"}</h4>
+                        <p style={styles.logDateSubText}>{new Date(item.date).toLocaleDateString("en-IN")}</p>
+                      </div>
+                      <h3 style={styles.logIncomeValueGreen}>+{money(item.amount)}</h3>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
           )}
-        </div>
 
-        <div style={styles.perfColumnFooterBtn} onClick={() => alert("All Eligible Members Clicked")}>
-          <span>View All Eligible</span>
-          <span>&gt;</span>
-        </div>
-      </div>
-
-    </div>
-
-    {/* Bottom Footer Note Banner */}
-    <div style={styles.perfFooterBannerNote}>
-      <div style={styles.perfBannerShieldIcon}>🛡️</div>
-      <p style={styles.perfBannerNoteText}>Performance bonus is calculated monthly and added to your wallet.</p>
-    </div>
-
-  </NewModal>
-)}
-            
-
+          <button style={styles.modalFooterPrimaryBtn} onClick={() => setBonusModal(null)}>
+            Close
+          </button>
+        </NewModal>
+      )}
 
       {/* ==========================================================
           IMAGE 2: TEAM BONUS MODAL
@@ -1239,7 +1266,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- পেন্ডিং রেফারাল সাব-মডাল (Z-Index ফিক্সড) --- */}
+      {/* --- পেন্ডিং রেফারাল সাব-মডাল --- */}
       {showPendingModal && (
         <div style={styles.subModalOverlay} onClick={() => setShowPendingModal(false)}>
           <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -1264,7 +1291,7 @@ export default function Refer() {
         </div>
       )}
 
-      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল (Z-Index ফিক্সড) --- */}
+      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল --- */}
       {showTodayJoinModal && (
         <div style={styles.subModalOverlay} onClick={() => setShowTodayJoinModal(false)}>
           <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -1293,7 +1320,6 @@ export default function Refer() {
   );
 }
 
-// 100% সেম মডাল উইন্ডো ফ্রেম
 function NewModal({ children, onClose }) {
   return (
     <div style={styles.newModalOverlayOverlay} onClick={onClose}>
@@ -1315,294 +1341,12 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
-  /* ==========================================================
-     NEW PERFORMANCE MODAL STYLES (MATCHED 100% TO IMAGE DESIGN)
-     ========================================================== */
-  perfModalHeaderContainer: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "20px"
-  },
-  perfModalMainTitle: {
-    margin: 0,
-    fontSize: "22px",
-    fontWeight: "800",
-    color: "#0f172a"
-  },
-  perfModalSubTitle: {
-    margin: "2px 0 0 0",
-    fontSize: "13px",
-    color: "#64748b"
-  },
-  perfTabsContainer: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "10px",
-    backgroundColor: "#f8fafc",
-    padding: "6px",
-    borderRadius: "16px",
-    border: "1px solid #e2e8f0",
-    marginBottom: "22px"
-  },
-  perfTabButton: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "6px",
-    padding: "12px 10px",
-    borderRadius: "12px",
-    border: "none",
-    backgroundColor: "transparent",
-    fontSize: "12px",
-    fontWeight: "700",
-    color: "#64748b",
-    cursor: "pointer",
-    transition: "all 0.2s ease"
-  },
-  perfTabButtonActive: {
-    backgroundColor: "#ffffff",
-    color: "#2563eb",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-    border: "1px solid #e2e8f0"
-  },
-  perfWalletCard: {
-    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%)",
-    borderRadius: "22px",
-    padding: "24px 28px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    color: "#ffffff",
-    marginBottom: "24px",
-    position: "relative",
-    overflow: "hidden",
-    boxShadow: "0 10px 25px -5px rgba(37, 99, 235, 0.3)"
-  },
-  perfWalletLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-    zIndex: 2
-  },
-  perfWalletIconFloat: {
-    fontSize: "36px",
-    backgroundColor: "rgba(255,255,255,0.15)",
-    width: "60px",
-    height: "60px",
-    borderRadius: "16px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  perfWalletTitle: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: "700",
-    color: "#ffffff"
-  },
-  perfWalletSubLabel: {
-    margin: "2px 0 0 0",
-    fontSize: "12px",
-    color: "rgba(255,255,255,0.8)"
-  },
-  perfWalletAmountValue: {
-    margin: "4px 0 0 0",
-    fontSize: "28px",
-    fontWeight: "900",
-    color: "#ffffff"
-  },
-  perfWalletRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    zIndex: 2,
-    borderLeft: "1px solid rgba(255,255,255,0.2)",
-    paddingLeft: "24px"
-  },
-  perfBagIconCircle: {
-    width: "44px",
-    height: "44px",
-    backgroundColor: "rgba(255,255,255,0.15)",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "20px"
-  },
-  perfTotalEarnedLabel: {
-    margin: 0,
-    fontSize: "12px",
-    color: "rgba(255,255,255,0.8)"
-  },
-  perfTotalEarnedVal: {
-    margin: "2px 0 0 0",
-    fontSize: "20px",
-    fontWeight: "800",
-    color: "#ffffff"
-  },
-  perfColumnsGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "20px",
-    marginBottom: "20px"
-  },
-  perfColumnBox: {
-    backgroundColor: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "20px",
-    padding: "18px",
-    display: "flex",
-    flexDirection: "column",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.01)"
-  },
-  perfColumnHeaderRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    paddingBottom: "14px",
-    borderBottom: "1px solid #f1f5f9",
-    marginBottom: "12px"
-  },
-  perfColIconBlue: {
-    width: "40px",
-    height: "40px",
-    backgroundColor: "#eff6ff",
-    color: "#2563eb",
-    borderRadius: "12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "18px"
-  },
-  perfColIconPurple: {
-    width: "40px",
-    height: "40px",
-    backgroundColor: "#faf5ff",
-    color: "#9333ea",
-    borderRadius: "12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "18px"
-  },
-  perfColTitle: {
-    margin: 0,
-    fontSize: "15px",
-    fontWeight: "700",
-    color: "#0f172a"
-  },
-  perfColSub: {
-    margin: "2px 0 0 0",
-    fontSize: "11px",
-    color: "#64748b"
-  },
-  perfItemsList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    flex: 1
-  },
-  perfHistoryRow: {
-    display: "flex",
-    alignItems: "center",
-    padding: "10px 12px",
-    backgroundColor: "#f8fafc",
-    borderRadius: "14px",
-    border: "1px solid #f1f5f9"
-  },
-  perfRowGiftIcon: {
-    width: "36px",
-    height: "36px",
-    backgroundColor: "#eff6ff",
-    borderRadius: "10px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "16px"
-  },
-  perfRowMainTitle: {
-    margin: 0,
-    fontSize: "13px",
-    fontWeight: "700",
-    color: "#1e293b"
-  },
-  perfRowDateSub: {
-    margin: "2px 0 0 0",
-    fontSize: "11px",
-    color: "#64748b"
-  },
-  perfRowAmountGreen: {
-    margin: 0,
-    fontSize: "14px",
-    fontWeight: "800",
-    color: "#16a34a"
-  },
-  perfEligibleRow: {
-    display: "flex",
-    alignItems: "center",
-    padding: "10px 12px",
-    backgroundColor: "#f8fafc",
-    borderRadius: "14px",
-    border: "1px solid #f1f5f9"
-  },
-  perfUserAvatarBadge: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "50%",
-    backgroundColor: "#3b82f6",
-    color: "#ffffff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "bold",
-    fontSize: "13px"
-  },
-  perfEligibleAmountText: {
-    margin: 0,
-    fontSize: "13px",
-    fontWeight: "800",
-    color: "#2563eb"
-  },
-  perfColumnFooterBtn: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: "14px",
-    marginTop: "12px",
-    borderTop: "1px solid #f1f5f9",
-    color: "#2563eb",
-    fontSize: "13px",
-    fontWeight: "700",
-    cursor: "pointer"
-  },
-  perfFooterBannerNote: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    backgroundColor: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    borderRadius: "16px",
-    padding: "14px 20px"
-  },
-  perfBannerShieldIcon: {
-    fontSize: "22px"
-  },
-  perfBannerNoteText: {
-    margin: 0,
-    fontSize: "13px",
-    color: "#475569",
-    fontWeight: "500"
-  },
-  /* ==========================================================
-     PREVIOUS STYLES PRESERVED EXACTLY AS REQUESTED (100% SAME)
-     ========================================================== */
   newModalOverlayOverlay: {
     position: "fixed",
     inset: 0,
     backgroundColor: "rgba(15, 23, 42, 0.45)",
     backdropFilter: "blur(12px)",
-    zIndex: 99999, // মেইন মোডালের ইন্ডেক্স
+    zIndex: 99999,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -1613,7 +1357,7 @@ const styles = {
     inset: 0,
     backgroundColor: "rgba(15, 23, 42, 0.6)",
     backdropFilter: "blur(8px)",
-    zIndex: 100000, // মেইন মোডালের ওপরে সাব-মোডাল দেখানোর জন্য হায়ার ইন্ডেক্স
+    zIndex: 100000,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
