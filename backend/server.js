@@ -5818,9 +5818,16 @@ if (
 
 }
 
-    const allBonusHistory = await BonusLedger.find({
-      email: String(user.email).toLowerCase()
-    }).sort({ date: -1 });
+    const rawBonusHistory = await BonusLedger.find({
+  email: String(user.email).toLowerCase()
+}).sort({ date: -1 });
+
+const allBonusHistory = rawBonusHistory.map(item => ({
+  ...item._doc,
+  fromName: item.fromName || "Direct Member",
+  uplineName: item.uplineName || user.name
+}));
+
 
     const performanceHistory = allBonusHistory
   .filter(
