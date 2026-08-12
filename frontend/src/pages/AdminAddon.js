@@ -32,7 +32,7 @@ export default function AdminAddon() {
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [flatAmount, setFlatAmount] = useState(799); // এখান থেকে অ্যামাউন্ট কন্ট্রোল করতে পারবেন
+  const [flatAmount, setFlatAmount] = useState(799);
   const [offerList, setOfferList] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -86,6 +86,28 @@ export default function AdminAddon() {
       setOfferList([]);
     } else {
       toast.error(res?.msg || "Failed to distribute amount.");
+    }
+  };
+
+  // নির্দিষ্ট একজন ইউজারের জন্য পেমেন্ট পাঠানোর ফাংশন
+  const handleSingleDistribute = async (item) => {
+    if (!window.confirm(`Do you want to send ${money(item.remainingBalance)} to ${item.name}?`)) return;
+
+    setLoading(true);
+    const res = await apiPost("/admin-addon-single-distribute", {
+      userId: item.userId,
+      email: item.email,
+      remainingBalance: item.remainingBalance,
+      referralCount: item.referralCount
+    });
+    setLoading(false);
+
+    if (res && res.success) {
+      toast.success(res.msg || "Amount added to user's wallet successfully!");
+      // লিস্ট থেকে সাকসেস হওয়া ইউজারকে রিমুভ করে দেওয়া
+      setOfferList(offerList.filter((u) => u.userId !== item.userId));
+    } else {
+      toast.error(res?.msg || "Failed to distribute amount to user.");
     }
   };
 
@@ -158,6 +180,7 @@ export default function AdminAddon() {
                     <th style={styles.th}>Target Amount ({money(flatAmount)})</th>
                     <th style={styles.th}>Already Received</th>
                     <th style={styles.th}>Remaining Balance (Wallet)</th>
+                    <th style={styles.th}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -174,6 +197,15 @@ export default function AdminAddon() {
                       <td style={styles.td}>{money(item.alreadyReceived)}</td>
                       <td style={{ ...styles.td, color: "#4ade80", fontWeight: "bold" }}>
                         {money(item.remainingBalance)}
+                      </td>
+                      <td style={styles.td}>
+                        <button
+                          onClick={() => handleSingleDistribute(item)}
+                          style={styles.payButton}
+                          disabled={loading}
+                        >
+                          Pay Now
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -208,5 +240,6 @@ const styles = {
   tr: { borderBottom: "1px solid #334155" },
   th: { padding: "12px", textAlign: "left", background: "#0f172a", color: "#cbd5e1", fontSize: "14px" },
   td: { padding: "12px", fontSize: "14px" },
+  payButton: { padding: "6px 12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" },
   distributeButton: { marginTop: "20px", width: "100%", padding: "15px", background: "#16a34a", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "16px", fontWeight: "bold" }
 };
