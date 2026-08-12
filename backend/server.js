@@ -4687,7 +4687,6 @@ res.json(finalUsers);
 
 
 // ১. নির্দিষ্ট তারিখের মধ্যে রেফার হিসাব এবং বোনাস ক্যালকুলেশন এপিআই
-// ১. তারিখ অনুযায়ী রেফার ক্যালকুলেশন করার রাউট
 app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
   try {
     const { startDate, endDate } = req.body;
@@ -4704,8 +4703,10 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     let offerResults = [];
 
     for (let user of users) {
-      const referralsInInterval = await Referral.find({
-        referrerId: user._id,
+      // এখানে Referral এর বদলে BonusLedger ব্যবহার করা হলো এবং bonusType ফিল্টার করা হলো
+      const referralsInInterval = await BonusLedger.find({
+        email: user.email, // অথবা আপনার স্কিমা অনুযায়ী যে ফিল্ড দিয়ে ইউজারকে ট্র্যাক করেন
+        bonusType: "Referral Bonus",
         createdAt: { $gte: start, $lte: end }
       });
 
@@ -4713,7 +4714,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
 
       if (referralCount > 0) {
         const targetAmount = referralCount * 799; 
-        const alreadyReceived = referralsInInterval.reduce((sum, ref) => sum + (Number(ref.bonusPaid) || 0), 0);
+        const alreadyReceived = referralsInInterval.reduce((sum, ref) => sum + (Number(ref.amount) || 0), 0);
         const remainingBalance = targetAmount - alreadyReceived;
 
         if (remainingBalance > 0) {
@@ -4736,6 +4737,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     res.status(500).json({ success: false, msg: "সার্ভার এরর: ক্যালকুলেশনে সমস্যা হয়েছে" });
   }
 });
+
 
 // ২. বাকি টাকা ডিস্ট্রিবিউশন রাউট
 app.post("/admin-addon-distribute", auth, adminAuth, async (req, res) => {
