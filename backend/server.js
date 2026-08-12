@@ -5820,13 +5820,14 @@ if (
 
     const rawBonusHistory = await BonusLedger.find({
   email: String(user.email).toLowerCase()
-}).sort({ date: -1 });
+}).sort({ date: -1 }).lean();
 
 const allBonusHistory = rawBonusHistory.map(item => ({
-  ...item._doc,
+  ...item,
   fromName: item.fromName || "Direct Member",
-  uplineName: downlineUser ? downlineUser.name : "N/A" // যার থেকে বোনাস এসেছে বা সঠিক ডাউলাইনের নাম
+  uplineName: item.uplineName || user.name
 }));
+
 
 
     const performanceHistory = allBonusHistory
