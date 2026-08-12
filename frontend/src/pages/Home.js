@@ -15,6 +15,9 @@ export default function Home() {
   const [latestUpdate, setLatestUpdate] = useState("No new announcement");
   const [loading, setLoading] = useState(true);
 
+  // 👇 স্লাইডিং ড্রয়ার স্টেট
+  const [showDrawer, setShowDrawer] = useState(false);
+
   // 👇 পপআপ মোডালের স্টেট
   const [showOfferPopup, setShowOfferPopup] = useState(false);
 
@@ -296,6 +299,41 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
+      {/* 👇 SLIDING DRAWER (স্লাইডিং ডোর / ড্রয়ার) */}
+      {showDrawer && (
+        <div style={styles.drawerOverlay} onClick={() => setShowDrawer(false)}>
+          <div style={styles.drawerPanel} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.drawerHeader}>
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#ffffff" }}>Save Money App</h3>
+              <button style={styles.drawerCloseBtn} onClick={() => setShowDrawer(false)}>✕</button>
+            </div>
+            
+            <div style={styles.drawerBody}>
+              <div style={styles.drawerAppCard}>
+                <img 
+                  src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
+                  alt="App Icon" 
+                  style={styles.drawerAppIcon}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+                <h4 style={{ margin: "10px 0 5px", fontSize: "16px", fontWeight: "700", color: "#ffffff" }}>Save Money APK</h4>
+                <p style={{ color: "#94a3b8", fontSize: "13px", margin: "0 0 15px", lineHeight: "1.4" }}>
+                  Download the official Save Money Android app to access your account seamlessly.
+                </p>
+                
+                <a 
+                  href="/save-money.apk" 
+                  download="save-money.apk"
+                  style={styles.drawerDownloadBtn}
+                >
+                  📥 Download APK File
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 👇 PHOTO POPUP MODAL (স্ক্রিনের মিডিল পপআপ) */}
       {showOfferPopup && (
         <div style={styles.popupOverlay}>
@@ -344,7 +382,10 @@ export default function Home() {
 
       {/* TOP HEADER */}
       <div style={styles.topHeader}>
-        <button style={styles.menuButton}>
+        <button 
+          style={styles.menuButton}
+          onClick={() => setShowDrawer(true)}
+        >
           ☰
         </button>
 
@@ -859,6 +900,84 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
+  // 👇 স্লাইডিং ড্রয়ারের স্টাইল
+  drawerOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(2, 6, 23, 0.75)",
+    backdropFilter: "blur(6px)",
+    zIndex: 100002,
+    display: "flex",
+    justifyContent: "flex-start"
+  },
+  drawerPanel: {
+    background: "#0f172a",
+    width: "300px",
+    height: "100%",
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+    boxShadow: "5px 0 30px rgba(0,0,0,0.5)",
+    borderRight: "1px solid #1e293b",
+    animation: "slideInLeft 0.3s ease"
+  },
+  drawerHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: "20px",
+    borderBottom: "1px solid #1e293b",
+    paddingBottom: "12px"
+  },
+  drawerCloseBtn: {
+    background: "#1e293b",
+    border: "none",
+    color: "#ffffff",
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  drawerBody: {
+    flex: 1,
+    overflowY: "auto"
+  },
+  drawerAppCard: {
+    background: "#1e293b",
+    padding: "16px",
+    borderRadius: "16px",
+    textAlign: "center",
+    border: "1px solid #334155"
+  },
+  drawerAppIcon: {
+    width: "60px",
+    height: "60px",
+    borderRadius: "14px",
+    objectFit: "contain"
+  },
+  drawerDownloadBtn: {
+    display: "block",
+    width: "100%",
+    padding: "12px",
+    background: "linear-gradient(135deg, #22c55e, #16a34a)",
+    color: "#ffffff",
+    fontWeight: "800",
+    fontSize: "14px",
+    borderRadius: "12px",
+    textDecoration: "none",
+    textAlign: "center",
+    boxShadow: "0 4px 14px rgba(34, 197, 94, 0.35)",
+    boxSizing: "border-box"
+  },
+
   // 👇 পপআপ মোডালের স্টাইল
   popupOverlay: {
     position: "fixed",
@@ -1555,6 +1674,10 @@ const keyframes = `
 @keyframes marquee {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
+}
+@keyframes slideInLeft {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0); }
 }
 `;
 try {
