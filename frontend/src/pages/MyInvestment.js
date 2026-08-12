@@ -205,191 +205,164 @@ export default function MyInvestment() {
   }
 
   return (
-    <div style={styles.mainLayoutWrapper}>
-      <div style={styles.leftSidebar}>
-        <div style={styles.sidebarLogoWrap}>
-          <div style={styles.sidebarTreeIcon}>🌳</div>
-          <h2 style={styles.sidebarBrandTitle}>SAVE MONEY</h2>
-          <p style={styles.sidebarBrandSub}>SIP INVEST PLAN</p>
+    <div style={styles.page}>
+      <div style={styles.wrap}>
+
+        <div style={styles.header}>
+          <button style={styles.backBtn} onClick={() => navigate("/home")}>
+            ←
+          </button>
+
+          <div style={styles.headerTitle}>
+            <h1>My Investment</h1>
+            <p>Track, manage & grow your wealth</p>
+          </div>
+
+          <div style={styles.rightTop}>
+            <div style={styles.secureBadge}>🛡 100% Secure</div>
+            <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>
+              🔔
+              <span></span>
+            </button>
+          </div>
         </div>
 
-        <div style={styles.sidebarGraphicArea}>
-          <div style={styles.sidebarChartBars}>
-            <div style={{...styles.sBar, height: "40px"}}></div>
-            <div style={{...styles.sBar, height: "65px"}}></div>
-            <div style={{...styles.sBar, height: "90px"}}></div>
-            <div style={{...styles.sBar, height: "120px"}}></div>
-          </div>
-          <div style={styles.sidebarPlantBox}>🌱</div>
-          <div style={styles.sidebarCoinsStack}>
-            <div style={styles.sCoin}>₹</div>
-            <div style={styles.sCoin}>₹</div>
-          </div>
-        </div>
+        {investments.length === 0 ? (
+          <EmptyInvestment navigate={navigate} />
+        ) : (
+          <>
+            <SummaryHero summary={summary} money={money} />
+
+            {investments.map((inv, index) => {
+              const currentCardInvestedAmount = inv.history && Array.isArray(inv.history) && inv.history.length > 0
+                ? inv.history.reduce((hSum, h) => hSum + Number(h.amount || 0), 0)
+                : Number(inv.amount || 0);
+
+              return (
+                <InvestmentCard
+                  key={inv._id || inv.investmentId || index}
+                  inv={inv}
+                  money={money}
+                  date={date}
+                  copyId={copyId}
+                  viewDetails={viewDetails}
+                  certificate={certificate}
+                  downloadStatement={downloadStatement}
+                  daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
+                  isOverdue={isOverdue}            
+                  requiredInvestment={inv.totalPlanAmount || inv.amount}
+                  investedAmount={currentCardInvestedAmount} 
+                  loadInvestments={loadInvestments}
+                  setCustomAlert={(val) => setCustomAlert(val)}
+                />
+              );
+            })}
+
+            <BottomBanner />
+          </>
+        )}
+
       </div>
 
-      <div style={styles.rightContentArea}>
-        <div style={styles.page}>
-          <div style={styles.wrap}>
+      {statementOpen && selectedPlan && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalBox}>
+            <h2>Payment Statement</h2>
+            <p>Start SIP payment and all renew payments are listed below.</p>
 
-            <div style={styles.header}>
-              <button style={styles.backBtn} onClick={() => navigate("/home")}>
-                ←
-              </button>
-
-              <div style={styles.headerTitle}>
-                <h1>My Investment</h1>
-                <p>Track, manage & grow your wealth</p>
-              </div>
-
-              <div style={styles.rightTop}>
-                <div style={styles.secureBadge}>🛡 100% Secure</div>
-                <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>
-                  🔔
-                  <span></span>
-                </button>
-              </div>
-            </div>
-
-            {investments.length === 0 ? (
-              <EmptyInvestment navigate={navigate} />
+            {(selectedPlan.history || []).length === 0 ? (
+              <p>No payment slip found</p>
             ) : (
-              <>
-                <SummaryHero summary={summary} money={money} />
+              selectedPlan.history.map((h, i) => (
+                <div key={i} style={styles.slipRow}>
+                  <div style={styles.slipBrandingBox}>
+                    <div style={styles.slipTreeIcon}>🌳</div>
+                    <div style={styles.slipBrandTextWrap}>
+                      <span style={styles.slipBrandTitle}>SAVE MONEY</span>
+                      <span style={styles.slipBrandSub}>SIP INVEST PLAN</span>
+                    </div>
+                  </div>
 
-                {investments.map((inv, index) => {
-                  const currentCardInvestedAmount = inv.history && Array.isArray(inv.history) && inv.history.length > 0
-                    ? inv.history.reduce((hSum, h) => hSum + Number(h.amount || 0), 0)
-                    : Number(inv.amount || 0);
+                  <div style={styles.slipInfoBox}>
+                    <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
+                    <p>{formatDate(h.date)}</p>
+                    <h3 style={{ color: "#16a34a", fontWeight: "800" }}>
+                      ₹ {Number(h.amount || 0).toLocaleString("en-IN")}
+                    </h3>
+                  </div>
 
-                  return (
-                    <InvestmentCard
-                      key={inv._id || inv.investmentId || index}
-                      inv={inv}
-                      money={money}
-                      date={date}
-                      copyId={copyId}
-                      viewDetails={viewDetails}
-                      certificate={certificate}
-                      downloadStatement={downloadStatement}
-                      daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
-                      isOverdue={isOverdue}            
-                      requiredInvestment={inv.totalPlanAmount || inv.amount}
-                      investedAmount={currentCardInvestedAmount} 
-                      loadInvestments={loadInvestments}
-                      setCustomAlert={(val) => setCustomAlert(val)}
-                    />
-                  );
-                })}
-
-                <BottomBanner />
-              </>
+                  <button
+                    style={styles.greenBtn}
+                    onClick={() =>
+                      downloadSlip(selectedPlan._id || selectedPlan.investmentId, h._id)
+                    }
+                  >
+                    Download Slip
+                  </button>
+                </div>
+              ))
             )}
 
+            <button style={styles.closeBtn} onClick={() => setStatementOpen(false)}>
+              Close
+            </button>
           </div>
-
-          {statementOpen && selectedPlan && (
-            <div style={styles.modalOverlay}>
-              <div style={styles.modalBox}>
-                <h2>Payment Statement</h2>
-                <p>Start SIP payment and all renew payments are listed below.</p>
-
-                {(selectedPlan.history || []).length === 0 ? (
-                  <p>No payment slip found</p>
-                ) : (
-                  selectedPlan.history.map((h, i) => (
-                    <div key={i} style={styles.slipRow}>
-                      {/* ছোট স্লিপ ব্র্যান্ডিং সেকশন */}
-                      <div style={styles.slipBrandingBox}>
-                        <div style={styles.slipTreeIcon}>🌳</div>
-                        <div style={styles.slipBrandTextWrap}>
-                          <span style={styles.slipBrandTitle}>SAVE MONEY</span>
-                          <span style={styles.slipBrandSub}>SIP INVEST PLAN</span>
-                        </div>
-                      </div>
-
-                      <div style={styles.slipInfoBox}>
-                        <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
-                        <p>{formatDate(h.date)}</p>
-                        <h3 style={{ color: "#16a34a", fontWeight: "800" }}>
-                          ₹ {Number(h.amount || 0).toLocaleString("en-IN")}
-                        </h3>
-                      </div>
-
-                      <button
-                        style={styles.greenBtn}
-                        onClick={() =>
-                          downloadSlip(selectedPlan._id || selectedPlan.investmentId, h._id)
-                        }
-                      >
-                        Download Slip
-                      </button>
-                    </div>
-                  ))
-                )}
-
-                <button style={styles.closeBtn} onClick={() => setStatementOpen(false)}>
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
-
-          {customAlert.show && (
-            <div style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(5, 8, 66, 0.4)",
-              backdropFilter: "blur(12px)", 
-              WebkitBackdropFilter: "blur(12px)",
-              zIndex: 99999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "20px"
-            }}>
-              <div style={{
-                width: "100%",
-                maxWidth: "380px",
-                background: "white",
-                borderRadius: "26px",
-                padding: "30px 24px",
-                color: "#071747",
-                boxShadow: "0 25px 60px -15px rgba(0,0,0,0.35)",
-                textAlign: "center",
-                border: "1px solid rgba(255, 255, 255, 0.8)"
-              }}>
-                <div style={{ fontSize: "56px", marginBottom: "12px", display: "inline-block" }}>
-                  {customAlert.type === "details" ? "📊" : "ℹ️"}
-                </div>
-                <h2 style={{ fontSize: "22px", fontWeight: "800", marginBottom: "16px", color: "#071747" }}>
-                  {customAlert.title}
-                </h2>
-                <div style={{ fontSize: "17px", fontWeight: "700", color: "#334155", marginBottom: "28px", lineHeight: "1.6" }}>
-                  {customAlert.message}
-                </div>
-                <button 
-                  style={{ 
-                    width: "100%", 
-                    padding: "14px", 
-                    fontSize: "16px", 
-                    fontWeight: "900", 
-                    background: customAlert.type === "details" ? "#0969ff" : "#16a34a", 
-                    color: "white", 
-                    border: "none", 
-                    borderRadius: "16px", 
-                    cursor: "pointer"
-                  }} 
-                  onClick={() => setCustomAlert({ show: false, title: "", message: "", type: "info" })}
-                >
-                  Okay, Got it
-                </button>
-              </div>
-            </div>
-          )}
-
         </div>
-      </div>
+      )}
+
+      {customAlert.show && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(5, 8, 66, 0.4)",
+          backdropFilter: "blur(12px)", 
+          WebkitBackdropFilter: "blur(12px)",
+          zIndex: 99999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "20px"
+        }}>
+          <div style={{
+            width: "100%",
+            maxWidth: "380px",
+            background: "white",
+            borderRadius: "26px",
+            padding: "30px 24px",
+            color: "#071747",
+            boxShadow: "0 25px 60px -15px rgba(0,0,0,0.35)",
+            textAlign: "center",
+            border: "1px solid rgba(255, 255, 255, 0.8)"
+          }}>
+            <div style={{ fontSize: "56px", marginBottom: "12px", display: "inline-block" }}>
+              {customAlert.type === "details" ? "📊" : "ℹ️"}
+            </div>
+            <h2 style={{ fontSize: "22px", fontWeight: "800", marginBottom: "16px", color: "#071747" }}>
+              {customAlert.title}
+            </h2>
+            <div style={{ fontSize: "17px", fontWeight: "700", color: "#334155", marginBottom: "28px", lineHeight: "1.6" }}>
+              {customAlert.message}
+            </div>
+            <button 
+              style={{ 
+                width: "100%", 
+                padding: "14px", 
+                fontSize: "16px", 
+                fontWeight: "900", 
+                background: customAlert.type === "details" ? "#0969ff" : "#16a34a", 
+                color: "white", 
+                border: "none", 
+                borderRadius: "16px", 
+                cursor: "pointer"
+              }} 
+              onClick={() => setCustomAlert({ show: false, title: "", message: "", type: "info" })}
+            >
+              Okay, Got it
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -467,28 +440,7 @@ function InvestmentCard({
     return formatDate(inv.renewDate || inv.nextRenewDate);
   };
 
-  const isSave =
-    String(inv.planType || inv.type || inv.planName || "")
-      .toLowerCase()
-      .includes("save");
-
-  const theme = isSave
-    ? {
-        color: "#16c784",
-        soft: "#effdf6",
-        title: inv.planName || "Save Money",
-        sub: inv.planSub || "SIP Invest Plan",
-        icon: "plant"
-      }
-    : {
-        color: "#0969ff",
-        soft: "#f1f6ff",
-        title: inv.planName || "One Time Investment",
-        sub: inv.planSub || "Upgrade Money",
-        icon: "rocket"
-      };
-
-  const investmentId = inv.investmentId || inv._id || `${isSave ? "SM" : "OT"}000000`;
+  const investmentId = inv.investmentId || inv._id || "SM000000";
   const amount = inv.amount || inv.totalAmount || inv.investAmount || 0;
   const monthlyReturn = inv.monthlyReturn || inv.monthlyEmi || inv.emi || 0;
   const years = inv.years || inv.tenure || inv.duration || 0;
@@ -499,121 +451,147 @@ function InvestmentCard({
   const progress = inv.progress || 5;
 
   return (
-    <section style={styles.card}>
-      <div style={styles.cardHeader}>
-        <div style={styles.planLogo}>
-          {theme.icon === "plant" ? <PlantIcon /> : <RocketIcon />}
+    <section style={styles.cardContainer}>
+      {/* বামপাশের গোল্ডেন গাছ ও বার সেকশন (প্রতিটা কার্ডের সঙ্গে থাকবে) */}
+      <div style={styles.cardLeftSidebar}>
+        <div style={styles.sidebarLogoWrap}>
+          <div style={styles.sidebarTreeIcon}>🌳</div>
+          <h2 style={styles.sidebarBrandTitle}>SAVE MONEY</h2>
+          <p style={styles.sidebarBrandSub}>SIP INVEST PLAN</p>
         </div>
 
-        <div style={styles.planTitleArea}>
-          <h2 style={{ color: theme.color }}>
-            {theme.title} <span>({theme.sub})</span>
-          </h2>
-          <div style={{ ...styles.activeBadge, color: theme.color, borderColor: theme.color }}>
-            🟢 ACTIVE INVESTMENT
+        <div style={styles.sidebarGraphicArea}>
+          <div style={styles.sidebarChartBars}>
+            <div style={{...styles.sBar, height: "30px"}}></div>
+            <div style={{...styles.sBar, height: "50px"}}></div>
+            <div style={{...styles.sBar, height: "70px"}}></div>
+            <div style={{...styles.sBar, height: "95px"}}></div>
           </div>
-        </div>
-
-        <div style={styles.darkIdBox} onClick={() => copyId(investmentId)}>
-          <div style={styles.idBoxTopText}>INVESTMENT ID</div>
-          <div style={styles.idBoxRow}>
-            <b>{String(investmentId)}</b>
-            <span style={styles.copyIcon}>📋</span>
+          <div style={styles.sidebarPlantBox}>🌱</div>
+          <div style={styles.sidebarCoinsStack}>
+            <div style={styles.sCoin}>₹</div>
+            <div style={styles.sCoin}>₹</div>
           </div>
         </div>
       </div>
 
-      <div style={styles.detailsGrid}>
-        <Info icon="💰" title="REQUIRED INVESTMENT" value={money(requiredInvestment || amount)} color={theme.color} />
-        <Info icon="🪙" title="INVESTED AMOUNT" value={money(investedAmount || monthlyReturn)} color={theme.color} />
-        <Info icon="📈" title="EMI / MONTHLY RETURN" value={money(monthlyReturn)} color={theme.color} />
-        <Info icon="⌛" title="YEARS / TENURE" value={`${years} Years`} color={theme.color} />
-        <Info icon="📅" title="START DATE" value={date(inv.startDate || inv.createdAt)} color="#2563eb" />
-        <Info icon="📅" title="END DATE" value={date(inv.endDate || inv.maturityDate)} color="#e11d48" />
-        <Info icon="🔄" title="RENEW DATE" value={date(inv.renewDate || inv.endDate || inv.maturityDate)} color="#d97706" />
-        <Info icon="%" title="RETURN RATE" value={`${returnRate}%`} color={theme.color} />
-        <Info icon="🛡" title="STATUS" value={status} color={theme.color} />
-      </div>
-
-      <div style={styles.totalReturnBanner}>
-        <div style={styles.totalReturnLeft}>
-          <div style={styles.totalReturnIconBag}>💰</div>
-          <div>
-            <div style={styles.totalReturnTitle}>TOTAL RETURN</div>
-            <div style={styles.totalReturnAmount}>{money(totalReturn)}</div>
-          </div>
-        </div>
-        <div style={styles.totalReturnChartGraphic}>
-          <svg width="180" height="45" viewBox="0 0 180 45" fill="none">
-            <path d="M5 38C35 35 50 15 80 25C110 35 130 10 175 5" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
-            <path d="M5 40C40 38 65 20 95 28C125 36 145 15 175 8" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="175" cy="8" r="4" fill="#a855f7"/>
-          </svg>
-          <div style={styles.chartCurrencyBadge}>₹</div>
-        </div>
-      </div>
-
-      <div style={styles.darkGrowthBox}>
-        <div style={styles.growthLeftCol}>
-          <div style={styles.growthTextHeader}>
-            <span>Your Investment is</span>
-            <span style={{ color: "#22c55e", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-              Growing Steadily 📈
-            </span>
+      {/* ডানপাশের মূল ইনভেস্টমেন্ট কন্টেন্ট */}
+      <div style={styles.cardRightContent}>
+        <div style={styles.cardHeader}>
+          <div style={styles.planLogo}>
+            <PlantIcon />
           </div>
 
-          <div style={styles.progressTrackDark}>
-            <div style={{ ...styles.progressFillDark, width: `${progress}%` }} />
-          </div>
-
-          <div style={styles.progressLabels}>
-            <span>0%</span>
-            <span>25%</span>
-            <span>50%</span>
-            <span>75%</span>
-            <span style={styles.fivePercentBadge}>5%</span>
-          </div>
-        </div>
-
-        <div style={styles.growthRightCol}>
-          <div style={styles.expectedMaturityLabel}>Expected Maturity Amount</div>
-          <div style={styles.expectedMaturityValue}>{money(maturityAmount)}</div>
-        </div>
-      </div>
-
-      <div style={styles.renewNoticeCard}>
-        <div style={styles.renewNoticeLeft}>
-          <div style={styles.renewNoticeHourglass}>⏳</div>
-          <div>
-            <div style={styles.renewNoticeTextMain}>
-              Renew due on {new Date(inv?.renewDate || inv?.nextRenewDate).toLocaleDateString("en-GB")}
+          <div style={styles.planTitleArea}>
+            <h2 style={{ color: "#16c784" }}>
+              Save Money <span>(SIP Invest Plan)</span>
+            </h2>
+            <div style={{ ...styles.activeBadge, color: "#16c784", borderColor: "#16c784" }}>
+              🟢 ACTIVE INVESTMENT
             </div>
-            <div style={styles.renewNoticeDaysLeft}>{daysLeft} Days Left</div>
+          </div>
+
+          <div style={styles.darkIdBox} onClick={() => copyId(investmentId)}>
+            <div style={styles.idBoxTopText}>INVESTMENT ID</div>
+            <div style={styles.idBoxRow}>
+              <b>{String(investmentId)}</b>
+              <span style={styles.copyIcon}>📋</span>
+            </div>
           </div>
         </div>
-        <button style={styles.viewRenewalDetailsBtn} onClick={() => setRenewOpen(true)}>
-          <span>VIEW RENEWAL DETAILS</span>
-          <span>›</span>
-        </button>
-      </div>
 
-      <div style={styles.actions}>
-        <button style={styles.actionBtnItem} onClick={() => viewDetails(inv)}>
-          <span>👁 VIEW DETAILS</span>
-          <span>›</span>
-        </button>
-        <button style={styles.actionBtnItem} onClick={() => certificate(inv)}>
-          <span>🏅 CERTIFICATE</span>
-          <span>›</span>
-        </button>
-        <button style={styles.actionBtnItem} onClick={() => downloadStatement(inv)}>
-          <span>⬇️ STATEMENT</span>
-          <span>›</span>
-        </button>
-        <button style={styles.renewBtnItem} onClick={() => setRenewOpen(true)}>
-          <span>🔄 RENEW NOW</span>
-          <span>›</span>
-        </button>
+        <div style={styles.detailsGrid}>
+          <Info icon="💰" title="REQUIRED INVESTMENT" value={money(requiredInvestment || amount)} color="#16c784" />
+          <Info icon="🪙" title="INVESTED AMOUNT" value={money(investedAmount || monthlyReturn)} color="#16c784" />
+          <Info icon="📈" title="EMI / MONTHLY RETURN" value={money(monthlyReturn)} color="#16c784" />
+          <Info icon="⌛" title="YEARS / TENURE" value={`${years} Years`} color="#16c784" />
+          <Info icon="📅" title="START DATE" value={date(inv.startDate || inv.createdAt)} color="#2563eb" />
+          <Info icon="📅" title="END DATE" value={date(inv.endDate || inv.maturityDate)} color="#e11d48" />
+          <Info icon="🔄" title="RENEW DATE" value={date(inv.renewDate || inv.endDate || inv.maturityDate)} color="#d97706" />
+          <Info icon="%" title="RETURN RATE" value={`${returnRate}%`} color="#16c784" />
+          <Info icon="🛡" title="STATUS" value={status} color="#16c784" />
+        </div>
+
+        <div style={styles.totalReturnBanner}>
+          <div style={styles.totalReturnLeft}>
+            <div style={styles.totalReturnIconBag}>💰</div>
+            <div>
+              <div style={styles.totalReturnTitle}>TOTAL RETURN</div>
+              <div style={styles.totalReturnAmount}>{money(totalReturn)}</div>
+            </div>
+          </div>
+          <div style={styles.totalReturnChartGraphic}>
+            <svg width="180" height="45" viewBox="0 0 180 45" fill="none">
+              <path d="M5 38C35 35 50 15 80 25C110 35 130 10 175 5" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
+              <path d="M5 40C40 38 65 20 95 28C125 36 145 15 175 8" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
+              <circle cx="175" cy="8" r="4" fill="#a855f7"/>
+            </svg>
+            <div style={styles.chartCurrencyBadge}>₹</div>
+          </div>
+        </div>
+
+        <div style={styles.darkGrowthBox}>
+          <div style={styles.growthLeftCol}>
+            <div style={styles.growthTextHeader}>
+              <span>Your Investment is</span>
+              <span style={{ color: "#22c55e", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                Growing Steadily 📈
+              </span>
+            </div>
+
+            <div style={styles.progressTrackDark}>
+              <div style={{ ...styles.progressFillDark, width: `${progress}%` }} />
+            </div>
+
+            <div style={styles.progressLabels}>
+              <span>0%</span>
+              <span>25%</span>
+              <span>50%</span>
+              <span>75%</span>
+              <span style={styles.fivePercentBadge}>5%</span>
+            </div>
+          </div>
+
+          <div style={styles.growthRightCol}>
+            <div style={styles.expectedMaturityLabel}>Expected Maturity Amount</div>
+            <div style={styles.expectedMaturityValue}>{money(maturityAmount)}</div>
+          </div>
+        </div>
+
+        <div style={styles.renewNoticeCard}>
+          <div style={styles.renewNoticeLeft}>
+            <div style={styles.renewNoticeHourglass}>⏳</div>
+            <div>
+              <div style={styles.renewNoticeTextMain}>
+                Renew due on {new Date(inv?.renewDate || inv?.nextRenewDate).toLocaleDateString("en-GB")}
+              </div>
+              <div style={styles.renewNoticeDaysLeft}>{daysLeft} Days Left</div>
+            </div>
+          </div>
+          <button style={styles.viewRenewalDetailsBtn} onClick={() => setRenewOpen(true)}>
+            <span>VIEW RENEWAL DETAILS</span>
+            <span>›</span>
+          </button>
+        </div>
+
+        <div style={styles.actions}>
+          <button style={styles.actionBtnItem} onClick={() => viewDetails(inv)}>
+            <span>👁 VIEW DETAILS</span>
+            <span>›</span>
+          </button>
+          <button style={styles.actionBtnItem} onClick={() => certificate(inv)}>
+            <span>🏅 CERTIFICATE</span>
+            <span>›</span>
+          </button>
+          <button style={styles.actionBtnItem} onClick={() => downloadStatement(inv)}>
+            <span>⬇️ STATEMENT</span>
+            <span>›</span>
+          </button>
+          <button style={styles.renewBtnItem} onClick={() => setRenewOpen(true)}>
+            <span>🔄 RENEW NOW</span>
+            <span>›</span>
+          </button>
+        </div>
       </div>
 
       {renewOpen && (
@@ -698,16 +676,6 @@ function PlantIcon() {
   );
 }
 
-function RocketIcon() {
-  return (
-    <div style={styles.rocketIcon}>
-      <span style={styles.rocketBody}></span>
-      <span style={styles.rocketWindow}></span>
-      <span style={styles.rocketFire}></span>
-    </div>
-  );
-}
-
 function BottomBanner() {
   return (
     <section style={styles.bottomBanner}>
@@ -726,38 +694,8 @@ function BottomBanner() {
 }
 
 const styles = {
-  mainLayoutWrapper: {
-    display: "flex",
-    minHeight: "100vh",
-    background: "#03082e",
-  },
-  leftSidebar: {
-    width: "280px",
-    background: "linear-gradient(180deg, #020617 0%, #071747 100%)",
-    borderRight: "1px solid rgba(255,255,255,0.08)",
-    padding: "30px 20px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    position: "sticky",
-    top: 0,
-    height: "100vh",
-    overflowY: "auto",
-    boxSizing: "border-box"
-  },
-  sidebarLogoWrap: { textAlign: "center" },
-  sidebarTreeIcon: { fontSize: "52px", marginBottom: "10px" },
-  sidebarBrandTitle: { color: "white", fontSize: "20px", fontWeight: "900", letterSpacing: "0.5px" },
-  sidebarBrandSub: { color: "#34d399", fontSize: "11px", fontWeight: "800", letterSpacing: "1.5px", marginTop: "4px" },
-  sidebarGraphicArea: { position: "relative", height: "220px", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "10px" },
-  sidebarChartBars: { display: "flex", alignItems: "flex-end", gap: "8px", position: "absolute", left: "15px", bottom: "20px" },
-  sBar: { width: "10px", background: "rgba(52, 211, 153, 0.25)", borderRadius: "4px 4px 0 0" },
-  sidebarPlantBox: { position: "absolute", left: "65px", bottom: "20px", fontSize: "44px" },
-  sidebarCoinsStack: { position: "absolute", left: "20px", bottom: "15px", display: "flex", flexDirection: "column", gap: "-10px" },
-  sCoin: { width: "32px", height: "32px", borderRadius: "50%", background: "#f59e0b", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "900", boxShadow: "0 4px 10px rgba(0,0,0,0.3)" },
-  rightContentArea: { flex: 1, overflowY: "auto" },
   page: { minHeight: "100vh", background: "linear-gradient(180deg,#050842 0%,#082a93 38%,#dbeafe 100%)", padding: "24px", fontFamily: "Arial, sans-serif", color: "#101a3a" },
-  wrap: { maxWidth: "980px", margin: "0 auto" },
+  wrap: { maxWidth: "1080px", margin: "0 auto" },
   loading: { minHeight: "100vh", background: "#050842", color: "white", display: "flex", justifyContent: "center", alignItems: "center" },
   loadingBox: { background: "rgba(255,255,255,.12)", padding: "28px", borderRadius: "28px", textAlign: "center" },
   header: { height: "78px", display: "flex", alignItems: "center", gap: "14px", color: "white" },
@@ -769,7 +707,7 @@ const styles = {
   emptyBox: { marginTop: "40px", background: "white", borderRadius: "30px", padding: "45px 25px", textAlign: "center", boxShadow: "0 18px 35px rgba(15,23,42,.18)" },
   emptyIcon: { fontSize: "80px" },
   emptyBtn: { marginTop: "18px", border: "none", borderRadius: "18px", padding: "15px 26px", background: "linear-gradient(135deg,#16c784,#059669)", color: "white", fontWeight: "900", fontSize: "17px", cursor: "pointer" },
-  hero: { position: "relative", overflow: "hidden", background: "linear-gradient(135deg,#2e1065,#4615a8,#1e0b58)", borderRadius: "28px", padding: "24px", minHeight: "225px", color: "white", display: "grid", gridTemplateColumns: "1fr 240px 1fr", gap: "12px", border: "1px solid rgba(255,255,255,.16)", boxShadow: "0 18px 35px rgba(0,0,0,.28)" },
+  hero: { position: "relative", overflow: "hidden", background: "linear-gradient(135deg,#2e1065,#4615a8,#1e0b58)", borderRadius: "28px", padding: "24px", minHeight: "225px", color: "white", display: "grid", gridTemplateColumns: "1fr 240px 1fr", gap: "12px", border: "1px solid rgba(255,255,255,.16)", boxShadow: "0 18px 35px rgba(0,0,0,.28)", marginBottom: "16px" },
   heroLeft: { zIndex: 2 },
   heroRight: { zIndex: 2 },
   heroItem: { display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" },
@@ -779,58 +717,69 @@ const styles = {
   coin1: { position: "absolute", left: "20px", bottom: "18px", width: "45px", height: "45px", borderRadius: "50%", background: "linear-gradient(135deg,#fde047,#f59e0b)", color: "#92400e", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900" },
   coin2: { position: "absolute", left: "58px", bottom: "4px", width: "48px", height: "48px", borderRadius: "50%", background: "linear-gradient(135deg,#facc15,#f97316)", color: "#92400e", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900" },
   shield: { position: "absolute", right: "20px", bottom: "10px", width: "65px", height: "78px", borderRadius: "26px 26px 35px 35px", background: "linear-gradient(135deg,#bbf7d0,#10b981)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "42px", fontWeight: "900", border: "5px solid #dcfce7" },
-  card: { background: "linear-gradient(180deg,#ffffff,#f8fbff)", borderRadius: "28px", padding: "24px", marginTop: "14px", boxShadow: "0 15px 32px rgba(15,23,42,.14)", border: "1px solid rgba(255,255,255,.85)" },
-  cardHeader: { display: "flex", alignItems: "center", gap: "18px", marginBottom: "18px" },
-  planLogo: { width: "98px", height: "98px", borderRadius: "50%", background: "radial-gradient(circle,#ffffff,#eefdf6)", boxShadow: "0 10px 24px rgba(0,0,0,.12)", display: "flex", alignItems: "center", justifyContent: "center" },
+  
+  /* নতুন কার্ড ডিজাইন যেখানে বামপাশে লম্বালম্বি ব্র্যান্ডিং বার যুক্ত আছে */
+  cardContainer: { display: "flex", background: "#ffffff", borderRadius: "28px", marginTop: "18px", boxShadow: "0 15px 32px rgba(15,23,42,.14)", border: "1px solid rgba(255,255,255,.85)", overflow: "hidden" },
+  cardLeftSidebar: { width: "240px", background: "linear-gradient(180deg, #020617 0%, #071747 100%)", borderRight: "1px solid rgba(255,255,255,0.08)", padding: "24px 16px", display: "flex", flexDirection: "column", justifyContent: "space-between", flexShrink: 0 },
+  sidebarLogoWrap: { textAlign: "center" },
+  sidebarTreeIcon: { fontSize: "46px", marginBottom: "6px" },
+  sidebarBrandTitle: { color: "white", fontSize: "17px", fontWeight: "900", letterSpacing: "0.5px" },
+  sidebarBrandSub: { color: "#34d399", fontSize: "10px", fontWeight: "800", letterSpacing: "1.2px", marginTop: "4px" },
+  sidebarGraphicArea: { position: "relative", height: "160px", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "5px" },
+  sidebarChartBars: { display: "flex", alignItems: "flex-end", gap: "6px", position: "absolute", left: "10px", bottom: "10px" },
+  sBar: { width: "8px", background: "rgba(52, 211, 153, 0.25)", borderRadius: "3px 3px 0 0" },
+  sidebarPlantBox: { position: "absolute", left: "55px", bottom: "10px", fontSize: "36px" },
+  sidebarCoinsStack: { position: "absolute", left: "15px", bottom: "5px", display: "flex", flexDirection: "column" },
+  sCoin: { width: "26px", height: "26px", borderRadius: "50%", background: "#f59e0b", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "900", boxShadow: "0 3px 8px rgba(0,0,0,0.3)" },
+  
+  cardRightContent: { flex: 1, padding: "22px", background: "linear-gradient(180deg,#ffffff,#f8fbff)" },
+  cardHeader: { display: "flex", alignItems: "center", gap: "16px", marginBottom: "18px" },
+  planLogo: { width: "80px", height: "80px", borderRadius: "50%", background: "radial-gradient(circle,#ffffff,#eefdf6)", boxShadow: "0 8px 20px rgba(0,0,0,.1)", display: "flex", alignItems: "center", justifyContent: "center" },
   planTitleArea: { flex: 1 },
-  activeBadge: { display: "inline-block", marginTop: "8px", padding: "6px 12px", borderRadius: "8px", border: "1px solid", fontWeight: "900", fontSize: "12px", background: "#f8fffb" },
-  darkIdBox: { width: "250px", background: "linear-gradient(135deg, #071747 0%, #0c235c 100%)", borderRadius: "16px", padding: "12px 16px", color: "white", cursor: "pointer", boxShadow: "0 6px 16px rgba(7,23,71,0.25)", border: "1px solid rgba(255,255,255,0.1)" },
-  idBoxTopText: { fontSize: "10px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" },
-  idBoxRow: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "14px", fontWeight: "800" },
-  copyIcon: { fontSize: "14px", background: "rgba(255,255,255,0.1)", padding: "4px 8px", borderRadius: "6px" },
-  detailsGrid: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", border: "1px solid #e5eaf3", borderRadius: "20px", overflow: "hidden", background: "#ffffff" },
-  info: { display: "flex", alignItems: "center", gap: "13px", padding: "16px", borderRight: "1px solid #e5eaf3", borderBottom: "1px solid #e5eaf3" },
-  infoTitleText: { fontSize: "11px", fontWeight: "700", color: "#64748b" },
-  infoIcon: { width: "42px", height: "42px", borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" },
-  totalReturnBanner: { marginTop: "14px", background: "linear-gradient(135deg, #f5f3ff 0%, #faf8ff 100%)", border: "1px solid #ede9fe", borderRadius: "18px", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  totalReturnLeft: { display: "flex", alignItems: "center", gap: "14px" },
-  totalReturnIconBag: { fontSize: "36px", background: "#ede9fe", width: "56px", height: "56px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
-  totalReturnTitle: { fontSize: "11px", fontWeight: "800", color: "#6b21a8" },
-  totalReturnAmount: { fontSize: "24px", fontWeight: "900", color: "#5b21b6", marginTop: "2px" },
+  activeBadge: { display: "inline-block", marginTop: "6px", padding: "5px 10px", borderRadius: "6px", border: "1px solid", fontWeight: "900", fontSize: "11px", background: "#f8fffb" },
+  darkIdBox: { width: "230px", background: "linear-gradient(135deg, #071747 0%, #0c235c 100%)", borderRadius: "14px", padding: "10px 14px", color: "white", cursor: "pointer", boxShadow: "0 6px 16px rgba(7,23,71,0.25)", border: "1px solid rgba(255,255,255,0.1)" },
+  idBoxTopText: { fontSize: "9px", fontWeight: "700", color: "#94a3b8", marginBottom: "3px" },
+  idBoxRow: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px", fontWeight: "800" },
+  copyIcon: { fontSize: "13px", background: "rgba(255,255,255,0.1)", padding: "3px 6px", borderRadius: "5px" },
+  detailsGrid: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", border: "1px solid #e5eaf3", borderRadius: "18px", overflow: "hidden", background: "#ffffff" },
+  info: { display: "flex", alignItems: "center", gap: "12px", padding: "14px", borderRight: "1px solid #e5eaf3", borderBottom: "1px solid #e5eaf3" },
+  infoTitleText: { fontSize: "10px", fontWeight: "700", color: "#64748b" },
+  infoIcon: { width: "38px", height: "38px", borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" },
+  totalReturnBanner: { marginTop: "14px", background: "linear-gradient(135deg, #f5f3ff 0%, #faf8ff 100%)", border: "1px solid #ede9fe", borderRadius: "16px", padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  totalReturnLeft: { display: "flex", alignItems: "center", gap: "12px" },
+  totalReturnIconBag: { fontSize: "32px", background: "#ede9fe", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
+  totalReturnTitle: { fontSize: "10px", fontWeight: "800", color: "#6b21a8" },
+  totalReturnAmount: { fontSize: "22px", fontWeight: "900", color: "#5b21b6", marginTop: "2px" },
   totalReturnChartGraphic: { position: "relative", display: "flex", alignItems: "center" },
-  chartCurrencyBadge: { position: "absolute", right: "0", top: "-10px", width: "22px", height: "22px", borderRadius: "50%", background: "#c084fc", color: "white", fontSize: "12px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" },
-  darkGrowthBox: { marginTop: "14px", background: "#071747", borderRadius: "20px", padding: "22px", color: "white", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px", alignItems: "center" },
-  growthLeftCol: { display: "flex", flexDirection: "column", gap: "10px" },
-  growthTextHeader: { fontSize: "16px", fontWeight: "800", display: "flex", flexDirection: "column", gap: "2px" },
-  progressTrackDark: { height: "10px", borderRadius: "20px", background: "#1e293b", overflow: "hidden", position: "relative", marginTop: "6px" },
+  chartCurrencyBadge: { position: "absolute", right: "0", top: "-10px", width: "20px", height: "20px", borderRadius: "50%", background: "#c084fc", color: "white", fontSize: "11px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" },
+  darkGrowthBox: { marginTop: "14px", background: "#071747", borderRadius: "18px", padding: "18px", color: "white", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "16px", alignItems: "center" },
+  growthLeftCol: { display: "flex", flexDirection: "column", gap: "8px" },
+  growthTextHeader: { fontSize: "15px", fontWeight: "800", display: "flex", flexDirection: "column", gap: "2px" },
+  progressTrackDark: { height: "9px", borderRadius: "20px", background: "#1e293b", overflow: "hidden", position: "relative", marginTop: "4px" },
   progressFillDark: { height: "100%", borderRadius: "20px", background: "linear-gradient(90deg, #16c784, #22c55e)" },
-  progressLabels: { display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginTop: "2px" },
-  fivePercentBadge: { background: "#f59e0b", color: "#071747", padding: "1px 6px", borderRadius: "6px", fontWeight: "900", fontSize: "10px" },
-  growthRightCol: { textAlign: "right", position: "relative", paddingLeft: "15px", borderLeft: "1px solid rgba(255,255,255,0.1)" },
-  expectedMaturityLabel: { fontSize: "12px", fontWeight: "700", color: "#94a3b8" },
-  expectedMaturityValue: { fontSize: "24px", fontWeight: "900", color: "#4ade80", marginTop: "4px" },
-  renewNoticeCard: { marginTop: "14px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "18px", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  renewNoticeLeft: { display: "flex", alignItems: "center", gap: "14px" },
-  renewNoticeHourglass: { fontSize: "24px", background: "#fef3c7", width: "46px", height: "46px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
-  renewNoticeTextMain: { fontSize: "14px", fontWeight: "800", color: "#1e293b" },
-  renewNoticeDaysLeft: { fontSize: "12px", fontWeight: "700", color: "#d97706", marginTop: "2px" },
-  viewRenewalDetailsBtn: { background: "#7c3aed", color: "white", border: "none", borderRadius: "14px", padding: "12px 18px", fontSize: "12px", fontWeight: "900", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" },
-  actions: { marginTop: "14px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" },
-  actionBtnItem: { background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "14px", padding: "12px 10px", fontSize: "11px", fontWeight: "900", color: "#071747", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  renewBtnItem: { background: "#071747", border: "1px solid #071747", borderRadius: "14px", padding: "12px 10px", fontSize: "11px", fontWeight: "900", color: "white", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  bottomBanner: { marginTop: "14px", background: "linear-gradient(135deg,#fff7df,#ffffff)", borderRadius: "24px", padding: "20px", display: "flex", alignItems: "center", gap: "18px" },
-  trophy: { fontSize: "74px" },
+  progressLabels: { display: "flex", justifyContent: "space-between", fontSize: "10px", fontWeight: "700", color: "#94a3b8", marginTop: "2px" },
+  fivePercentBadge: { background: "#f59e0b", color: "#071747", padding: "1px 5px", borderRadius: "5px", fontWeight: "900", fontSize: "9px" },
+  growthRightCol: { textAlign: "right", position: "relative", paddingLeft: "12px", borderLeft: "1px solid rgba(255,255,255,0.1)" },
+  expectedMaturityLabel: { fontSize: "11px", fontWeight: "700", color: "#94a3b8" },
+  expectedMaturityValue: { fontSize: "22px", fontWeight: "900", color: "#4ade80", marginTop: "3px" },
+  renewNoticeCard: { marginTop: "14px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "16px", padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  renewNoticeLeft: { display: "flex", alignItems: "center", gap: "12px" },
+  renewNoticeHourglass: { fontSize: "22px", background: "#fef3c7", width: "42px", height: "42px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
+  renewNoticeTextMain: { fontSize: "13px", fontWeight: "800", color: "#1e293b" },
+  renewNoticeDaysLeft: { fontSize: "11px", fontWeight: "700", color: "#d97706", marginTop: "2px" },
+  viewRenewalDetailsBtn: { background: "#7c3aed", color: "white", border: "none", borderRadius: "12px", padding: "10px 16px", fontSize: "11px", fontWeight: "900", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" },
+  actions: { marginTop: "14px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" },
+  actionBtnItem: { background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "12px", padding: "10px 8px", fontSize: "10px", fontWeight: "900", color: "#071747", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  renewBtnItem: { background: "#071747", border: "1px solid #071747", borderRadius: "12px", padding: "10px 8px", fontSize: "10px", fontWeight: "900", color: "white", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  bottomBanner: { marginTop: "16px", background: "linear-gradient(135deg,#fff7df,#ffffff)", borderRadius: "22px", padding: "18px", display: "flex", alignItems: "center", gap: "16px" },
+  trophy: { fontSize: "64px" },
   bottomText: { flex: 1 },
-  bottomBenefits: { display: "flex", gap: "26px" },
-  plantIcon: { position: "relative", width: "70px", height: "70px" },
-  leafA: { position: "absolute", width: "32px", height: "22px", background: "#22c55e", borderRadius: "100% 0 100% 0", top: "8px", left: "10px" },
-  leafB: { position: "absolute", width: "34px", height: "23px", background: "#16a34a", borderRadius: "0 100% 0 100%", top: "8px", right: "8px" },
-  stem: { position: "absolute", width: "6px", height: "34px", background: "#15803d", left: "34px", top: "24px", borderRadius: "10px" },
-  pot: { position: "absolute", bottom: "0", left: "18px", width: "40px", height: "26px", borderRadius: "0 0 14px 14px", background: "#f59e0b", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900" },
-  rocketIcon: { position: "relative", width: "70px", height: "70px" },
-  rocketBody: { position: "absolute", width: "30px", height: "58px", borderRadius: "50% 50% 18px 18px", background: "linear-gradient(180deg,#bae6fd,#0284c7)", left: "22px", top: "0", transform: "rotate(28deg)" },
-  rocketWindow: { position: "absolute", width: "13px", height: "13px", borderRadius: "50%", background: "#1d4ed8", left: "37px", top: "19px" },
-  rocketFire: { position: "absolute", width: "30px", height: "30px", background: "linear-gradient(180deg,#facc15,#f97316)", borderRadius: "50% 50% 50% 0", left: "6px", bottom: "5px", transform: "rotate(25deg)" },
+  bottomBenefits: { display: "flex", gap: "22px" },
+  plantIcon: { position: "relative", width: "56px", height: "56px" },
+  leafA: { position: "absolute", width: "26px", height: "18px", background: "#22c55e", borderRadius: "100% 0 100% 0", top: "6px", left: "8px" },
+  leafB: { position: "absolute", width: "28px", height: "19px", background: "#16a34a", borderRadius: "0 100% 0 100%", top: "6px", right: "6px" },
+  stem: { position: "absolute", width: "5px", height: "28px", background: "#15803d", left: "27px", top: "18px", borderRadius: "8px" },
+  pot: { position: "absolute", bottom: "0", left: "14px", width: "32px", height: "20px", borderRadius: "0 0 10px 10px", background: "#f59e0b", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" },
   modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" },
   modalBox: { width: "100%", maxWidth: "450px", background: "white", borderRadius: "22px", padding: "22px", color: "#071747", boxShadow: "0 25px 50px rgba(0,0,0,.25)" },
   slipRow: { background: "#05082e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "14px", marginTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", color: "white" },
