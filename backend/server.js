@@ -5818,15 +5818,38 @@ if (
 
 }
 
-    const rawBonusHistory = await BonusLedger.find({
+     const rawBonusHistory = await BonusLedger.find({
   email: String(user.email).toLowerCase()
 }).sort({ date: -1 }).lean();
 
-const allBonusHistory = rawBonusHistory.map(item => ({
-  ...item,
-  fromName: item.fromName || "Direct Member",
-  uplineName: user.name // এখানে লগইন করা ইউজারের মূল নাম বা সঠিক আপলাইনের নাম সেট করা হলো
-}));
+// প্রতিটা হিস্ট্রির জন্য ডাউলাইন বা যার থেকে বোনাস এসেছে তার আসল ইউজার খুঁজে বের করা
+const allBonusHistory = await Promise.all(
+  rawBonusHistory.map(async (item) => {
+    let actualFromName = item.fromName;
+    let actualUplineName = user.name;
+
+    // যদি fromEmail থাকে, তবে ইউজার টেবিল থেকে তার আসল নামটি খুঁজে আনুন
+    if (item.fromEmail) {
+      const downlineUser = await User.findOne({ 
+        email: String(item.fromEmail).toLowerCase() 
+      }).lean();
+      
+      if (downlineUser) {
+        actualFromName = downlineUser.name;
+        // যদি ডাটাবেজে যার রেফার কোড ব্যবহার করে জয়েন করেছে তার নাম বের করতে চান:
+        // const referrer = await User.findOne({ referralCode: downlineUser.referredBy }).lean();
+        // if (referrer) actualUplineName = referrer.name;
+      }
+    }
+
+    return {
+      ...item,
+      fromName: actualFromName || "Direct Member",
+      uplineName: actualUplineName
+    };
+  })
+);
+      
 
 
 
