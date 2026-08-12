@@ -30,7 +30,7 @@ const bonusLedgerSchema = new mongoose.Schema(
     "Referral Bonus",
     "Performance Bonus",
     "Team Bonus",
-    "Royalty Bonus"
+    "Royalty Bonus",
     "Offer Add-on"
   ]
 },
