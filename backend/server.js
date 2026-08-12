@@ -4685,6 +4685,87 @@ res.json(finalUsers);
   }
 });
 
+
+// ১. নির্দিষ্ট তারিখের মধ্যে রেফার হিসাব এবং বোনাস ক্যালকুলেশন এপিআই
+app.post("/admin-addon-calc", verifyAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.body;
+    if (!startDate || !endDate) {
+      return res.status(400).json({ success: false, msg: "Start date and end date are required" });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    // সব ইউজার এবং তাদের রেফার বা বোনাস রেকর্ড ফেচ করুন (আপনার ডাটাবেজ মডেল অনুযায়ী কুয়েরি অ্যাড করুন)
+    const users = await User.find({});
+    let offerResults = [];
+
+    for (let user of users) {
+      // ধরা যাক, ইউজারের রেফারের লিস্ট বা কাউন্ট বের করার লজিক এখানে রয়েছে
+      // উদাহরণস্বরূপ: নির্দিষ্ট তারিখের মধ্যে করা রেফারের সংখ্যা বের করা
+      const referralsInInterval = await Referral.find({
+        referrerId: user._id,
+        createdAt: { $gte: start, $lte: end }
+      });
+
+      const referralCount = referralsInInterval.length;
+
+      if (referralCount > 0) {
+        const targetAmount = referralCount * 799; // ফ্ল্যাট ৭৯৯ টাকা করে
+        
+        // ইতিমধ্যে সে এই রেফারগুলোর জন্য কত টাকা বোনাস পেয়েছে তা হিসাব করুন
+        const alreadyReceived = referralsInInterval.reduce((sum, ref) => sum + (ref.bonusPaid || 0), 0);
+        const remainingBalance = targetAmount - alreadyReceived;
+
+        if (remainingBalance > 0) {
+          offerResults.push({
+            userId: user._id,
+            name: user.name,
+            email: user.email,
+            referralCount,
+            targetAmount,
+            alreadyReceived,
+            remainingBalance
+          });
+        }
+      }
+    }
+
+    res.json({ success: true, data: offerResults });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: err.message });
+  }
+});
+
+// ২. বাকি টাকা সবার ওয়ালেটে অ্যাড করার এপিআই
+app.post("/admin-addon-distribute", verifyAdmin, async (req, res) => {
+  try {
+    const { offerList } = req.body;
+    if (!offerList || !Array.isArray(offerList) || offerList.length === 0) {
+      return res.status(400).json({ success: false, msg: "No distribution data provided" });
+    }
+
+    for (let item of offerList) {
+      if (item.remainingBalance > 0) {
+        // ইউজারের ওয়ালেট ব্যালেন্স আপডেট করুন এবং ট্রানজেকশন লগ যোগ করুন
+        await User.findByIdAndUpdate(item.userId, {
+          $inc: { wallet: item.remainingBalance }
+        });
+
+        // চাইলে এখানে WalletHistory বা ট্রানজেকশন মডেলে এন্ট্রি রাখতে পারেন
+      }
+    }
+
+    res.json({ success: true, msg: "Successfully distributed remaining balance to all user wallets!" });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: err.message });
+  }
+});
+
+
+
 app.post("/close-ticket", auth, async (req, res) => {
   const { ticketId } = req.body;
 
