@@ -6851,22 +6851,24 @@ app.post("/daily-reward", async (req, res) => {
 });
             
 
-// --- উইথড্র ইনফো লোড করার এপিআই ---
+
+
+// --- উইথড্র ইনফো এবং হিস্টরি পাওয়ার API ---
 app.post("/withdraw-info", async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     const user = await User.findOne({ email: email?.toLowerCase() });
     if (!user) return res.status(404).json({ success: false, msg: "User not found" });
 
     const bank = await BankDetails.findOne({ email });
 
-    // আজ টোটাল কত উইথড্র রিকোয়েস্ট পেন্ডিং বা সাকসেস হয়েছে
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // ১. উইথড্রয়াল (Debit) রিকোয়েস্টগুলো আনুন
     const totalDebitedDocs = await WithdrawRequest.find({
       email,
       createdAt: { $gte: today, $lt: tomorrow },
@@ -6875,18 +6877,38 @@ app.post("/withdraw-info", async (req, res) => {
 
     const totalDebited = totalDebitedDocs.reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    // উইথড্র করা যাবে মেইন ব্যালেন্স অথবা টুডে ব্যালেন্সের লজিক অনুযায়ী (আপনার আগের লজিক ঠিক রাখা হয়েছে)
     let withdrawableBalance = Number(user.todayBalance || 0) - totalDebited;
     if (withdrawableBalance < 0) withdrawableBalance = 0;
 
-    const history = await WithdrawRequest.find({ email }).sort({ createdAt: -1 });
+    // Withdraw history (Debit)
+    const withdrawalHistory = await WithdrawRequest.find({ email }).lean();
+    const formattedWithdrawals = withdrawalHistory.map(w => ({
+      ...w,
+      type: "Debit"
+    }));
+
+    // ২. ওয়ালেট ক্রেডিট হিস্টরি (যেখান থেকে ₹50 বা অন্যান্য ক্রেডিট এসেছে) আনুন 
+    // (যদি আপনার মডেলে কালেকশনের নাম আলাদা হয় যেমন Earning বা Transaction, তবে সেটি এখানে দিন)
+    const creditHistoryDocs = await EarningModel?.find({ email }).lean() || [];
+    const formattedCredits = creditHistoryDocs.map(c => ({
+      _id: c._id,
+      amount: c.amount,
+      status: "Success",
+      createdAt: c.createdAt || c.date,
+      type: "Credit"
+    }));
+
+    // ৩. দুটো একসাথে মার্জ করে লেটেস্ট অনুযায়ী সর্ট করুন
+    const combinedHistory = [...formattedWithdrawals, ...formattedCredits].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
 
     return res.json({
       success: true,
-      todayBalance: Number(user.todayBalance || 0), // সরাসরি ডাটাবেজ থেকে লাইভ টুডে ওয়ালেট
-      withdrawableBalance: withdrawableBalance,
+      todayBalance: Number(user.todayBalance || 0),
+      withdrawableBalance: withdrawableBalance * 0.8,
       bank,
-      history
+      history: combinedHistory
     });
 
   } catch (err) {
@@ -6896,18 +6918,17 @@ app.post("/withdraw-info", async (req, res) => {
 });
 
 
-// --- উইথড্র অ্যাকশন সাবমিট করার এপিআই ---
+// --- উইথড্র রিকোয়েস্ট সাবমিট করার API ---
 app.post("/withdraw-request", async (req, res) => {
   try {
     const email = String(req.body.email || "").toLowerCase();
-    const amount = Number(req.body.amount || 0);
+    const amount = Number(req.body.amount);
 
     const user = await User.findOne({ email });
     const bank = await BankDetails.findOne({ email });
 
     if (!user) return res.status(404).json({ success: false, msg: "User not found" });
     if (!bank) return res.status(400).json({ success: false, msg: "Please add bank details first" });
-
     if (amount < 100) return res.status(400).json({ success: false, msg: "Minimum withdraw amount is 100" });
 
     const today = new Date();
@@ -6915,7 +6936,6 @@ app.post("/withdraw-request", async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // দিনে ১ বারের বেশি উইথড্র ব্লক করার লজিক
     const activeRequestToday = await WithdrawRequest.findOne({
       email,
       createdAt: { $gte: today, $lt: tomorrow },
@@ -6934,16 +6954,14 @@ app.post("/withdraw-request", async (req, res) => {
       createdAt: { $gte: today, $lt: tomorrow },
       status: { $in: ["Pending", "Success"] }
     });
-    const totalDebited = totalDebitedDocs.reduce((a, b) => a + Number(b.amount || 0), 0);
 
-    // উইথড্র ব্যালেন্স চেক (সরাসরি লাইভ todayBalance থেকে হিসাব করা হচ্ছে)
-    let withdrawableBalance = Number(user.todayBalance || 0) - totalDebited;
+    const totalDebited = totalDebitedDocs.reduce((a, b) => a + Number(b.amount || 0), 0);
+    const withdrawableBalance = Number(user.todayBalance || 0) - totalDebited;
 
     if (amount > withdrawableBalance) {
       return res.status(400).json({ success: false, msg: "Amount is greater than withdrawable balance" });
     }
 
-    // নতুন উইথড্র রিকোয়েস্ট তৈরি
     await WithdrawRequest.create({
       email,
       name: user.name || "",
@@ -6955,12 +6973,12 @@ app.post("/withdraw-request", async (req, res) => {
         bankName: bank.bankName,
         accountNumber: bank.accountNumber,
         ifscCode: bank.ifscCode,
-        upiId: bank.upiId,
+        upiId: bank.upiId
       },
-      status: "Pending"
+      status: "Pending",
+      type: "Debit"
     });
 
-    // উইথড্র রিকোয়েস্ট দেওয়ার সাথে সাথে ইউজারের todayBalance থেকে টাকা কেটে নেওয়া হচ্ছে
     user.todayBalance = Number(user.todayBalance || 0) - amount;
     await user.save();
 
@@ -6974,7 +6992,7 @@ app.post("/withdraw-request", async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
-
+    
 
 
 
