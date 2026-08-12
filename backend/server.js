@@ -4705,12 +4705,15 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     let offerResults = [];
 
     for (let user of users) {
+      // 'Referral Bonus' এবং 'Offer Add-on' দুটোই একসাথে ফিল্টার করা হলো যাতে অলরেডি দেওয়া টাকাগুলো বাদ যায়
       const referralsInInterval = await BonusLedger.find({
         email: user.email,
-        bonusType: "Referral Bonus",
+        bonusType: { $in: ["Referral Bonus", "Offer Add-on"] },
         createdAt: { $gte: start, $lte: end }
       });
 
+      // এখানে আপনি চাইলে রেফারেল কাউন্ট আলাদাভাবে নিতে পারেন, অথবা শুধু লেজার এন্ট্রি কাউন্ট করতে পারেন। 
+      // যেহেতু আপনার আগের লজিকেই লেজার এন্ট্রিগুলো কাউন্ট হচ্ছিল, তাই length ই ব্যবহার করা হলো।
       const referralCount = referralsInInterval.length;
 
       if (referralCount > 0) {
@@ -4738,6 +4741,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error during calculation" });
   }
 });
+
 
 
 
