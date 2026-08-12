@@ -14,21 +14,16 @@ export default function Withdraw() {
   const [withdrawableBalance, setWithdrawableBalance] = useState(0);
   const [bank, setBank] = useState(null);
   const [history, setHistory] = useState([]); 
-  const [loading, setLoading] = useState(false);
   
-  // ফিল্টার স্টেট
   const [filterType, setFilterType] = useState("All"); // All, Credit, Debit
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   
-  // ভিউ মোর স্টেট (প্রতি ক্লিকে ৫টি করে বাড়বে)
   const [visibleCount, setVisibleCount] = useState(5);
-  
-  // ট্রানজ্যাকশন ডিটেইলস মোডাল স্টেট
   const [selectedTx, setSelectedTx] = useState(null);
   const receiptRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
-  // ক্যালকুলেশন
   const inputAmount = Number(amount) || 0;
   const tdsDeduction = inputAmount * 0.05;
   const finalBankCredit = inputAmount - tdsDeduction;
@@ -62,7 +57,7 @@ export default function Withdraw() {
         const today = new Date().toDateString();
         const hasActiveRequest = historyList.some((req) => {
           const reqDate = new Date(req.createdAt).toDateString();
-          return reqDate === today && (req.status === "Pending" || req.status === "Success");
+          return reqDate === today && (req.status === "Pending" || req.status === "Success") && req.type !== "Credit";
         });
 
         if (hasActiveRequest) {
@@ -90,17 +85,6 @@ export default function Withdraw() {
     }
     if (Number(amount) > withdrawableBalance) {
       toast.info("Amount exceeds your withdrawable limit (80% of earnings)");
-      return;
-    }
-
-    const todayRequest = history.find((req) => {
-      const reqDate = new Date(req.createdAt).toDateString();
-      const today = new Date().toDateString();
-      return reqDate === today && (req.status === "Pending" || req.status === "Success");
-    });
-
-    if (todayRequest) {
-      toast.error("You can only make one successful or pending withdraw request per day. Please try again tomorrow.");
       return;
     }
 
@@ -165,20 +149,17 @@ export default function Withdraw() {
         link.href = imageURL;
         link.download = `Receipt_${selectedTx._id || "tx"}.png`;
         link.click();
-
-        const whatsappText = encodeURIComponent(`Hello, sharing my transaction receipt of ${money(selectedTx.amount)}. Details attached.`);
-        window.open(`https://api.whatsapp.com/send?text=${whatsappText}`, "_blank");
-        
-        toast.success("Receipt saved! Opening WhatsApp...");
       }, "image/png");
-
     } catch (error) {
       console.error(error);
       toast.error("Failed to generate receipt share");
     }
   };
 
-  const getStatusDetails = (status) => {
+  const getStatusDetails = (status, type) => {
+    if (type === "Credit") {
+      return { text: "CREDITED", color: "#00b074", bgColor: "#e6f7f1" };
+    }
     if (status === "Rejected" || status === "Reject") {
       return { text: "REFUNDED", color: "#ef4444", bgColor: "#fef2f2" };
     }
@@ -188,10 +169,10 @@ export default function Withdraw() {
     return { text: "PENDING", color: "#eab308", bgColor: "#fef9c3" };
   };
 
-  // ফ্রন্টএন্ড ফিল্টারিং লজিক (Date to Date এবং Type)
   const filteredHistory = history.filter((item) => {
-    if (filterType === "Credit" && item.type !== "Credit") return false;
-    if (filterType === "Debit" && item.type === "Credit") return false;
+    const isCredit = item.type === "Credit";
+    if (filterType === "Credit" && !isCredit) return false;
+    if (filterType === "Debit" && isCredit) return false;
 
     if (startDate || endDate) {
       const txDate = new Date(item.createdAt);
@@ -215,8 +196,6 @@ export default function Withdraw() {
 
   return (
     <div style={styles.page}>
-      
-      {/* Top Header */}
       <div style={styles.topNav}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -234,7 +213,6 @@ export default function Withdraw() {
         </div>
       </div>
 
-      {/* Balance Cards */}
       <section style={styles.balanceGrid}>
         <div style={{ ...styles.balanceCard, background: "linear-gradient(135deg, #1c1437 0%, #090e1a 100%)", borderColor: "#4c2899" }}>
           <div style={styles.cardHeaderFlex}>
@@ -270,7 +248,6 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Payout Form */}
       <section style={styles.glassContainer}>
         <h3 style={styles.sectionTitle}>Amount to Payout</h3>
         <div style={styles.inputWrapper}>
@@ -312,7 +289,6 @@ export default function Withdraw() {
         </button>
       </section>
 
-      {/* Settlement Account */}
       <section style={styles.glassContainer}>
         <div style={styles.sectionHeaderTitle}>
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M3 22v-4h18v4H3zM12 2L2 7h20L12 2zM4 9v7h3V9H4zm5 0v7h3V9H9zm5 0v7h3V9h-3zm5 0v7h3V9h-3z"/></svg>
@@ -361,7 +337,6 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Audit Statement (History & Filters) */}
       <section style={styles.superGlassContainer}>
         <div style={styles.historySectionHeader}>
           <div style={styles.sectionHeaderTitle}>
@@ -370,7 +345,6 @@ export default function Withdraw() {
           </div>
         </div>
 
-        {/* Date to Date & Transaction Type Filters */}
         <div style={styles.filterWrapper}>
           <div style={styles.typeFilterGroup}>
             {["All", "Credit", "Debit"].map((type) => (
@@ -392,21 +366,11 @@ export default function Withdraw() {
           <div style={styles.dateFilterGroup}>
             <div style={styles.dateInputBox}>
               <label style={styles.dateLabel}>From:</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                style={styles.dateInput}
-              />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={styles.dateInput} />
             </div>
             <div style={styles.dateInputBox}>
               <label style={styles.dateLabel}>To:</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                style={styles.dateInput}
-              />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={styles.dateInput} />
             </div>
           </div>
         </div>
@@ -418,32 +382,29 @@ export default function Withdraw() {
         ) : (
           <div style={styles.historyListContainer}>
             {visibleHistory.map((x) => {
-              const statusInfo = getStatusDetails(x.status);
+              const isCredit = x.type === "Credit";
+              const statusInfo = getStatusDetails(x.status, x.type);
               const holderName = bank?.accountHolderName || "Account Holder";
               const firstLetter = holderName.charAt(0).toUpperCase();
               const isRejected = x.status === "Rejected" || x.status === "Reject";
 
               return (
-                <div 
-                  key={x._id || x.createdAt} 
-                  style={styles.historyRowItem} 
-                  onClick={() => setSelectedTx(x)}
-                >
+                <div key={x._id || x.createdAt} style={styles.historyRowItem} onClick={() => setSelectedTx(x)}>
                   <div style={styles.historyLeftSection}>
                     <div style={{
                       ...styles.avatarCircle, 
-                      backgroundColor: isRejected ? "#fef2f2" : "#dbeafe",
-                      color: isRejected ? "#ef4444" : "#1e40af"
+                      backgroundColor: isCredit ? "#dbeafe" : (isRejected ? "#fef2f2" : "#fae8ff"),
+                      color: isCredit ? "#1e40af" : (isRejected ? "#ef4444" : "#9333ea")
                     }}>
                       {firstLetter}
                     </div>
                     <div>
-                      <div style={styles.historyHolderName}>{holderName}</div>
+                      <div style={styles.historyHolderName}>{isCredit ? "Wallet Credit" : holderName}</div>
                       <div style={styles.historyDateText}>
                         {new Date(x.createdAt).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })}, {new Date(x.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
                       <span style={{...styles.tagBadge, backgroundColor: statusInfo.bgColor, color: statusInfo.color}}>
-                        {statusInfo.text === "COMPLETED" ? "💸 Money Received" : statusInfo.text === "REFUNDED" ? "🔄 Refunded" : "⏳ Pending"}
+                        {isCredit ? "💰 Credited" : (statusInfo.text === "COMPLETED" ? "💸 Withdrawal Sent" : statusInfo.text === "REFUNDED" ? "🔄 Refunded" : "⏳ Pending")}
                       </span>
                     </div>
                   </div>
@@ -451,21 +412,18 @@ export default function Withdraw() {
                   <div style={styles.historyRightSection}>
                     <div style={{
                       ...styles.historyAmtText, 
-                      color: statusInfo.text === "COMPLETED" ? "#00b074" : statusInfo.text === "REFUNDED" ? "#ef4444" : "#eab308"
+                      color: isCredit ? "#00b074" : (statusInfo.text === "REFUNDED" ? "#ef4444" : "#f87171")
                     }}>
-                      {statusInfo.text === "COMPLETED" ? "+" : ""} {money(x.amount)}
+                      {isCredit ? "+" : "-"} {money(x.amount)}
                     </div>
-                    <div style={styles.fromBankText}>{isRejected ? "Returned 🔄" : "In 🏦"}</div>
+                    <div style={styles.fromBankText}>{isCredit ? "In 💳" : (isRejected ? "Returned 🔄" : "Out 🏦")}</div>
                   </div>
                 </div>
               );
             })}
             
             {filteredHistory.length > visibleCount && (
-              <button 
-                style={styles.viewMoreBtn} 
-                onClick={() => setVisibleCount(prev => prev + 5)}
-              >
+              <button style={styles.viewMoreBtn} onClick={() => setVisibleCount(prev => prev + 5)}>
                 View More ↓
               </button>
             )}
@@ -473,115 +431,48 @@ export default function Withdraw() {
         )}
       </section>
 
-      {/* রসিদ উইন্ডো মোডাল */}
       {selectedTx && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContentWrapper}>
-            
             <div ref={receiptRef} style={styles.newReceiptCard}>
-              {selectedTx.status === "Rejected" || selectedTx.status === "Reject" ? (
-                <div style={styles.tickAreaContainer}>
-                  <div style={{ ...styles.greenTickCircle, backgroundColor: "#fef2f2" }}>
-                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  </div>
-                  <h4 style={{ ...styles.txSuccessTitle, color: "#ef4444" }}>Transaction Refunded</h4>
-                  <h2 style={{ ...styles.txMainAmountText, color: "#ef4444" }}>{money(selectedTx.amount)}</h2>
-                  <div style={{ ...styles.badgeRewardLabel, color: "#b91c1c", backgroundColor: "#fef2f2" }}>FAILED / RETURNED</div>
+              <div style={styles.tickAreaContainer}>
+                <div style={styles.greenTickCircle}>
+                  <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#00b074" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
-              ) : (
-                <div style={styles.tickAreaContainer}>
-                  <div style={styles.greenTickCircle}>
-                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#00b074" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <h4 style={styles.txSuccessTitle}>Transaction Successful</h4>
-                  <h2 style={styles.txMainAmountText}>+ {money(selectedTx.amount)}</h2>
-                  <div style={styles.badgeRewardLabel}>WITHDRAWAL SETTLED</div>
-                </div>
-              )}
+                <h4 style={styles.txSuccessTitle}>{selectedTx.type === "Credit" ? "Credit Received Successfully" : "Transaction Record"}</h4>
+                <h2 style={styles.txMainAmountText}>{selectedTx.type === "Credit" ? "+" : "-"} {money(selectedTx.amount)}</h2>
+                <div style={styles.badgeRewardLabel}>{selectedTx.type === "Credit" ? "WALLET EARNING" : "WITHDRAWAL SETTLED"}</div>
+              </div>
 
               <div style={styles.dottedDividerLine} />
 
               <div style={styles.receiptDataGrid}>
                 <div style={styles.gridRow}>
-                  <span style={styles.gridLabel}>Wallet ID</span>
-                  <span style={styles.gridValueBold}>{selectedTx.walletId || `WAL${selectedTx.userId?.slice(-6) || "327865"}`}</span>
-                </div>
-                <div style={styles.gridRow}>
-                  <span style={styles.gridLabel}>User Name</span>
-                  <span style={styles.gridValueBold}>{bank?.accountHolderName || "Account Holder"}</span>
-                </div>
-                <div style={styles.gridRow}>
-                  <span style={styles.gridLabel}>Transaction ID</span>
-                  <span style={{...styles.gridValueBold, color: "#7c3aed"}}>{selectedTx._id || "6a611c2c9590aef1e987525a"}</span>
+                  <span style={styles.gridLabel}>Type</span>
+                  <span style={styles.gridValueBold}>{selectedTx.type === "Credit" ? "Credit" : "Debit"}</span>
                 </div>
                 <div style={styles.gridRow}>
                   <span style={styles.gridLabel}>Date & Time</span>
-                  <span style={styles.gridValueBold}>
-                    {new Date(selectedTx.createdAt).toLocaleString("en-IN", {hour12: true})}
-                  </span>
-                </div>
-                <div style={styles.gridRow}>
-                  <span style={styles.gridLabel}>Remarks</span>
-                  <span style={styles.gridValueBold}>Withdraw</span>
+                  <span style={styles.gridValueBold}>{new Date(selectedTx.createdAt).toLocaleString("en-IN", {hour12: true})}</span>
                 </div>
                 <div style={styles.gridRow}>
                   <span style={styles.gridLabel}>Status</span>
-                  <span style={{
-                    ...styles.statusCapsuleStyle,
-                    color: getStatusDetails(selectedTx.status).color,
-                    backgroundColor: getStatusDetails(selectedTx.status).bgColor
-                  }}>{getStatusDetails(selectedTx.status).text}</span>
+                  <span style={styles.statusCapsuleStyle}>{selectedTx.status || "Completed"}</span>
                 </div>
               </div>
 
-              {(selectedTx.status === "Rejected" || selectedTx.status === "Reject") && (
-                <div style={styles.adminRejectReasonBox}>
-                  <strong>Refund Reason:</strong> {selectedTx.rejectReason || selectedTx.reason || "Cancelled by manager"}
-                </div>
-              )}
-
               <div style={styles.brandingSec}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <span>Powered by SaveMoney Secure</span>
               </div>
             </div>
 
             <div style={styles.actionButtonGroupContainer}>
-              <button style={styles.purpleShareBtn} onClick={handleShareToWhatsApp}>
-                📸 Share / Save Receipt Image
-              </button>
-              <button style={styles.whiteCloseBtn} onClick={() => setSelectedTx(null)}>
-                Close Window
-              </button>
+              <button style={styles.purpleShareBtn} onClick={handleShareToWhatsApp}>📸 Share / Save Receipt Image</button>
+              <button style={styles.whiteCloseBtn} onClick={() => setSelectedTx(null)}>Close Window</button>
             </div>
-
           </div>
         </div>
       )}
-
-      {/* Trust Container */}
-      <section style={styles.superTrustContainer}>
-        <div style={styles.superTrustItem}>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          <h4 style={styles.superTrustTitle}>Secure & Trusted</h4>
-        </div>
-        <div style={styles.superDivider} />
-        <div style={styles.superTrustItem}>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-          <h4 style={styles.superTrustTitle}>Quick Pay</h4>
-        </div>
-        <div style={styles.superDivider} />
-        <div style={styles.superTrustItem}>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path></svg>
-          <h4 style={styles.superTrustTitle}>24/7 Support</h4>
-        </div>
-        <div style={styles.superDivider} />
-        <div style={styles.superTrustItem}>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
-          <h4 style={styles.superTrustTitle}>Top Platform</h4>
-        </div>
-      </section>
-
     </div>
   );
 }
@@ -627,24 +518,16 @@ const styles = {
   metaValue: { fontSize: "21px", fontWeight: "900" }, 
   bankArrowContainer: { paddingLeft: "22px" },
   bankActionCircle: { width: "56px", height: "56px", borderRadius: "50%", border: "none", background: "#202f4e", display: "flex", alignItems: "center", justifyContent: "center" },
-  
-  // No Bank Account Added State Styles
   noBankContainer: { width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "20px", flexWrap: "wrap" },
   noBankContent: { display: "flex", alignItems: "center", gap: "16px", flex: 1 },
   noBankTitle: { fontSize: "20px", fontWeight: "800", color: "#f59e0b", margin: "0 0 4px 0" },
-  noBankDesc: { fontSize: "15px", color: "#94a3b8", margin: 0 },
+  noBankDesc: { fontSize: "15px", color: "#a8bccc", margin: 0 },
   addBankBtn: { background: "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)", color: "#000000", border: "none", padding: "12px 20px", borderRadius: "12px", fontSize: "16px", fontWeight: "800", cursor: "pointer" },
-
   historySectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", width: "100%" },
   superGlassContainer: { width: "100%", padding: "35px 25px", borderRadius: "28px", background: "#0a1122", border: "2px solid #22375e", boxSizing: "border-box", boxShadow: "0 15px 35px rgba(0,0,0,0.4)" },
   superSectionTitle: { margin: 0, fontSize: "26px", fontWeight: "950", letterSpacing: "0.5px" },
   superEmptyStateContainer: { textAlign: "center", padding: "60px 20px" },
   superEmptyMainText: { fontSize: "22px", color: "#94a3b8", fontWeight: "700" },
-  superTrustContainer: { width: "100%", background: "#0a1122", border: "2px solid #202f4e", borderRadius: "26px", padding: "36px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" },
-  superTrustItem: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", justifyContent: "center" },
-  superDivider: { width: "2.5px", backgroundColor: "#202f4e", height: "45px", alignSelf: "center" },
-  superTrustTitle: { fontSize: "17px", fontWeight: "950", margin: "16px 0 0 0", whiteSpace: "nowrap", letterSpacing: "0.3px" },
-
   filterWrapper: { display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px", background: "#020716", padding: "20px", borderRadius: "18px", border: "1.5px solid #202f4e" },
   typeFilterGroup: { display: "flex", gap: "10px" },
   filterTabBtn: { flex: 1, padding: "12px", border: "1.5px solid", borderRadius: "10px", cursor: "pointer", fontSize: "16px", fontWeight: "700", transition: "all 0.2s" },
@@ -652,7 +535,6 @@ const styles = {
   dateInputBox: { flex: 1, minWidth: "140px", display: "flex", flexDirection: "column", gap: "6px" },
   dateLabel: { fontSize: "14px", fontWeight: "700", color: "#94a3b8" },
   dateInput: { background: "#0a1122", border: "1.5px solid #202f4e", color: "#ffffff", padding: "10px", borderRadius: "8px", fontSize: "15px", outline: "none", width: "100%", boxSizing: "border-box" },
-
   historyListContainer: { display: "flex", flexDirection: "column", gap: "2px" },
   historyRowItem: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 14px", borderBottom: "1.5px solid #202f4e", cursor: "pointer", borderRadius: "12px" },
   historyLeftSection: { display: "flex", alignItems: "center", gap: "18px" },
@@ -663,8 +545,7 @@ const styles = {
   historyRightSection: { textAlign: "right" },
   historyAmtText: { fontSize: "24px", fontWeight: "900" },
   fromBankText: { fontSize: "14px", color: "#64748b", marginTop: "4px" },
-  viewMoreBtn: { width: "100%", background: "#202f4e", color: "#ffffff", border: "none", padding: "16px", borderRadius: "12px", cursor: "pointer", fontSize: "18px", fontWeight: "700", marginTop: "16px", textAlign: "center", transition: "background 0.2s" },
-  
+  viewMoreBtn: { width: "100%", background: "#202f4e", color: "#ffffff", border: "none", padding: "16px", borderRadius: "12px", cursor: "pointer", fontSize: "18px", fontWeight: "700", marginTop: "16px", textAlign: "center" },
   modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px", overflowY: "auto" },
   modalContentWrapper: { width: "100%", maxWidth: "450px", display: "flex", flexDirection: "column", gap: "16px" },
   newReceiptCard: { width: "100%", backgroundColor: "#ffffff", borderRadius: "32px", padding: "30px 24px", boxSizing: "border-box", color: "#000000", position: "relative" },
@@ -679,9 +560,8 @@ const styles = {
   gridLabel: { fontSize: "17px", color: "#64748b", fontWeight: "500" },
   gridValueBold: { fontSize: "17px", color: "#000000", fontWeight: "700", textAlign: "right", maxWidth: "60%", wordBreak: "break-all" },
   statusCapsuleStyle: { padding: "4px 12px", borderRadius: "6px", fontSize: "14px", fontWeight: "800", letterSpacing: "0.3px" },
-  adminRejectReasonBox: { marginTop: "14px", padding: "10px", backgroundColor: "#fef2f2", borderRadius: "8px", borderLeft: "4px solid #ef4444", fontSize: "14px", color: "#991b1b" },
-  brandingSec: { display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "14px", color: "#94a3b8", marginTop: "35px", fontWeight: "600" },
+  brandingSec: { display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "14px", color: "#94a3b8", margin: "35px 0 0 0", fontWeight: "600" },
   actionButtonGroupContainer: { display: "flex", flexDirection: "column", gap: "12px", width: "100%" },
-  purpleShareBtn: { width: "100%", height: "60px", backgroundColor: "#8b5cf6", color: "#ffffff", border: "none", borderRadius: "20px", fontSize: "19px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 14px rgba(139,92,246,0.4)" },
-  whiteCloseBtn: { width: "100%", height: "60px", backgroundColor: "#ffffff", color: "#334155", border: "none", borderRadius: "20px", fontSize: "19px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }
+  purpleShareBtn: { width: "100%", height: "60px", backgroundColor: "#8b5cf6", color: "#ffffff", border: "none", borderRadius: "20px", fontSize: "19px", fontWeight: "700", cursor: "pointer" },
+  whiteCloseBtn: { width: "100%", height: "60px", backgroundColor: "#ffffff", color: "#334155", border: "none", borderRadius: "20px", fontSize: "19px", fontWeight: "700", cursor: "pointer" }
 };
