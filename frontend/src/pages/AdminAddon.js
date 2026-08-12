@@ -10,22 +10,25 @@ export default function AdminAddon() {
   const [offerList, setOfferList] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const apiPost = async (path, body) => {
+    const apiPost = async (path, body) => {
     try {
       const res = await fetch(`${API}${path}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          authorization: token || ""
+          authorization: token || "" // আপনার প্রজেক্টের অন্যান্য পেজের মতো একই হেডার ফরম্যাট
         },
         body: JSON.stringify(body)
       });
-      return await res.json();
+      const d = await safeJson(res);
+      if (checkAuthError && checkAuthError(d)) return null;
+      return d;
     } catch (err) {
       console.log("API Error:", err);
       return { success: false, msg: "Network error" };
     }
   };
+
 
   const handleCalculate = async () => {
     if (!startDate || !endDate) {
