@@ -4688,7 +4688,7 @@ res.json(finalUsers);
 
 // ১. নির্দিষ্ট তারিখের মধ্যে রেফার হিসাব এবং বোনাস ক্যালকুলেশন এপিআই
 // ১. তারিখ অনুযায়ী রেফার ক্যালকুলেশন করার রাউট
-app.post("/admin-addon-calc", adminAuth, async (req, res) => {
+app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
   try {
     const { startDate, endDate } = req.body;
     
@@ -4738,7 +4738,7 @@ app.post("/admin-addon-calc", adminAuth, async (req, res) => {
 });
 
 // ২. বাকি টাকা ডিস্ট্রিবিউশন রাউট
-app.post("/admin-addon-distribute", adminAuth, async (req, res) => {
+app.post("/admin-addon-distribute", auth, adminAuth, async (req, res) => {
   try {
     const { offerList } = req.body;
 
