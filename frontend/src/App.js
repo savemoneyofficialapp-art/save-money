@@ -22,6 +22,8 @@ import MyInvestment from "./pages/MyInvestment";
 import AdminKYC from "./pages/AdminKYC";
 import AdminNotification from "./pages/AdminNotification";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminAddon from "./pages/AdminAddon";
+
 
 import PerformanceBonus from "./pages/PerformanceBonus";
 import TeamBonus from "./pages/TeamBonus";
@@ -295,6 +297,11 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+
+          <Route path="/admin-addon" element={<ProtectedRoute><AdminAddon /></ProtectedRoute>} />
+
+          
 
         <Route
           path="/support"
