@@ -3418,7 +3418,7 @@ app.post("/update-mobile", async (req, res) => {
   res.json({ msg: "Mobile updated" });
 });
 
-app.post("/submit-kyc", upload.fields([
+App.post("/submit-kyc", upload.fields([
   { name: "aadhaarFile", maxCount: 1 },
   { name: "panFile", maxCount: 1 },
   { name: "photo", maxCount: 1 }
@@ -3447,7 +3447,7 @@ app.post("/submit-kyc", upload.fields([
 
     console.log("KYC API HIT:", email);
 
-    // ডাটাবেজে ক্লাউডিনারি লিংকগুলো সেভ করা
+    // ডাটাবেজে ক্লাউডিনারি লিংকগুলো এবং সাবমিট করার সময় সেভ করা
     await User.updateOne(
       { email },
       {
@@ -3458,6 +3458,7 @@ app.post("/submit-kyc", upload.fields([
         panFile: panUrl,         // লোকাল পাথের বদলে Cloudinary URL
         photo: photoUrl,         // লোকাল পাথের বদলে Cloudinary URL
         kycStatus: "reviewing",
+        kycSubmittedAt: new Date(), // <--- আজকের KYC কাউন্ট ট্র্যাক করার জন্য এটি যুক্ত করা হলো
         rejectReason: "",
         kycRejectReason: ""
       }
@@ -3471,6 +3472,7 @@ app.post("/submit-kyc", upload.fields([
     res.status(500).json({ success: false, msg: "Server error during KYC upload" });
   }
 });
+
 
 
 app.post("/kyc-info", async (req, res) => {
@@ -3733,7 +3735,7 @@ app.post("/admin/approve", async (req, res) => {
   res.json({ msg: "Approved" });
 });
 
-app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
+App.get("/admin-analytics", auth, adminAuth, async (req, res) => {
 
   const totalUsers = await User.countDocuments();
 
@@ -3743,6 +3745,16 @@ app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
 
   const kycPending = await User.countDocuments({
     kycStatus: "reviewing"
+  });
+
+  // আজকের দিনে যারা KYC সাবমিট করে রিভিউতে আছে
+  const kycPendingToday = await User.countDocuments({
+    kycStatus: "reviewing",
+    kycSubmittedAt: {
+      $gte: new Date(
+        new Date().setHours(0, 0, 0, 0)
+      )
+    }
   });
 
   const totalInvestment = await Investment.aggregate([
@@ -3796,6 +3808,8 @@ app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
     kycApproved,
 
     kycPending,
+
+    kycPendingToday, // <--- এটি রেসপন্সে যুক্ত করা হলো
 
     totalInvestment:
       totalInvestment[0]?.total || 0,
