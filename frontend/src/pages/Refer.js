@@ -526,7 +526,13 @@ export default function Refer() {
                     
                     <div style={styles.txMetaDetails}>
                       <h4 style={styles.txSenderName}>{item.fromName || "Save Money User"}</h4>
-                      <p style={styles.txTimeStamp}>Received Today, {new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+                      <p style={styles.txTimeStamp}>
+  {new Date(item.date).toDateString() === new Date().toDateString() 
+    ? `Received Today, ${new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+    : `${new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, ${new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+  }
+</p>
+
                       
                       <div style={styles.txTagBadge}>
                         💵 {item.bonusType || "Money Received"}
