@@ -6856,11 +6856,13 @@ app.post("/daily-reward", async (req, res) => {
 // --- উইথড্র ইনফো এবং হিস্টরি পাওয়ার API ---
 app.post("/withdraw-info", async (req, res) => {
   try {
-    const { email } = req.body;
+    const rawEmail = req.body.email || "";
+    const email = rawEmail.toLowerCase().trim();
 
-    const user = await User.findOne({ email: email?.toLowerCase() });
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ success: false, msg: "User not found" });
 
+    // ব্যাংক ডিটেইলস ফেচ করা
     const bank = await BankDetails.findOne({ email });
 
     const today = new Date();
@@ -6868,7 +6870,7 @@ app.post("/withdraw-info", async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // ১. উইথড্রয়াল (Debit) রিকোয়েস্টগুলো আনুন
+    // আজকের ডেবিট রিকোয়েস্ট হিসাব
     const totalDebitedDocs = await WithdrawRequest.find({
       email,
       createdAt: { $gte: today, $lt: tomorrow },
@@ -6876,29 +6878,33 @@ app.post("/withdraw-info", async (req, res) => {
     });
 
     const totalDebited = totalDebitedDocs.reduce((a, b) => a + Number(b.amount || 0), 0);
-
     let withdrawableBalance = Number(user.todayBalance || 0) - totalDebited;
     if (withdrawableBalance < 0) withdrawableBalance = 0;
 
-    // Withdraw history (Debit)
+    // উইথড্র হিস্টরি ফেচ করা
     const withdrawalHistory = await WithdrawRequest.find({ email }).lean();
     const formattedWithdrawals = withdrawalHistory.map(w => ({
       ...w,
       type: "Debit"
     }));
 
-    // ২. ওয়ালেট ক্রেডিট হিস্টরি (যেখান থেকে ₹50 বা অন্যান্য ক্রেডিট এসেছে) আনুন 
-    // (যদি আপনার মডেলে কালেকশনের নাম আলাদা হয় যেমন Earning বা Transaction, তবে সেটি এখানে দিন)
-    const creditHistoryDocs = await EarningModel?.find({ email }).lean() || [];
-    const formattedCredits = creditHistoryDocs.map(c => ({
-      _id: c._id,
-      amount: c.amount,
-      status: "Success",
-      createdAt: c.createdAt || c.date,
-      type: "Credit"
-    }));
+    // সব হিস্টরি একত্রিত করা (EarningModel বা অন্য কোনো মডেল एरর এড়াতে ট্রাই-ক্যাচ রাখা হলো)
+    let formattedCredits = [];
+    try {
+      if (typeof EarningModel !== "undefined") {
+        const creditHistoryDocs = await EarningModel.find({ email }).lean();
+        formattedCredits = creditHistoryDocs.map(c => ({
+          _id: c._id,
+          amount: c.amount,
+          status: "Success",
+          createdAt: c.createdAt || c.date,
+          type: "Credit"
+        }));
+      }
+    } catch (e) {
+      console.log("Credit history fetch skipped");
+    }
 
-    // ৩. দুটো একসাথে মার্জ করে লেটেস্ট অনুযায়ী সর্ট করুন
     const combinedHistory = [...formattedWithdrawals, ...formattedCredits].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
@@ -6907,7 +6913,7 @@ app.post("/withdraw-info", async (req, res) => {
       success: true,
       todayBalance: Number(user.todayBalance || 0),
       withdrawableBalance: withdrawableBalance * 0.8,
-      bank,
+      bank: bank || null,
       history: combinedHistory
     });
 
