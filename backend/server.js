@@ -4752,27 +4752,28 @@ app.post("/admin-addon-distribute", auth, adminAuth, async (req, res) => {
 
     for (let item of offerList) {
       if (item.remainingBalance > 0) {
-        // ১. ইউজারের ওয়ালেটে ব্যালেন্স আপডেট করা
+        // সবার todayBalance এ টাকা যোগ করা হলো
         await User.findByIdAndUpdate(item.userId, {
-          $inc: { wallet: item.remainingBalance }
+          $inc: { todayBalance: item.remainingBalance }
         });
 
-        // ২. ওয়ালেট হিস্ট্রি বা বোনাস লেজারে রেকর্ড যুক্ত করা (যাতে ডেসক্রিপশন বা নোট সেভ থাকে)
+        // লেজারে 'Offer Add-on' হিসেবে হিস্ট্রি সেভ করা
         await BonusLedger.create({
           email: item.email,
-          bonusType: "Referral Bonus",
+          bonusType: "Offer Add-on",
           amount: item.remainingBalance,
-          note: `Referral Offer Add-on: Remaining balance credited (${item.referralCount} referrals)`
+          note: `Offer Add-on Mass Payout Credited (${item.referralCount} referrals calculated)`
         });
       }
     }
 
-    res.json({ success: true, msg: "Remaining balance added to all wallets successfully!" });
+    res.json({ success: true, msg: "Remaining balance added to Today Balance for all users successfully!" });
   } catch (err) {
     console.error("Distribution Error:", err);
     res.status(500).json({ success: false, msg: "Failed to distribute amount" });
   }
 });
+
 
 
 app.post("/admin-addon-single-distribute", auth, adminAuth, async (req, res) => {
@@ -4783,29 +4784,32 @@ app.post("/admin-addon-single-distribute", auth, adminAuth, async (req, res) => 
       return res.status(400).json({ success: false, msg: "Invalid user data or balance" });
     }
 
-    // ইউজার মডেলে Today Wallet এর ফিল্ড নেম অনুযায়ী এখানে আপডেট করুন 
-    // (যদি ফিল্ডের নাম todayWallet হয় তবে todayWallet: remainingBalance দিন)
-    await User.findByIdAndUpdate(userId, {
-      $inc: { 
-        todayWallet: remainingBalance, // অথবা আপনার স্কিমার আসল ফিল্ডের নাম
-        wallet: remainingBalance 
-      }
-    });
+    // সরাসরি todayBalance এ টাকা যোগ করা হলো
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $inc: { todayBalance: remainingBalance } },
+      { new: true }
+    );
 
-    // বোনাস লেজারে হিস্ট্রি সেভ করা
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, msg: "User not found" });
+    }
+
+    // বোনাস লেজারে 'Offer Add-on' হিসেবে হিস্ট্রি সেভ করা
     await BonusLedger.create({
       email: email,
-      bonusType: "Referral Bonus",
+      bonusType: "Offer Add-on",
       amount: remainingBalance,
-      note: `Referral Offer Add-on: Single payout credited (${referralCount} referrals)`
+      note: `Offer Add-on Payout Credited (${referralCount} referrals calculated)`
     });
 
-    res.json({ success: true, msg: "Amount added to Today Wallet successfully!" });
+    res.json({ success: true, msg: "Amount added to Today Balance successfully!" });
   } catch (err) {
     console.error("Single Distribution Error:", err);
     res.status(500).json({ success: false, msg: "Failed to distribute amount to user" });
   }
 });
+
 
 
 
