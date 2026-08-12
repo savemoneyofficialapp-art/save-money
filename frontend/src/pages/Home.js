@@ -299,7 +299,7 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
-      {/* 👇 SLIDING DRAWER (স্লাইডিং ডোর / ড্রয়ার) */}
+      {/* 👇 স্লাইডিং ড্রয়ার (ড্রয়ার ফিক্সড ভার্সন) */}
       {showDrawer && (
         <div style={styles.drawerOverlay} onClick={() => setShowDrawer(false)}>
           <div style={styles.drawerPanel} onClick={(e) => e.stopPropagation()}>
@@ -900,35 +900,31 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // 👇 স্লাইডিং ড্রয়ারের স্টাইল
-    drawerOverlay: {
+  // 👇 ফিক্সড স্লাইডিং ড্রয়ারের স্টাইল
+  drawerOverlay: {
     position: "fixed",
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(2, 6, 23, 0.75)",
-    backdropFilter: "blur(6px)",
-    zIndex: 100002,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    zIndex: 999999,
     display: "flex",
     justifyContent: "flex-start",
-    visibility: "visible", // এটি যোগ করুন
-    opacity: 1             // এটি যোগ করুন
+    alignItems: "flex-start"
   },
   drawerPanel: {
-    background: "#0f172a",
-    width: "300px",
+    backgroundColor: "#0f172a",
+    width: "280px",
     height: "100%",
     padding: "20px",
+    boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
-    boxShadow: "5px 0 30px rgba(0,0,0,0.5)",
+    boxShadow: "5px 0 25px rgba(0,0,0,0.8)",
     borderRight: "1px solid #1e293b",
-    animation: "slideInLeft 0.3s ease forwards", // এখানে forwards যুক্ত করুন
-    position: "relative", // এটি যোগ করুন
-    zIndex: 100003        // এটি যোগ করুন
+    zIndex: 1000000
   },
-
   drawerHeader: {
     display: "flex",
     alignItems: "center",
@@ -1680,12 +1676,7 @@ const keyframes = `
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
 }
-@keyframes slideInLeft {
-  0% { transform: translateX(-100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
-}
 `;
-
 try {
   styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
 } catch (e) {}
