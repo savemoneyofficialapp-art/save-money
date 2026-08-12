@@ -4,6 +4,34 @@ import { API } from "../config";
 
 export default function AdminAddon() {
   const token = localStorage.getItem("token");
+    // ১. সেইফ জেসন পার্স করার ফাংশন
+  const safeJson = async (res) => {
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { msg: text || "Invalid server response" };
+    }
+  };
+
+  // ২. অথ এরর চেক করার ফাংশন
+  const checkAuthError = (d) => {
+    if (
+      d?.msg === "Token expired or invalid" ||
+      d?.msg === "No token" ||
+      d?.msg === "Invalid token" ||
+      d?.msg === "Admin access only" ||
+      d?.msg === "Admin only" ||
+      d?.msg === "Admin auth failed"
+    ) {
+      localStorage.clear();
+      alert(d.msg + ". Please login again.");
+      window.location.href = "/login";
+      return true;
+    }
+    return false;
+  };
+  
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
