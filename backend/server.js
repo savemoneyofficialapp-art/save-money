@@ -3418,7 +3418,7 @@ app.post("/update-mobile", async (req, res) => {
   res.json({ msg: "Mobile updated" });
 });
 
-App.post("/submit-kyc", upload.fields([
+app.post("/submit-kyc", upload.fields([
   { name: "aadhaarFile", maxCount: 1 },
   { name: "panFile", maxCount: 1 },
   { name: "photo", maxCount: 1 }
@@ -3735,7 +3735,7 @@ app.post("/admin/approve", async (req, res) => {
   res.json({ msg: "Approved" });
 });
 
-App.get("/admin-analytics", auth, adminAuth, async (req, res) => {
+app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
 
   const totalUsers = await User.countDocuments();
 
