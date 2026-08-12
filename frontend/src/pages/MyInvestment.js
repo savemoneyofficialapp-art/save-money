@@ -27,7 +27,6 @@ export default function MyInvestment() {
   const [renewOpen, setRenewOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
-  // কাস্টম অ্যালার্ট ও ডিটেইলস মডালের জন্য ডাইনামিক স্টেট
   const [customAlert, setCustomAlert] = useState({ show: false, title: "", message: "", type: "info" });
 
   const getDaysLeft = (renewDate) => {
@@ -220,246 +219,275 @@ export default function MyInvestment() {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.wrap}>
-
-        <div style={styles.header}>
-          <button style={styles.backBtn} onClick={() => navigate("/home")}>
-            ←
-          </button>
-
-          <div style={styles.headerTitle}>
-            <h1>My Investment</h1>
-            <p>Track, manage & grow your wealth</p>
-          </div>
-
-          <div style={styles.rightTop}>
-            <div style={styles.secureBadge}>🛡 100% Secure</div>
-            <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>
-              🔔
-              <span></span>
-            </button>
-          </div>
+    <div style={styles.mainLayoutWrapper}>
+      {/* বাম পাশের ফিক্সড ডার্ক সাইডবার */}
+      <div style={styles.leftSidebar}>
+        <div style={styles.sidebarLogoWrap}>
+          <div style={styles.sidebarTreeIcon}>🌳</div>
+          <h2 style={styles.sidebarBrandTitle}>SAVE MONEY</h2>
+          <p style={styles.sidebarBrandSub}>SIP INVEST PLAN</p>
         </div>
 
-        {investments.length === 0 ? (
-          <EmptyInvestment navigate={navigate} />
-        ) : (
-          <>
-            <SummaryHero summary={summary} money={money} />
-
-            {investments.map((inv, index) => {
-              const currentCardInvestedAmount = inv.history && Array.isArray(inv.history) && inv.history.length > 0
-                ? inv.history.reduce((hSum, h) => hSum + Number(h.amount || 0), 0)
-                : Number(inv.amount || 0);
-
-              return (
-                <InvestmentCard
-                  key={inv._id || inv.investmentId || index}
-                  inv={inv}
-                  money={money}
-                  date={date}
-                  copyId={copyId}
-                  viewDetails={viewDetails}
-                  certificate={certificate}
-                  downloadStatement={downloadStatement}
-                  renewNow={renewNow}
-                  daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
-                  isOverdue={isOverdue}            
-                  requiredInvestment={inv.totalPlanAmount || inv.amount}
-                  investedAmount={currentCardInvestedAmount} 
-                />
-              );
-            })}
-
-            <BottomBanner />
-          </>
-        )}
-
+        <div style={styles.sidebarGraphicArea}>
+          <div style={styles.sidebarChartBars}>
+            <div style={{...styles.sBar, height: "40px"}}></div>
+            <div style={{...styles.sBar, height: "65px"}}></div>
+            <div style={{...styles.sBar, height: "90px"}}></div>
+            <div style={{...styles.sBar, height: "120px"}}></div>
+          </div>
+          <div style={styles.sidebarPlantBox}>
+            🌱
+          </div>
+          <div style={styles.sidebarCoinsStack}>
+            <div style={styles.sCoin}>₹</div>
+            <div style={styles.sCoin}>₹</div>
+          </div>
+        </div>
       </div>
 
-      {statementOpen && selectedPlan && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalBox}>
-            <h2>Payment Statement</h2>
-            <p>Start SIP payment and all renew payments are listed below.</p>
+      {/* মূল কন্টেন্ট এরিয়া */}
+      <div style={styles.rightContentArea}>
+        <div style={styles.page}>
+          <div style={styles.wrap}>
 
-            {(selectedPlan.history || []).length === 0 ? (
-              <p>No payment slip found</p>
+            <div style={styles.header}>
+              <button style={styles.backBtn} onClick={() => navigate("/home")}>
+                ←
+              </button>
+
+              <div style={styles.headerTitle}>
+                <h1>My Investment</h1>
+                <p>Track, manage & grow your wealth</p>
+              </div>
+
+              <div style={styles.rightTop}>
+                <div style={styles.secureBadge}>🛡 100% Secure</div>
+                <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>
+                  🔔
+                  <span></span>
+                </button>
+              </div>
+            </div>
+
+            {investments.length === 0 ? (
+              <EmptyInvestment navigate={navigate} />
             ) : (
-              selectedPlan.history.map((h, i) => (
-                <div key={i} style={styles.slipRow}>
-                  <div>
-                    <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
-                    <p>{formatDate(h.date)}</p>
-                    <h3 style={{ color: "#16a34a", fontWeight: "800" }}>
-                      ₹ {Number(h.amount || 0).toLocaleString("en-IN")}
-                    </h3>
-                  </div>
+              <>
+                <SummaryHero summary={summary} money={money} />
 
-                  <button
-                    style={styles.greenBtn}
-                    onClick={() =>
-                      downloadSlip(selectedPlan._id || selectedPlan.investmentId, h._id)
-                    }
-                  >
-                    Download Slip
-                  </button>
-                </div>
-              ))
+                {investments.map((inv, index) => {
+                  const currentCardInvestedAmount = inv.history && Array.isArray(inv.history) && inv.history.length > 0
+                    ? inv.history.reduce((hSum, h) => hSum + Number(h.amount || 0), 0)
+                    : Number(inv.amount || 0);
+
+                  return (
+                    <InvestmentCard
+                      key={inv._id || inv.investmentId || index}
+                      inv={inv}
+                      money={money}
+                      date={date}
+                      copyId={copyId}
+                      viewDetails={viewDetails}
+                      certificate={certificate}
+                      downloadStatement={downloadStatement}
+                      renewNow={renewNow}
+                      openRenewInfo={openRenewInfo}
+                      daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
+                      isOverdue={isOverdue}            
+                      requiredInvestment={inv.totalPlanAmount || inv.amount}
+                      investedAmount={currentCardInvestedAmount} 
+                    />
+                  );
+                })}
+
+                <BottomBanner />
+              </>
             )}
 
-            <button style={styles.closeBtn} onClick={() => setStatementOpen(false)}>
-              Close
-            </button>
           </div>
-        </div>
-      )}
 
-      {renewOpen && selectedPlan && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalBox}>
-            <h2>Renew Information</h2>
+          {statementOpen && selectedPlan && (
+            <div style={styles.modalOverlay}>
+              <div style={styles.modalBox}>
+                <h2>Payment Statement</h2>
+                <p>Start SIP payment and all renew payments are listed below.</p>
 
-            <p>
-              Your SIP renewal is due exactly after 30 days from your investment start date.
-            </p>
+                {(selectedPlan.history || []).length === 0 ? (
+                  <p>No payment slip found</p>
+                ) : (
+                  selectedPlan.history.map((h, i) => (
+                    <div key={i} style={styles.slipRow}>
+                      <div>
+                        <b>{i === 0 ? "Start SIP Payment" : "Renew Payment"}</b>
+                        <p>{formatDate(h.date)}</p>
+                        <h3 style={{ color: "#16a34a", fontWeight: "800" }}>
+                          ₹ {Number(h.amount || 0).toLocaleString("en-IN")}
+                        </h3>
+                      </div>
 
-            <h3>Renew Due Date</h3>
+                      <button
+                        style={styles.greenBtn}
+                        onClick={() =>
+                          downloadSlip(selectedPlan._id || selectedPlan.investmentId, h._id)
+                        }
+                      >
+                        Download Slip
+                      </button>
+                    </div>
+                  ))
+                )}
 
-            <h2 style={{ color: "#16a34a" }}>
-              {renewDateText()}
-            </h2>
+                <button style={styles.closeBtn} onClick={() => setStatementOpen(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
 
-            <h3>Days Left For Renew</h3>
+          {renewOpen && selectedPlan && (
+            <div style={styles.modalOverlay}>
+              <div style={styles.modalBox}>
+                <h2>Renew Information</h2>
 
-            {isOverdue(selectedPlan?.renewDate || selectedPlan?.nextRenewDate) ? (
-              <h1 style={{ color: "#ef4444" }}>Overdue</h1>
-            ) : (
-              <h1 style={{ color: "#7c3aed" }}>
-                {getDaysLeft(selectedPlan?.renewDate || selectedPlan?.nextRenewDate)} Days
-              </h1>
-            )}
+                <p>
+                  Your SIP renewal is due exactly after 30 days from your investment start date.
+                </p>
 
-            <p>
-              Please renew on or before your renew due date. If the renew date is missed,
-              your investment status may become inactive and bonus / auto withdrawal benefits
-              may be affected.
-            </p>
+                <h3>Renew Due Date</h3>
 
-            <button
-              style={styles.greenBtn}
-              onClick={async () => {
-                try {
-                  const res = await axios.post(
-                    `${API}/renew-invest`,
-                    {
-                      investmentId: selectedPlan._id
+                <h2 style={{ color: "#16a34a" }}>
+                  {renewDateText()}
+                </h2>
+
+                <h3>Days Left For Renew</h3>
+
+                {isOverdue(selectedPlan?.renewDate || selectedPlan?.nextRenewDate) ? (
+                  <h1 style={{ color: "#ef4444" }}>Overdue</h1>
+                ) : (
+                  <h1 style={{ color: "#7c3aed" }}>
+                    {getDaysLeft(selectedPlan?.renewDate || selectedPlan?.nextRenewDate)} Days
+                  </h1>
+                )}
+
+                <p>
+                  Please renew on or before your renew due date. If the renew date is missed,
+                  your investment status may become inactive and bonus / auto withdrawal benefits
+                  may be affected.
+                </p>
+
+                <button
+                  style={styles.greenBtn}
+                  onClick={async () => {
+                    try {
+                      const res = await axios.post(
+                        `${API}/renew-invest`,
+                        {
+                          investmentId: selectedPlan._id
+                        }
+                      );
+
+                      setRenewOpen(false);
+
+                      setCustomAlert({ 
+                        show: true, 
+                        title: "Notification", 
+                        message: res.data.msg,
+                        type: "info"
+                      });
+
+                      if (res.data.success) {
+                        loadInvestments(); 
+                      }
+
+                    } catch (err) {
+                      toast.error(
+                        err?.response?.data?.msg ||
+                        "Renew failed"
+                      );
                     }
-                  );
+                  }}
+                >
+                  Renew Payment
+                </button>
 
-                  setRenewOpen(false);
+                <button style={styles.closeBtn} onClick={() => setRenewOpen(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
 
-                  setCustomAlert({ 
-                    show: true, 
-                    title: "Notification", 
-                    message: res.data.msg,
-                    type: "info"
-                  });
-
-                  if (res.data.success) {
-                    loadInvestments(); 
-                  }
-
-                } catch (err) {
-                  toast.error(
-                    err?.response?.data?.msg ||
-                    "Renew failed"
-                  );
+          {customAlert.show && (
+            <div style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(5, 8, 66, 0.4)",
+              backdropFilter: "blur(12px)", 
+              WebkitBackdropFilter: "blur(12px)",
+              zIndex: 99999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px"
+            }}>
+              
+              <style>{`
+                @keyframes popupBounceScale {
+                  0% { transform: scale(0.75); opacity: 0; }
+                  100% { transform: scale(1); opacity: 1; }
                 }
-              }}
-            >
-              Renew Payment
-            </button>
+              `}</style>
 
-            <button style={styles.closeBtn} onClick={() => setRenewOpen(false)}>
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+              <div style={{
+                width: "100%",
+                maxWidth: "380px",
+                background: "white",
+                borderRadius: "26px",
+                padding: "30px 24px",
+                color: "#071747",
+                boxShadow: "0 25px 60px -15px rgba(0,0,0,0.35)",
+                textAlign: "center",
+                border: "1px solid rgba(255, 255, 255, 0.8)",
+                animation: "popupBounceScale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"
+              }}>
+                
+                <div style={{ fontSize: "56px", marginBottom: "12px", display: "inline-block" }}>
+                  {customAlert.type === "details" ? "📊" : "ℹ️"}
+                </div>
+                
+                <h2 style={{ fontSize: "22px", fontWeight: "800", marginBottom: "16px", color: "#071747", letterSpacing: "-0.5px" }}>
+                  {customAlert.title}
+                </h2>
+                
+                <div style={{ fontSize: "17px", fontWeight: "700", color: "#334155", marginBottom: "28px", lineHeight: "1.6" }}>
+                  {customAlert.message}
+                </div>
+                
+                <button 
+                  style={{ 
+                    width: "100%", 
+                    padding: "14px", 
+                    fontSize: "16px", 
+                    fontWeight: "900", 
+                    background: customAlert.type === "details" ? "#0969ff" : "#16a34a", 
+                    color: "white", 
+                    border: "none", 
+                    borderRadius: "16px", 
+                    cursor: "pointer",
+                    boxShadow: "0 8px 22px rgba(0,0,0,0.15)",
+                    transition: "transform 0.1s"
+                  }} 
+                  onClick={() => setCustomAlert({ show: false, title: "", message: "", type: "info" })}
+                >
+                  Okay, Got it
+                </button>
 
-      {customAlert.show && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(5, 8, 66, 0.4)",
-          backdropFilter: "blur(12px)", 
-          WebkitBackdropFilter: "blur(12px)",
-          zIndex: 99999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "20px"
-        }}>
-          
-          <style>{`
-            @keyframes popupBounceScale {
-              0% { transform: scale(0.75); opacity: 0; }
-              100% { transform: scale(1); opacity: 1; }
-            }
-          `}</style>
-
-          <div style={{
-            width: "100%",
-            maxWidth: "380px",
-            background: "white",
-            borderRadius: "26px",
-            padding: "30px 24px",
-            color: "#071747",
-            boxShadow: "0 25px 60px -15px rgba(0,0,0,0.35)",
-            textAlign: "center",
-            border: "1px solid rgba(255, 255, 255, 0.8)",
-            animation: "popupBounceScale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"
-          }}>
-            
-            <div style={{ fontSize: "56px", marginBottom: "12px", display: "inline-block" }}>
-              {customAlert.type === "details" ? "📊" : "ℹ️"}
+              </div>
             </div>
-            
-            <h2 style={{ fontSize: "22px", fontWeight: "800", marginBottom: "16px", color: "#071747", letterSpacing: "-0.5px" }}>
-              {customAlert.title}
-            </h2>
-            
-            <div style={{ fontSize: "17px", fontWeight: "700", color: "#334155", marginBottom: "28px", lineHeight: "1.6" }}>
-              {customAlert.message}
-            </div>
-            
-            <button 
-              style={{ 
-                width: "100%", 
-                padding: "14px", 
-                fontSize: "16px", 
-                fontWeight: "900", 
-                background: customAlert.type === "details" ? "#0969ff" : "#16a34a", 
-                color: "white", 
-                border: "none", 
-                borderRadius: "16px", 
-                cursor: "pointer",
-                boxShadow: "0 8px 22px rgba(0,0,0,0.15)",
-                transition: "transform 0.1s"
-              }} 
-              onClick={() => setCustomAlert({ show: false, title: "", message: "", type: "info" })}
-              onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.97)"}
-              onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-            >
-              Okay, Got it
-            </button>
+          )}
 
-          </div>
         </div>
-      )}
-
+      </div>
     </div>
   );
 }
@@ -596,7 +624,6 @@ function InvestmentCard({
           </div>
         </div>
 
-        {/* আপডেট করা প্রিমিয়াম ডার্ক আইডি বক্স (২য় স্ক্রিনশট অনুযায়ী) */}
         <div style={styles.darkIdBox} onClick={() => copyId(investmentId)}>
           <div style={styles.idBoxTopText}>INVESTMENT ID</div>
           <div style={styles.idBoxRow}>
@@ -618,7 +645,6 @@ function InvestmentCard({
         <Info icon="🛡" title="STATUS" value={status} color={theme.color} />
       </div>
 
-      {/* আপডেট করা টোটাল রিটার্ন ব্যানার (২য় স্ক্রিনশট অনুযায়ী) */}
       <div style={styles.totalReturnBanner}>
         <div style={styles.totalReturnLeft}>
           <div style={styles.totalReturnIconBag}>💰</div>
@@ -628,7 +654,7 @@ function InvestmentCard({
           </div>
         </div>
         <div style={styles.totalReturnChartGraphic}>
-          <svg width="180" height="45" viewBox="0 0 180 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="180" height="45" viewBox="0 0 180 45" fill="none">
             <path d="M5 38C35 35 50 15 80 25C110 35 130 10 175 5" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
             <path d="M5 40C40 38 65 20 95 28C125 36 145 15 175 8" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
             <circle cx="175" cy="8" r="4" fill="#a855f7"/>
@@ -637,7 +663,6 @@ function InvestmentCard({
         </div>
       </div>
 
-      {/* আপডেট করা ডার্ক প্রোগ্রেস ও ম্যাচিউরিটি সেকশন (২য় স্ক্রিনশট অনুযায়ী) */}
       <div style={styles.darkGrowthBox}>
         <div style={styles.growthLeftCol}>
           <div style={styles.growthTextHeader}>
@@ -664,7 +689,6 @@ function InvestmentCard({
           <div style={styles.expectedMaturityLabel}>Expected Maturity Amount</div>
           <div style={styles.expectedMaturityValue}>{money(maturityAmount)}</div>
           
-          {/* গ্রাফ লাইন ভিজ্যুয়াল */}
           <div style={styles.maturityChartOverlay}>
             <svg width="140" height="35" viewBox="0 0 140 35" fill="none">
               <path d="M5 30C25 28 45 18 65 22C85 26 110 10 135 4" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
@@ -674,16 +698,23 @@ function InvestmentCard({
         </div>
       </div>
 
-      {/* রিনিউ কাউন্টডাউন নোটিশ */}
-      <div style={styles.daysLeftBoxDark}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span>⏳</span>
-          <span>Renew due on {new Date(inv?.renewDate || inv?.nextRenewDate).toLocaleDateString("en-GB")}</span>
+      {/* রিনিউ নোটিশ কার্ড এবং ভিউ রিনিউ ডিটেইলস বেগুনি বাটন */}
+      <div style={styles.renewNoticeCard}>
+        <div style={styles.renewNoticeLeft}>
+          <div style={styles.renewNoticeHourglass}>⏳</div>
+          <div>
+            <div style={styles.renewNoticeTextMain}>
+              Renew due on {new Date(inv?.renewDate || inv?.nextRenewDate).toLocaleDateString("en-GB")}
+            </div>
+            <div style={styles.renewNoticeDaysLeft}>{daysLeft} Days Left</div>
+          </div>
         </div>
-        <b>{daysLeft} Days Left</b>
+        <button style={styles.viewRenewalDetailsBtn} onClick={() => renewNow(inv)}>
+          <span>VIEW RENEWAL DETAILS</span>
+          <span>›</span>
+        </button>
       </div>
 
-      {/* আপডেট করা অ্যাকশন বাটন (অ্যারো সহ) */}
       <div style={styles.actions}>
         <button style={styles.actionBtnItem} onClick={() => viewDetails(inv)}>
           <span>👁 VIEW DETAILS</span>
@@ -759,10 +790,114 @@ function BottomBanner() {
 }
 
 const styles = {
+  mainLayoutWrapper: {
+    display: "flex",
+    minHeight: "100vh",
+    background: "#03082e",
+  },
+
+  leftSidebar: {
+    width: "280px",
+    background: "linear-gradient(180deg, #020617 0%, #071747 100%)",
+    borderRight: "1px solid rgba(255,255,255,0.08)",
+    padding: "30px 20px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    position: "sticky",
+    top: 0,
+    height: "100vh",
+    overflowY: "auto",
+    boxSizing: "border-box"
+  },
+
+  sidebarLogoWrap: {
+    textAlign: "center"
+  },
+
+  sidebarTreeIcon: {
+    fontSize: "52px",
+    marginBottom: "10px"
+  },
+
+  sidebarBrandTitle: {
+    color: "white",
+    fontSize: "20px",
+    fontWeight: "900",
+    letterSpacing: "0.5px"
+  },
+
+  sidebarBrandSub: {
+    color: "#34d399",
+    fontSize: "11px",
+    fontWeight: "800",
+    letterSpacing: "1.5px",
+    marginTop: "4px"
+  },
+
+  sidebarGraphicArea: {
+    position: "relative",
+    height: "220px",
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingBottom: "10px"
+  },
+
+  sidebarChartBars: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: "8px",
+    position: "absolute",
+    left: "15px",
+    bottom: "20px"
+  },
+
+  sBar: {
+    width: "10px",
+    background: "rgba(52, 211, 153, 0.25)",
+    borderRadius: "4px 4px 0 0"
+  },
+
+  sidebarPlantBox: {
+    position: "absolute",
+    left: "65px",
+    bottom: "20px",
+    fontSize: "44px"
+  },
+
+  sidebarCoinsStack: {
+    position: "absolute",
+    left: "20px",
+    bottom: "15px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "-10px"
+  },
+
+  sCoin: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    background: "#f59e0b",
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "13px",
+    fontWeight: "900",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+  },
+
+  rightContentArea: {
+    flex: 1,
+    overflowY: "auto"
+  },
+
   page: {
     minHeight: "100vh",
     background: "linear-gradient(180deg,#050842 0%,#082a93 38%,#dbeafe 100%)",
-    padding: "16px",
+    padding: "24px",
     fontFamily: "Arial, sans-serif",
     color: "#101a3a"
   },
@@ -1012,7 +1147,6 @@ const styles = {
     background: "#f8fffb"
   },
 
-  // ২য় স্ক্রিনশটের মতো প্রিমিয়াম ডার্ক আইডি বক্স স্টাইল
   darkIdBox: {
     width: "250px",
     background: "linear-gradient(135deg, #071747 0%, #0c235c 100%)",
@@ -1083,7 +1217,6 @@ const styles = {
     fontSize: "18px"
   },
 
-  // ২য় স্ক্রিনশটের টোটাল রিটার্ন ব্যানার স্টাইল
   totalReturnBanner: {
     marginTop: "14px",
     background: "linear-gradient(135deg, #f5f3ff 0%, #faf8ff 100%)",
@@ -1148,7 +1281,6 @@ const styles = {
     justifyContent: "center"
   },
 
-  // ২য় স্ক্রিনশটের ডার্ক প্রোগ্রেস ও ম্যাচিউরিটি বক্স স্টাইল
   darkGrowthBox: {
     marginTop: "14px",
     background: "#071747",
@@ -1235,21 +1367,64 @@ const styles = {
     marginTop: "2px"
   },
 
-  daysLeftBoxDark: {
-    marginTop: "12px",
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: "14px",
-    padding: "12px 16px",
+  // রিনিউ নোটিশ কার্ডের স্টাইল
+  renewNoticeCard: {
+    marginTop: "14px",
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "18px",
+    padding: "16px 20px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    color: "white",
-    fontSize: "14px",
-    fontWeight: "700"
+    boxShadow: "0 4px 12px rgba(0,0,0,0.04)"
   },
 
-  // ২য় স্ক্রিনশটের অ্যাকশন বাটন স্টাইল (অ্যারো সহ)
+  renewNoticeLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px"
+  },
+
+  renewNoticeHourglass: {
+    fontSize: "24px",
+    background: "#fef3c7",
+    width: "46px",
+    height: "46px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  renewNoticeTextMain: {
+    fontSize: "14px",
+    fontWeight: "800",
+    color: "#1e293b"
+  },
+
+  renewNoticeDaysLeft: {
+    fontSize: "12px",
+    fontWeight: "700",
+    color: "#d97706",
+    marginTop: "2px"
+  },
+
+  viewRenewalDetailsBtn: {
+    background: "#7c3aed",
+    color: "white",
+    border: "none",
+    borderRadius: "14px",
+    padding: "12px 18px",
+    fontSize: "12px",
+    fontWeight: "900",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    boxShadow: "0 4px 12px rgba(124, 58, 237, 0.25)"
+  },
+
   actions: {
     marginTop: "14px",
     display: "grid",
@@ -1269,8 +1444,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
-    transition: "all 0.2s"
+    boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
   },
 
   renewBtnItem: {
