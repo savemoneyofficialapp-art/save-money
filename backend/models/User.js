@@ -213,6 +213,12 @@ walletBalance: {
   type: Number,
   default: 0
 },
+
+
+    kycSubmittedAt: {
+    type: Date,
+    default: null
+  },
   
 
   // ðŸ”¹ KYC STATUS
