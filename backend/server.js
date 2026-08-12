@@ -6850,10 +6850,6 @@ app.post("/daily-reward", async (req, res) => {
   }
 });
             
-
-
-
-// --- উইথড্র ইনফো এবং হিস্টরি পাওয়ার API ---
 app.post("/withdraw-info", async (req, res) => {
   try {
     const rawEmail = req.body.email || "";
@@ -6862,7 +6858,6 @@ app.post("/withdraw-info", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ success: false, msg: "User not found" });
 
-    // ব্যাংক ডিটেইলস ফেচ করা
     const bank = await BankDetails.findOne({ email });
 
     const today = new Date();
@@ -6881,30 +6876,31 @@ app.post("/withdraw-info", async (req, res) => {
     let withdrawableBalance = Number(user.todayBalance || 0) - totalDebited;
     if (withdrawableBalance < 0) withdrawableBalance = 0;
 
-    // উইথড্র হিস্টরি ফেচ করা
+    // ১. উইথড্র হিস্টরি (Debit) ফেচ করা
     const withdrawalHistory = await WithdrawRequest.find({ email }).lean();
     const formattedWithdrawals = withdrawalHistory.map(w => ({
       ...w,
-      type: "Debit"
+      type: "Debit",
+      createdAt: w.createdAt || w.date
     }));
 
-    // সব হিস্টরি একত্রিত করা (EarningModel বা অন্য কোনো মডেল एरর এড়াতে ট্রাই-ক্যাচ রাখা হলো)
+    // ২. BonusLedger থেকে ক্রেডিট হিস্টরি (যেমন ৫০ টাকা বোনাস) ফেচ করা
     let formattedCredits = [];
     try {
-      if (typeof EarningModel !== "undefined") {
-        const creditHistoryDocs = await EarningModel.find({ email }).lean();
-        formattedCredits = creditHistoryDocs.map(c => ({
-          _id: c._id,
-          amount: c.amount,
-          status: "Success",
-          createdAt: c.createdAt || c.date,
-          type: "Credit"
-        }));
-      }
+      const bonusDocs = await BonusLedger.find({ email }).lean();
+      formattedCredits = bonusDocs.map(b => ({
+        _id: b._id,
+        amount: b.amount,
+        status: "Success",
+        createdAt: b.createdAt || b.date,
+        type: "Credit",
+        note: b.note || b.bonusType || "Bonus Credited"
+      }));
     } catch (e) {
-      console.log("Credit history fetch skipped");
+      console.log("BonusLedger fetch error:", e);
     }
 
+    // ৩. উভয় হিস্টরি একত্রিত করে লেটেস্ট ডেট অনুযায়ী সর্ট করা
     const combinedHistory = [...formattedWithdrawals, ...formattedCredits].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
@@ -6922,6 +6918,8 @@ app.post("/withdraw-info", async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+        
+
 
 
 // --- উইথড্র রিকোয়েস্ট সাবমিট করার API ---
