@@ -901,7 +901,7 @@ function BottomNavItem({ icon, title, active, onClick }) {
 
 const styles = {
   // 👇 স্লাইডিং ড্রয়ারের স্টাইল
-  drawerOverlay: {
+    drawerOverlay: {
     position: "fixed",
     top: 0,
     left: 0,
@@ -911,7 +911,9 @@ const styles = {
     backdropFilter: "blur(6px)",
     zIndex: 100002,
     display: "flex",
-    justifyContent: "flex-start"
+    justifyContent: "flex-start",
+    visibility: "visible", // এটি যোগ করুন
+    opacity: 1             // এটি যোগ করুন
   },
   drawerPanel: {
     background: "#0f172a",
@@ -922,8 +924,11 @@ const styles = {
     flexDirection: "column",
     boxShadow: "5px 0 30px rgba(0,0,0,0.5)",
     borderRight: "1px solid #1e293b",
-    animation: "slideInLeft 0.3s ease"
+    animation: "slideInLeft 0.3s ease forwards", // এখানে forwards যুক্ত করুন
+    position: "relative", // এটি যোগ করুন
+    zIndex: 100003        // এটি যোগ করুন
   },
+
   drawerHeader: {
     display: "flex",
     alignItems: "center",
@@ -1676,10 +1681,11 @@ const keyframes = `
   100% { transform: translate3d(-100%, 0, 0); }
 }
 @keyframes slideInLeft {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(0); }
+  0% { transform: translateX(-100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
 }
 `;
+
 try {
   styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
 } catch (e) {}
