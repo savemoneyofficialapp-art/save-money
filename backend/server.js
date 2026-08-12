@@ -4747,21 +4747,59 @@ app.post("/admin-addon-distribute", auth, adminAuth, async (req, res) => {
     const { offerList } = req.body;
 
     if (!offerList || offerList.length === 0) {
-      return res.status(400).json({ success: false, msg: "বিতরণ করার মতো কোনো ডেটা নেই" });
+      return res.status(400).json({ success: false, msg: "No data available to distribute" });
     }
 
     for (let item of offerList) {
       if (item.remainingBalance > 0) {
+        // ১. ইউজারের ওয়ালেটে ব্যালেন্স আপডেট করা
         await User.findByIdAndUpdate(item.userId, {
           $inc: { wallet: item.remainingBalance }
+        });
+
+        // ২. ওয়ালেট হিস্ট্রি বা বোনাস লেজারে রেকর্ড যুক্ত করা (যাতে ডেসক্রিপশন বা নোট সেভ থাকে)
+        await BonusLedger.create({
+          email: item.email,
+          bonusType: "Referral Bonus",
+          amount: item.remainingBalance,
+          note: `Referral Offer Add-on: Remaining balance credited (${item.referralCount} referrals)`
         });
       }
     }
 
-    res.json({ success: true, msg: "সবার ওয়ালেটে সফলভাবে টাকা যোগ করা হয়েছে!" });
+    res.json({ success: true, msg: "Remaining balance added to all wallets successfully!" });
   } catch (err) {
     console.error("Distribution Error:", err);
-    res.status(500).json({ success: false, msg: "টাকা বিতরণ করতে ব্যর্থ হয়েছে" });
+    res.status(500).json({ success: false, msg: "Failed to distribute amount" });
+  }
+});
+
+
+app.post("/admin-addon-single-distribute", auth, adminAuth, async (req, res) => {
+  try {
+    const { userId, email, remainingBalance, referralCount } = req.body;
+
+    if (!userId || !remainingBalance || remainingBalance <= 0) {
+      return res.status(400).json({ success: false, msg: "Invalid user data or balance" });
+    }
+
+    // ১. নির্দিষ্ট ইউজারের ওয়ালেটে ব্যালেন্স আপডেট করা
+    await User.findByIdAndUpdate(userId, {
+      $inc: { wallet: remainingBalance }
+    });
+
+    // ২. বোনাস লেজারে রেকর্ড যুক্ত করা
+    await BonusLedger.create({
+      email: email,
+      bonusType: "Referral Bonus",
+      amount: remainingBalance,
+      note: `Referral Offer Add-on: Single payout credited (${referralCount} referrals)`
+    });
+
+    res.json({ success: true, msg: "Amount added to this user's wallet successfully!" });
+  } catch (err) {
+    console.error("Single Distribution Error:", err);
+    res.status(500).json({ success: false, msg: "Failed to distribute amount to user" });
   }
 });
 
