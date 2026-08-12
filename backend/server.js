@@ -5825,8 +5825,9 @@ if (
 const allBonusHistory = rawBonusHistory.map(item => ({
   ...item,
   fromName: item.fromName || "Direct Member",
-  uplineName: item.fromName || "N/A" // নিজের নামের বদলে ডাউলাইন ইউজারের নাম দেখানোর জন্য এটি করা হলো
+  uplineName: user.name // এখানে লগইন করা ইউজারের মূল নাম বা সঠিক আপলাইনের নাম সেট করা হলো
 }));
+
 
 
 
