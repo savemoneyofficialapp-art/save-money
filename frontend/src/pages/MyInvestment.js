@@ -220,7 +220,6 @@ export default function MyInvestment() {
 
   return (
     <div style={styles.mainLayoutWrapper}>
-      {/* বাম পাশের ফিক্সড ডার্ক সাইডবার */}
       <div style={styles.leftSidebar}>
         <div style={styles.sidebarLogoWrap}>
           <div style={styles.sidebarTreeIcon}>🌳</div>
@@ -245,7 +244,6 @@ export default function MyInvestment() {
         </div>
       </div>
 
-      {/* মূল কন্টেন্ট এরিয়া */}
       <div style={styles.rightContentArea}>
         <div style={styles.page}>
           <div style={styles.wrap}>
@@ -291,7 +289,6 @@ export default function MyInvestment() {
                       certificate={certificate}
                       downloadStatement={downloadStatement}
                       renewNow={renewNow}
-                      openRenewInfo={openRenewInfo}
                       daysLeft={getDaysLeft(inv?.renewDate || inv?.nextRenewDate)}  
                       isOverdue={isOverdue}            
                       requiredInvestment={inv.totalPlanAmount || inv.amount}
@@ -698,7 +695,6 @@ function InvestmentCard({
         </div>
       </div>
 
-      {/* রিনিউ নোটিশ কার্ড এবং ভিউ রিনিউ ডিটেইলস বেগুনি বাটন */}
       <div style={styles.renewNoticeCard}>
         <div style={styles.renewNoticeLeft}>
           <div style={styles.renewNoticeHourglass}>⏳</div>
@@ -1367,7 +1363,6 @@ const styles = {
     marginTop: "2px"
   },
 
-  // রিনিউ নোটিশ কার্ডের স্টাইল
   renewNoticeCard: {
     marginTop: "14px",
     background: "#ffffff",
