@@ -4689,11 +4689,13 @@ res.json(finalUsers);
 // ১. নির্দিষ্ট তারিখের মধ্যে রেফার হিসাব এবং বোনাস ক্যালকুলেশন এপিআই
 app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
   try {
-    const { startDate, endDate } = req.body;
+    const { startDate, endDate, flatAmount } = req.body;
     
     if (!startDate || !endDate) {
-      return res.status(400).json({ success: false, msg: "তারিখ প্রদান করা আবশ্যক" });
+      return res.status(400).json({ success: false, msg: "Start date and end date are required" });
     }
+
+    const amountPerRef = Number(flatAmount) || 799; // ডাইনামিক অ্যামাউন্ট অথবা ডিফল্ট ৭৯৯
 
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -4703,9 +4705,8 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     let offerResults = [];
 
     for (let user of users) {
-      // এখানে Referral এর বদলে BonusLedger ব্যবহার করা হলো এবং bonusType ফিল্টার করা হলো
       const referralsInInterval = await BonusLedger.find({
-        email: user.email, // অথবা আপনার স্কিমা অনুযায়ী যে ফিল্ড দিয়ে ইউজারকে ট্র্যাক করেন
+        email: user.email,
         bonusType: "Referral Bonus",
         createdAt: { $gte: start, $lte: end }
       });
@@ -4713,7 +4714,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
       const referralCount = referralsInInterval.length;
 
       if (referralCount > 0) {
-        const targetAmount = referralCount * 799; 
+        const targetAmount = referralCount * amountPerRef; 
         const alreadyReceived = referralsInInterval.reduce((sum, ref) => sum + (Number(ref.amount) || 0), 0);
         const remainingBalance = targetAmount - alreadyReceived;
 
@@ -4734,9 +4735,10 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     res.json({ success: true, data: offerResults });
   } catch (err) {
     console.error("Calculation Error:", err);
-    res.status(500).json({ success: false, msg: "সার্ভার এরর: ক্যালকুলেশনে সমস্যা হয়েছে" });
+    res.status(500).json({ success: false, msg: "Server error during calculation" });
   }
 });
+
 
 
 // ২. বাকি টাকা ডিস্ট্রিবিউশন রাউট
