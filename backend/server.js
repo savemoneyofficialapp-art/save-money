@@ -4783,12 +4783,16 @@ app.post("/admin-addon-single-distribute", auth, adminAuth, async (req, res) => 
       return res.status(400).json({ success: false, msg: "Invalid user data or balance" });
     }
 
-    // ১. নির্দিষ্ট ইউজারের ওয়ালেটে ব্যালেন্স আপডেট করা
+    // ইউজার মডেলে Today Wallet এর ফিল্ড নেম অনুযায়ী এখানে আপডেট করুন 
+    // (যদি ফিল্ডের নাম todayWallet হয় তবে todayWallet: remainingBalance দিন)
     await User.findByIdAndUpdate(userId, {
-      $inc: { wallet: remainingBalance }
+      $inc: { 
+        todayWallet: remainingBalance, // অথবা আপনার স্কিমার আসল ফিল্ডের নাম
+        wallet: remainingBalance 
+      }
     });
 
-    // ২. বোনাস লেজারে রেকর্ড যুক্ত করা
+    // বোনাস লেজারে হিস্ট্রি সেভ করা
     await BonusLedger.create({
       email: email,
       bonusType: "Referral Bonus",
@@ -4796,7 +4800,7 @@ app.post("/admin-addon-single-distribute", auth, adminAuth, async (req, res) => 
       note: `Referral Offer Add-on: Single payout credited (${referralCount} referrals)`
     });
 
-    res.json({ success: true, msg: "Amount added to this user's wallet successfully!" });
+    res.json({ success: true, msg: "Amount added to Today Wallet successfully!" });
   } catch (err) {
     console.error("Single Distribution Error:", err);
     res.status(500).json({ success: false, msg: "Failed to distribute amount to user" });
