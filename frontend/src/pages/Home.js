@@ -62,7 +62,7 @@ export default function Home() {
     loadNotifications();
     loadLatestUpdate();
 
-    // 👇 লগইন করে আসার পর পপআপ শো করার চেককো
+    // 👇 লগইন করে আসার পর পপআপ শো করার চেক
     const flag = localStorage.getItem("showLoginPopup");
     if (flag === "true") {
       setShowOfferPopup(true);
