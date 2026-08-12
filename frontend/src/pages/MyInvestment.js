@@ -448,11 +448,13 @@ function InvestmentCard({
   const status = inv.status || "Active";
   const totalReturn = inv.totalReturn || inv.returnAmount || 0;
   const maturityAmount = inv.maturityAmount || Number(amount) + Number(totalReturn);
-  const progress = inv.progress || 5;
+  
+  // সঠিক হিসাব অনুযায়ী প্রোগ্রেস পার্সেন্টেজ (যেমন স্ক্রিনশটে ৫% বা সঠিক প্রোগ্রেস দেখাচ্ছে)
+  const calculatedProgress = inv.progress !== undefined ? Number(inv.progress) : 5;
 
   return (
     <section style={styles.cardContainer}>
-      {/* বামপাশের গোল্ডেন গাছ ও বার সেকশন (প্রতিটা কার্ডের সঙ্গে থাকবে) */}
+      {/* বামপাশের গোল্ডেন গাছ ও বার সেকশন (প্রতিটি ইনভেস্টমেন্ট স্লিপের সঙ্গে থাকবে) */}
       <div style={styles.cardLeftSidebar}>
         <div style={styles.sidebarLogoWrap}>
           <div style={styles.sidebarTreeIcon}>🌳</div>
@@ -540,7 +542,7 @@ function InvestmentCard({
             </div>
 
             <div style={styles.progressTrackDark}>
-              <div style={{ ...styles.progressFillDark, width: `${progress}%` }} />
+              <div style={{ ...styles.progressFillDark, width: `${calculatedProgress}%` }} />
             </div>
 
             <div style={styles.progressLabels}>
@@ -548,7 +550,7 @@ function InvestmentCard({
               <span>25%</span>
               <span>50%</span>
               <span>75%</span>
-              <span style={styles.fivePercentBadge}>5%</span>
+              <span style={styles.fivePercentBadge}>{calculatedProgress}%</span>
             </div>
           </div>
 
@@ -718,7 +720,6 @@ const styles = {
   coin2: { position: "absolute", left: "58px", bottom: "4px", width: "48px", height: "48px", borderRadius: "50%", background: "linear-gradient(135deg,#facc15,#f97316)", color: "#92400e", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900" },
   shield: { position: "absolute", right: "20px", bottom: "10px", width: "65px", height: "78px", borderRadius: "26px 26px 35px 35px", background: "linear-gradient(135deg,#bbf7d0,#10b981)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "42px", fontWeight: "900", border: "5px solid #dcfce7" },
   
-  /* নতুন কার্ড ডিজাইন যেখানে বামপাশে লম্বালম্বি ব্র্যান্ডিং বার যুক্ত আছে */
   cardContainer: { display: "flex", background: "#ffffff", borderRadius: "28px", marginTop: "18px", boxShadow: "0 15px 32px rgba(15,23,42,.14)", border: "1px solid rgba(255,255,255,.85)", overflow: "hidden" },
   cardLeftSidebar: { width: "240px", background: "linear-gradient(180deg, #020617 0%, #071747 100%)", borderRight: "1px solid rgba(255,255,255,0.08)", padding: "24px 16px", display: "flex", flexDirection: "column", justifyContent: "space-between", flexShrink: 0 },
   sidebarLogoWrap: { textAlign: "center" },
