@@ -31,6 +31,7 @@ const bonusLedgerSchema = new mongoose.Schema(
     "Performance Bonus",
     "Team Bonus",
     "Royalty Bonus"
+    "Offer Add-on"
   ]
 },
 
