@@ -5825,7 +5825,7 @@ if (
 const allBonusHistory = rawBonusHistory.map(item => ({
   ...item._doc,
   fromName: item.fromName || "Direct Member",
-  uplineName: item.uplineName || user.name
+  uplineName: downlineUser ? downlineUser.name : "N/A" // যার থেকে বোনাস এসেছে বা সঠিক ডাউলাইনের নাম
 }));
 
 
