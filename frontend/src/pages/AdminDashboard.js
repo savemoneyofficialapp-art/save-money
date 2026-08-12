@@ -386,8 +386,8 @@ export default function AdminDashboard() {
         <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-user-control")}>
           👥 User Control
         </button>
-        <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-support")}>
-          🎫 Support Tickets
+        <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-addon")}>
+          🧩 ADD ON
         </button>
       </div>
 
@@ -400,6 +400,11 @@ export default function AdminDashboard() {
         <div style={styles.card}>
           <p style={styles.cardLabel}>Registrations Today</p>
           <h2 style={{ ...styles.cardVal, color: "#a855f7" }}>{data.todayUsers || 0}</h2>
+        </div>
+
+        <div style={styles.card}>
+          <p style={styles.cardLabel}>KYC Today</p>
+          <h2 style={{ ...styles.cardVal, color: "#ec4899" }}>{data.todayKyc || 0}</h2>
         </div>
 
         <div style={styles.card}>
@@ -1215,7 +1220,7 @@ const styles = {
     fontSize: "13px"
   },
   smallRed: {
-    background: "#ef4444",
+    backend: "#ef4444",
     border: "none",
     color: "white",
     padding: "8px 14px",
