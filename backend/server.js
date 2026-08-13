@@ -4695,7 +4695,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
       return res.status(400).json({ success: false, msg: "Start date and end date are required" });
     }
 
-    const amountPerRef = Number(flatAmount) || 799; // ডাইনামিক অ্যামাউন্ট অথবা ডিফল্ট ৭৯৯
+    const amountPerRef = Number(flatAmount) || 799;
 
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -4705,20 +4705,26 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     let offerResults = [];
 
     for (let user of users) {
-      // 'Referral Bonus' এবং 'Offer Add-on' দুটোই একসাথে ফিল্টার করা হলো যাতে অলরেডি দেওয়া টাকাগুলো বাদ যায়
-      const referralsInInterval = await BonusLedger.find({
+      // ১. শুধুমাত্র 'Referral Bonus' গুলোর সংখ্যা দিয়ে আসল রেফারেল কাউন্ট বের করা (যাতে পেমেন্ট করলে রেফারেল না বাড়ে)
+      const actualReferrals = await BonusLedger.find({
         email: user.email,
-        bonusType: { $in: ["Referral Bonus", "Offer Add-on"] },
+        bonusType: "Referral Bonus",
         createdAt: { $gte: start, $lte: end }
       });
 
-      // এখানে আপনি চাইলে রেফারেল কাউন্ট আলাদাভাবে নিতে পারেন, অথবা শুধু লেজার এন্ট্রি কাউন্ট করতে পারেন। 
-      // যেহেতু আপনার আগের লজিকেই লেজার এন্ট্রিগুলো কাউন্ট হচ্ছিল, তাই length ই ব্যবহার করা হলো।
-      const referralCount = referralsInInterval.length;
+      const referralCount = actualReferrals.length;
 
       if (referralCount > 0) {
         const targetAmount = referralCount * amountPerRef; 
-        const alreadyReceived = referralsInInterval.reduce((sum, ref) => sum + (Number(ref.amount) || 0), 0);
+
+        // ২. এই ডেট রেঞ্জের মধ্যে ইতিমধ্যে দেওয়া সমস্ত পেমেন্ট ('Referral Bonus' + 'Offer Add-on') যোগ করা
+        const allPayoutsInInterval = await BonusLedger.find({
+          email: user.email,
+          bonusType: { $in: ["Referral Bonus", "Offer Add-on"] },
+          createdAt: { $gte: start, $lte: end }
+        });
+
+        const alreadyReceived = allPayoutsInInterval.reduce((sum, ref) => sum + (Number(ref.amount) || 0), 0);
         const remainingBalance = targetAmount - alreadyReceived;
 
         if (remainingBalance > 0) {
@@ -4741,6 +4747,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error during calculation" });
   }
 });
+
 
 
 
