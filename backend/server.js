@@ -4697,7 +4697,10 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
 
     const amountPerRef = Number(flatAmount) || 799;
 
+    // ডেট রেঞ্জ সেট করার সময় সময় যেন সম্পূর্ণ দিন কভার করে তা নিশ্চিত করা
     const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
@@ -4705,7 +4708,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     let offerResults = [];
 
     for (let user of users) {
-      // ১. শুধুমাত্র 'Referral Bonus' গুলোর সংখ্যা দিয়ে আসল রেফারেল কাউন্ট বের করা (যাতে পেমেন্ট করলে রেফারেল না বাড়ে)
+      // ১. আসল রেফারেল কাউন্ট বের করা (শুধুমাত্র 'Referral Bonus')
       const actualReferrals = await BonusLedger.find({
         email: user.email,
         bonusType: "Referral Bonus",
@@ -4717,7 +4720,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
       if (referralCount > 0) {
         const targetAmount = referralCount * amountPerRef; 
 
-        // ২. এই ডেট রেঞ্জের মধ্যে ইতিমধ্যে দেওয়া সমস্ত পেমেন্ট ('Referral Bonus' + 'Offer Add-on') যোগ করা
+        // ২. এই ইউজারকে এই ডেট রেঞ্জে ইতিপূর্বে যা দেওয়া হয়েছে (সব Offer Add-on এবং Referral Bonus)
         const allPayoutsInInterval = await BonusLedger.find({
           email: user.email,
           bonusType: { $in: ["Referral Bonus", "Offer Add-on"] },
@@ -4727,6 +4730,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
         const alreadyReceived = allPayoutsInInterval.reduce((sum, ref) => sum + (Number(ref.amount) || 0), 0);
         const remainingBalance = targetAmount - alreadyReceived;
 
+        // যদি রিমেইনিং ব্যালেন্স শূন্য বা তার বেশি হয়, তবেই লিস্টে দেখাবে
         if (remainingBalance > 0) {
           offerResults.push({
             userId: user._id,
@@ -4747,6 +4751,7 @@ app.post("/admin-addon-calc", auth, adminAuth, async (req, res) => {
     res.status(500).json({ success: false, msg: "Server error during calculation" });
   }
 });
+
 
 
 
