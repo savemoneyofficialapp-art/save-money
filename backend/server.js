@@ -7645,7 +7645,10 @@ cron.schedule("0 0 1 * *", async () => {
 
     } catch (err) {
         console.error("MONTH RESET ERROR:", err);
-    }
+}
+    },{
+    scheduled: true,
+    timezone: "Asia/Kolkata"
 });
 
 
