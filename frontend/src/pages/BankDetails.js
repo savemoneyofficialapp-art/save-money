@@ -157,7 +157,7 @@ export default function BankDetails() {
     <div style={styles.page}>
       <div style={styles.headerNav}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          â† Back
+          &larr; Back
         </button>
       </div>
 
@@ -181,26 +181,26 @@ export default function BankDetails() {
 
           <div style={styles.bankCard}>
             <div style={styles.cardChip}></div>
-            <p style={styles.cardNumber}>â€¢â€¢â€¢â€¢  â€¢â€¢â€¢â€¢  â€¢â€¢â€¢â€¢  3456</p>
+            <p style={styles.cardNumber}>••••  ••••  ••••  3456</p>
           </div>
 
-          <div style={styles.shield}>âœ“</div>
+          <div style={styles.shield}>✓</div>
         </div>
       </section>
 
       <section style={styles.formBox}>
         <div style={styles.secureHead}>
-          <div style={styles.secureIcon}>ðŸ›¡ï¸</div>
+          <div style={styles.secureIcon}>🛡️</div>
           <div style={{ flex: 1 }}>
             <h2 style={styles.secureTitle}>End-to-End Cryptographic Security</h2>
             <p style={styles.secureSubtitle}>Your bank coordinates are fully tokenized and encrypted at rest.</p>
           </div>
-          <div style={styles.secureBadge}>ðŸ”’ 256-Bit Encrypted</div>
+          <div style={styles.secureBadge}>🔒 256-Bit Encrypted</div>
         </div>
 
         <div style={styles.inputsContainer}>
           <Input
-            icon="ðŸ‘¤"
+            icon="👤"
             label="Account Holder Name"
             name="accountHolderName"
             value={form.accountHolderName}
@@ -209,7 +209,7 @@ export default function BankDetails() {
           />
 
           <Input
-            icon="ðŸ“±"
+            icon="📱"
             label="Associated Mobile Number"
             name="mobile"
             value={form.mobile}
@@ -219,7 +219,7 @@ export default function BankDetails() {
 
           <div style={styles.row}>
             <div style={styles.labelWrapper}>
-              <span style={styles.inlineIcon}>ðŸ¦</span>
+              <span style={styles.inlineIcon}>🏦</span>
               <label style={styles.label}>
                 Institution / Bank Name <span style={{ color: "#f87171" }}>*</span>
               </label>
@@ -277,7 +277,7 @@ export default function BankDetails() {
           </div>
 
           <Input
-            icon="ðŸ’³"
+            icon="💳"
             label="Bank Account Number"
             name="accountNumber"
             value={form.accountNumber}
@@ -286,7 +286,7 @@ export default function BankDetails() {
           />
 
           <Input
-            icon="ðŸ”"
+            icon="🔏"
             label="IFSC Routing Code"
             name="ifscCode"
             value={form.ifscCode}
@@ -295,7 +295,7 @@ export default function BankDetails() {
           />
 
           <Input
-            icon="âš¡"
+            icon="⚡"
             label="UPI Address Alias"
             name="upiId"
             value={form.upiId}
@@ -326,21 +326,21 @@ export default function BankDetails() {
               onClick={save}
               disabled={loading}
             >
-              <span>{loading ? "âš¡ Processing..." : "ðŸ’¾ Save Secure Ledger"}</span>
-              <span style={{ fontSize: "22px" }}>â†’</span>
+              <span>{loading ? "⚡ Processing..." : "💾 Save Secure Ledger"}</span>
+              <span style={{ fontSize: "22px" }}>&rarr;</span>
             </button>
           ) : (
             <div style={styles.lockedArea}>
               <p style={styles.lockMessage}>Bank details are locked for security. If you need to change them, please contact support.</p>
               <button style={styles.supportBtn} onClick={() => navigate("/support")}>
-                Support â†’
+                Support &rarr;
               </button>
             </div>
           )}
         </div>
 
         <p style={styles.bottomText}>
-          ðŸ›¡ï¸ Compliance Guarantee: Financial fields remain completely confidential under banking privacy directives.
+          🛡️ Compliance Guarantee: Financial fields remain completely confidential under banking privacy directives.
         </p>
       </section>
     </div>
@@ -463,13 +463,7 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     gap: "14px",
-    marginTop: "12px",
-    span: {
-      width: "6px",
-      height: "40px",
-      background: "#334155",
-      borderRadius: "2px"
-    }
+    marginTop: "12px"
   },
   bankCard: {
     position: "absolute",
@@ -560,7 +554,7 @@ const styles = {
     fontWeight: "700",
     border: "1px solid rgba(34,197,94,0.2)"
   },
-  inputsContainer: {
+    inputsContainer: {
     padding: "12px 24px"
   },
   row: {
@@ -621,7 +615,7 @@ const styles = {
     margin: "24px",
     padding: "20px",
     borderRadius: "16px",
-    border: "1px dashed rgba(245, 158, 11, 0.4)",
+    border: "1.5px dashed rgba(245, 158, 11, 0.4)",
     display: "flex",
     alignItems: "flex-start",
     gap: "16px",
