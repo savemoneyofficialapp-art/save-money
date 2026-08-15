@@ -337,7 +337,104 @@ export default function Withdraw() {
         </div>
       </section>
 
-      {/* Premium Receipt Modal */}
+      <section style={styles.superGlassContainer}>
+        <div style={styles.historySectionHeader}>
+          <div style={styles.sectionHeaderTitle}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            <h3 style={styles.superSectionTitle}>Audit Statement</h3>
+          </div>
+        </div>
+
+        <div style={styles.filterWrapper}>
+          <div style={styles.typeFilterGroup}>
+            {["All", "Credit", "Debit"].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                style={{
+                  ...styles.filterTabBtn,
+                  backgroundColor: filterType === type ? "#2563eb" : "#0f172a",
+                  color: "#ffffff",
+                  borderColor: filterType === type ? "#3b82f6" : "#334155"
+                }}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+          
+          <div style={styles.dateFilterGroup}>
+            <div style={styles.dateInputBox}>
+              <label style={styles.dateLabel}>From:</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={styles.dateInput} />
+            </div>
+            <div style={styles.dateInputBox}>
+              <label style={styles.dateLabel}>To:</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={styles.dateInput} />
+            </div>
+          </div>
+        </div>
+
+        {filteredHistory.length === 0 ? (
+          <div style={styles.superEmptyStateContainer}>
+            <p style={styles.superEmptyMainText}>No matching statement records found.</p>
+          </div>
+        ) : (
+          <div style={styles.historyListContainer}>
+            {visibleHistory.map((x) => {
+              const isCredit = x.type === "Credit";
+              const statusInfo = getStatusDetails(x.status, x.type);
+              const holderName = bank?.accountHolderName || "Account Holder";
+              const firstLetter = holderName.charAt(0).toUpperCase();
+              const isRejected = x.status === "Rejected" || x.status === "Reject";
+
+              const displayTitle = isCredit 
+                ? (x.bonusType || x.note || "Bonus Credited") 
+                : holderName;
+
+              return (
+                <div key={x._id || x.createdAt} style={styles.historyRowItem} onClick={() => setSelectedTx(x)}>
+                  <div style={styles.historyLeftSection}>
+                    <div style={{
+                      ...styles.avatarCircle, 
+                      backgroundColor: isCredit ? "#d1fae5" : (isRejected ? "#fee2e2" : "#e0e7ff"),
+                      color: isCredit ? "#065f46" : (isRejected ? "#b91c1c" : "#3730a3")
+                    }}>
+                      {firstLetter}
+                    </div>
+                    <div>
+                      <div style={styles.historyHolderName}>{displayTitle}</div>
+                      <div style={styles.historyDateText}>
+                        {new Date(x.createdAt).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })}, {new Date(x.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </div>
+                      <span style={{...styles.tagBadge, backgroundColor: statusInfo.bgColor, color: statusInfo.color}}>
+                        {isCredit ? `💰 ${x.bonusType || "Credited"}` : (statusInfo.text === "COMPLETED" ? "💸 Withdrawal Sent" : statusInfo.text === "REFUNDED" ? "🔄 Refunded" : "⏳ Pending")}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div style={styles.historyRightSection}>
+                    <div style={{
+                      ...styles.historyAmtText, 
+                      color: isCredit ? "#10b981" : (statusInfo.text === "REFUNDED" ? "#ef4444" : "#f87171")
+                    }}>
+                      {isCredit ? "+" : "-"} {money(x.amount)}
+                    </div>
+                    <div style={styles.fromBankText}>{isCredit ? "In 💳" : (isRejected ? "Returned 🔄" : "Out 🏦")}</div>
+                  </div>
+                </div>
+              );
+            })}
+            
+            {filteredHistory.length > visibleCount && (
+              <button style={styles.viewMoreBtn} onClick={() => setVisibleCount(prev => prev + 5)}>
+                View More ↓
+              </button>
+            )}
+          </div>
+        )}
+      </section>
+
       {selectedTx && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContentWrapper}>
@@ -361,8 +458,11 @@ export default function Withdraw() {
 
               <div style={styles.detailsGrid}>
                 <div style={styles.row}><span>Transaction ID</span><span style={styles.val}>{selectedTx._id?.slice(-8).toUpperCase()}</span></div>
-                <div style={styles.row}><span>Date</span><span>{new Date(selectedTx.createdAt).toLocaleDateString()}</span></div>
-                <div style={styles.row}><span>Type</span><span>{selectedTx.type}</span></div>
+                <div style={styles.row}><span>Date</span><span>{new Date(selectedTx.createdAt).toLocaleString()}</span></div>
+                <div style={styles.row}><span>Type</span><span style={styles.val}>{selectedTx.type}</span></div>
+                {selectedTx.bonusType && (
+                  <div style={styles.row}><span>Bonus Type</span><span style={styles.val}>{selectedTx.bonusType}</span></div>
+                )}
                 <div style={styles.row}><span>Status</span><span style={{color: "#059669", fontWeight: "bold"}}>{selectedTx.status || "Completed"}</span></div>
               </div>
 
@@ -371,8 +471,8 @@ export default function Withdraw() {
               </div>
             </div>
 
-            <button style={styles.shareBtn} onClick={handleShareToWhatsApp}>Save/Share Receipt</button>
-            <button style={styles.closeBtn} onClick={() => setSelectedTx(null)}>Close</button>
+            <button style={styles.shareBtn} onClick={handleShareToWhatsApp}>📸 Save / Share Receipt</button>
+            <button style={styles.closeBtn} onClick={() => setSelectedTx(null)}>Close Window</button>
           </div>
         </div>
       )}
@@ -426,22 +526,47 @@ const styles = {
   noBankTitle: { fontSize: "16px", fontWeight: "800", color: "#f59e0b", margin: "0 0 2px 0" },
   noBankDesc: { fontSize: "13px", color: "#94a3b8", margin: 0 },
   addBankBtn: { background: "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)", color: "#000000", border: "none", padding: "10px 16px", borderRadius: "10px", fontSize: "14px", fontWeight: "800", cursor: "pointer" },
+  historySectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", width: "100%" },
+  superGlassContainer: { width: "100%", padding: "24px 20px", borderRadius: "20px", background: "#111c30", border: "1px solid #1e293b", boxSizing: "border-box" },
+  superSectionTitle: { margin: 0, fontSize: "20px", fontWeight: "800" },
+  superEmptyStateContainer: { textAlign: "center", padding: "40px 16px" },
+  superEmptyMainText: { fontSize: "16px", color: "#94a3b8", fontWeight: "600" },
+  filterWrapper: { display: "flex", flexDirection: "column", gap: "12px", marginBottom: "18px", background: "#0b1325", padding: "14px", borderRadius: "14px", border: "1px solid #1e293b" },
+  typeFilterGroup: { display: "flex", gap: "8px" },
+  filterTabBtn: { flex: 1, padding: "10px", border: "1px solid", borderRadius: "8px", cursor: "pointer", fontSize: "14px", fontWeight: "700" },
+  dateFilterGroup: { display: "flex", gap: "12px", flexWrap: "wrap" },
+  dateInputBox: { flex: 1, minWidth: "120px", display: "flex", flexDirection: "column", gap: "4px" },
+  dateLabel: { fontSize: "12px", fontWeight: "700", color: "#94a3b8" },
+  dateInput: { background: "#111c30", border: "1px solid #1e293b", color: "#ffffff", padding: "8px", borderRadius: "6px", fontSize: "13px", outline: "none", width: "100%", boxSizing: "border-box" },
+  historyListContainer: { display: "flex", flexDirection: "column", gap: "2px" },
+  historyRowItem: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 10px", borderBottom: "1px solid #1e293b", cursor: "pointer", borderRadius: "10px" },
+  historyLeftSection: { display: "flex", alignItems: "center", gap: "14px" },
+  avatarCircle: { width: "44px", height: "44px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "800" },
+  historyHolderName: { fontSize: "16px", fontWeight: "700", color: "#ffffff" },
+  historyDateText: { fontSize: "13px", color: "#94a3b8", marginTop: "2px" },
+  tagBadge: { display: "inline-block", padding: "2px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", marginTop: "6px" },
+  historyRightSection: { textAlign: "right" },
+  historyAmtText: { fontSize: "18px", fontWeight: "800" },
+  fromBankText: { fontSize: "12px", color: "#64748b", marginTop: "2px" },
+  viewMoreBtn: { width: "100%", background: "#1e293b", color: "#ffffff", border: "none", padding: "12px", borderRadius: "10px", cursor: "pointer", fontSize: "15px", fontWeight: "700", marginTop: "14px", textAlign: "center" },
   modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px", overflowY: "auto" },
   modalContentWrapper: { width: "100%", maxWidth: "400px", display: "flex", flexDirection: "column", gap: "14px" },
   premiumReceiptCard: { backgroundColor: "#ffffff", color: "#1e293b", padding: "30px", borderRadius: "20px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)" },
   receiptHeader: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" },
   logoPlaceholder: { width: "30px", height: "30px", background: "#3b82f6", color: "#fff", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" },
+  receiptBrand: { fontSize: "18px", fontWeight: "800", margin: 0, color: "#0f172a" },
   statusSection: { textAlign: "center", marginBottom: "20px" },
   statusIcon: { width: "50px", height: "50px", background: "#dcfce7", color: "#16a34a", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: "24px" },
-  amountDisplay: { fontSize: "32px", fontWeight: "800", margin: "10px 0" },
+  statusText: { fontSize: "14px", color: "#64748b", fontWeight: "600", margin: 0 },
+  amountDisplay: { fontSize: "32px", fontWeight: "800", margin: "10px 0", color: "#0f172a" },
   detailsDivider: { display: "flex", alignItems: "center", margin: "20px 0" },
-  circleLeft: { width: "20px", height: "20px", borderRadius: "50%", background: "#f1f5f9", marginLeft: "-40px" },
+  circleLeft: { width: "20px", height: "20px", borderRadius: "50%", background: "#0f172a", marginLeft: "-40px" },
   line: { flex: 1, borderTop: "2px dashed #cbd5e1" },
-  circleRight: { width: "20px", height: "20px", borderRadius: "50%", background: "#f1f5f9", marginRight: "-40px" },
+  circleRight: { width: "20px", height: "20px", borderRadius: "50%", background: "#0f172a", marginRight: "-40px" },
   detailsGrid: { display: "flex", flexDirection: "column", gap: "15px" },
-  row: { display: "flex", justifyContent: "space-between", fontSize: "14px" },
-  val: { fontWeight: "bold" },
+  row: { display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#64748b" },
+  val: { fontWeight: "bold", color: "#0f172a" },
   footerBranding: { textAlign: "center", marginTop: "30px", fontSize: "12px", color: "#94a3b8" },
-  shareBtn: { padding: "15px", background: "#3b82f6", color: "#fff", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "bold" },
-  closeBtn: { padding: "15px", background: "#e2e8f0", color: "#475569", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "bold" }
+  shareBtn: { padding: "15px", background: "#3b82f6", color: "#fff", border: "none", borderRadius: "14px", cursor: "pointer", fontWeight: "bold", fontSize: "16px" },
+  closeBtn: { padding: "15px", background: "#e2e8f0", color: "#475569", border: "none", borderRadius: "14px", cursor: "pointer", fontWeight: "bold", fontSize: "16px" }
 };
