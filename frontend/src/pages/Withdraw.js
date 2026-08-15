@@ -440,8 +440,13 @@ export default function Withdraw() {
           <div style={styles.modalContentWrapper}>
             <div ref={receiptRef} style={styles.premiumReceiptCard}>
               <div style={styles.receiptHeader}>
-                <div style={styles.logoPlaceholder}>SM</div>
-                <h3 style={styles.receiptBrand}>SafeMoney Secure</h3>
+                <div style={styles.logoPlaceholder}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <div>
+                  <h3 style={styles.receiptBrand}>SafeMoney Secure</h3>
+                  <span style={styles.receiptSubtitle}>Official Transaction Receipt</span>
+                </div>
               </div>
               
               <div style={styles.statusSection}>
@@ -458,11 +463,17 @@ export default function Withdraw() {
 
               <div style={styles.detailsGrid}>
                 <div style={styles.row}><span>Transaction ID</span><span style={styles.val}>{selectedTx._id?.slice(-8).toUpperCase()}</span></div>
-                <div style={styles.row}><span>Date</span><span>{new Date(selectedTx.createdAt).toLocaleString()}</span></div>
+                <div style={styles.row}><span>Date</span><span style={styles.val}>{new Date(selectedTx.createdAt).toLocaleString()}</span></div>
                 <div style={styles.row}><span>Type</span><span style={styles.val}>{selectedTx.type}</span></div>
-                {selectedTx.bonusType && (
-                  <div style={styles.row}><span>Bonus Type</span><span style={styles.val}>{selectedTx.bonusType}</span></div>
-                )}
+                
+                {/* বিবরণ বা কিসের টাকা অ্যাড হয়েছে তা দেখানোর জন্য */}
+                <div style={styles.row}>
+                  <span>Description</span>
+                  <span style={{ ...styles.val, textAlign: "right", maxWidth: "180px" }}>
+                    {selectedTx.type === "Credit" ? (selectedTx.bonusType || selectedTx.note || "Bonus Credited") : "Bank Withdrawal Payout"}
+                  </span>
+                </div>
+
                 <div style={styles.row}><span>Status</span><span style={{color: "#059669", fontWeight: "bold"}}>{selectedTx.status || "Completed"}</span></div>
               </div>
 
@@ -552,9 +563,10 @@ const styles = {
   modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px", overflowY: "auto" },
   modalContentWrapper: { width: "100%", maxWidth: "400px", display: "flex", flexDirection: "column", gap: "14px" },
   premiumReceiptCard: { backgroundColor: "#ffffff", color: "#1e293b", padding: "30px", borderRadius: "20px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)" },
-  receiptHeader: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" },
-  logoPlaceholder: { width: "30px", height: "30px", background: "#3b82f6", color: "#fff", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" },
-  receiptBrand: { fontSize: "18px", fontWeight: "800", margin: 0, color: "#0f172a" },
+  receiptHeader: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" },
+  logoPlaceholder: { width: "36px", height: "36px", background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(59, 130, 246, 0.3)" },
+  receiptBrand: { fontSize: "17px", fontWeight: "800", margin: 0, color: "#0f172a" },
+  receiptSubtitle: { fontSize: "12px", color: "#64748b", fontWeight: "600" },
   statusSection: { textAlign: "center", marginBottom: "20px" },
   statusIcon: { width: "50px", height: "50px", background: "#dcfce7", color: "#16a34a", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: "24px" },
   statusText: { fontSize: "14px", color: "#64748b", fontWeight: "600", margin: 0 },
@@ -564,7 +576,7 @@ const styles = {
   line: { flex: 1, borderTop: "2px dashed #cbd5e1" },
   circleRight: { width: "20px", height: "20px", borderRadius: "50%", background: "#0f172a", marginRight: "-40px" },
   detailsGrid: { display: "flex", flexDirection: "column", gap: "15px" },
-  row: { display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#64748b" },
+  row: { display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#64748b", alignItems: "flex-start" },
   val: { fontWeight: "bold", color: "#0f172a" },
   footerBranding: { textAlign: "center", marginTop: "30px", fontSize: "12px", color: "#94a3b8" },
   shareBtn: { padding: "15px", background: "#3b82f6", color: "#fff", border: "none", borderRadius: "14px", cursor: "pointer", fontWeight: "bold", fontSize: "16px" },
