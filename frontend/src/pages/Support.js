@@ -2,6 +2,9 @@ import { useState } from "react";
 
 export default function Support() {
   // States
+  const [name, setName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [referCode, setReferCode] = useState("");
   const [subject, setSubject] = useState("");
   const [problem, setProblem] = useState("");
 
@@ -9,14 +12,14 @@ export default function Support() {
   const handleGetSupport = (e) => {
     e.preventDefault();
 
-    if (!subject.trim() || !problem.trim()) {
-      return alert("অনুগ্রহ করে সাবজেক্ট এবং প্রবলেম দুটিই লিখুন।");
+    if (!name.trim() || !mobile.trim() || !subject.trim() || !problem.trim()) {
+      return alert("অনুগ্রহ করে নাম, মোবাইল নম্বর, সাবজেক্ট এবং প্রবলেম ফিল্ডগুলো পূরণ করুন।");
     }
 
     const telegramUsername = "savemoneysupport";
     
-    // মেসেজ ফরম্যাট তৈরি (এডমিন যাতে সহজে বুঝতে পারে)
-    const formattedMessage = `📌 New Support Request\n\n🔹 Subject: ${subject}\n❌ Problem: ${problem}`;
+    // মেসেজ ফরম্যাট তৈরি (এডমিন যাতে ইউজারের নাম, মোবাইল, রেফার কোড সহ সহজে বুঝতে পারে)
+    const formattedMessage = `📌 New Support Request\n\n👤 Name: ${name}\n📞 Mobile: ${mobile}\n referral Code: ${referCode || "N/A"}\n🔹 Subject: ${subject}\n❌ Problem: ${problem}`;
     
     // URL এনকোড করা
     const encodedMessage = encodeURIComponent(formattedMessage);
@@ -37,6 +40,35 @@ export default function Support() {
         </div>
         
         <form onSubmit={handleGetSupport} style={styles.form}>
+          {/* Name Input */}
+          <input
+            type="text"
+            style={styles.modalInput}
+            placeholder="Your Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+
+          {/* Mobile Number Input */}
+          <input
+            type="tel"
+            style={styles.modalInput}
+            placeholder="Mobile Number"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
+            required
+          />
+
+          {/* Refer Code Input (Optional) */}
+          <input
+            type="text"
+            style={styles.modalInput}
+            placeholder="Referral Code (Optional)"
+            value={referCode}
+            onChange={(e) => setReferCode(e.target.value)}
+          />
+
           {/* Subject Input */}
           <input
             type="text"
@@ -68,26 +100,25 @@ export default function Support() {
   );
 }
 
-// 💎 ২য় স্ক্রিনশট এবং আপনার রিকোয়েস্ট অনুযায়ী আল্ট্রা-প্রিমিয়াম স্টাইলশিট
+// 💎 স্টাইলশিট অপরিবর্তিত রাখা হয়েছে
 const styles = {
   container: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    height: "100vh",
+    minHeight: "100vh",
     width: "100vw",
-    // ব্যাকগ্রাউন্ডে একটি প্রিমিয়াম ডার্ক টেক-সাপোর্ট ইমেজ ও ডার্ক ওভারলে দেওয়া হয়েছে
     backgroundImage: "linear-gradient(rgba(11, 19, 41, 0.85), rgba(2, 6, 23, 0.92)), url('https://images.unsplash.com/photo-1534536281715-e28d76689b4d?q=80&w=1920&auto=format&fit=crop')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     color: "#f8fafc",
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    overflow: "hidden",
-    boxSizing: "border-box"
+    boxSizing: "border-box",
+    padding: "20px 0"
   },
 
   modalCard: {
-    background: "#1e293b", // স্ক্রিনশটের মতো এক্সাক্ট কালার থিম
+    background: "#1e293b",
     width: "90%",
     maxWidth: "450px",
     borderRadius: "20px",
@@ -128,7 +159,7 @@ const styles = {
 
   modalTextarea: {
     width: "100%",
-    minHeight: "140px",
+    minHeight: "120px",
     padding: "14px 16px",
     background: "#0f172a",
     border: "1px solid rgba(255, 255, 255, 0.08)",
@@ -149,7 +180,7 @@ const styles = {
 
   submitBtn: {
     padding: "12px 24px",
-    background: "#38bdf8", // ২য় স্ক্রিনশটের বাটন কালার ম্যাচিংস
+    background: "#38bdf8",
     border: "none",
     color: "#0f172a",
     borderRadius: "10px",
