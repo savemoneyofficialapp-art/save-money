@@ -7795,7 +7795,6 @@ cron.schedule("0 0 * * *", async () => {
   scheduled: true,
     timezone: "Asia/Kolkata"
 });
-});
 
 // =================== AUTO MONTH WITHDRAWAL ===================
 cron.schedule("0 0 5 * *", async () => {
