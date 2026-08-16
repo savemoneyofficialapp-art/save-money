@@ -7780,13 +7780,21 @@ cron.schedule("0 0 * * *",  async () => {
 cron.schedule("0 0 * * *", async () => {
   console.log("Auto inactive check running...");
 
-  const users = await User.find();
+  try {
+    const users = await User.find();
 
-  for (let user of users) {
-    await updateInvestmentStatus(user.email);
+    for (let user of users) {
+      await updateInvestmentStatus(user.email);
+    }
+
+    console.log("Auto inactive check completed");
+  } catch (error) {
+    console.error("Error in auto inactive check:", error);
   }
-
-  console.log("Auto inactive check completed");
+}, {
+  scheduled: true,
+    timezone: "Asia/Kolkata"
+});
 });
 
 // =================== AUTO MONTH WITHDRAWAL ===================
