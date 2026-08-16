@@ -817,16 +817,13 @@ async function processFirstInvestmentBonuses(investorEmail, investment) {
 
 
 async function processRenewBonuses(investorEmail, investment) {
-
     try {
-
         const investor = await User.findOne({
             email: String(investorEmail).toLowerCase()
         });
 
         if (!investor) return;
-
-        if (!investor.referredBy) return;
+        if (investor.referredBy) return;
 
         const sponsor = await User.findOne({
             $or: [
@@ -838,23 +835,20 @@ async function processRenewBonuses(investorEmail, investment) {
         if (!sponsor) return;
 
         // Sponsor investment active থাকতে হবে
-        const sponsorInvestment =
-            await Investment.findOne({
-                email: sponsor.email.toLowerCase(),
-                status: "Active"
-            });
+        const sponsorInvestment = await Investment.findOne({
+            email: sponsor.email.toLowerCase(),
+            status: "Active"
+        });
 
         if (!sponsorInvestment) return;
 
         // Performance Bonus Active থাকতে হবে
         if (!sponsor.performanceEnabled) return;
-
         if (sponsor.performanceStatus !== "Active") return;
 
         let bonus = 0;
 
         switch (Number(investment.years)) {
-
             case 1:
                 bonus = 699;
                 break;
@@ -873,44 +867,58 @@ async function processRenewBonuses(investorEmail, investment) {
 
             default:
                 bonus = 0;
-
         }
 
-        if (bonus <= 0) return;
+        if (bonus > 0) {
+            await addBonus({
+                email: sponsor.email,
+                fromEmail: investor.email,
+                fromName: investor.name,
+                uplineName: sponsor.name,
+                type: "Performance Bonus",
+                amount: bonus,
+                level: 0,
+                note: `Performance Bonus (${investment.years} Year Renewal)`,
+                refid: `PERFORMANCE-RENEW-${investment._id}-${investment.monthsPaid}`
+            });
+        }
 
-        await addBonus({
+        // --- টিম বোনাস রিনিউ লজিক (আপলাইন ৫ লেভেল পর্যন্ত) ---
+        const uplines = await getUplines(investor, 5);
 
-            email: sponsor.email,
+        for (const item of uplines) {
+            const teamSponsor = item.user;
+            const level = item.level;
 
-            fromEmail: investor.email,
+            if (!teamSponsor) continue;
 
-            fromName: investor.name,
+            // Sponsor active থাকতে হবে
+            if (teamSponsor.activeStatus !== "Active") continue;
+            if (teamSponsor.teamBonusEnabled === false) continue;
+            if (teamSponsor.disableBonus) continue;
 
-            type: "Performance Bonus",
+            const teamBonusAmt = teamBonusAmount(level);
+            if (teamBonusAmt <= 0) continue;
 
-            amount: bonus,
+            await addBonus({
+                email: teamSponsor.email,
+                fromEmail: investor.email,
+                fromName: investor.name,
+                uplineName: teamSponsor.name,
+                type: "Team Bonus",
+                level,
+                amount: teamBonusAmt,
+                note: `Level ${level} Team Bonus (Renewal)`,
+                refid: `TEAM-RENEW-${investment._id}-${investment.monthsPaid || 0}-L${level}`
+            });
+        }
 
-            level: 0,
-
-            note:
-                `Performance Bonus (${investment.years} Year Renewal)`,
-
-            refId:
-                `PERFORMANCE-RENEW-${investment._id}-${investment.monthsPaid}`
-
-        });
-
-    }
-
-    catch (err) {
-
+    } catch (err) {
         console.log(
-            "PROCESS PERFORMANCE RENEW ERROR:",
+            "PROCESS PERFORMANCE & TEAM RENEW ERROR:",
             err
         );
-
     }
-
 }
 
 async function updateInvestmentStatus(email) {
