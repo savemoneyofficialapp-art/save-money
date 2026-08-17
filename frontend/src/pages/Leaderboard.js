@@ -82,7 +82,7 @@ const leaderboardData30Days = [
   { name: "Arjun Chatterjee", refs: 14, earning: 9786 },
   { name: "Megha Mukherjee", refs: 13, earning: 9087 },
   { name: "Suresh Ghosh", refs: 12, earning: 8388 },
-  { name: "Divya Kundu", refs: 11, earning: 7689 },
+  { name: "Rama Basu Biswas", refs: 3, earning: 7689 },
   { name: "Rohan Sen", refs: 10, earning: 6990 },
   { name: "Neha Biswas", refs: 9, earning: 6291 },
   { name: "Karan Mondal", refs: 8, earning: 5592 },
