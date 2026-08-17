@@ -317,7 +317,14 @@ teamBonusEnabled: {
 royaltyBonusEnabled: {
   type: Boolean,
   default: false
-}
+},
+
+    // 📌 নতুন যোগ করা হলো পুশ সাবস্ক্রিপশনের জন্য
+  pushSubscription: {
+    type: Object,
+    default: null
+  },
+    
 
 });
 
