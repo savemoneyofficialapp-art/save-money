@@ -31,48 +31,50 @@ export default function Home() {
     }, 2500);
   };
 
-  // 👇 ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন
+  // 👇 ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন (আপডেটকৃত)
   const registerPushNotification = async () => {
-    if ("serviceWorker" in navigator && "PushManager" in window) {
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        
-        // পারমিশন চাওয়া
-        const permissionResult = await Notification.requestPermission();
-        if (permissionResult !== "granted") {
-          console.log("Notification permission not granted.");
-          return;
-        }
+    if (!("serviceWorker" in navigator) && !("PushManager" in window)) return;
+    
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      
+      const permissionResult = await Notification.requestPermission();
+      if (permissionResult !== "granted") {
+        console.log("Notification permission not granted.");
+        return;
+      }
 
-        // আপনার ব্যাকএন্ড থেকে VAPID Public Key নিয়ে আসা
-        const keyRes = await fetch(`${API}/get-vapid-key`);
-        const keyData = await keyRes.json();
-        const publicVapidKey = keyData.publicKey;
+      const keyRes = await fetch(`${API}/get-vapid-key`);
+      const keyData = await keyRes.json();
+      const publicVapidKey = keyData.publicKey;
 
-        if (!publicVapidKey) return;
+      if (!publicVapidKey) return;
 
-        // URL Safe Base64 থেকে Uint8Array তে রূপান্তর করার ফাংশন
-        const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
+      const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
 
-        const subscription = await registration.pushManager.subscribe({
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: convertedVapidKey
         });
-
-        // ব্যাকএন্ডে সাবস্ক্রিপশন পাঠিয়ে সেভ করা
-        await fetch(`${API}/save-push-subscription`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            authorization: token
-          },
-          body: JSON.stringify({ email, subscription })
-        });
-
-        console.log("Push Notification Subscribed Successfully!");
-      } catch (error) {
-        console.log("Push subscription error:", error);
       }
+
+      const currentEmail = localStorage.getItem("email");
+      if (!currentEmail) return;
+
+      await fetch(`${API}/save-push-subscription`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token
+        },
+        body: JSON.stringify({ email: currentEmail, subscription })
+      });
+
+      console.log("Push Notification Subscribed Successfully!");
+    } catch (error) {
+      console.log("Push subscription error:", error);
     }
   };
 
@@ -123,7 +125,7 @@ export default function Home() {
     const flag = localStorage.getItem("showLoginPopup");
     if (flag === "true") {
       setShowOfferPopup(true);
-      localStorage.removeItem("showLoginPopup"); // একবার দেখানোর পর রিমুভ করে দেওয়া হচ্ছে
+      localStorage.removeItem("showLoginPopup");
     }
   }, []);
 
@@ -356,7 +358,7 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
-      {/* 👇 PHOTO POPUP MODAL (স্ক্রিনের মিডিল পপআপ) */}
+      {/* 👇 PHOTO POPUP MODAL */}
       {showOfferPopup && (
         <div style={styles.popupOverlay}>
           <div style={styles.popupCard}>
@@ -373,7 +375,6 @@ export default function Home() {
               style={styles.popupImage}
             />
 
-            {/* 👇 ডাউনলোড বাটন */}
             <button
               style={styles.popupDownloadBtn}
               onClick={() => handleDownloadImage("/INDEPENDENCE OFFER.png")}
@@ -485,7 +486,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LATEST UPDATE (MARQUEE SCROLLING EFFECT) */}
+      {/* LATEST UPDATE */}
       <section style={styles.latestCard}>
         <div style={styles.latestLeft}>
           <div style={styles.latestIcon}>
@@ -919,7 +920,6 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // 👇 পপআপ মোডালের স্টাইল
   popupOverlay: {
     position: "fixed",
     top: 0,
