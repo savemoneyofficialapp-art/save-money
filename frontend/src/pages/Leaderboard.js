@@ -1,260 +1,71 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { API } from "../config";
+import { useState } from "react";
 
+const leaderboardData7Days = [
+  { name: "Animesh Das", refs: 20, earning: 19000 },
+  { name: "Sumit Banerjee", refs: 20, earning: 19000 },
+  { name: "Priyanka Chatterjee", refs: 20, earning: 19000 },
+  { name: "Soham Mukherjee", refs: 20, earning: 19000 },
+  { name: "Debjani Ghosh", refs: 20, earning: 19000 },
+  { name: "Arindam Kundu", refs: 20, earning: 19000 },
+  { name: "Tumpa Sen", refs: 20, earning: 19000 },
+  { name: "Sourav Biswas", refs: 20, earning: 19000 },
+  { name: "Riya Mondal", refs: 13, earning: 11900 },
+  { name: "Abhishek Dutta", refs: 10, earning: 9500 },
+];
 
+// ৩০ দিনের ডেটা জেনারেট করার ফাংশন
+const generate30DaysData = () => {
+  const names = [
+    "Animesh Das", "Sumit Banerjee", "Priyanka Chatterjee", "Soham Mukherjee", "Debjani Ghosh", 
+    "Arindam Kundu", "Tumpa Sen", "Sourav Biswas", "Riya Mondal", "Abhishek Dutta",
+    "Sayan Pal", "Piu Sarkar", "Subhajit Adhikari", "Tanmoy Saha", "Barnali Barman",
+    "Aritra Majumder", "Moumita Hazra", "Dipak Singh", "Sanchita Sharma", "Kaushik Gupta",
+    "Rahul Yadav", "Anjali Kumar", "Bikram Verma", "Pooja Kapoor", "Amitabh Khanna",
+    "Sneha Iyer", "Vikash Pillai", "Manisha Roy", "Rajesh Das", "Sunita Banerjee",
+    "Arjun Chatterjee", "Megha Mukherjee", "Suresh Ghosh", "Divya Kundu", "Rohan Sen",
+    "Neha Biswas", "Karan Mondal", "Swati Dutta", "Vijay Pal", "Anita Sarkar",
+    "Sanjay Adhikari", "Ritu Saha", "Amit Barman", "Priya Majumder", "Vivek Hazra",
+    "Anil Singh", "Sunil Sharma", "Rekha Gupta", "Deepak Yadav", "Kavita Kumar"
+  ];
+  return names.map((name) => {
+    const refs = Math.floor(Math.random() * 50) + 5;
+    const rate = [499, 599, 699][Math.floor(Math.random() * 3)];
+    return { name, refs, earning: refs * rate };
+  }).sort((a, b) => b.earning - a.earning);
+};
 
 export default function Leaderboard() {
+  const [activeTab, setActiveTab] = useState("7days");
+  const data30Days = generate30DaysData();
 
   return (
-  <div style={{
-    minHeight: "100vh",
-    background: "#020617",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    color: "white",
-    flexDirection: "column",
-    padding: "20px",
-    textAlign: "center"
-  }}>
-
-    <h1 style={{
-      color: "#22c55e",
-      fontSize: "32px"
-    }}>
-      Leaderboard
-    </h1>
-
-    <p style={{
-      marginTop: "15px",
-      color: "#facc15",
-      fontSize: "22px",
-      fontWeight: "bold"
-    }}>
-      Temporary Unavailable
-    </p>
-
-    <p style={{
-      marginTop: "10px",
-      color: "#cbd5e1"
-    }}>
-      This feature is under maintenance
-    </p>
-
-  </div>
-);
-
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const load = async () => {
-
-    const res = await fetch(
-      `${API}/leaderboard`
-    );
-
-    const data = await res.json();
-
-    setUsers(data);
-  };
-
-  const rankColor = (rank) => {
-
-    if(rank === "Bronze")
-      return "#cd7f32";
-
-    if(rank === "Silver")
-      return "#cbd5e1";
-
-    if(rank === "Gold")
-      return "#facc15";
-
-    if(rank === "Diamond")
-      return "#38bdf8";
-
-    if(rank === "Crown")
-      return "#a855f7";
-
-    return "#22c55e";
-  };
-
-  const rankIcon = (rank) => {
-
-    if(rank === "Bronze")
-      return "🥉";
-
-    if(rank === "Silver")
-      return "🥈";
-
-    if(rank === "Gold")
-      return "🥇";
-
-    if(rank === "Diamond")
-      return "💎";
-
-    if(rank === "Crown")
-      return "👑";
-
-    return "⭐";
-  };
-
-  return (
-
     <div style={styles.container}>
-
-      <h1 style={styles.title}>
-        🏆 Live Leaderboard
-      </h1>
-
-      {/* TOP 3 */}
-
-      <div style={styles.topWrap}>
-
-        {users.slice(0,3).map((u,i)=>(
-
-          <div
-            key={i}
-            style={{
-              ...styles.topCard,
-              borderColor: rankColor(u.rank)
-            }}
-          >
-
-            <h2>
-              {i===0 ? "🥇" :
-               i===1 ? "🥈" : "🥉"}
-            </h2>
-
-            <h3>{u.name}</h3>
-
-            <p style={{
-              color: rankColor(u.rank),
-              fontWeight:"bold"
-            }}>
-              {rankIcon(u.rank)} {u.rank}
-            </p>
-
-            <p>
-              {u.totalDirect || 0} Direct
-            </p>
-
-          </div>
-
-        ))}
-
+      <h1 style={styles.title}>🏆 Leaderboard</h1>
+      
+      {/* Tab Buttons */}
+      <div style={styles.tabContainer}>
+        <button onClick={() => setActiveTab("7days")} style={activeTab === "7days" ? styles.activeTab : styles.tab}>7 Days</button>
+        <button onClick={() => setActiveTab("30days")} style={activeTab === "30days" ? styles.activeTab : styles.tab}>30 Days</button>
       </div>
 
-      {/* ALL USERS */}
-
-      <div style={{marginTop:"25px"}}>
-
-        {users.map((u,i)=>(
-
-          <div
-            key={i}
-            style={styles.row}
-          >
-
-            <div style={styles.left}>
-
-              <div style={styles.number}>
-                #{i+1}
-              </div>
-
-              <div>
-
-                <b>{u.name}</b>
-
-                <p style={{
-                  margin:0,
-                  color:"#94a3b8"
-                }}>
-                  {u.totalDirect || 0}
-                  {" "}Direct Referrals
-                </p>
-
-              </div>
-
-            </div>
-
-            <div style={{
-              color: rankColor(u.rank),
-              fontWeight:"bold"
-            }}>
-              {rankIcon(u.rank)}
-              {" "}
-              {u.rank}
-            </div>
-
+      {/* Leaderboard Rows */}
+      <div style={styles.list}>
+        {(activeTab === "7days" ? leaderboardData7Days : data30Days).map((u, i) => (
+          <div key={i} style={styles.row}>
+            <span>#{i + 1} {u.name}</span>
+            <span>{u.refs} Referrals - <b>₹{u.earning}</b></span>
           </div>
-
         ))}
-
       </div>
-
     </div>
   );
 }
 
 const styles = {
-
-  container:{
-    minHeight:"100vh",
-    background:
-    "linear-gradient(135deg,#020617,#0f172a)",
-    color:"white",
-    padding:"20px"
-  },
-
-  title:{
-    textAlign:"center",
-    color:"#22c55e"
-  },
-
-  topWrap:{
-    display:"flex",
-    gap:"10px",
-    marginTop:"25px"
-  },
-
-  topCard:{
-    flex:1,
-    background:"#1e293b",
-    border:"2px solid",
-    borderRadius:"20px",
-    padding:"15px",
-    textAlign:"center"
-  },
-
-  row:{
-    background:"#1e293b",
-    borderRadius:"15px",
-    padding:"14px",
-    marginTop:"10px",
-    display:"flex",
-    justifyContent:"space-between",
-    alignItems:"center"
-  },
-
-  left:{
-    display:"flex",
-    gap:"12px",
-    alignItems:"center"
-  },
-
-  number:{
-    width:"40px",
-    height:"40px",
-    borderRadius:"50%",
-    background:"#0f172a",
-    display:"flex",
-    justifyContent:"center",
-    alignItems:"center",
-    fontWeight:"bold"
-  }
-
+  container: { background: "#0f172a", color: "white", padding: "20px", minHeight: "100vh" },
+  title: { textAlign: "center", color: "#22c55e" },
+  tabContainer: { display: "flex", justifyContent: "center", gap: "10px", marginBottom: "20px" },
+  tab: { padding: "10px 20px", cursor: "pointer", background: "#334155", border: "none", color: "white", borderRadius: "5px" },
+  activeTab: { padding: "10px 20px", cursor: "pointer", background: "#22c55e", border: "none", color: "white", borderRadius: "5px" },
+  row: { background: "#1e293b", padding: "15px", margin: "10px 0", borderRadius: "10px", display: "flex", justifyContent: "space-between" }
 };
