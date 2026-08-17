@@ -31,6 +31,63 @@ export default function Home() {
     }, 2500);
   };
 
+  // 👇 ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন
+  const registerPushNotification = async () => {
+    if ("serviceWorker" in navigator && "PushManager" in window) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        
+        // পারমিশন চাওয়া
+        const permissionResult = await Notification.requestPermission();
+        if (permissionResult !== "granted") {
+          console.log("Notification permission not granted.");
+          return;
+        }
+
+        // আপনার ব্যাকএন্ড থেকে VAPID Public Key নিয়ে আসা
+        const keyRes = await fetch(`${API}/get-vapid-key`);
+        const keyData = await keyRes.json();
+        const publicVapidKey = keyData.publicKey;
+
+        if (!publicVapidKey) return;
+
+        // URL Safe Base64 থেকে Uint8Array তে রূপান্তর করার ফাংশন
+        const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
+
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedVapidKey
+        });
+
+        // ব্যাকএন্ডে সাবস্ক্রিপশন পাঠিয়ে সেভ করা
+        await fetch(`${API}/save-push-subscription`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: token
+          },
+          body: JSON.stringify({ email, subscription })
+        });
+
+        console.log("Push Notification Subscribed Successfully!");
+      } catch (error) {
+        console.log("Push subscription error:", error);
+      }
+    }
+  };
+
+  // হেল্পার ফাংশন: VAPID Key কনভার্ট করার জন্য
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
   // 👇 পপআপ ফটো ডাউনলোডের হ্যান্ডলার
   const handleDownloadImage = async (imageUrl) => {
     try {
@@ -58,6 +115,9 @@ export default function Home() {
     loadHome();
     loadNotifications();
     loadLatestUpdate();
+
+    // হোম পেজ লোড হওয়ার সময় পুশ নোটিফিকেশন রেজিস্ট্রেশন কল করা হলো
+    registerPushNotification();
 
     // 👇 লগইন করে আসার পর পপআপ শো করার চেক
     const flag = localStorage.getItem("showLoginPopup");
