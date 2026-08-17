@@ -23,3 +23,6 @@ const sendPushNotification = async (userIdOrEmail, title, body, url = "/") => {
     }
   }
 };
+
+module.exports = sendPushNotification;
+
