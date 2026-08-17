@@ -7243,6 +7243,22 @@ app.post("/admin/withdraw-action", async (req, res) => {
   }
 });
 
+// ১. সাবস্ক্রিপশন সেভ করার রাউট
+app.post("/save-push-subscription", async (req, res) => {
+  try {
+    const { email, subscription } = req.body;
+    await User.findOneAndUpdate({ email }, { pushSubscription: subscription });
+    res.status(200).json({ success: true, message: "Subscription saved" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ২. VAPID Public Key পাঠানোর রাউট
+app.get("/get-vapid-key", (req, res) => {
+  res.status(200).json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
 
 
 
