@@ -31,9 +31,12 @@ export default function Home() {
     }, 2500);
   };
 
-  // 👇 ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন (আপডেটকৃত)
+  // 👇 ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন (ডিবাগিং লগ সহ আপডেটকৃত)
   const registerPushNotification = async () => {
-    if (!("serviceWorker" in navigator) && !("PushManager" in window)) return;
+    if (!("serviceWorker" in navigator) && !("PushManager" in window)) {
+      console.log("Push notifications not supported by this browser.");
+      return;
+    }
     
     try {
       const registration = await navigator.serviceWorker.ready;
@@ -48,7 +51,10 @@ export default function Home() {
       const keyData = await keyRes.json();
       const publicVapidKey = keyData.publicKey;
 
-      if (!publicVapidKey) return;
+      if (!publicVapidKey) {
+        console.log("VAPID public key not found from server.");
+        return;
+      }
 
       const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
 
@@ -63,7 +69,7 @@ export default function Home() {
       const currentEmail = localStorage.getItem("email");
       if (!currentEmail) return;
 
-      await fetch(`${API}/save-push-subscription`, {
+      const subRes = await fetch(`${API}/save-push-subscription`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,9 +78,14 @@ export default function Home() {
         body: JSON.stringify({ email: currentEmail, subscription })
       });
 
-      console.log("Push Notification Subscribed Successfully!");
+      const subData = await subRes.json();
+      if (subRes.ok) {
+        console.log("Push Notification Subscribed Successfully!", subData);
+      } else {
+        console.error("Failed to save push subscription on server:", subData);
+      }
     } catch (error) {
-      console.log("Push subscription error:", error);
+      console.error("Push subscription error:", error);
     }
   };
 
