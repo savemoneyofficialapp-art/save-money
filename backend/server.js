@@ -689,6 +689,13 @@ async function addBonus({
         `${bonusType} ₹${bonusAmount} received from ${fromName}`
       );
     }
+     // 🔔 Push Notification for Bonus Received
+    await sendPushNotification(
+      String(email).toLowerCase(),
+      "Bonus Received! 🎁",
+      `You have received a new bonus of ₹${bonusAmount} in your account.`,
+      "/wallet"
+    );
 
   } catch (err) {
     console.log("ADD BONUS ERROR:", err);
@@ -1972,6 +1979,10 @@ err
   description: "Save Money SIP Started",
   date: new Date()
 });
+
+  // ইনভেস্টমেন্ট সাকসেস হওয়ার পর:
+await sendPushNotification(email, "SIP Investment Success 🚀", "Your new SIP investment has been successfully placed.", "/my-investment");
+    
 return res.status(200).json({
       success: true,
       msg: "Investment Started Successfully",
@@ -2105,6 +2116,9 @@ app.post("/renew-invest", async (req, res) => {
       description: "SIP Renew Payment",
       date: new Date()
     });
+
+    // 🔔 Push Notification for SIP Renewal
+    await sendPushNotification(user.email, "SIP Renewed 🔄", "Your monthly SIP has been successfully renewed.", "/my-investment");
 
     // ফ্রন্টএন্ডে রেসপন্স পাঠানো
     res.json({
@@ -2954,6 +2968,8 @@ await WalletHistory.create({
   status: 'Success',
   date: new Date()
 });
+        // 🔔 Push Notification to Sender (Money Sent)
+    await sendPushNotification(sender.email, "Money Sent 💸", `You have successfully transferred ₹${transferAmount} to ${receiver.name}.`, "/wallet");
 
 // ২. রিসিভারের জন্য (Credit)
 await WalletHistory.create({
@@ -2967,6 +2983,8 @@ await WalletHistory.create({
   status: 'Success',
   date: new Date()
 });
+      // 🔔 Push Notification to Receiver (Money Received)
+    await sendPushNotification(receiver.email, "Money Received 💰", `You have successfully received ₹${transferAmount} from ${sender.name}.`, "/wallet");
 
 
         res.json({
@@ -3473,6 +3491,11 @@ app.post("/submit-kyc", upload.fields([
     );
 
     await createNotification(email, "KYC Submitted Successfully");
+    res.json({ success: true, msg: "KYC submitted successfully" });
+
+     // 🔔 Push Notification for KYC Submit
+    await sendPushNotification(email, "KYC Submitted 📝", "Your KYC documents have been submitted successfully and are under review.", "/kyc");
+
     res.json({ success: true, msg: "KYC submitted successfully" });
 
   } catch (err) {
@@ -4224,7 +4247,8 @@ kycRejectReason:""
 
 );
 
-
+// 🔔 Push Notification for KYC Approval
+      await sendPushNotification(updatedUser.email, "KYC Approved! 🎉", "Congratulations! Your KYC verification has been approved successfully.", "/kyc");
 
 res.json({
 
@@ -4285,7 +4309,8 @@ kycRejectReason:reason
 
 );
 
-
+// 🔔 Push Notification for KYC Rejection
+      await sendPushNotification(updatedUser.email, "KYC Rejected ❌", "Your KYC verification was rejected. Please re-submit with correct details.", "/kyc");
 
 res.json({
 
@@ -7184,6 +7209,8 @@ app.post("/withdraw-request", async (req, res) => {
 
     user.todayBalance = Number(user.todayBalance || 0) - amount;
     await user.save();
+    // 🔔 Push Notification for Withdrawal Request
+    await sendPushNotification(email, "Withdrawal Update 💸", "Your withdrawal request has been submitted successfully and is being processed.", "/withdraw");
 
     return res.json({
       success: true,
