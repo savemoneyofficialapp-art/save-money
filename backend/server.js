@@ -3413,6 +3413,34 @@ app.post("/get-user-data", auth, async (req, res) => {
 
 });
 
+// পুশ নোটিফিকেশন সাবস্ক্রিপশন সেভ করার রুট
+app.post('/save-push-subscription', async (req, res) => {
+  try {
+    const { email, subscription } = req.body;
+    
+    if (!email || !subscription) {
+      return res.status(400).json({ error: "Email and subscription required" });
+    }
+
+    // ইউজারের ডাটাবেসে সাবস্ক্রিপশন সেভ করা
+    const updatedUser = await User.findOneAndUpdate(
+      { email: email },
+      { $set: { pushSubscription: subscription } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Push subscription saved successfully" });
+  } catch (err) {
+    console.error("Save push subscription error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 app.post("/check-kyc", async (req, res) => {
 
   const { email } = req.body;
