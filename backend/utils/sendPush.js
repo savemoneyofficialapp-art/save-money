@@ -1,17 +1,23 @@
 const webpush = require("web-push");
-const User = require("../models/User"); // আপনার ইউজার মডেল পাথ
+const User = require("../models/User");
 
-webpush.setVapidDetails(
-  "mailto:support@yourdomain.com",
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+// সিকিউরিটি বা ক্র্যাশ এড়াতে ট্রাই-ক্যাচ দিয়ে র‍্যাপ করা হলো
+try {
+  if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+      'mailto:support@yourdomain.com',
+      process.env.VAPID_PUBLIC_KEY.trim(),
+      process.env.VAPID_PRIVATE_KEY.trim()
+    );
+  }
+} catch (err) {
+  console.log("VAPID Setup Warning:", err.message);
+}
 
 const sendPushNotification = async (userIdOrEmail, title, body, url = "/") => {
   try {
-    // আইডি বা ইমেইল দিয়ে ইউজার খুঁজুন
-    const user = await User.findOne({ 
-      $or: [{ _id: userIdOrEmail }, { email: userIdOrEmail }] 
+    const user = await User.findOne({
+      $or: [{ _id: userIdOrEmail }, { email: userIdOrEmail }]
     });
 
     if (!user || !user.pushSubscription) return;
@@ -22,12 +28,9 @@ const sendPushNotification = async (userIdOrEmail, title, body, url = "/") => {
   } catch (error) {
     console.error("Error sending push notification:", error);
     if (error.statusCode === 410) {
-      // ইউজার সাবস্ক্রিপশন বাতিল করলে ডাটাবেস থেকে মুছে দিন
       await User.updateOne({ email: userIdOrEmail }, { $set: { pushSubscription: null } });
-      
     }
   }
 };
 
 module.exports = sendPushNotification;
-
