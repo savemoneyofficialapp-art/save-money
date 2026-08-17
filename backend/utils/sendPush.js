@@ -24,6 +24,7 @@ const sendPushNotification = async (userIdOrEmail, title, body, url = "/") => {
     if (error.statusCode === 410) {
       // ইউজার সাবস্ক্রিপশন বাতিল করলে ডাটাবেস থেকে মুছে দিন
       await User.updateOne({ email: userIdOrEmail }, { $set: { pushSubscription: null } });
+      
     }
   }
 };
