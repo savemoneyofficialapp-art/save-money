@@ -7467,7 +7467,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
 });
 
 
-app.get("/investment-certificate/:id", async (req, res) => {
+              app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
 
@@ -7519,7 +7519,7 @@ app.get("/investment-certificate/:id", async (req, res) => {
               object-fit: cover;
               z-index: 1;
             }
-            /* ইমেজের ডিজাইন অনুযায়ী ফিল্ডগুলোর পজিশন নিখুঁত করা হয়েছে */
+            /* ইমেজের ডিজাইন অনুযায়ী পজিশন */
             .details-overlay {
               position: absolute;
               top: 422px;
@@ -7534,7 +7534,6 @@ app.get("/investment-certificate/:id", async (req, res) => {
               color: #0f172a;
               font-weight: 700;
             }
-            /* ইমেজের প্রতিটি লাইনের সাথে নিখুঁত দূরত্ব */
             .row-name { top: 0px; font-size: 14.5px; color: #1e293b; }
             .row-cert { top: 32px; }
             .row-amount { top: 67px; }
@@ -7545,7 +7544,6 @@ app.get("/investment-certificate/:id", async (req, res) => {
             .row-maturity { top: 242px; }
             .row-status { top: 277px; }
 
-            /* ইস্যু ডেট পজিশন */
             .issue-date-box {
               position: absolute;
               bottom: 128px;
@@ -7583,9 +7581,9 @@ app.get("/investment-certificate/:id", async (req, res) => {
         <body>
           <div class="certificate-container">
             
-            <img src="https://i.ibb.co.com/6c9M3C5s/1000195302.jpg" alt="Certificate Background" class="cert-bg" />
+            <!-- ব্যাকগ্রাউন্ড ইমেজ লিংক আপডেট করা হলো -->
+            <img src="https://i.ibb.co/6c9M3C5s/1000195302.jpg" alt="Certificate Background" class="cert-bg" crossorigin="anonymous" />
 
-            <!-- মূল ডেটা বসানোর জায়গা -->
             <div class="details-overlay">
               <div class="field-row row-name">Investor Name: ${userName}</div>
               <div class="field-row row-cert">${certNo}</div>
@@ -7617,6 +7615,7 @@ app.get("/investment-certificate/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
 
 
 
