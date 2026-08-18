@@ -7466,19 +7466,13 @@ app.get("/admin/withdraw-requests", async (req, res) => {
   }
 });
 
-
-                     
-              
-              app.get("/investment-certificate/:id", async (req, res) => {
+app.get("/investment-certificate/:id", async (req, res) => {
   try {
-    // পপুলেট বাদ দিয়ে সরাসরি ডেটা ফেচ করা হলো যাতে কোনো এরর না আসে
     const investment = await Investment.findById(req.params.id);
 
     if (!investment) return res.status(404).send("Investment not found");
 
-    // ইউজারের নাম সেভ করা থাকলে সেটি দেখাবে, না থাকলে ডিফল্ট দেখাবে
     const userName = investment.userName || investment.name || investment.fullName || "Valued Investor";
-
     const amount = investment.monthlyAmount || investment.amount || 0;
     const rate = investment.rate || investment.returnRate || 0;
     const certNo = investment.certificateNo || `SM-CERT-${String(investment._id).toUpperCase().slice(-12)}`;
@@ -7511,6 +7505,8 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               position: relative;
               width: 800px;
               height: 1131px;
+              /* ব্যাকগ্রাউন্ড কালার ফিক্সড করা হলো যাতে ইমেজ আসার আগ পর্যন্ত ব্ল্যাক হয়ে না থাকে */
+              background-color: #fffdf5;
               background-image: url('https://i.ibb.co.com/wh51QWJt/1000195302.jpg');
               background-size: cover;
               background-position: center;
@@ -7529,12 +7525,13 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               padding: 6.5px 0;
               font-size: 14px;
             }
+            /* টেক্সট কালার একদম গাঢ় করে দেওয়া হলো যাতে যেকোনো ব্যাকগ্রাউন্ডেও স্পষ্টভাবে দেখা যায় */
             .row b {
-              color: #1e293b;
+              color: #0f172a;
               font-weight: 600;
             }
             .row span {
-              color: #0f172a;
+              color: #020617;
               font-weight: 700;
             }
             .issue-date-box {
@@ -7542,8 +7539,8 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               bottom: 120px;
               left: 170px;
               font-size: 13.5px;
-              color: #1e293b;
-              font-weight: 600;
+              color: #0f172a;
+              font-weight: 700;
             }
             .print-btn-wrap {
               text-align: center;
@@ -7603,11 +7600,6 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
-
-      
-
-
 
 
 app.get("/investment-slip/:planId/:historyId", async (req, res) => {
