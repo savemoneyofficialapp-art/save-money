@@ -7467,91 +7467,273 @@ app.get("/admin/withdraw-requests", async (req, res) => {
 });
 
     
-app.get("/investment-certificate/:id", async (req, res) => {
+    app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
+
     if (!investment) return res.status(404).send("Investment not found");
 
-    const userName = investment.userName || investment.name || investment.fullName || "Valued Investor";
     const amount = investment.monthlyAmount || investment.amount || 0;
     const rate = investment.rate || investment.returnRate || 0;
-    const certNo = investment.certificateNo || `SM-CERT-${String(investment._id).toUpperCase().slice(-12)}`;
+    const certNo = investment.certificateNo || `SM-CERT-${investment._id}`;
     
-    const totalPlanAmount = investment.totalPlanAmount || investment.planAmount || investment.totalAmount || (amount * (investment.years || 3) * 12) || 0;
-    const totalInterest = investment.totalInterest || investment.totalReturn || 0;
-    const maturityAmount = investment.maturityAmount || (Number(totalPlanAmount) + Number(totalInterest));
-
+    // Format issue date or fallback to current date
     const issueDate = investment.createdAt 
-      ? new Date(investment.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+      ? new Date(investment.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) 
       : "12 Aug 2026";
 
     const html = `
       <html>
         <head>
+          <title>Investment Certificate</title>
+          <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
           <style>
-            body { margin: 0; padding: 0; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; background: #0f172a; }
+            body {
+              margin: 0;
+              padding: 20px;
+              background: #e2e8f0;
+              font-family: 'Montserrat', sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+            }
             .certificate-container {
-              width: 794px;
-              height: 1123px;
-              /* এখানে ব্যাকগ্রাউন্ড ইমেজটি সরাসরি সেট করা হয়েছে */
-              background-image: url('https://i.ibb.co.com/6c9M3C5s/1000195302.jpg');
-              background-size: cover;
-              background-position: center;
+              width: 800px;
+              background: #fffdf9;
+              background-image: radial-gradient(#e6deb9 0.75px, transparent 0.75px), radial-gradient(#e6deb9 0.75px, #fffdf9 0.75px);
+              background-size: 30px 30px;
+              background-position: 0 0, 15px 15px;
+              border: 16px solid transparent;
+              border-image: url('https://i.imgur.com/3QZ1Q7r.png') 30 round; /* Golden Ornate Border Fallback / Styling */
+              box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+              padding: 40px 50px;
               position: relative;
+              box-sizing: border-box;
+              overflow: hidden;
             }
-            .details-overlay {
+            /* Fallback CSS Border if image doesn't load */
+            .border-box {
+              border: 4px double #b8860b;
+              padding: 30px;
+              position: relative;
+              background: rgba(255, 255, 255, 0.85);
+            }
+            .watermark {
               position: absolute;
-              top: 415px; 
-              left: 145px;
-              width: 505px;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              width: 380px;
+              opacity: 0.06;
+              pointer-events: none;
             }
-            .row-item {
+            .header {
+              text-align: center;
+              margin-bottom: 25px;
+            }
+            .logo-shield {
+              width: 75px;
+              margin-bottom: 5px;
+            }
+            .company-name {
+              font-family: 'Cinzel', serif;
+              font-size: 28px;
+              font-weight: 800;
+              color: #1a202c;
+              letter-spacing: 3px;
+              margin: 0;
+            }
+            .company-sub {
+              font-family: 'Cinzel', serif;
+              font-size: 11px;
+              letter-spacing: 6px;
+              color: #b8860b;
+              margin-top: 4px;
+              font-weight: 700;
+            }
+            .divider {
+              text-align: center;
+              color: #b8860b;
+              margin: 15px 0;
+              font-size: 18px;
+            }
+            .cert-title {
+              font-family: 'Cinzel', serif;
+              font-size: 32px;
+              font-weight: 700;
+              color: #1a202c;
+              text-align: center;
+              letter-spacing: 1px;
+              margin: 10px 0 5px 0;
+            }
+            .cert-desc {
+              text-align: center;
+              font-size: 13px;
+              color: #4a5568;
+              font-family: 'Playfair Display', serif;
+              font-style: italic;
+              margin-bottom: 30px;
+            }
+            .details-table {
+              width: 100%;
+              margin-bottom: 25px;
+            }
+            .row {
               display: flex;
               justify-content: space-between;
-              margin-bottom: 22px;
-              font-size: 15px;
-              color: #1a1a1a;
+              align-items: center;
+              border-bottom: 1px dotted #cbd5e0;
+              padding: 10px 0;
+              font-size: 14px;
+            }
+            .row b {
+              color: #2d3748;
               font-weight: 600;
             }
-            .issue-date {
-              position: absolute;
-              bottom: 125px;
-              left: 145px;
-              font-size: 14px;
+            .row span {
+              color: #1a202c;
               font-weight: 600;
+            }
+            .verified-banner {
+              text-align: center;
+              color: #b8860b;
+              font-weight: 600;
+              font-size: 13px;
+              margin: 20px 0;
+              letter-spacing: 1px;
+            }
+            .footer-section {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              margin-top: 30px;
+            }
+            .issue-box {
+              text-align: center;
+              font-size: 13px;
+              color: #4a5568;
+            }
+            .issue-box .date {
+              font-weight: 600;
+              color: #1a202c;
+              margin-top: 4px;
+              border-top: 1px solid #a0aec0;
+              display: inline-block;
+              padding-top: 4px;
+            }
+            .center-seal {
+              text-align: center;
+            }
+            .seal-img {
+              width: 110px;
+            }
+            .signature-box {
+              text-align: center;
+            }
+            .sig-font {
+              font-family: 'Playfair Display', cursive;
+              font-size: 26px;
+              color: #1a202c;
+              font-style: italic;
+              margin-bottom: -5px;
+            }
+            .sig-line {
+              border-top: 1px solid #a0aec0;
+              width: 160px;
+              margin-top: 8px;
+              padding-top: 4px;
+              font-size: 12px;
+              color: #4a5568;
             }
             .print-btn {
-              position: fixed; top: 20px; z-index: 99; padding: 10px 20px; cursor: pointer;
+              display: block;
+              margin: 20px auto 0 auto;
+              padding: 12px 30px;
+              background: #16a34a;
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-weight: bold;
+              font-size: 15px;
+              cursor: pointer;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             }
-            @media print { .print-btn { display: none; } }
+            .print-btn:hover { background: #15803d; }
+            @media print {
+              .print-btn { display: none; }
+              body { background: none; padding: 0; }
+              .certificate-container { box-shadow: none; border: none; }
+            }
           </style>
         </head>
         <body>
-          <button class="print-btn" onclick="window.print()">Print Certificate</button>
-          <div class="certificate-container">
-            <div class="details-overlay">
-              <div class="row-item" style="font-size: 18px; font-weight: 800; margin-bottom: 35px;">
-                <span>Investor Name</span><span>${userName}</span>
+          <div>
+            <div class="certificate-container">
+              <div class="border-box">
+                <!-- Background Watermark Shield -->
+                <svg class="watermark" viewBox="0 0 24 24" fill="#b8860b"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+
+                <div class="header">
+                  <svg class="logo-shield" viewBox="0 0 24 24" fill="#d97706"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.67-3.13 8.85-7 9.92-3.87-1.07-7-5.25-7-9.92V6.3l7-3.12z"/></svg>
+                  <div class="company-name">SAVE MONEY</div>
+                  <div class="company-sub">INVESTMENT</div>
+                </div>
+
+                <div class="divider">❦ ❦ ❦</div>
+
+                <div class="cert-title">INVESTMENT CERTIFICATE</div>
+                <div class="cert-desc">This is to certify that the following investment has been successfully created under Save Money Investment.</div>
+
+                <div class="details-table">
+                  <div class="row"><b>Certificate No</b><span>${certNo}</span></div>
+                  <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
+                  <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
+                  <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
+                  <div class="row"><b>Total Plan Amount</b><span>₹${investment.totalPlanAmount || 0}</span></div>
+                  <div class="row"><b>Total Interest</b><span>₹${investment.totalInterest || 0}</span></div>
+                  <div class="row"><b>Maturity Amount</b><span>₹${investment.maturityAmount || 0}</span></div>
+                  <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
+                </div>
+
+                <div class="verified-banner">★★★ Verified Save Money Investment ★★★</div>
+
+                <div class="footer-section">
+                  <div class="issue-box">
+                    <div>Issue Date</div>
+                    <div class="date">${issueDate}</div>
+                  </div>
+
+                  <div class="center-seal">
+                    <svg class="seal-img" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="46" fill="#d97706" stroke="#fff" stroke-width="2"/>
+                      <circle cx="50" cy="50" r="38" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="3,3"/>
+                      <text x="50" y="25" font-size="9" fill="#fff" font-weight="bold" text-anchor="middle" font-family="Cinzel">VERIFIED INVESTMENT</text>
+                      <text x="50" y="80" font-size="9" fill="#fff" font-weight="bold" text-anchor="middle" font-family="Cinzel">SAVE MONEY</text>
+                      <path d="M50 35 L58 45 L53 45 L53 58 L47 58 L47 45 L42 45 Z" fill="#fff"/>
+                    </svg>
+                  </div>
+
+                  <div class="signature-box">
+                    <div class="sig-font">Gasleeln</div>
+                    <div class="sig-line">Authorized Signatory<br>Save Money Investment</div>
+                  </div>
+                </div>
               </div>
-              <div class="row-item"><span>Certificate No</span><span>${certNo}</span></div>
-              <div class="row-item"><span>Monthly Investment</span><span>₹${amount}</span></div>
-              <div class="row-item"><span>Tenure</span><span>${investment.years || 3} Years</span></div>
-              <div class="row-item"><span>Return Rate</span><span>${rate}%</span></div>
-              <div class="row-item"><span>Total Plan Amount</span><span>₹${totalPlanAmount}</span></div>
-              <div class="row-item"><span>Total Interest</span><span>₹${totalInterest}</span></div>
-              <div class="row-item"><span>Maturity Amount</span><span>₹${maturityAmount}</span></div>
-              <div class="row-item"><span>Status</span><span>${investment.status || "Active"}</span></div>
             </div>
-            <div class="issue-date">${issueDate}</div>
+            <button class="print-btn" onclick="window.print()">Download / Print Certificate</button>
           </div>
         </body>
       </html>
     `;
+
     res.send(html);
   } catch (err) {
+    console.log("CERTIFICATE ERROR:", err);
     res.status(500).send("Server error");
   }
 });
+
                   
 
 
