@@ -7468,15 +7468,16 @@ app.get("/admin/withdraw-requests", async (req, res) => {
 
 
                      
+              
               app.get("/investment-certificate/:id", async (req, res) => {
   try {
-    // ইউজারের নাম পেতে populate ব্যবহার করা হয়েছে (যদি ইউজার আইডি দিয়ে রেফারেন্স করা থাকে) অথবা সরাসরি investment.userName / user.name চেক করা হবে
-    const investment = await Investment.findById(req.params.id).populate('userId');
+    // পপুলেট বাদ দিয়ে সরাসরি ডেটা ফেচ করা হলো যাতে কোনো এরর না আসে
+    const investment = await Investment.findById(req.params.id);
 
     if (!investment) return res.status(404).send("Investment not found");
 
-    // ইউজারের নাম বের করার লজিক
-    const userName = investment.userName || investment.name || (investment.userId && (investment.userId.name || investment.userId.fullName)) || "Valued Investor";
+    // ইউজারের নাম সেভ করা থাকলে সেটি দেখাবে, না থাকলে ডিফল্ট দেখাবে
+    const userName = investment.userName || investment.name || investment.fullName || "Valued Investor";
 
     const amount = investment.monthlyAmount || investment.amount || 0;
     const rate = investment.rate || investment.returnRate || 0;
@@ -7516,7 +7517,6 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               box-shadow: 0 30px 60px rgba(0,0,0,0.6);
               box-sizing: border-box;
             }
-            /* ডেটা টেবিল পজিশন (নামসহ ৯টি রো পারফেক্টলি সেট করা হয়েছে) */
             .details-table {
               position: absolute;
               top: 395px;
@@ -7543,7 +7543,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               left: 170px;
               font-size: 13.5px;
               color: #1e293b;
-5              font-weight: 600;
+              font-weight: 600;
             }
             .print-btn-wrap {
               text-align: center;
