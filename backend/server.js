@@ -7477,86 +7477,108 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     const rate = investment.rate || investment.returnRate || 0;
     const certNo = investment.certificateNo || `SM-CERT-${String(investment._id).toUpperCase().slice(-12)}`;
     
-    // টোটাল প্ল্যান অ্যামাউন্ট জিরো আসার সমস্যা ঠিক করার জন্য ফিল্ডগুলোর সঠিক প্রায়োরিটি দেওয়া হলো
     const totalPlanAmount = investment.totalPlanAmount || investment.planAmount || investment.totalAmount || (amount * (investment.years || 3) * 12) || 0;
     const totalInterest = investment.totalInterest || investment.totalReturn || 0;
     const maturityAmount = investment.maturityAmount || (Number(totalPlanAmount) + Number(totalInterest));
 
     const issueDate = investment.createdAt 
       ? new Date(investment.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-      : new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      : "12 Aug 2026";
 
     const html = `
       <html>
         <head>
           <title>Investment Certificate - Save Money</title>
-          <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;750;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
             body {
               margin: 0;
               padding: 20px;
-              background: #e2e8f0;
+              background: #0f172a;
               font-family: 'Poppins', sans-serif;
               display: flex;
               justify-content: center;
               align-items: center;
               min-height: 100vh;
             }
+            /* লম্বালম্বি (Portrait) সাইজ এবং রাজকীয় গোল্ডেন বর্ডার */
             .certificate-container {
               position: relative;
-              width: 850px;
-              background: #fffdf9;
-              padding: 45px 60px;
-              box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-              border: 12px solid #d4af37;
+              width: 794px;
+              height: 1123px;
+              background: #fffdf5;
+              padding: 60px 75px;
+              box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+              border: 18px solid #d4af37;
               box-sizing: border-box;
+              background-image: radial-gradient(circle, #fffdf5 60%, #fef3c7 100%);
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
             }
+            /* কর্নার রাজকীয় ডিজাইন এবং ডাবল বর্ডার */
             .certificate-container::before {
               content: "";
               position: absolute;
-              top: 6px; left: 6px; right: 6px; bottom: 6px;
+              top: 8px; left: 8px; right: 8px; bottom: 8px;
               border: 2px solid #b8860b;
               pointer-events: none;
             }
+            .top-section {
+              position: relative;
+            }
             .header {
               text-align: center;
-              margin-bottom: 20px;
+              margin-bottom: 10px;
             }
-            /* আসল লোগো সুন্দর গোল সার্কেলে বসানোর স্টাইল */
-            .logo-img {
-              width: 85px;
-              height: 85px;
-              border-radius: 50%;
-              object-fit: cover;
-              border: 3px solid #d4af37;
-              box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+            /* গোল্ডেন শিল্ড লোগো */
+            .shield-logo {
+              width: 70px;
+              height: 80px;
+              background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%);
               margin: 0 auto 10px;
-              display: block;
+              clip-path: polygon(50% 0%, 100% 20%, 100% 75%, 50% 100%, 0% 75%, 0% 20%);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 6px 15px rgba(202, 138, 4, 0.4);
+              border: 2px solid #fff;
+            }
+            .shield-inner {
+              font-size: 30px;
             }
             h1 {
               font-family: 'Cinzel', serif;
               color: #2b1d0c;
-              font-size: 34px;
+              font-size: 36px;
               margin: 0;
               letter-spacing: 2px;
+              font-weight: 800;
             }
             .sub-title {
               font-family: 'Cinzel', serif;
               font-size: 12px;
-              letter-spacing: 4px;
+              letter-spacing: 5px;
               color: #854d0e;
-              margin-top: 4px;
-              margin-bottom: 15px;
+              margin-top: 3px;
+              margin-bottom: 10px;
               font-weight: 700;
+            }
+            .divider-ornament {
+              text-align: center;
+              color: #d4af37;
+              font-size: 16px;
+              margin: 8px 0;
             }
             .cert-heading {
               font-family: 'Cinzel', serif;
-              font-size: 22px;
+              font-size: 24px;
               color: #1e293b;
               text-align: center;
-              margin-top: 10px;
+              margin-top: 5px;
               margin-bottom: 6px;
-              letter-spacing: 1px;
+              letter-spacing: 1.5px;
+              font-weight: 700;
             }
             .cert-desc {
               text-align: center;
@@ -7565,15 +7587,28 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               margin-bottom: 20px;
               font-style: italic;
             }
+            /* ব্যাকগ্রাউন্ড ওয়াটারমার্ক শিল্ড */
+            .bg-watermark {
+              position: absolute;
+              top: 48%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              width: 320px;
+              opacity: 0.08;
+              pointer-events: none;
+              z-index: 0;
+            }
             .details-table {
               width: 100%;
-              margin-bottom: 25px;
+              position: relative;
+              z-index: 1;
+              margin-bottom: 10px;
             }
             .row {
               display: flex;
               justify-content: space-between;
-              border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-              padding: 9px 4px;
+              border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+              padding: 10px 4px;
               font-size: 14.5px;
             }
             .row b {
@@ -7584,35 +7619,46 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               color: #0f172a;
               font-weight: 700;
             }
+            .bottom-section {
+              position: relative;
+              z-index: 1;
+            }
+            .verified-tag {
+              text-align: center;
+              font-size: 12.5px;
+              font-weight: 700;
+              color: #b45309;
+              margin-bottom: 20px;
+              letter-spacing: 1px;
+            }
             .footer-section {
               display: flex;
               justify-content: space-between;
               align-items: flex-end;
-              margin-top: 25px;
             }
             .signature-box {
               text-align: center;
             }
-            /* Gaaleela এর বদলে Save Money প্রিমিয়াম ফন্টে ও স্টাইলে */
             .sig-brand {
-              font-family: 'Cinzel', serif;
-              font-size: 20px;
-              font-weight: 800;
+              font-family: 'Playfair Display', serif;
+              font-size: 26px;
+              font-style: italic;
+              font-weight: 700;
               color: #1e3a8a;
-              margin-bottom: 6px;
-              letter-spacing: 1px;
+              margin-bottom: 2px;
             }
             .sig-title {
-              font-size: 11.5px;
+              font-size: 11px;
               color: #475569;
               font-weight: 600;
               border-top: 1px solid #94a3b8;
               padding-top: 4px;
-              width: 180px;
+              width: 170px;
             }
+            /* আসল গোল্ডেন সিল */
             .verified-seal {
-              width: 100px;
-              height: 100px;
+              width: 110px;
+              height: 110px;
               background: radial-gradient(circle, #fef08a 0%, #eab308 60%, #ca8a04 100%);
               border-radius: 50%;
               border: 3px dashed #fff;
@@ -7621,16 +7667,16 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               align-items: center;
               justify-content: center;
               text-align: center;
-              box-shadow: 0 6px 20px rgba(202, 138, 4, 0.4);
+              box-shadow: 0 6px 20px rgba(202, 138, 4, 0.5);
               color: #451a03;
-              font-size: 9px;
+              font-size: 8.5px;
               font-weight: 800;
               text-transform: uppercase;
               padding: 5px;
             }
             .print-btn-wrap {
               text-align: center;
-              margin-top: 25px;
+              margin-top: 20px;
             }
             .print-btn {
               background: linear-gradient(135deg, #d4af37, #9a670f);
@@ -7646,55 +7692,69 @@ app.get("/admin/withdraw-requests", async (req, res) => {
             @media print {
               body { background: white; padding: 0; }
               .print-btn-wrap { display: none; }
-              .certificate-container { box-shadow: none; border: 8px solid #d4af37; }
+              .certificate-container { box-shadow: none; border: 12px solid #d4af37; height: 100vh; }
             }
           </style>
         </head>
         <body>
           <div>
             <div class="certificate-container">
-              <div class="header">
-                <!-- আপনার আসল লোগো ইমেজটি এখানে সরাসরি কানেক্ট করা হলো -->
-                <img src="https://i.ibb.co.com/k2079qD9/1000191662.png" alt="Save Money Logo" class="logo-img" />
-                <h1>SAVE MONEY</h1>
-                <div class="sub-title">INVESTMENT</div>
-              </div>
-
-              <div class="cert-heading">INVESTMENT CERTIFICATE</div>
-              <div class="cert-desc">This is to certify that the following investment has been successfully created under Save Money Investment.</div>
-
-              <div class="details-table">
-                <div class="row"><b>Certificate No</b><span>${certNo}</span></div>
-                <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
-                <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
-                <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
-                <div class="row"><b>Total Plan Amount</b><span>₹${totalPlanAmount}</span></div>
-                <div class="row"><b>Total Interest</b><span>₹${totalInterest}</span></div>
-                <div class="row"><b>Maturity Amount</b><span>₹${maturityAmount}</span></div>
-                <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
-              </div>
-
-              <div style="text-align:center; font-size: 12.5px; font-weight: 700; color: #b45309; margin-bottom: 15px;">
-                ★ ★ ★ Verified Save Money Investment ★ ★ ★
-              </div>
-
-              <div class="footer-section">
-                <div style="font-size: 12px; color: #64748b;">
-                  <b>Issue Date:</b><br>${issueDate}
+              
+              <!-- উপরের অংশ -->
+              <div class="top-section">
+                <div class="header">
+                  <div class="shield-logo">
+                    <div class="shield-inner">📈</div>
+                  </div>
+                  <h1>SAVE MONEY</h1>
+                  <div class="sub-title">INVESTMENT</div>
                 </div>
 
-                <div class="verified-seal">
-                  <span>🛡️</span>
-                  <span style="font-size: 9.5px; margin-top: 2px;">VERIFIED</span>
-                  <span style="font-size: 7.5px;">SAVE MONEY</span>
-                </div>
+                <div class="divider-ornament">❧ ❦ ☙</div>
+                <div class="cert-heading">INVESTMENT CERTIFICATE</div>
+                <div class="cert-desc">This is to certify that the following investment has been successfully created under Save Money Investment.</div>
+              </div>
 
-                <div class="signature-box">
-                  <!-- ডান পাশের সিগনেচারে Gaaleela এর বদলে Save Money বসানো হয়েছে -->
-                  <div class="sig-brand">Save Money</div>
-                  <div class="sig-title">Authorized Signatory<br>Save Money Investment</div>
+              <!-- মাঝখানের ডেট টেবিল এবং ব্যাকগ্রাউন্ড ওয়াটারমার্ক শিল্ড -->
+              <div style="position: relative;">
+                <div class="shield-logo bg-watermark" style="width: 250px; height: 280px; opacity: 0.07; border: none; background: #d4af37;"></div>
+                
+                <div class="details-table">
+                  <div class="row"><b>Certificate No</b><span>${certNo}</span></div>
+                  <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
+                  <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
+                  <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
+                  <div class="row"><b>Total Plan Amount</b><span>₹${totalPlanAmount}</span></div>
+                  <div class="row"><b>Total Interest</b><span>₹${totalInterest}</span></div>
+                  <div class="row"><b>Maturity Amount</b><span>₹${maturityAmount}</span></div>
+                  <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
                 </div>
               </div>
+
+              <!-- নিচের অংশ -->
+              <div class="bottom-section">
+                <div class="verified-tag">
+                  ★★★ Verified Save Money Investment ★★★
+                </div>
+
+                <div class="footer-section">
+                  <div style="font-size: 11.5px; color: #64748b;">
+                    <b>Issue Date:</b><br>${issueDate}
+                  </div>
+
+                  <div class="verified-seal">
+                    <span>🛡️</span>
+                    <span style="font-size: 9.5px; margin-top: 2px;">VERIFIED</span>
+                    <span style="font-size: 7.5px;">SAVE MONEY</span>
+                  </div>
+
+                  <div class="signature-box">
+                    <div class="sig-brand">Save Money</div>
+                    <div class="sig-title">Authorized Signatory<br>Save Money Investment</div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <div class="print-btn-wrap">
@@ -7711,6 +7771,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
       
 
 
