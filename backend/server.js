@@ -7467,7 +7467,8 @@ app.get("/admin/withdraw-requests", async (req, res) => {
 });
 
 
-              app.get("/investment-certificate/:id", async (req, res) => {
+              
+            App.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
 
@@ -7519,35 +7520,37 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               object-fit: cover;
               z-index: 1;
             }
-            /* ইমেজের ডিজাইন অনুযায়ী পজিশন */
+            /* ইমেজের প্রিন্টেড লাইনের সাথে সরাসরি মানগুলো বসানোর জন্য নিখুঁত পজিশন */
             .details-overlay {
               position: absolute;
-              top: 422px;
-              left: 235px;
-              width: 440px;
+              top: 428px;
+              left: 310px;
+              width: 380px;
               z-index: 2;
             }
-            .field-row {
+            .field-value {
               position: absolute;
-              width: 440px;
+              width: 380px;
               font-size: 13.5px;
               color: #0f172a;
               font-weight: 700;
             }
-            .row-name { top: 0px; font-size: 14.5px; color: #1e293b; }
-            .row-cert { top: 32px; }
-            .row-amount { top: 67px; }
-            .row-tenure { top: 102px; }
-            .row-rate { top: 137px; }
-            .row-plan { top: 172px; }
-            .row-interest { top: 207px; }
-            .row-maturity { top: 242px; }
-            .row-status { top: 277px; }
+            /* ইমেজের প্রতিটি লাইনের সাথে হুবহু মেলবন্ধন */
+            .val-name { top: -35px; font-size: 14.5px; color: #1e293b; }
+            .val-cert { top: 0px; }
+            .val-amount { top: 35px; }
+            .val-tenure { top: 70px; }
+            .val-rate { top: 105px; }
+            .val-plan { top: 140px; }
+            .val-interest { top: 175px; }
+            .val-maturity { top: 210px; }
+            .val-status { top: 245px; }
 
+            /* ইস্যু ডেটের সঠিক পজিশন */
             .issue-date-box {
               position: absolute;
               bottom: 128px;
-              left: 175px;
+              left: 195px;
               font-size: 13.5px;
               color: #1e293b;
               font-weight: 600;
@@ -7581,19 +7584,19 @@ app.get("/admin/withdraw-requests", async (req, res) => {
         <body>
           <div class="certificate-container">
             
-            <!-- ব্যাকগ্রাউন্ড ইমেজ লিংক আপডেট করা হলো -->
             <img src="https://i.ibb.co/6c9M3C5s/1000195302.jpg" alt="Certificate Background" class="cert-bg" crossorigin="anonymous" />
 
+            <!-- শুধু মানগুলো ইমেজের নির্ধারিত জায়গায় বসানো হলো -->
             <div class="details-overlay">
-              <div class="field-row row-name">Investor Name: ${userName}</div>
-              <div class="field-row row-cert">${certNo}</div>
-              <div class="field-row row-amount">₹${amount}</div>
-              <div class="field-row row-tenure">${investment.years || 0} Years</div>
-              <div class="field-row row-rate">${rate}%</div>
-              <div class="field-row row-plan">₹${totalPlanAmount}</div>
-              <div class="field-row row-interest">₹${totalInterest}</div>
-              <div class="field-row row-maturity">₹${maturityAmount}</div>
-              <div class="field-row row-status">${investment.status || "Active"}</div>
+              <div class="field-value val-name">${userName}</div>
+              <div class="field-value val-cert">${certNo}</div>
+              <div class="field-value val-amount">₹${amount}</div>
+              <div class="field-value val-tenure">${investment.years || 0} Years</div>
+              <div class="field-value val-rate">${rate}%</div>
+              <div class="field-value val-plan">₹${totalPlanAmount}</div>
+              <div class="field-value val-interest">₹${totalInterest}</div>
+              <div class="field-value val-maturity">₹${maturityAmount}</div>
+              <div class="field-value val-status">${investment.status || "Active"}</div>
             </div>
 
             <div class="issue-date-box">
@@ -7602,7 +7605,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
 
           </div>
 
-          <div class="print-btn-wrap">
+          <div.print-btn-wrap>
             <button class="print-btn" onclick="window.print()">Download / Print Certificate</button>
           </div>
         </body>
@@ -7615,6 +7618,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
 
 
 
