@@ -7476,60 +7476,111 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     const certNo = investment.certificateNo || `SM-CERT-${investment._id}`;
     const issueDate = investment.createdAt ? new Date(investment.createdAt).toLocaleDateString('en-GB') : "12 Aug 2026";
 
-    // পাবলিক ফোল্ডার থেকে লোকাল ইমেজের পাথ
-    const certificateBgUrl = "/certificate-template.jpg"; 
+    // আপনার সার্টিফিকেট ইমেজের ডাইরেক্ট লিংক এখানে বসানো হলো
+    const certificateBgUrl = "https://i.ibb.co.com/6c6z7Q7/1000195357.jpg";
 
     const html = `
+      <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="UTF-8">
+          <title>Investment Certificate - ${certNo}</title>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
-            body { margin: 0; padding: 20px; display: flex; justify-content: center; background: #e2e8f0; font-family: 'Montserrat', sans-serif; }
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&display=swap');
             
-            .certificate-wrapper {
-              position: relative;
-              width: 800px;
-              height: 1050px;
-              background-image: url('${certificateBgUrl}');
-              background-size: cover;
-              background-repeat: no-repeat;
-              background-position: center;
-              box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            body {
+              margin: 0;
+              padding: 20px;
+              background: #1a202c;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              font-family: 'Montserrat', sans-serif;
             }
 
-            .cert-no { position: absolute; top: 432px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
-            .monthly-amt { position: absolute; top: 478px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
-            .tenure { position: absolute; top: 524px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
-            .rate { position: absolute; top: 570px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
-            .plan-amt { position: absolute; top: 616px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
-            .total-interest { position: absolute; top: 662px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
-            .maturity { position: absolute; top: 708px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
-            .status { position: absolute; top: 754px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
-            
-            .issue-date { position: absolute; bottom: 155px; left: 145px; font-size: 14px; font-weight: bold; color: #1a202c; }
-            
-            .print-btn { display: block; margin: 20px auto; padding: 12px 30px; background: #16a34a; color: white; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 16px; }
+            .certificate-container {
+              position: relative;
+              width: 800px;
+              height: 1055px;
+              background-image: url('${certificateBgUrl}');
+              background-size: 100% 100%;
+              background-repeat: no-repeat;
+              background-position: center;
+              box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            }
+
+            /* ডেটা পজিশনিং */
+            .cert-data {
+              position: absolute;
+              right: 110px;
+              font-size: 15px;
+              font-weight: 700;
+              color: #1a202c;
+            }
+
+            .c-no { top: 432px; font-size: 14px; }
+            .c-amount { top: 478px; }
+            .c-tenure { top: 524px; }
+            .c-rate { top: 570px; }
+            .c-plan { top: 616px; }
+            .c-interest { top: 662px; }
+            .c-maturity { top: 708px; font-size: 16px; color: #b45309; }
+            .c-status { top: 754px; }
+
+            .c-date {
+              position: absolute;
+              bottom: 152px;
+              left: 215px;
+              font-size: 13px;
+              font-weight: 600;
+              color: #1a202c;
+            }
+
+            .action-box {
+              margin-top: 20px;
+              text-align: center;
+            }
+
+            .print-btn {
+              padding: 14px 35px;
+              background: #16a34a;
+              color: white;
+              border: none;
+              border-radius: 10px;
+              font-weight: bold;
+              font-size: 16px;
+              cursor: pointer;
+              box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+            }
+
+            .print-btn:hover {
+              background: #15803d;
+            }
 
             @media print {
-              .print-btn { display: none; }
-              body { padding: 0; background: none; }
+              body { background: none; padding: 0; }
+              .action-box { display: none; }
+              .certificate-container { box-shadow: none; width: 100%; height: 100vh; }
             }
           </style>
         </head>
         <body>
-          <div>
-            <div class="certificate-wrapper">
-              <div class="cert-no">${certNo}</div>
-              <div class="monthly-amt">₹${amount}</div>
-              <div class="tenure">${investment.years || 0} Years</div>
-              <div class="rate">${rate}%</div>
-              <div class="plan-amt">₹${investment.totalPlanAmount || 0}</div>
-              <div class="total-interest">₹${investment.totalInterest || 0}</div>
-              <div class="maturity">₹${investment.maturityAmount || 0}</div>
-              <div class="status">${investment.status || "Active"}</div>
-              <div class="issue-date">${issueDate}</div>
-            </div>
-            <button class="print-btn" onclick="window.print()">Download / Print Certificate</button>
+          <div class="certificate-container">
+            <div class="cert-data c-no">${certNo}</div>
+            <div class="cert-data c-amount">₹${amount}</div>
+            <div class="cert-data c-tenure">${investment.years || 3} Years</div>
+            <div class="cert-data c-rate">${rate}%</div>
+            <div class="cert-data c-plan">₹${investment.totalPlanAmount || 0}</div>
+            <div class="cert-data c-interest">₹${investment.totalInterest || 0}</div>
+            <div class="cert-data c-maturity">₹${investment.maturityAmount || 0}</div>
+            <div class="cert-data c-status">${investment.status || "Active"}</div>
+            <div class="c-date">${issueDate}</div>
+          </div>
+
+          <div class="action-box">
+            <button class="print-btn" onclick="window.print()">📥 Download / Print Certificate</button>
           </div>
         </body>
       </html>
@@ -7540,6 +7591,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
 
 
     
