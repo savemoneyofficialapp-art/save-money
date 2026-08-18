@@ -31,7 +31,7 @@ export default function Home() {
     }, 2500);
   };
 
-  // 👇 ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন (ডিবাগিং লগ সহ আপডেটকৃত)
+  // 👇 ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন (আপডেটকৃত ও নিরাপদ)
   const registerPushNotification = async () => {
     if (!("serviceWorker" in navigator) && !("PushManager" in window)) {
       console.log("Push notifications not supported by this browser.");
@@ -69,13 +69,16 @@ export default function Home() {
       const currentEmail = localStorage.getItem("email");
       if (!currentEmail) return;
 
+      // সাবস্ক্রিপশন অবজেক্টকে ক্লিন করে পার্স করা হলো যাতে endpoint লিক বা ড্রপ না হয়
+      const subscriptionData = JSON.parse(JSON.stringify(subscription));
+
       const subRes = await fetch(`${API}/save-push-subscription`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           authorization: token
         },
-        body: JSON.stringify({ email: currentEmail, subscription })
+        body: JSON.stringify({ email: currentEmail, subscription: subscriptionData })
       });
 
       const subData = await subRes.json();
