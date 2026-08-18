@@ -7466,6 +7466,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
   }
 });
 
+
 app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
@@ -7493,7 +7494,7 @@ app.get("/investment-certificate/:id", async (req, res) => {
           <style>
             body {
               margin: 0;
-              padding: 20px;
+              padding: 0;
               background: #0f172a;
               font-family: 'Poppins', sans-serif;
               display: flex;
@@ -7503,48 +7504,60 @@ app.get("/investment-certificate/:id", async (req, res) => {
             }
             .certificate-container {
               position: relative;
-              width: 800px;
-              height: 1131px;
-              /* ব্যাকগ্রাউন্ড কালার ফিক্সড করা হলো যাতে ইমেজ আসার আগ পর্যন্ত ব্ল্যাক হয়ে না থাকে */
-              background-color: #fffdf5;
-              background-image: url('https://i.ibb.co.com/wh51QWJt/1000195302.jpg');
-              background-size: cover;
-              background-position: center;
+              width: 794px;
+              height: 1123px;
+              background: #fffdf5;
               box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-              box-sizing: border-box;
+              overflow: hidden;
             }
+            /* মূল সার্টিফিকেট ইমেজটি ব্যাকগ্রাউন্ড হিসেবে নিখুঁতভাবে সেট করা হলো */
+            .cert-bg {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              z-index: 1;
+            }
+            /* ডেটা টেবিল সরাসরি ছবির লাইনের ওপর পজিশন করা হয়েছে */
             .details-table {
               position: absolute;
-              top: 395px;
+              top: 450px;
               left: 145px;
-              width: 510px;
+              width: 515px;
+              z-index: 2;
             }
             .row {
               display: flex;
               justify-content: space-between;
-              padding: 6.5px 0;
+              padding: 6.8px 0;
               font-size: 14px;
             }
-            /* টেক্সট কালার একদম গাঢ় করে দেওয়া হলো যাতে যেকোনো ব্যাকগ্রাউন্ডেও স্পষ্টভাবে দেখা যায় */
             .row b {
-              color: #0f172a;
+              color: #1e293b;
               font-weight: 600;
             }
             .row span {
-              color: #020617;
-              font-weight: 700;
-            }
-            .issue-date-box {
-              position: absolute;
-              bottom: 120px;
-              left: 170px;
-              font-size: 13.5px;
               color: #0f172a;
               font-weight: 700;
             }
+            /* ইস্যু ডেট পজিশন */
+            .issue-date-box {
+              position: absolute;
+              bottom: 128px;
+              left: 175px;
+              font-size: 13.5px;
+              color: #1e293b;
+              font-weight: 600;
+              z-index: 2;
+            }
             .print-btn-wrap {
-              text-align: center;
-              margin-top: 20px;
+              position: fixed;
+              bottom: 15px;
+              left: 50%;
+              transform: translateX(-50%);
+              z-index: 10;
             }
             .print-btn {
               background: linear-gradient(135deg, #d4af37, #9a670f);
@@ -7555,7 +7568,7 @@ app.get("/investment-certificate/:id", async (req, res) => {
               font-weight: 700;
               border-radius: 30px;
               cursor: pointer;
-              box-shadow: 0 4px 15px rgba(154, 103, 15, 0.4);
+              box-shadow: 0 4px 15px rgba(154, 103, 15, 0.5);
             }
             @media print {
               body { background: white; padding: 0; }
@@ -7565,30 +7578,32 @@ app.get("/investment-certificate/:id", async (req, res) => {
           </style>
         </head>
         <body>
-          <div>
-            <div class="certificate-container">
-              
-              <div class="details-table">
-                <div class="row"><b>Investor Name</b><span>${userName}</span></div>
-                <div class="row"><b>Certificate No</b><span>${certNo}</span></div>
-                <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
-                <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
-                <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
-                <div class="row"><b>Total Plan Amount</b><span>₹${totalPlanAmount}</span></div>
-                <div class="row"><b>Total Interest</b><span>₹${totalInterest}</span></div>
-                <div class="row"><b>Maturity Amount</b><span>₹${maturityAmount}</span></div>
-                <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
-              </div>
+          <div class="certificate-container">
+            
+            <!-- মূল সার্টিফিকেট ইমেজ -->
+            <img src="https://i.ibb.co.com/6c9M3C5s/1000195302.jpg" alt="Certificate Background" class="cert-bg" />
 
-              <div class="issue-date-box">
-                ${issueDate}
-              </div>
-
+            <!-- ডেটা এবং নাম -->
+            <div class="details-table">
+              <div class="row"><b>Investor Name</b><span>${userName}</span></div>
+              <div class="row"><b>Certificate No</b><span>${certNo}</span></div>
+              <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
+              <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
+              <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
+              <div class="row"><b>Total Plan Amount</b><span>₹${totalPlanAmount}</span></div>
+              <div class="row"><b>Total Interest</b><span>₹${totalInterest}</span></div>
+              <div class="row"><b>Maturity Amount</b><span>₹${maturityAmount}</span></div>
+              <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
             </div>
 
-            <div class="print-btn-wrap">
-              <button class="print-btn" onclick="window.print()">Download / Print Certificate</button>
+            <div class="issue-date-box">
+              ${issueDate}
             </div>
+
+          </div>
+
+          <div class="print-btn-wrap">
+            <button class="print-btn" onclick="window.print()">Download / Print Certificate</button>
           </div>
         </body>
       </html>
@@ -7600,6 +7615,8 @@ app.get("/investment-certificate/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+
 
 
 app.get("/investment-slip/:planId/:historyId", async (req, res) => {
