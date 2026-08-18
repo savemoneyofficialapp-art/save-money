@@ -7466,7 +7466,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
   }
 });
 
-App.get("/investment-certificate/:id", async (req, res) => {
+app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
 
