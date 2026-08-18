@@ -7466,8 +7466,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
   }
 });
 
-
-              app.get("/investment-certificate/:id", async (req, res) => {
+    app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
 
@@ -7490,7 +7489,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
       <html>
         <head>
           <title>Investment Certificate - Save Money</title>
-          <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
             body {
               margin: 0;
@@ -7519,43 +7518,42 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               object-fit: cover;
               z-index: 1;
             }
-            /* শেষ ছবির মতো লেবেলের ডানে মানগুলো বসানোর জন্য সঠিক লেআউট */
+            
+            /* নতুন কমপ্লিট সার্টিফিকেট ইমেজ অনুযায়ী ফিল্ডগুলোর পজিশনিং */
             .details-overlay {
               position: absolute;
-              top: 435px;
-              left: 140px;
-              width: 530px;
+              top: 410px;
+              left: 85px;
+              width: 624px;
               z-index: 2;
             }
             .row-item {
-              position: absolute;
               display: flex;
               justify-content: space-between;
-              width: 530px;
+              align-items: center;
+              width: 100%;
               font-size: 14.5px;
-              color: #1e293b;
-              font-weight: 700;
+              color: #1a1a1a;
+              font-weight: 600;
+              margin-bottom: 15.5px;
             }
-            /* প্রতিটি সারির নিখুঁত দূরত্ব */
-            .item-name { top: -42px; font-size: 15.5px; }
-            .item-cert { top: 0px; }
-            .item-amount { top: 41px; }
-            .item-tenure { top: 82px; }
-            .item-rate { top: 123px; }
-            .item-plan { top: 164px; }
-            .item-interest { top: 205px; }
-            .item-maturity { top: 246px; }
-            .item-status { top: 287px; }
+            .item-name {
+              font-size: 16px;
+              font-weight: 700;
+              color: #0b2239;
+              margin-bottom: 22px;
+            }
 
             .issue-date-box {
               position: absolute;
-              bottom: 126px;
-              left: 190px;
+              bottom: 92px;
+              left: 115px;
               font-size: 14px;
-              color: #1e293b;
+              color: #1a1a1a;
               font-weight: 600;
               z-index: 2;
             }
+
             .print-btn-wrap {
               position: fixed;
               bottom: 15px;
@@ -7584,19 +7582,46 @@ app.get("/admin/withdraw-requests", async (req, res) => {
         <body>
           <div class="certificate-container">
             
-            <!-- মূল ব্যাকগ্রাউন্ড ইমেজ সঠিকভাবে লোড হওয়ার জন্য আপডেট করা হলো -->
-            <img src="https://i.ibb.co/6c9M3C5s/1000195302.jpg" alt="Certificate Background" class="cert-bg" crossorigin="anonymous" />
+            <!-- নতুন কমপ্লিট সার্টিফিকেট ব্যাকগ্রাউন্ড ইমেজ -->
+            <img src="https://i.ibb.co.com/6c9M3C5s/1000195302.jpg" alt="Certificate Background" class="cert-bg" crossorigin="anonymous" />
 
             <div class="details-overlay">
-              <div class="row-item item-name"><span>Investor Name</span><span>${userName}</span></div>
-              <div class="row-item item-cert"><span></span><span>${certNo}</span></div>
-              <div class="row-item item-amount"><span></span><span>₹${amount}</span></div>
-              <div class="row-item item-tenure"><span></span><span>${investment.years || 0} Years</span></div>
-              <div class="row-item item-rate"><span></span><span>${rate}%</span></div>
-              <div class="row-item item-plan"><span></span><span>₹${totalPlanAmount}</span></div>
-              <div class="row-item item-interest"><span></span><span>₹${totalInterest}</span></div>
-              <div class="row-item item-maturity"><span></span><span>₹${maturityAmount}</span></div>
-              <div class="row-item item-status"><span></span><span>${investment.status || "Active"}</span></div>
+              <div class="row-item item-name">
+                <span>Investor Name</span>
+                <span>${userName}</span>
+              </div>
+              <div class="row-item">
+                <span>Certificate No</span>
+                <span>${certNo}</span>
+              </div>
+              <div class="row-item">
+                <span>Monthly Investment</span>
+                <span>₹${amount}</span>
+              </div>
+              <div class="row-item">
+                <span>Tenure</span>
+                <span>${investment.years || 3} Years</span>
+              </div>
+              <div class="row-item">
+                <span>Return Rate</span>
+                <span>${rate}%</span>
+              </div>
+              <div class="row-item">
+                <span>Total Plan Amount</span>
+                <span>₹${totalPlanAmount}</span>
+              </div>
+              <div class="row-item">
+                <span>Total Interest</span>
+                <span>₹${totalInterest}</span>
+              </div>
+              <div class="row-item">
+                <span>Maturity Amount</span>
+                <span>₹${maturityAmount}</span>
+              </div>
+              <div class="row-item">
+                <span>Status</span>
+                <span>${investment.status || "Active"}</span>
+              </div>
             </div>
 
             <div class="issue-date-box">
@@ -7618,6 +7643,8 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+
 
 
 
