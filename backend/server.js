@@ -7467,7 +7467,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
 });
 
 
-app.get("/investment-certificate/:id", async (req, res) => {
+App.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
 
@@ -7510,7 +7510,6 @@ app.get("/investment-certificate/:id", async (req, res) => {
               box-shadow: 0 30px 60px rgba(0,0,0,0.6);
               overflow: hidden;
             }
-            /* মূল সার্টিফিকেট ইমেজটি ব্যাকগ্রাউন্ড হিসেবে নিখুঁতভাবে সেট করা হলো */
             .cert-bg {
               position: absolute;
               top: 0;
@@ -7520,28 +7519,32 @@ app.get("/investment-certificate/:id", async (req, res) => {
               object-fit: cover;
               z-index: 1;
             }
-            /* ডেটা টেবিল সরাসরি ছবির লাইনের ওপর পজিশন করা হয়েছে */
-            .details-table {
+            /* ইমেজের ডিজাইন অনুযায়ী ফিল্ডগুলোর পজিশন নিখুঁত করা হয়েছে */
+            .details-overlay {
               position: absolute;
-              top: 450px;
-              left: 145px;
-              width: 515px;
+              top: 422px;
+              left: 235px;
+              width: 440px;
               z-index: 2;
             }
-            .row {
-              display: flex;
-              justify-content: space-between;
-              padding: 6.8px 0;
-              font-size: 14px;
-            }
-            .row b {
-              color: #1e293b;
-              font-weight: 600;
-            }
-            .row span {
+            .field-row {
+              position: absolute;
+              width: 440px;
+              font-size: 13.5px;
               color: #0f172a;
               font-weight: 700;
             }
+            /* ইমেজের প্রতিটি লাইনের সাথে নিখুঁত দূরত্ব */
+            .row-name { top: 0px; font-size: 14.5px; color: #1e293b; }
+            .row-cert { top: 32px; }
+            .row-amount { top: 67px; }
+            .row-tenure { top: 102px; }
+            .row-rate { top: 137px; }
+            .row-plan { top: 172px; }
+            .row-interest { top: 207px; }
+            .row-maturity { top: 242px; }
+            .row-status { top: 277px; }
+
             /* ইস্যু ডেট পজিশন */
             .issue-date-box {
               position: absolute;
@@ -7580,20 +7583,19 @@ app.get("/investment-certificate/:id", async (req, res) => {
         <body>
           <div class="certificate-container">
             
-            <!-- মূল সার্টিফিকেট ইমেজ -->
             <img src="https://i.ibb.co.com/6c9M3C5s/1000195302.jpg" alt="Certificate Background" class="cert-bg" />
 
-            <!-- ডেটা এবং নাম -->
-            <div class="details-table">
-              <div class="row"><b>Investor Name</b><span>${userName}</span></div>
-              <div class="row"><b>Certificate No</b><span>${certNo}</span></div>
-              <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
-              <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
-              <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
-              <div class="row"><b>Total Plan Amount</b><span>₹${totalPlanAmount}</span></div>
-              <div class="row"><b>Total Interest</b><span>₹${totalInterest}</span></div>
-              <div class="row"><b>Maturity Amount</b><span>₹${maturityAmount}</span></div>
-              <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
+            <!-- মূল ডেটা বসানোর জায়গা -->
+            <div class="details-overlay">
+              <div class="field-row row-name">Investor Name: ${userName}</div>
+              <div class="field-row row-cert">${certNo}</div>
+              <div class="field-row row-amount">₹${amount}</div>
+              <div class="field-row row-tenure">${investment.years || 0} Years</div>
+              <div class="field-row row-rate">${rate}%</div>
+              <div class="field-row row-plan">₹${totalPlanAmount}</div>
+              <div class="field-row row-interest">₹${totalInterest}</div>
+              <div class="field-row row-maturity">₹${maturityAmount}</div>
+              <div class="field-row row-status">${investment.status || "Active"}</div>
             </div>
 
             <div class="issue-date-box">
@@ -7615,7 +7617,6 @@ app.get("/investment-certificate/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 
 
 
