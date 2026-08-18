@@ -7466,7 +7466,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
   }
 });
 
-app.get("/investment-certificate/:id", async (req, res) => {
+App.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
 
@@ -7474,38 +7474,230 @@ app.get("/investment-certificate/:id", async (req, res) => {
 
     const amount = investment.monthlyAmount || investment.amount || 0;
     const rate = investment.rate || investment.returnRate || 0;
-    const certNo = investment.certificateNo || `SMCERT-${investment._id}`;
+    const certNo = investment.certificateNo || `SM-CERT-${String(investment._id).toUpperCase().slice(-12)}`;
+    
+    // ফরম্যাটেড ডেট
+    const issueDate = investment.createdAt 
+      ? new Date(investment.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+      : new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
     const html = `
       <html>
         <head>
-          <title>Investment Certificate</title>
+          <title>Investment Certificate - Save Money</title>
+          <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;750;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
           <style>
-            body{font-family:Arial;background:#f4f7ff;padding:30px;color:#071747}
-            .card{max-width:750px;margin:auto;background:white;border-radius:24px;padding:35px;border:3px solid #16a34a;box-shadow:0 20px 40px rgba(0,0,0,.12)}
-            h1{text-align:center;color:#16a34a;font-size:42px}
-            h2{text-align:center;color:#071747}
-            .row{display:flex;justify-content:space-between;border-bottom:1px solid #e5e7eb;padding:14px 0;font-size:18px}
-            .seal{text-align:center;margin-top:25px;color:#16a34a;font-weight:bold}
-            button{margin-top:25px;width:100%;padding:14px;border:none;border-radius:12px;background:#16a34a;color:white;font-weight:bold;font-size:16px}
+            body {
+              margin: 0;
+              padding: 20px;
+              background: #e2e8f0;
+              font-family: 'Poppins', sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+            }
+            .certificate-container {
+              position: relative;
+              width: 850px;
+              background: #fffdf9;
+              padding: 50px 65px;
+              box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+              border: 12px solid #d4af37;
+              box-sizing: border-box;
+            }
+            /* রাজকীয় ডাবল বর্ডার ইফেক্ট */
+            .certificate-container::before {
+              content: "";
+              position: absolute;
+              top: 6px; left: 6px; right: 6px; bottom: 6px;
+              border: 2px solid #b8860b;
+              pointer-events: none;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 25px;
+            }
+            .badge-icon {
+              width: 75px;
+              height: 85px;
+              background: linear-gradient(135deg, #f59e0b, #b45309);
+              margin: 0 auto 12px;
+              clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-size: 32px;
+              box-shadow: 0 6px 15px rgba(180, 83, 9, 0.4);
+            }
+            h1 {
+              font-family: 'Cinzel', serif;
+              color: #2b1d0c;
+              font-size: 36px;
+              margin: 0;
+              letter-spacing: 2px;
+            }
+            .sub-title {
+              font-family: 'Cinzel', serif;
+              font-size: 13px;
+              letter-spacing: 4px;
+              color: #854d0e;
+              margin-top: 4px;
+              margin-bottom: 15px;
+              font-weight: 700;
+            }
+            .cert-heading {
+              font-family: 'Cinzel', serif;
+              font-size: 24px;
+              color: #1e293b;
+              text-align: center;
+              margin-top: 15px;
+              margin-bottom: 8px;
+              letter-spacing: 1px;
+            }
+            .cert-desc {
+              text-align: center;
+              font-size: 13px;
+              color: #475569;
+              margin-bottom: 25px;
+              font-style: italic;
+            }
+            .details-table {
+              width: 100%;
+              margin-bottom: 30px;
+            }
+            .row {
+              display: flex;
+              justify-content: space-between;
+              border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+              padding: 10px 4px;
+              font-size: 15px;
+            }
+            .row b {
+              color: #334155;
+              font-weight: 600;
+            }
+            .row span {
+              color: #0f172a;
+              font-weight: 700;
+            }
+            .footer-section {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              margin-top: 35px;
+            }
+            .signature-box {
+              text-align: center;
+            }
+            .sig-line {
+              font-family: 'Playfair Display', serif;
+              font-size: 26px;
+              font-style: italic;
+              color: #1e3a8a;
+              margin-bottom: 4px;
+            }
+            .sig-title {
+              font-size: 12px;
+              color: #475569;
+              font-weight: 600;
+              border-top: 1px solid #94a3b8;
+              padding-top: 4px;
+              width: 180px;
+            }
+            .verified-seal {
+              width: 110px;
+              height: 110px;
+              background: radial-gradient(circle, #fef08a 0%, #eab308 60%, #ca8a04 100%);
+              border-radius: 50%;
+              border: 3px dashed #fff;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              box-shadow: 0 6px 20px rgba(202, 138, 4, 0.4);
+              color: #451a03;
+              font-size: 9px;
+              font-weight: 800;
+              text-transform: uppercase;
+              padding: 5px;
+            }
+            .print-btn-wrap {
+              text-align: center;
+              margin-top: 25px;
+            }
+            .print-btn {
+              background: linear-gradient(135deg, #d4af37, #9a670f);
+              color: white;
+              border: none;
+              padding: 12px 35px;
+              font-size: 15px;
+              font-weight: 700;
+              border-radius: 30px;
+              cursor: pointer;
+              box-shadow: 0 4px 15px rgba(154, 103, 15, 0.4);
+              transition: transform 0.2s;
+            }
+            .print-btn:hover {
+              transform: scale(1.03);
+            }
+            @media print {
+              body { background: white; padding: 0; }
+              .print-btn-wrap { display: none; }
+              .certificate-container { box-shadow: none; border: 8px solid #d4af37; }
+            }
           </style>
         </head>
         <body>
-          <div class="card">
-            <h1>SAVE MONEY</h1>
-            <h2>INVESTMENT CERTIFICATE</h2>
+          <div>
+            <div class="certificate-container">
+              <div class="header">
+                <div class="badge-icon">📈</div>
+                <h1>SAVE MONEY</h1>
+                <div class="sub-title">INVESTMENT</div>
+              </div>
 
-            <div class="row"><b>Certificate No</b><span>${certNo}</span></div>
-            <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
-            <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
-            <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
-            <div class="row"><b>Total Plan Amount</b><span>₹${investment.totalPlanAmount || 0}</span></div>
-            <div class="row"><b>Total Interest</b><span>₹${investment.totalInterest || 0}</span></div>
-            <div class="row"><b>Maturity Amount</b><span>₹${investment.maturityAmount || 0}</span></div>
-            <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
+              <div class="cert-heading">INVESTMENT CERTIFICATE</div>
+              <div class="cert-desc">This is to certify that the following investment has been successfully created under Save Money Investment.</div>
 
-            <p class="seal">✅ Verified Save Money Investment</p>
-            <button onclick="window.print()">Download / Print Certificate</button>
+              <div class="details-table">
+                <div class="row"><b>Certificate No</b><span>${certNo}</span></div>
+                <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
+                <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
+                <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
+                <div class="row"><b>Total Plan Amount</b><span>₹${investment.totalPlanAmount || 0}</span></div>
+                <div class="row"><b>Total Interest</b><span>₹${investment.totalInterest || 0}</span></div>
+                <div class="row"><b>Maturity Amount</b><span>₹${investment.maturityAmount || 0}</span></div>
+                <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
+              </div>
+
+              <div style="text-align:center; font-size: 13px; font-weight: 700; color: #b45309; margin-bottom: 20px;">
+                ★ ★ ★ Verified Save Money Investment ★ ★ ★
+              </div>
+
+              <div class="footer-section">
+                <div style="font-size: 12px; color: #64748b;">
+                  <b>Issue Date:</b><br>${issueDate}
+                </div>
+
+                <div class="verified-seal">
+                  <span>🛡️</span>
+                  <span style="font-size: 10px; margin-top: 2px;">VERIFIED</span>
+                  <span style="font-size: 8px;">SAVE MONEY</span>
+                </div>
+
+                <div class="signature-box">
+                  <div class="sig-line">Gaaleela</div>
+                  <div class="sig-title">Authorized Signatory<br>Save Money Investment</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="print-btn-wrap">
+              <button class="print-btn" onclick="window.print()">Download / Print Certificate</button>
+            </div>
           </div>
         </body>
       </html>
@@ -7517,6 +7709,7 @@ app.get("/investment-certificate/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
 
 app.get("/investment-slip/:planId/:historyId", async (req, res) => {
   try {
