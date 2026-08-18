@@ -5098,91 +5098,54 @@ app.post("/admin-user-tree", auth, adminAuth, async (req, res) => {
   }
 });
 
-app.post("/admin/update-bonus-status", async (req, res) => {
+app.post("/admin/update-bonus-status", auth, adminAuth, async (req, res) => {
+    try {
+        const { 
+            userId, 
+            performanceBonusEnabled, 
+            teamBonusEnabled, 
+            royaltyBonusEnabled 
+        } = req.body;
 
-  try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                msg: "User not found"
+            });
+        }
 
-    const {
+        // Performance Bonus আপডেট
+        if (typeof performanceBonusEnabled === "boolean") {
+            user.performanceAdminOverride = true;
+            user.performanceEnabled = performanceBonusEnabled;
+            user.performanceBonusEnabled = performanceBonusEnabled; // মেইন ফিল্ড সিঙ্ক করার জন্য
+            user.performanceStatus = performanceBonusEnabled ? "Active" : "Inactive";
+        }
 
-      userId,
+        // Team Bonus আপডেট
+        if (typeof teamBonusEnabled === "boolean") {
+            user.teamBonusEnabled = teamBonusEnabled;
+        }
 
-      performanceBonusEnabled,
+        // Royalty Bonus আপডেট
+        if (typeof royaltyBonusEnabled === "boolean") {
+            user.royaltyBonusEnabled = royaltyBonusEnabled;
+        }
 
-      teamBonusEnabled,
+        await user.save();
 
-      royaltyBonusEnabled
+        res.json({
+            success: true,
+            msg: "Bonus status updated successfully"
+        });
 
-    } = req.body;
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-
-      return res.json({
-
-        success: false,
-
-        msg: "User not found"
-
-      });
-
+    } catch (err) {
+        console.log("ADMIN BONUS UPDATE ERROR:", err);
+        res.status(500).json({ success: false, msg: "Server error" });
     }
-
-    // Performance Bonus
-    if (typeof performanceBonusEnabled === "boolean") {
-
-      user.performanceAdminOverride = true;
-
-      user.performanceEnabled = performanceBonusEnabled;
-      user.performanceBonusEnabled = performanceBonusEnabled;
-
-      user.performanceStatus = performanceBonusEnabled
-        ? "Active"
-        : "Inactive";
-
-    }
-
-    // Team Bonus
-    if (typeof teamBonusEnabled === "boolean") {
-
-      user.teamBonusEnabled = teamBonusEnabled;
-
-    }
-
-    // Royalty Bonus
-    if (typeof royaltyBonusEnabled === "boolean") {
-
-      user.royaltyBonusEnabled = royaltyBonusEnabled;
-
-    }
-
-    await user.save();
-
-    res.json({
-
-      success: true,
-
-      msg: "Bonus status updated successfully"
-
-    });
-
-  }
-
-  catch (err) {
-
-    console.log("ADMIN BONUS UPDATE ERROR:", err);
-
-    res.status(500).json({
-
-      success: false,
-
-      msg: "Server error"
-
-    });
-
-  }
-
 });
+
 
 app.post("/admin/reset-performance-auto", async (req, res) => {
 
