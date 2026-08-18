@@ -7537,7 +7537,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
       </html>
     `;
     res.send(html);
-  }chart (err) {
+  }catch (err) {
     console.log(err);
     res.status(500).send("Server error");
   }
