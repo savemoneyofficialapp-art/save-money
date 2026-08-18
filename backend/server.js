@@ -7105,65 +7105,7 @@ app.post("/daily-reward", async (req, res) => {
 
 
 
-// ১. প্রতিদিন সকালে ডেইলি রিওয়ার্ড ক্লাইম করার নোটিফিকেশন (প্রতিদিন সকাল ৮:০০ টায়)
-cron.schedule('0 8,12,20 * * *', async () => {
-  try {
-    console.log("⏰ Running Daily Reward Cron Job...");
-    const users = await User.find({ pushSubscription: { $ne: null } });
 
-    for (let user of users) {
-      await sendPushNotification(
-        user.email,
-        "🎁 Daily Reward Reminder!",
-        "শুভ সকাল! প্লিজ আপনার ডেইলি রিওয়ার্ড ক্লেইম করুন 💸✨",
-        "/daily-reward"
-      );
-    }
-    console.log("✅ Daily Reward notifications sent successfully!");
-  } catch (err) {
-    console.error("❌ Daily reward cron error:", err);
-  }
-});
-
-// ২. প্রতিদিন ৩ বার রেফার করার নোটিফিকেশন (যেমন: সকাল ১০টা, দুপুর ২টা এবং সন্ধ্যা ৭টায়)
-cron.schedule('0 10,14,19 * * *', async () => {
-  try {
-    console.log("⏰ Running Referral Cron Job...");
-    const users = await User.find({ pushSubscription: { $ne: null } });
-
-    for (let user of users) {
-      await sendPushNotification(
-        user.email,
-        "👥 Refer & Earn More!",
-        "বন্ধুদের বেশি বেশি রেফার করো আর ঝটপট ইনকাম করো 🚀💰",
-        "/refer"
-      );
-    }
-    console.log("✅ Referral notifications sent successfully!");
-  } catch (err) {
-    console.error("❌ Referral cron error:", err);
-  }
-});
-
-// ৩. প্রতিদিন ২ বার SIP ও রেফার আর্নিংয়ের নোটিফিকেশন (যেমন: দুপুর ১২টা এবং বিকেল ৫টায়)
-cron.schedule('0 12,17 * * *', async () => {
-  try {
-    console.log("⏰ Running SIP & Referral Promo Cron Job...");
-    const users = await User.find({ pushSubscription: { $ne: null } });
-
-    for (let user of users) {
-      await sendPushNotification(
-        user.email,
-        "🌱 SIP & Earn Opportunity!",
-        "সেভ মানি আপনাকে SIP করার সঙ্গে সঙ্গে রেফার করে দুর্দান্ত আর্নিংয়ের সুযোগ করে দিচ্ছে! এখনই শুরু করুন 📈🎯",
-        "/invest-now"
-      );
-    }
-    console.log("✅ SIP promo notifications sent successfully!");
-  } catch (err) {
-    console.error("❌ SIP promo cron error:", err);
-  }
-});
 
             
 app.post("/withdraw-info", async (req, res) => {
@@ -8003,6 +7945,74 @@ cron.schedule("0 0 5 * *", async () => {
     timezone: "Asia/Kolkata"
 });
 
+// ১. প্রতিদিন সকালে ডেইলি রিওয়ার্ড ক্লাইম করার নোটিফিকেশন (প্রতিদিন সকাল ৮:০০ টায়)
+cron.schedule('0 8,12,20 * * *', async () => {
+  try {
+    console.log("⏰ Running Daily Reward Cron Job...");
+    const users = await User.find({ pushSubscription: { $ne: null } });
+
+    for (let user of users) {
+      await sendPushNotification(
+        user.email,
+        "🎁 Daily Reward Reminder!",
+        "শুভ সকাল! প্লিজ আপনার ডেইলি রিওয়ার্ড ক্লেইম করুন 💸✨",
+        "/daily-reward"
+      );
+    }
+    console.log("✅ Daily Reward notifications sent successfully!");
+  } catch (err) {
+    console.error("❌ Daily reward cron error:", err);
+  }
+  }, {
+    scheduled: true,
+    timezone: "Asia/Kolkata"
+});
+
+// ২. প্রতিদিন ৩ বার রেফার করার নোটিফিকেশন (যেমন: সকাল ১০টা, দুপুর ২টা এবং সন্ধ্যা ৭টায়)
+cron.schedule('0 10,14,19 * * *', async () => {
+  try {
+    console.log("⏰ Running Referral Cron Job...");
+    const users = await User.find({ pushSubscription: { $ne: null } });
+
+    for (let user of users) {
+      await sendPushNotification(
+        user.email,
+        "👥 Refer & Earn More!",
+        "বন্ধুদের বেশি বেশি রেফার করো আর ঝটপট ইনকাম করো 🚀💰",
+        "/refer"
+      );
+    }
+    console.log("✅ Referral notifications sent successfully!");
+  } catch (err) {
+    console.error("❌ Referral cron error:", err);
+  }
+  }, {
+    scheduled: true,
+    timezone: "Asia/Kolkata"
+});
+
+// ৩. প্রতিদিন ২ বার SIP ও রেফার আর্নিংয়ের নোটিফিকেশন (যেমন: দুপুর ১২টা এবং বিকেল ৫টায়)
+cron.schedule('0 12,17 * * *', async () => {
+  try {
+    console.log("⏰ Running SIP & Referral Promo Cron Job...");
+    const users = await User.find({ pushSubscription: { $ne: null } });
+
+    for (let user of users) {
+      await sendPushNotification(
+        user.email,
+        "🌱 SIP & Earn Opportunity!",
+        "সেভ মানি আপনাকে SIP করার সঙ্গে সঙ্গে রেফার করে দুর্দান্ত আর্নিংয়ের সুযোগ করে দিচ্ছে! এখনই শুরু করুন 📈🎯",
+        "/invest-now"
+      );
+    }
+    console.log("✅ SIP promo notifications sent successfully!");
+  } catch (err) {
+    console.error("❌ SIP promo cron error:", err);
+  }
+  }, {
+    scheduled: true,
+    timezone: "Asia/Kolkata"
+});
 
 
 
