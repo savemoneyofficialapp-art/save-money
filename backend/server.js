@@ -7476,43 +7476,45 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     const certNo = investment.certificateNo || `SM-CERT-${investment._id}`;
     const issueDate = investment.createdAt ? new Date(investment.createdAt).toLocaleDateString('en-GB') : "12 Aug 2026";
 
+    // আপনার মূল সার্টিফিকেট ইমেজটির সরাসরি URL বা Base64 এখানে কাজ করবে। 
+    // সার্ভারে ইমেজ লোড নিশ্চিত করতে নিচের ব্যাকগ্রাউন্ড ইউআরএলে আপনার ইমেজের সঠিক ডাইরেক্ট লিংক বা পাবলিক লিংক দিন।
+    const certificateBgUrl = "https://ibb.co/Nhp7rgH"; // অথবা আপনার সার্ভারের সঠিক স্ট্যাটিক পাথ যেমন: "/certificate-template.jpg"
+
     const html = `
       <html>
         <head>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Montserrat:wght@500&display=swap');
-            body { margin: 0; padding: 20px; display: flex; justify-content: center; background: #f0f2f5; }
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
+            body { margin: 0; padding: 20px; display: flex; justify-content: center; background: #e2e8f0; font-family: 'Montserrat', sans-serif; }
             
-            /* সার্টিফিকেটের মেইন বক্স */
             .certificate-wrapper {
               position: relative;
-              width: 800px; /* ইমেজের সাইজ অনুযায়ী */
+              width: 800px;
               height: 1050px;
-              background-image: url('/certificate-template.jpg');
-              background-size: contain;
+              background-image: url('${certificateBgUrl}');
+              background-size: cover;
               background-repeat: no-repeat;
               background-position: center;
-              font-family: 'Montserrat', sans-serif;
-              color: #1a202c;
+              box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             }
 
-            /* টেক্সট পজিশনিং (Absolute Positioning) */
-            .cert-no { position: absolute; top: 432px; right: 120px; font-weight: bold; }
-            .monthly-amt { position: absolute; top: 478px; right: 120px; font-weight: bold; }
-            .tenure { position: absolute; top: 524px; right: 120px; font-weight: bold; }
-            .rate { position: absolute; top: 570px; right: 120px; font-weight: bold; }
-            .plan-amt { position: absolute; top: 616px; right: 120px; font-weight: bold; }
-            .total-interest { position: absolute; top: 662px; right: 120px; font-weight: bold; }
-            .maturity { position: absolute; top: 708px; right: 120px; font-weight: bold; }
-            .status { position: absolute; top: 754px; right: 120px; font-weight: bold; }
+            /* ডেটা পজিশনিং - আপনার ইমেজের চার্ট অনুযায়ী ডান পাশের কলাম */
+            .cert-no { position: absolute; top: 432px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
+            .monthly-amt { position: absolute; top: 478px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
+            .tenure { position: absolute; top: 524px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
+            .rate { position: absolute; top: 570px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
+            .plan-amt { position: absolute; top: 616px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
+            .total-interest { position: absolute; top: 662px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
+            .maturity { position: absolute; top: 708px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
+            .status { position: absolute; top: 754px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
             
-            .issue-date { position: absolute; bottom: 155px; left: 145px; font-size: 14px; }
+            .issue-date { position: absolute; bottom: 155px; left: 145px; font-size: 14px; font-weight: bold; color: #1a202c; }
             
-            .print-btn { display: block; margin: 20px auto; padding: 12px 25px; background: #16a34a; color: white; border: none; cursor: pointer; border-radius: 5px; }
+            .print-btn { display: block; margin: 20px auto; padding: 12px 30px; background: #16a34a; color: white; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 16px; }
 
             @media print {
               .print-btn { display: none; }
-              body { padding: 0; }
+              body { padding: 0; background: none; }
             }
           </style>
         </head>
@@ -7529,13 +7531,14 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               <div class="status">${investment.status || "Active"}</div>
               <div class="issue-date">${issueDate}</div>
             </div>
-            <button class="print-btn" onclick="window.print()">Print Certificate</button>
+            <button class="print-btn" onclick="window.print()">Download / Print Certificate</button>
           </div>
         </body>
       </html>
     `;
     res.send(html);
-  } catch (err) {
+  }chart (err) {
+    console.log(err);
     res.status(500).send("Server error");
   }
 });
