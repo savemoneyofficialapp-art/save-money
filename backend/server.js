@@ -7466,7 +7466,8 @@ app.get("/admin/withdraw-requests", async (req, res) => {
   }
 });
 
-app.get("/investment-certificate/:id", async (req, res) => {
+
+       app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
 
@@ -7476,7 +7477,11 @@ app.get("/investment-certificate/:id", async (req, res) => {
     const rate = investment.rate || investment.returnRate || 0;
     const certNo = investment.certificateNo || `SM-CERT-${String(investment._id).toUpperCase().slice(-12)}`;
     
-    // ফরম্যাটেড ডেট
+    // টোটাল প্ল্যান অ্যামাউন্ট জিরো আসার সমস্যা ঠিক করার জন্য ফিল্ডগুলোর সঠিক প্রায়োরিটি দেওয়া হলো
+    const totalPlanAmount = investment.totalPlanAmount || investment.planAmount || investment.totalAmount || (amount * (investment.years || 3) * 12) || 0;
+    const totalInterest = investment.totalInterest || investment.totalReturn || 0;
+    const maturityAmount = investment.maturityAmount || (Number(totalPlanAmount) + Number(totalInterest));
+
     const issueDate = investment.createdAt 
       ? new Date(investment.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
       : new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -7501,12 +7506,11 @@ app.get("/investment-certificate/:id", async (req, res) => {
               position: relative;
               width: 850px;
               background: #fffdf9;
-              padding: 50px 65px;
+              padding: 45px 60px;
               box-shadow: 0 25px 50px rgba(0,0,0,0.25);
               border: 12px solid #d4af37;
               box-sizing: border-box;
             }
-            /* রাজকীয় ডাবল বর্ডার ইফেক্ট */
             .certificate-container::before {
               content: "";
               position: absolute;
@@ -7516,31 +7520,29 @@ app.get("/investment-certificate/:id", async (req, res) => {
             }
             .header {
               text-align: center;
-              margin-bottom: 25px;
+              margin-bottom: 20px;
             }
-            .badge-icon {
-              width: 75px;
+            /* আসল লোগো সুন্দর গোল সার্কেলে বসানোর স্টাইল */
+            .logo-img {
+              width: 85px;
               height: 85px;
-              background: linear-gradient(135deg, #f59e0b, #b45309);
-              margin: 0 auto 12px;
-              clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: white;
-              font-size: 32px;
-              box-shadow: 0 6px 15px rgba(180, 83, 9, 0.4);
+              border-radius: 50%;
+              object-fit: cover;
+              border: 3px solid #d4af37;
+              box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+              margin: 0 auto 10px;
+              display: block;
             }
             h1 {
               font-family: 'Cinzel', serif;
               color: #2b1d0c;
-              font-size: 36px;
+              font-size: 34px;
               margin: 0;
               letter-spacing: 2px;
             }
             .sub-title {
               font-family: 'Cinzel', serif;
-              font-size: 13px;
+              font-size: 12px;
               letter-spacing: 4px;
               color: #854d0e;
               margin-top: 4px;
@@ -7549,30 +7551,30 @@ app.get("/investment-certificate/:id", async (req, res) => {
             }
             .cert-heading {
               font-family: 'Cinzel', serif;
-              font-size: 24px;
+              font-size: 22px;
               color: #1e293b;
               text-align: center;
-              margin-top: 15px;
-              margin-bottom: 8px;
+              margin-top: 10px;
+              margin-bottom: 6px;
               letter-spacing: 1px;
             }
             .cert-desc {
               text-align: center;
-              font-size: 13px;
+              font-size: 12.5px;
               color: #475569;
-              margin-bottom: 25px;
+              margin-bottom: 20px;
               font-style: italic;
             }
             .details-table {
               width: 100%;
-              margin-bottom: 30px;
+              margin-bottom: 25px;
             }
             .row {
               display: flex;
               justify-content: space-between;
               border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-              padding: 10px 4px;
-              font-size: 15px;
+              padding: 9px 4px;
+              font-size: 14.5px;
             }
             .row b {
               color: #334155;
@@ -7586,20 +7588,22 @@ app.get("/investment-certificate/:id", async (req, res) => {
               display: flex;
               justify-content: space-between;
               align-items: flex-end;
-              margin-top: 35px;
+              margin-top: 25px;
             }
             .signature-box {
               text-align: center;
             }
-            .sig-line {
-              font-family: 'Playfair Display', serif;
-              font-size: 26px;
-              font-style: italic;
+            /* Gaaleela এর বদলে Save Money প্রিমিয়াম ফন্টে ও স্টাইলে */
+            .sig-brand {
+              font-family: 'Cinzel', serif;
+              font-size: 20px;
+              font-weight: 800;
               color: #1e3a8a;
-              margin-bottom: 4px;
+              margin-bottom: 6px;
+              letter-spacing: 1px;
             }
             .sig-title {
-              font-size: 12px;
+              font-size: 11.5px;
               color: #475569;
               font-weight: 600;
               border-top: 1px solid #94a3b8;
@@ -7607,8 +7611,8 @@ app.get("/investment-certificate/:id", async (req, res) => {
               width: 180px;
             }
             .verified-seal {
-              width: 110px;
-              height: 110px;
+              width: 100px;
+              height: 100px;
               background: radial-gradient(circle, #fef08a 0%, #eab308 60%, #ca8a04 100%);
               border-radius: 50%;
               border: 3px dashed #fff;
@@ -7638,10 +7642,6 @@ app.get("/investment-certificate/:id", async (req, res) => {
               border-radius: 30px;
               cursor: pointer;
               box-shadow: 0 4px 15px rgba(154, 103, 15, 0.4);
-              transition: transform 0.2s;
-            }
-            .print-btn:hover {
-              transform: scale(1.03);
             }
             @media print {
               body { background: white; padding: 0; }
@@ -7654,7 +7654,8 @@ app.get("/investment-certificate/:id", async (req, res) => {
           <div>
             <div class="certificate-container">
               <div class="header">
-                <div class="badge-icon">📈</div>
+                <!-- আপনার আসল লোগো ইমেজটি এখানে সরাসরি কানেক্ট করা হলো -->
+                <img src="https://i.ibb.co.com/k2079qD9/1000191662.png" alt="Save Money Logo" class="logo-img" />
                 <h1>SAVE MONEY</h1>
                 <div class="sub-title">INVESTMENT</div>
               </div>
@@ -7667,13 +7668,13 @@ app.get("/investment-certificate/:id", async (req, res) => {
                 <div class="row"><b>Monthly Investment</b><span>₹${amount}</span></div>
                 <div class="row"><b>Tenure</b><span>${investment.years || 0} Years</span></div>
                 <div class="row"><b>Return Rate</b><span>${rate}%</span></div>
-                <div class="row"><b>Total Plan Amount</b><span>₹${investment.totalPlanAmount || 0}</span></div>
-                <div class="row"><b>Total Interest</b><span>₹${investment.totalInterest || 0}</span></div>
-                <div class="row"><b>Maturity Amount</b><span>₹${investment.maturityAmount || 0}</span></div>
+                <div class="row"><b>Total Plan Amount</b><span>₹${totalPlanAmount}</span></div>
+                <div class="row"><b>Total Interest</b><span>₹${totalInterest}</span></div>
+                <div class="row"><b>Maturity Amount</b><span>₹${maturityAmount}</span></div>
                 <div class="row"><b>Status</b><span>${investment.status || "Active"}</span></div>
               </div>
 
-              <div style="text-align:center; font-size: 13px; font-weight: 700; color: #b45309; margin-bottom: 20px;">
+              <div style="text-align:center; font-size: 12.5px; font-weight: 700; color: #b45309; margin-bottom: 15px;">
                 ★ ★ ★ Verified Save Money Investment ★ ★ ★
               </div>
 
@@ -7684,12 +7685,13 @@ app.get("/investment-certificate/:id", async (req, res) => {
 
                 <div class="verified-seal">
                   <span>🛡️</span>
-                  <span style="font-size: 10px; margin-top: 2px;">VERIFIED</span>
-                  <span style="font-size: 8px;">SAVE MONEY</span>
+                  <span style="font-size: 9.5px; margin-top: 2px;">VERIFIED</span>
+                  <span style="font-size: 7.5px;">SAVE MONEY</span>
                 </div>
 
                 <div class="signature-box">
-                  <div class="sig-line">Gaaleela</div>
+                  <!-- ডান পাশের সিগনেচারে Gaaleela এর বদলে Save Money বসানো হয়েছে -->
+                  <div class="sig-brand">Save Money</div>
                   <div class="sig-title">Authorized Signatory<br>Save Money Investment</div>
                 </div>
               </div>
@@ -7709,6 +7711,9 @@ app.get("/investment-certificate/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+      
+
+
 
 
 app.get("/investment-slip/:planId/:historyId", async (req, res) => {
