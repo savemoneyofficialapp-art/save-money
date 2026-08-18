@@ -7468,7 +7468,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
 
 
               
-            app.get("/investment-certificate/:id", async (req, res) => {
+            App.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
 
@@ -7520,7 +7520,6 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               object-fit: cover;
               z-index: 1;
             }
-            /* ইমেজের প্রিন্টেড লাইনের সাথে সরাসরি মানগুলো বসানোর জন্য নিখুঁত পজিশন */
             .details-overlay {
               position: absolute;
               top: 428px;
@@ -7535,8 +7534,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               color: #0f172a;
               font-weight: 700;
             }
-            /* ইমেজের প্রতিটি লাইনের সাথে হুবহু মেলবন্ধন */
-            .val-name { top: -35px; font-size: 14.5px; color: #1e293b; }
+            .val-name { top: -38px; font-size: 15px; color: #1e293b; }
             .val-cert { top: 0px; }
             .val-amount { top: 35px; }
             .val-tenure { top: 70px; }
@@ -7546,7 +7544,6 @@ app.get("/admin/withdraw-requests", async (req, res) => {
             .val-maturity { top: 210px; }
             .val-status { top: 245px; }
 
-            /* ইস্যু ডেটের সঠিক পজিশন */
             .issue-date-box {
               position: absolute;
               bottom: 128px;
@@ -7586,7 +7583,6 @@ app.get("/admin/withdraw-requests", async (req, res) => {
             
             <img src="https://i.ibb.co/6c9M3C5s/1000195302.jpg" alt="Certificate Background" class="cert-bg" crossorigin="anonymous" />
 
-            <!-- শুধু মানগুলো ইমেজের নির্ধারিত জায়গায় বসানো হলো -->
             <div class="details-overlay">
               <div class="field-value val-name">${userName}</div>
               <div class="field-value val-cert">${certNo}</div>
@@ -7605,7 +7601,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
 
           </div>
 
-          <div.print-btn-wrap>
+          <div class="print-btn-wrap">
             <button class="print-btn" onclick="window.print()">Download / Print Certificate</button>
           </div>
         </body>
