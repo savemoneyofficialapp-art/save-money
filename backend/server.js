@@ -7466,10 +7466,10 @@ app.get("/admin/withdraw-requests", async (req, res) => {
   }
 });
 
-    app.get("/investment-certificate/:id", async (req, res) => {
+    
+app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
-
     if (!investment) return res.status(404).send("Investment not found");
 
     const userName = investment.userName || investment.name || investment.fullName || "Valued Investor";
@@ -7488,163 +7488,71 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     const html = `
       <html>
         <head>
-          <title>Investment Certificate - Save Money</title>
-          <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
-            body {
-              margin: 0;
-              padding: 0;
-              background: #0f172a;
-              font-family: 'Poppins', sans-serif;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              min-height: 100vh;
-            }
+            body { margin: 0; padding: 0; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; background: #0f172a; }
             .certificate-container {
-              position: relative;
               width: 794px;
               height: 1123px;
-              background: #fffdf5;
-              box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-              overflow: hidden;
+              /* এখানে ব্যাকগ্রাউন্ড ইমেজটি সরাসরি সেট করা হয়েছে */
+              background-image: url('https://i.ibb.co.com/6c9M3C5s/1000195302.jpg');
+              background-size: cover;
+              background-position: center;
+              position: relative;
             }
-            .cert-bg {
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-              z-index: 1;
-            }
-            
-            /* নতুন কমপ্লিট সার্টিফিকেট ইমেজ অনুযায়ী ফিল্ডগুলোর পজিশনিং */
             .details-overlay {
               position: absolute;
-              top: 410px;
-              left: 85px;
-              width: 624px;
-              z-index: 2;
+              top: 415px; 
+              left: 145px;
+              width: 505px;
             }
             .row-item {
               display: flex;
               justify-content: space-between;
-              align-items: center;
-              width: 100%;
-              font-size: 14.5px;
-              color: #1a1a1a;
-              font-weight: 600;
-              margin-bottom: 15.5px;
-            }
-            .item-name {
-              font-size: 16px;
-              font-weight: 700;
-              color: #0b2239;
               margin-bottom: 22px;
-            }
-
-            .issue-date-box {
-              position: absolute;
-              bottom: 92px;
-              left: 115px;
-              font-size: 14px;
+              font-size: 15px;
               color: #1a1a1a;
               font-weight: 600;
-              z-index: 2;
             }
-
-            .print-btn-wrap {
-              position: fixed;
-              bottom: 15px;
-              left: 50%;
-              transform: translateX(-50%);
-              z-index: 10;
+            .issue-date {
+              position: absolute;
+              bottom: 125px;
+              left: 145px;
+              font-size: 14px;
+              font-weight: 600;
             }
             .print-btn {
-              background: linear-gradient(135deg, #d4af37, #9a670f);
-              color: white;
-              border: none;
-              padding: 12px 35px;
-              font-size: 15px;
-              font-weight: 700;
-              border-radius: 30px;
-              cursor: pointer;
-              box-shadow: 0 4px 15px rgba(154, 103, 15, 0.5);
+              position: fixed; top: 20px; z-index: 99; padding: 10px 20px; cursor: pointer;
             }
-            @media print {
-              body { background: white; padding: 0; }
-              .print-btn-wrap { display: none; }
-              .certificate-container { box-shadow: none; width: 100vw; height: 100vh; }
-            }
+            @media print { .print-btn { display: none; } }
           </style>
         </head>
         <body>
+          <button class="print-btn" onclick="window.print()">Print Certificate</button>
           <div class="certificate-container">
-            
-            <!-- নতুন কমপ্লিট সার্টিফিকেট ব্যাকগ্রাউন্ড ইমেজ -->
-            <img src="https://i.ibb.co.com/6c9M3C5s/1000195302.jpg" alt="Certificate Background" class="cert-bg" crossorigin="anonymous" />
-
             <div class="details-overlay">
-              <div class="row-item item-name">
-                <span>Investor Name</span>
-                <span>${userName}</span>
+              <div class="row-item" style="font-size: 18px; font-weight: 800; margin-bottom: 35px;">
+                <span>Investor Name</span><span>${userName}</span>
               </div>
-              <div class="row-item">
-                <span>Certificate No</span>
-                <span>${certNo}</span>
-              </div>
-              <div class="row-item">
-                <span>Monthly Investment</span>
-                <span>₹${amount}</span>
-              </div>
-              <div class="row-item">
-                <span>Tenure</span>
-                <span>${investment.years || 3} Years</span>
-              </div>
-              <div class="row-item">
-                <span>Return Rate</span>
-                <span>${rate}%</span>
-              </div>
-              <div class="row-item">
-                <span>Total Plan Amount</span>
-                <span>₹${totalPlanAmount}</span>
-              </div>
-              <div class="row-item">
-                <span>Total Interest</span>
-                <span>₹${totalInterest}</span>
-              </div>
-              <div class="row-item">
-                <span>Maturity Amount</span>
-                <span>₹${maturityAmount}</span>
-              </div>
-              <div class="row-item">
-                <span>Status</span>
-                <span>${investment.status || "Active"}</span>
-              </div>
+              <div class="row-item"><span>Certificate No</span><span>${certNo}</span></div>
+              <div class="row-item"><span>Monthly Investment</span><span>₹${amount}</span></div>
+              <div class="row-item"><span>Tenure</span><span>${investment.years || 3} Years</span></div>
+              <div class="row-item"><span>Return Rate</span><span>${rate}%</span></div>
+              <div class="row-item"><span>Total Plan Amount</span><span>₹${totalPlanAmount}</span></div>
+              <div class="row-item"><span>Total Interest</span><span>₹${totalInterest}</span></div>
+              <div class="row-item"><span>Maturity Amount</span><span>₹${maturityAmount}</span></div>
+              <div class="row-item"><span>Status</span><span>${investment.status || "Active"}</span></div>
             </div>
-
-            <div class="issue-date-box">
-              ${issueDate}
-            </div>
-
-          </div>
-
-          <div class="print-btn-wrap">
-            <button class="print-btn" onclick="window.print()">Download / Print Certificate</button>
+            <div class="issue-date">${issueDate}</div>
           </div>
         </body>
       </html>
     `;
-
     res.send(html);
   } catch (err) {
-    console.log("CERTIFICATE ERROR:", err);
     res.status(500).send("Server error");
   }
 });
-
-
+                  
 
 
 
