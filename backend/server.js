@@ -156,7 +156,7 @@ const WalletTransaction =
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://save-money-indol.vercel.app"
+  "https://save-moneyy-indol.vercel.app"
 ];
 
 
