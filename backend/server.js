@@ -7476,9 +7476,8 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     const certNo = investment.certificateNo || `SM-CERT-${investment._id}`;
     const issueDate = investment.createdAt ? new Date(investment.createdAt).toLocaleDateString('en-GB') : "12 Aug 2026";
 
-    // আপনার মূল সার্টিফিকেট ইমেজটির সরাসরি URL বা Base64 এখানে কাজ করবে। 
-    // সার্ভারে ইমেজ লোড নিশ্চিত করতে নিচের ব্যাকগ্রাউন্ড ইউআরএলে আপনার ইমেজের সঠিক ডাইরেক্ট লিংক বা পাবলিক লিংক দিন।
-    const certificateBgUrl = "https://ibb.co/Nhp7rgH"; // অথবা আপনার সার্ভারের সঠিক স্ট্যাটিক পাথ যেমন: "/certificate-template.jpg"
+    // পাবলিক ফোল্ডার থেকে লোকাল ইমেজের পাথ
+    const certificateBgUrl = "/certificate-template.jpg"; 
 
     const html = `
       <html>
@@ -7498,7 +7497,6 @@ app.get("/admin/withdraw-requests", async (req, res) => {
               box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             }
 
-            /* ডেটা পজিশনিং - আপনার ইমেজের চার্ট অনুযায়ী ডান পাশের কলাম */
             .cert-no { position: absolute; top: 432px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
             .monthly-amt { position: absolute; top: 478px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
             .tenure { position: absolute; top: 524px; right: 120px; font-weight: bold; font-size: 15px; color: #1a202c; }
@@ -7537,11 +7535,12 @@ app.get("/admin/withdraw-requests", async (req, res) => {
       </html>
     `;
     res.send(html);
-  }catch (err) {
-    console.log(err);
+  } catch (err) {
+    console.log("CERTIFICATE ERROR:", err);
     res.status(500).send("Server error");
   }
 });
+
 
     
               
