@@ -7466,7 +7466,8 @@ app.get("/admin/withdraw-requests", async (req, res) => {
   }
 });
 
-    app.get("/investment-certificate/:id", async (req, res) => {
+                          
+        app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
 
@@ -7508,7 +7509,6 @@ app.get("/admin/withdraw-requests", async (req, res) => {
       year: "numeric"
     });
 
-    // Prevent HTML injection from database values
     const safe = (value) =>
       String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -7518,6 +7518,7 @@ app.get("/admin/withdraw-requests", async (req, res) => {
         .replace(/'/g, "&#039;");
 
     res.send(`
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7525,12 +7526,20 @@ app.get("/admin/withdraw-requests", async (req, res) => {
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
-<title>Investment Certificate - ${safe(certNo)}</title>
+<title>
+  Save Money Investment Certificate
+</title>
 
 <style>
+
+/* =========================
+   GLOBAL
+========================= */
 
 *{
   box-sizing:border-box;
@@ -7543,516 +7552,926 @@ body{
 }
 
 body{
-  background:#e9edf3;
-  font-family:Georgia, "Times New Roman", serif;
-  color:#172033;
-  padding:35px 15px;
-}
-
-/* MAIN CERTIFICATE */
-
-.certificate{
-  position:relative;
-  max-width:900px;
-  min-height:1150px;
-  margin:auto;
-  padding:65px 70px 55px;
 
   background:
     radial-gradient(
-      circle at center,
-      rgba(20,125,75,.035) 0,
-      rgba(20,125,75,0) 55%
-    ),
-    #fffef9;
-
-  border:12px double #176b45;
-
-  box-shadow:
-    0 20px 50px rgba(0,0,0,.18);
-
-  overflow:hidden;
-}
-
-/* INNER BORDER */
-
-.certificate::before{
-  content:"";
-  position:absolute;
-  inset:22px;
-  border:2px solid #c9a84b;
-  pointer-events:none;
-}
-
-.certificate::after{
-  content:"";
-  position:absolute;
-  inset:30px;
-  border:1px solid rgba(23,107,69,.45);
-  pointer-events:none;
-}
-
-/* WATERMARK */
-
-.watermark{
-  position:absolute;
-  top:50%;
-  left:50%;
-
-  transform:
-    translate(-50%,-50%)
-    rotate(-20deg);
-
-  font-family:Arial,sans-serif;
-  font-size:105px;
-  font-weight:900;
-
-  color:rgba(23,107,69,.035);
-
-  white-space:nowrap;
-
-  pointer-events:none;
-}
-
-/* CORNER ORNAMENTS */
-
-.corner{
-  position:absolute;
-  width:72px;
-  height:72px;
-
-  border:4px solid #c9a84b;
-  border-radius:50%;
-
-  z-index:2;
-}
-
-.corner::after{
-  content:"✦";
-  position:absolute;
-
-  top:50%;
-  left:50%;
-
-  transform:translate(-50%,-50%);
-
-  font-size:30px;
-  color:#176b45;
-}
-
-.corner.tl{
-  top:35px;
-  left:35px;
-}
-
-.corner.tr{
-  top:35px;
-  right:35px;
-}
-
-.corner.bl{
-  bottom:35px;
-  left:35px;
-}
-
-.corner.br{
-  bottom:35px;
-  right:35px;
-}
-
-/* CONTENT */
-
-.content{
-  position:relative;
-  z-index:5;
-}
-
-/* BRAND */
-
-.brand{
-  text-align:center;
-  margin-top:20px;
-}
-
-.brand-logo{
-  width:90px;
-  height:90px;
-
-  margin:auto;
-
-  border-radius:50%;
-
-  background:
-    radial-gradient(
-      circle at 35% 30%,
-      #fff3b0,
-      #d4af37 35%,
-      #9d7414 75%,
-      #654600
+      circle at top,
+      #faf7ed 0%,
+      #e6e9ee 65%,
+      #dce1e7 100%
     );
 
-  border:5px solid #fff;
-  outline:3px solid #c9a84b;
+  padding:30px 12px;
+
+  color:#30240e;
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+}
+
+
+/* =========================
+   CERTIFICATE
+========================= */
+
+.certificate{
+
+  position:relative;
+
+  width:100%;
+  max-width:1000px;
+
+  min-height:1414px;
+
+  margin:auto;
+
+  padding:
+    75px
+    85px
+    65px;
+
+  background:
+
+    radial-gradient(
+      ellipse at center,
+      rgba(212,175,55,.08),
+      transparent 55%
+    ),
+
+    repeating-linear-gradient(
+      45deg,
+      rgba(180,140,40,.018) 0px,
+      rgba(180,140,40,.018) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+
+    #fffdf5;
+
+  overflow:hidden;
+
+  box-shadow:
+    0 25px 60px rgba(0,0,0,.25);
+
+  border:
+    14px double #9b7215;
+
+}
+
+
+/* =========================
+   GOLD FRAME
+========================= */
+
+.certificate::before{
+
+  content:"";
+
+  position:absolute;
+
+  inset:18px;
+
+  border:
+    3px solid #c9a43a;
+
+  pointer-events:none;
+
+}
+
+
+.certificate::after{
+
+  content:"";
+
+  position:absolute;
+
+  inset:28px;
+
+  border:
+    1px solid #e1c96e;
+
+  pointer-events:none;
+
+}
+
+
+/* =========================
+   INNER DECORATIVE FRAME
+========================= */
+
+.inner-frame{
+
+  position:absolute;
+
+  inset:37px;
+
+  border:
+    1px solid rgba(164,119,18,.65);
+
+  pointer-events:none;
+
+}
+
+
+/* =========================
+   ORNAMENT CORNERS
+========================= */
+
+.ornament{
+
+  position:absolute;
+
+  width:125px;
+  height:125px;
+
+  z-index:3;
+
+  color:#b88718;
+
+  font-size:80px;
+
+  line-height:1;
+
+  font-family:Georgia,serif;
+
+  text-shadow:
+    1px 1px 0 #fff1a8,
+    2px 2px 3px rgba(80,50,0,.35);
+
+}
+
+
+.ornament::before{
+
+  content:"❧";
+
+  position:absolute;
+
+}
+
+
+.ornament::after{
+
+  content:"❧";
+
+  position:absolute;
+
+  transform:rotate(90deg);
+
+}
+
+
+.top-left{
+
+  top:7px;
+  left:8px;
+
+}
+
+
+.top-right{
+
+  top:7px;
+  right:8px;
+
+  transform:scaleX(-1);
+
+}
+
+
+.bottom-left{
+
+  bottom:7px;
+  left:8px;
+
+  transform:scaleY(-1);
+
+}
+
+
+.bottom-right{
+
+  bottom:7px;
+  right:8px;
+
+  transform:scale(-1);
+
+}
+
+
+/* =========================
+   GOLD CONTENT
+========================= */
+
+.content{
+
+  position:relative;
+
+  z-index:10;
+
+}
+
+
+/* =========================
+   LOGO
+========================= */
+
+.logo-wrap{
+
+  text-align:center;
+
+  margin-top:5px;
+
+}
+
+
+.logo{
+
+  width:118px;
+  height:118px;
+
+  margin:auto;
+
+  border-radius:50%;
 
   display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  position:relative;
+
+  color:#f8d96b;
+
+  background:
+
+    radial-gradient(
+      circle at 35% 25%,
+      #555,
+      #171717 48%,
+      #050505 100%
+    );
+
+  border:
+    6px solid #d4af37;
+
+  box-shadow:
+
+    0 0 0 4px #fff8d6,
+
+    0 0 0 7px #a77b18,
+
+    0 8px 18px rgba(0,0,0,.25);
+
+  font-family:Arial,sans-serif;
+
+  font-size:34px;
+
+  font-weight:900;
+
+  letter-spacing:-5px;
+
+}
+
+
+.logo::before{
+
+  content:"";
+
+  position:absolute;
+
+  inset:8px;
+
+  border:
+    1px solid #f1d46d;
+
+  border-radius:50%;
+
+}
+
+
+.logo-arrow{
+
+  position:absolute;
+
+  right:17px;
+  top:23px;
+
+  font-size:32px;
+
+  transform:rotate(-18deg);
+
+  color:#ffd84f;
+
+}
+
+
+.logo-rupee{
+
+  position:absolute;
+
+  bottom:17px;
+  left:50%;
+
+  transform:translateX(-50%);
+
+  width:27px;
+  height:27px;
+
+  display:flex;
+
   align-items:center;
   justify-content:center;
 
-  color:#fff;
+  border-radius:50%;
 
-  font-family:Arial,sans-serif;
-  font-size:42px;
-  font-weight:900;
+  background:#d4af37;
 
-  box-shadow:
-    0 5px 15px rgba(0,0,0,.2);
+  color:#1b1608;
+
+  font-size:15px;
+
+  letter-spacing:0;
+
 }
+
+
+/* =========================
+   BRAND
+========================= */
 
 .brand-name{
-  margin-top:16px;
 
-  font-family:Arial,sans-serif;
+  margin-top:25px;
 
-  font-size:42px;
-  font-weight:900;
-  letter-spacing:4px;
+  text-align:center;
 
-  color:#176b45;
+  font-size:54px;
 
-  text-transform:uppercase;
-}
+  font-weight:bold;
 
-.brand-sub{
-  margin-top:4px;
-
-  font-family:Arial,sans-serif;
-
-  font-size:12px;
   letter-spacing:5px;
 
-  color:#a27b21;
+  color:#9b6e0d;
+
   text-transform:uppercase;
+
+  text-shadow:
+    1px 1px 0 #fff3a8,
+    2px 2px 3px rgba(80,50,0,.25);
+
 }
 
-/* TITLE */
 
-.title-line{
+.brand-sub{
+
+  text-align:center;
+
+  margin-top:4px;
+
+  font-size:18px;
+
+  letter-spacing:8px;
+
+  color:#8b6b20;
+
+  text-transform:uppercase;
+
+}
+
+
+/* =========================
+   DIVIDER
+========================= */
+
+.divider{
+
   display:flex;
-  align-items:center;
-  gap:18px;
 
-  margin:38px 0 12px;
+  align-items:center;
+
+  justify-content:center;
+
+  gap:16px;
+
+  margin:34px auto 18px;
+
 }
 
-.title-line span{
-  height:1px;
-  flex:1;
+
+.divider-line{
+
+  width:170px;
+
+  height:2px;
 
   background:
     linear-gradient(
       90deg,
       transparent,
-      #c9a84b,
-      transparent
+      #bd8d20,
+      #e7ca69
     );
+
 }
 
-.title{
-  text-align:center;
 
-  font-size:35px;
-  font-weight:700;
-
-  letter-spacing:3px;
-
-  color:#17284c;
-
-  text-transform:uppercase;
-}
-
-.subtitle{
-  text-align:center;
-
-  font-family:Arial,sans-serif;
-
-  font-size:13px;
-  letter-spacing:1.5px;
-
-  color:#687080;
-
-  margin-bottom:35px;
-}
-
-/* CERTIFICATE NUMBER */
-
-.cert-number{
-  text-align:center;
-
-  font-family:Arial,sans-serif;
-
-  font-size:12px;
-
-  color:#777;
-
-  margin-bottom:25px;
-}
-
-.cert-number strong{
-  color:#176b45;
-}
-
-/* INVESTMENT TABLE */
-
-.details{
-  width:100%;
-
-  border:1px solid #d7c486;
-
-  background:rgba(255,255,255,.8);
-}
-
-.row{
-  display:grid;
-
-  grid-template-columns:42% 58%;
-
-  min-height:55px;
-
-  border-bottom:1px solid #e7e0c9;
-}
-
-.row:last-child{
-  border-bottom:none;
-}
-
-.label{
-  padding:17px 20px;
-
-  font-family:Arial,sans-serif;
-
-  font-size:13px;
-  font-weight:700;
-
-  color:#31405c;
+.divider-line.right{
 
   background:
     linear-gradient(
       90deg,
-      rgba(23,107,69,.055),
+      #e7ca69,
+      #bd8d20,
       transparent
     );
+
 }
 
-.value{
-  padding:17px 20px;
 
-  text-align:right;
+.divider-symbol{
 
-  font-family:Arial,sans-serif;
-
-  font-size:14px;
-  font-weight:600;
-
-  color:#18243b;
-}
-
-/* MATURITY */
-
-.maturity{
-  margin-top:28px;
-
-  padding:20px;
-
-  border:2px solid #c9a84b;
-
-  text-align:center;
-
-  background:
-    linear-gradient(
-      135deg,
-      #fffdf4,
-      #f7f1dc
-    );
-}
-
-.maturity-label{
-  font-family:Arial,sans-serif;
-
-  font-size:11px;
-
-  letter-spacing:2px;
-
-  text-transform:uppercase;
-
-  color:#8c6b1c;
-}
-
-.maturity-value{
-  margin-top:6px;
-
-  font-family:Georgia,serif;
-
-  font-size:32px;
-
-  font-weight:bold;
-
-  color:#176b45;
-}
-
-/* VERIFIED */
-
-.verified{
-  text-align:center;
-
-  margin:28px 0 35px;
-}
-
-.verified-badge{
-  display:inline-flex;
-
-  align-items:center;
-  justify-content:center;
-
-  width:145px;
-  height:145px;
-
-  border-radius:50%;
-
-  background:
-    radial-gradient(
-      circle,
-      #f7e5a2,
-      #c9a84b 45%,
-      #8d6818 100%
-    );
-
-  border:7px double #fff;
-
-  outline:2px solid #a27b21;
-
-  box-shadow:
-    0 5px 15px rgba(0,0,0,.16);
-
-  color:#fff;
-
-  font-family:Arial,sans-serif;
-
-  font-size:13px;
-  font-weight:900;
-
-  text-align:center;
-
-  line-height:1.5;
-}
-
-.verified-text{
-  margin-top:10px;
-
-  font-family:Arial,sans-serif;
-
-  font-size:12px;
-
-  color:#176b45;
-
-  font-weight:bold;
-}
-
-/* FOOTER */
-
-.footer{
-  display:grid;
-
-  grid-template-columns:1fr 1fr;
-
-  gap:50px;
-
-  margin-top:15px;
-
-  align-items:end;
-}
-
-.footer-box{
-  text-align:center;
-
-  font-family:Arial,sans-serif;
-}
-
-.signature{
-  height:48px;
-
-  border-bottom:1px solid #333;
-
-  margin-bottom:8px;
-
-  font-family:"Brush Script MT",
-              "Segoe Script",
-              cursive;
+  color:#bd8d20;
 
   font-size:28px;
 
-  color:#17284c;
 }
 
-.footer-label{
-  font-size:11px;
 
-  color:#555;
+/* =========================
+   TITLE
+========================= */
+
+.title{
+
+  text-align:center;
+
+  font-size:43px;
+
+  font-weight:bold;
+
+  letter-spacing:2px;
+
+  color:#241d0d;
 
   text-transform:uppercase;
 
-  letter-spacing:1px;
 }
 
-.issue-date{
-  height:48px;
 
-  border-bottom:1px solid #333;
+.subtitle{
 
-  margin-bottom:8px;
+  text-align:center;
 
-  padding-top:18px;
+  margin-top:12px;
 
-  font-size:14px;
+  font-size:18px;
 
-  color:#17284c;
+  color:#6e5d37;
+
 }
 
-/* BOTTOM */
 
-.bottom-note{
+/* =========================
+   CERTIFICATE NO
+========================= */
+
+.certificate-number{
+
   text-align:center;
 
   margin-top:35px;
 
   font-family:Arial,sans-serif;
 
+  font-size:14px;
+
+  color:#6d644e;
+
+}
+
+
+.certificate-number strong{
+
+  color:#8c6916;
+
+}
+
+
+/* =========================
+   WATERMARK
+========================= */
+
+.watermark{
+
+  position:absolute;
+
+  left:50%;
+  top:57%;
+
+  transform:
+    translate(-50%,-50%);
+
+  width:460px;
+  height:460px;
+
+  border-radius:50%;
+
+  border:
+    2px solid rgba(186,145,38,.10);
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  pointer-events:none;
+
+}
+
+
+.watermark::before{
+
+  content:"";
+
+  width:330px;
+  height:330px;
+
+  border-radius:50%;
+
+  border:
+    2px dashed rgba(186,145,38,.10);
+
+}
+
+
+.watermark::after{
+
+  content:"SM";
+
+  position:absolute;
+
+  font-family:Arial,sans-serif;
+
+  font-size:110px;
+
+  font-weight:900;
+
+  color:rgba(186,145,38,.065);
+
+}
+
+
+/* =========================
+   DETAILS
+========================= */
+
+.details{
+
+  margin-top:30px;
+
+}
+
+
+.row{
+
+  display:grid;
+
+  grid-template-columns:
+    38%
+    62%;
+
+  min-height:63px;
+
+  align-items:center;
+
+  border-bottom:
+    1.5px solid #c79b31;
+
+  position:relative;
+
+}
+
+
+.row:first-child{
+
+  border-top:
+    1.5px solid #c79b31;
+
+}
+
+
+.row::before{
+
+  content:"◆";
+
+  position:absolute;
+
+  left:-7px;
+
+  color:#c18d20;
+
   font-size:9px;
 
-  color:#888;
-
-  letter-spacing:.8px;
 }
 
-/* PRINT BUTTON */
 
-.print-area{
-  max-width:900px;
+.row::after{
 
-  margin:20px auto 0;
+  content:"◆";
+
+  position:absolute;
+
+  right:-7px;
+
+  color:#c18d20;
+
+  font-size:9px;
+
+}
+
+
+.label{
+
+  padding-left:20px;
+
+  font-size:19px;
+
+  font-weight:bold;
+
+  color:#2c2618;
+
+}
+
+
+.value{
+
+  text-align:right;
+
+  padding-right:20px;
+
+  font-size:18px;
+
+  color:#312a1b;
+
+}
+
+
+/* =========================
+   VERIFIED
+========================= */
+
+.verified-text{
 
   text-align:center;
+
+  margin-top:30px;
+
+  font-size:17px;
+
+  color:#8d6918;
+
+  font-weight:bold;
+
 }
 
-.print-btn{
-  border:0;
 
-  padding:15px 35px;
+.verified-text span{
 
-  border-radius:8px;
+  margin:0 10px;
 
-  background:#176b45;
+  color:#c29424;
+
+}
+
+
+/* =========================
+   SEAL
+========================= */
+
+.seal-area{
+
+  display:flex;
+
+  justify-content:center;
+
+  margin-top:20px;
+
+}
+
+
+.seal{
+
+  width:160px;
+  height:160px;
+
+  border-radius:50%;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  text-align:center;
+
+  position:relative;
+
+  background:
+
+    radial-gradient(
+      circle,
+      #f2d979 0%,
+      #c79b2b 45%,
+      #8a6110 100%
+    );
+
+  border:
+    8px double #fff5c7;
+
+  outline:
+    3px solid #a97814;
+
+  box-shadow:
+    0 7px 18px rgba(0,0,0,.22);
 
   color:#fff;
+
+  font-family:Arial,sans-serif;
+
+  font-size:14px;
+
+  font-weight:900;
+
+  line-height:1.45;
+
+}
+
+
+.seal::before{
+
+  content:"✦  VERIFIED  ✦";
+
+  position:absolute;
+
+  top:20px;
+
+  font-size:10px;
+
+  letter-spacing:1px;
+
+}
+
+
+.seal::after{
+
+  content:"SAVE MONEY";
+
+  position:absolute;
+
+  bottom:20px;
+
+  font-size:10px;
+
+  letter-spacing:1px;
+
+}
+
+
+.seal-icon{
+
+  font-size:42px;
+
+  margin-top:4px;
+
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer{
+
+  display:grid;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  gap:100px;
+
+  margin-top:35px;
+
+  align-items:end;
+
+}
+
+
+.footer-box{
+
+  text-align:center;
+
+}
+
+
+.date{
+
+  height:42px;
+
+  padding-top:18px;
+
+  border-bottom:
+    1px solid #6c603f;
+
+  font-size:15px;
+
+}
+
+
+.signature{
+
+  height:42px;
+
+  border-bottom:
+    1px solid #6c603f;
+
+  font-family:
+    "Brush Script MT",
+    "Segoe Script",
+    cursive;
+
+  font-size:31px;
+
+  color:#8d6412;
+
+}
+
+
+.footer-label{
+
+  margin-top:8px;
+
+  font-size:13px;
+
+  color:#5c523a;
+
+}
+
+
+/* =========================
+   FOOT NOTE
+========================= */
+
+.note{
+
+  text-align:center;
+
+  margin-top:28px;
+
+  font-family:Arial,sans-serif;
+
+  font-size:10px;
+
+  color:#9b927d;
+
+}
+
+
+/* =========================
+   PRINT BUTTON
+========================= */
+
+.print-area{
+
+  max-width:1000px;
+
+  margin:22px auto;
+
+  text-align:center;
+
+}
+
+
+.print-btn{
+
+  border:0;
+
+  padding:16px 38px;
+
+  border-radius:6px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #76500b,
+      #c79a29,
+      #7b560d
+    );
+
+  color:white;
 
   font-size:15px;
 
@@ -8061,14 +8480,174 @@ body{
   cursor:pointer;
 
   box-shadow:
-    0 8px 20px rgba(23,107,69,.25);
+    0 8px 18px rgba(80,50,0,.25);
+
 }
 
-.print-btn:hover{
-  background:#0f5637;
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:700px){
+
+  body{
+    padding:8px;
+  }
+
+  .certificate{
+
+    min-height:auto;
+
+    padding:
+      55px
+      28px
+      45px;
+
+    border-width:9px;
+
+  }
+
+  .certificate::before{
+    inset:14px;
+  }
+
+  .certificate::after{
+    inset:22px;
+  }
+
+  .inner-frame{
+    inset:29px;
+  }
+
+  .ornament{
+    width:65px;
+    height:65px;
+    font-size:45px;
+  }
+
+  .logo{
+    width:82px;
+    height:82px;
+    font-size:25px;
+  }
+
+  .logo-arrow{
+    font-size:22px;
+    right:13px;
+    top:16px;
+  }
+
+  .logo-rupee{
+    width:20px;
+    height:20px;
+    font-size:11px;
+    bottom:12px;
+  }
+
+  .brand-name{
+    font-size:29px;
+    letter-spacing:3px;
+  }
+
+  .brand-sub{
+    font-size:7px;
+    letter-spacing:3px;
+  }
+
+  .divider{
+    margin-top:25px;
+  }
+
+  .divider-line{
+    width:65px;
+  }
+
+  .title{
+    font-size:23px;
+    letter-spacing:1px;
+  }
+
+  .subtitle{
+    font-size:10px;
+  }
+
+  .certificate-number{
+    font-size:9px;
+    margin-top:25px;
+  }
+
+  .row{
+    min-height:48px;
+    grid-template-columns:45% 55%;
+  }
+
+  .label{
+    font-size:11px;
+    padding-left:10px;
+  }
+
+  .value{
+    font-size:11px;
+    padding-right:8px;
+    word-break:break-word;
+  }
+
+  .verified-text{
+    font-size:11px;
+  }
+
+  .seal{
+    width:110px;
+    height:110px;
+    font-size:9px;
+  }
+
+  .seal-icon{
+    font-size:28px;
+  }
+
+  .seal::before,
+  .seal::after{
+    font-size:7px;
+  }
+
+  .footer{
+    gap:25px;
+  }
+
+  .date{
+    font-size:10px;
+  }
+
+  .signature{
+    font-size:22px;
+  }
+
+  .footer-label{
+    font-size:8px;
+  }
+
+  .watermark{
+    width:280px;
+    height:280px;
+  }
+
+  .watermark::before{
+    width:210px;
+    height:210px;
+  }
+
+  .watermark::after{
+    font-size:70px;
+  }
+
 }
 
-/* PRINT */
+
+/* =========================
+   PRINT / PDF
+========================= */
 
 @media print{
 
@@ -8077,12 +8656,15 @@ body{
     margin:0;
   }
 
+  html,
   body{
-    background:white;
+    margin:0;
     padding:0;
+    background:#fff;
   }
 
   .certificate{
+
     width:210mm;
     min-height:297mm;
 
@@ -8090,65 +8672,19 @@ body{
 
     margin:0;
 
-    padding:18mm 18mm 14mm;
+    padding:
+      16mm
+      17mm
+      13mm;
+
+    box-shadow:none;
 
     border-width:8px;
 
-    box-shadow:none;
   }
 
   .print-area{
     display:none;
-  }
-
-  .watermark{
-    display:block;
-  }
-
-}
-
-/* MOBILE */
-
-@media(max-width:650px){
-
-  body{
-    padding:10px;
-  }
-
-  .certificate{
-    padding:55px 25px 35px;
-  }
-
-  .brand-name{
-    font-size:30px;
-    letter-spacing:2px;
-  }
-
-  .title{
-    font-size:24px;
-  }
-
-  .subtitle{
-    font-size:10px;
-  }
-
-  .row{
-    grid-template-columns:44% 56%;
-  }
-
-  .label,
-  .value{
-    padding:13px 10px;
-    font-size:11px;
-  }
-
-  .footer{
-    gap:20px;
-  }
-
-  .corner{
-    width:50px;
-    height:50px;
   }
 
 }
@@ -8157,70 +8693,135 @@ body{
 
 </head>
 
+
 <body>
+
 
 <div class="certificate">
 
-  <div class="watermark">
-    SAVE MONEY
-  </div>
+  <div class="inner-frame"></div>
 
-  <div class="corner tl"></div>
-  <div class="corner tr"></div>
-  <div class="corner bl"></div>
-  <div class="corner br"></div>
+  <!-- GOLD CORNERS -->
+
+  <div class="ornament top-left"></div>
+  <div class="ornament top-right"></div>
+  <div class="ornament bottom-left"></div>
+  <div class="ornament bottom-right"></div>
+
 
   <div class="content">
 
+
+    <!-- LOGO -->
+
+    <div class="logo-wrap">
+
+      <div class="logo">
+
+        SM
+
+        <span class="logo-arrow">
+          ↗
+        </span>
+
+        <span class="logo-rupee">
+          ₹
+        </span>
+
+      </div>
+
+    </div>
+
+
     <!-- BRAND -->
 
-    <div class="brand">
+    <div class="brand-name">
+      SAVE MONEY
+    </div>
 
-      <div class="brand-logo">
-        SM
+    <div class="brand-sub">
+      INVESTMENT
+    </div>
+
+
+    <!-- DECORATIVE DIVIDER -->
+
+    <div class="divider">
+
+      <div class="divider-line"></div>
+
+      <div class="divider-symbol">
+        ❧ ✦ ❧
       </div>
 
-      <div class="brand-name">
-        SAVE MONEY
-      </div>
-
-      <div class="brand-sub">
-        Investment & Financial Services
-      </div>
+      <div class="divider-line right"></div>
 
     </div>
 
 
     <!-- TITLE -->
 
-    <div class="title-line">
-      <span></span>
-
-      <div class="title">
-        Investment Certificate
-      </div>
-
-      <span></span>
+    <div class="title">
+      Investment Certificate
     </div>
 
+
+    <div class="divider">
+
+      <div class="divider-line"></div>
+
+      <div class="divider-symbol">
+        ❧
+      </div>
+
+      <div class="divider-line right"></div>
+
+    </div>
+
+
     <div class="subtitle">
-      OFFICIAL CERTIFICATE OF INVESTMENT
+
+      This is to certify that the following investment
+      has been successfully created under Save Money Investment.
+
     </div>
 
 
     <!-- CERTIFICATE NUMBER -->
 
-    <div class="cert-number">
+    <div class="certificate-number">
 
-      Certificate No:
-      <strong>${safe(certNo)}</strong>
+      Certificate No&nbsp;&nbsp;
+
+      <strong>
+        ${safe(certNo)}
+      </strong>
 
     </div>
 
 
-    <!-- DETAILS -->
+    <!-- WATERMARK -->
+
+    <div class="watermark"></div>
+
+
+    <!-- INVESTMENT DETAILS -->
 
     <div class="details">
+
+
+      <div class="row">
+
+        <div class="label">
+          Certificate No
+        </div>
+
+        <div class="value">
+          ${safe(certNo)}
+        </div>
+
+      </div>
+
 
       <div class="row">
 
@@ -8238,7 +8839,7 @@ body{
       <div class="row">
 
         <div class="label">
-          Investment Tenure
+          Tenure
         </div>
 
         <div class="value">
@@ -8303,51 +8904,55 @@ body{
       <div class="row">
 
         <div class="label">
-          Investment Status
+          Status
         </div>
 
-        <div class="value"
-             style="color:#176b45;font-weight:800;">
-
+        <div
+          class="value"
+          style="
+            color:#8a6614;
+            font-weight:bold;
+          "
+        >
           ${safe(status)}
-
         </div>
 
       </div>
 
-    </div>
-
-
-    <!-- MATURITY -->
-
-    <div class="maturity">
-
-      <div class="maturity-label">
-        Guaranteed Maturity Value
-      </div>
-
-      <div class="maturity-value">
-        ₹${safe(maturityAmount)}
-      </div>
 
     </div>
 
 
-    <!-- VERIFIED -->
+    <!-- VERIFIED TEXT -->
 
-    <div class="verified">
+    <div class="verified-text">
 
-      <div class="verified-badge">
+      <span>✦ ✦</span>
 
-        ✓<br>
-        VERIFIED<br>
-        INVESTMENT<br>
-        SAVE MONEY
+      Verified Save Money Investment
 
-      </div>
+      <span>✦ ✦</span>
 
-      <div class="verified-text">
-        This certificate represents a verified Save Money investment.
+    </div>
+
+
+    <!-- SEAL -->
+
+    <div class="seal-area">
+
+      <div class="seal">
+
+        <div>
+
+          <div class="seal-icon">
+            ↗
+          </div>
+
+          VERIFIED<br>
+          INVESTMENT
+
+        </div>
+
       </div>
 
     </div>
@@ -8357,9 +8962,10 @@ body{
 
     <div class="footer">
 
+
       <div class="footer-box">
 
-        <div class="issue-date">
+        <div class="date">
           ${safe(issueDate)}
         </div>
 
@@ -8373,35 +8979,52 @@ body{
       <div class="footer-box">
 
         <div class="signature">
-          Save Money
+          Savemoney
         </div>
 
         <div class="footer-label">
-          Authorized Signature
+          Authorized Signatory
+        </div>
+
+        <div
+          style="
+            font-size:11px;
+            color:#777;
+            margin-top:4px;
+          "
+        >
+          Save Money Investment
         </div>
 
       </div>
 
-    </div>
-
-
-    <div class="bottom-note">
-
-      This certificate is electronically generated and is valid
-      subject to the terms and conditions of the investment plan.
 
     </div>
+
+
+    <!-- NOTE -->
+
+    <div class="note">
+
+      This certificate is electronically generated and
+      represents the investment details recorded by Save Money.
+
+    </div>
+
 
   </div>
 
 </div>
 
 
+<!-- PRINT -->
+
 <div class="print-area">
 
   <button
     class="print-btn"
-    onclick="window.print()">
+    onclick="window.print()"
+  >
 
     Download / Print Certificate
 
@@ -8413,17 +9036,21 @@ body{
 </body>
 
 </html>
+
     `);
 
   } catch (err) {
 
-    console.log("CERTIFICATE ERROR:", err);
+    console.log(
+      "CERTIFICATE ERROR:",
+      err
+    );
 
-    res.status(500).send("Server error");
-
+    res
+      .status(500)
+      .send("Server error");
   }
 });
-
 
     
               
