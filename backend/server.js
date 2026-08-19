@@ -7469,129 +7469,960 @@ app.get("/admin/withdraw-requests", async (req, res) => {
     app.get("/investment-certificate/:id", async (req, res) => {
   try {
     const investment = await Investment.findById(req.params.id);
-    if (!investment) return res.status(404).send("Investment not found");
 
-    const amount = investment.monthlyAmount || investment.amount || 0;
-    const rate = investment.rate || investment.returnRate || 0;
-    const certNo = investment.certificateNo || `SM-CERT-${investment._id}`;
-    const issueDate = investment.createdAt ? new Date(investment.createdAt).toLocaleDateString('en-GB') : "12 Aug 2026";
+    if (!investment) {
+      return res.status(404).send("Investment not found");
+    }
 
-    // আপনার সার্টিফিকেট ইমেজের ডাইরেক্ট লিংক এখানে বসানো হলো
-    const certificateBgUrl = "https://i.ibb.co.com/6c6z7Q7/1000195357.jpg";
+    const amount =
+      investment.monthlyAmount ||
+      investment.amount ||
+      0;
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Investment Certificate - ${certNo}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&display=swap');
-            
-            body {
-              margin: 0;
-              padding: 20px;
-              background: #1a202c;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              min-height: 100vh;
-              font-family: 'Montserrat', sans-serif;
-            }
+    const rate =
+      investment.rate ||
+      investment.returnRate ||
+      0;
 
-            .certificate-container {
-              position: relative;
-              width: 800px;
-              height: 1055px;
-              background-image: url('${certificateBgUrl}');
-              background-size: 100% 100%;
-              background-repeat: no-repeat;
-              background-position: center;
-              box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            }
+    const certNo =
+      investment.certificateNo ||
+      `SMCERT-${investment._id}`;
 
-            /* ডেটা পজিশনিং */
-            .cert-data {
-              position: absolute;
-              right: 110px;
-              font-size: 15px;
-              font-weight: 700;
-              color: #1a202c;
-            }
+    const years = investment.years || 0;
 
-            .c-no { top: 432px; font-size: 14px; }
-            .c-amount { top: 478px; }
-            .c-tenure { top: 524px; }
-            .c-rate { top: 570px; }
-            .c-plan { top: 616px; }
-            .c-interest { top: 662px; }
-            .c-maturity { top: 708px; font-size: 16px; color: #b45309; }
-            .c-status { top: 754px; }
+    const totalPlanAmount =
+      investment.totalPlanAmount || 0;
 
-            .c-date {
-              position: absolute;
-              bottom: 152px;
-              left: 215px;
-              font-size: 13px;
-              font-weight: 600;
-              color: #1a202c;
-            }
+    const totalInterest =
+      investment.totalInterest || 0;
 
-            .action-box {
-              margin-top: 20px;
-              text-align: center;
-            }
+    const maturityAmount =
+      investment.maturityAmount || 0;
 
-            .print-btn {
-              padding: 14px 35px;
-              background: #16a34a;
-              color: white;
-              border: none;
-              border-radius: 10px;
-              font-weight: bold;
-              font-size: 16px;
-              cursor: pointer;
-              box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
-            }
+    const status =
+      investment.status || "Active";
 
-            .print-btn:hover {
-              background: #15803d;
-            }
+    const issueDate = new Date().toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    });
 
-            @media print {
-              body { background: none; padding: 0; }
-              .action-box { display: none; }
-              .certificate-container { box-shadow: none; width: 100%; height: 100vh; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="certificate-container">
-            <div class="cert-data c-no">${certNo}</div>
-            <div class="cert-data c-amount">₹${amount}</div>
-            <div class="cert-data c-tenure">${investment.years || 3} Years</div>
-            <div class="cert-data c-rate">${rate}%</div>
-            <div class="cert-data c-plan">₹${investment.totalPlanAmount || 0}</div>
-            <div class="cert-data c-interest">₹${investment.totalInterest || 0}</div>
-            <div class="cert-data c-maturity">₹${investment.maturityAmount || 0}</div>
-            <div class="cert-data c-status">${investment.status || "Active"}</div>
-            <div class="c-date">${issueDate}</div>
-          </div>
+    // Prevent HTML injection from database values
+    const safe = (value) =>
+      String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
-          <div class="action-box">
-            <button class="print-btn" onclick="window.print()">📥 Download / Print Certificate</button>
-          </div>
-        </body>
-      </html>
-    `;
-    res.send(html);
+    res.send(`
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Investment Certificate - ${safe(certNo)}</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+html,
+body{
+  margin:0;
+  padding:0;
+}
+
+body{
+  background:#e9edf3;
+  font-family:Georgia, "Times New Roman", serif;
+  color:#172033;
+  padding:35px 15px;
+}
+
+/* MAIN CERTIFICATE */
+
+.certificate{
+  position:relative;
+  max-width:900px;
+  min-height:1150px;
+  margin:auto;
+  padding:65px 70px 55px;
+
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(20,125,75,.035) 0,
+      rgba(20,125,75,0) 55%
+    ),
+    #fffef9;
+
+  border:12px double #176b45;
+
+  box-shadow:
+    0 20px 50px rgba(0,0,0,.18);
+
+  overflow:hidden;
+}
+
+/* INNER BORDER */
+
+.certificate::before{
+  content:"";
+  position:absolute;
+  inset:22px;
+  border:2px solid #c9a84b;
+  pointer-events:none;
+}
+
+.certificate::after{
+  content:"";
+  position:absolute;
+  inset:30px;
+  border:1px solid rgba(23,107,69,.45);
+  pointer-events:none;
+}
+
+/* WATERMARK */
+
+.watermark{
+  position:absolute;
+  top:50%;
+  left:50%;
+
+  transform:
+    translate(-50%,-50%)
+    rotate(-20deg);
+
+  font-family:Arial,sans-serif;
+  font-size:105px;
+  font-weight:900;
+
+  color:rgba(23,107,69,.035);
+
+  white-space:nowrap;
+
+  pointer-events:none;
+}
+
+/* CORNER ORNAMENTS */
+
+.corner{
+  position:absolute;
+  width:72px;
+  height:72px;
+
+  border:4px solid #c9a84b;
+  border-radius:50%;
+
+  z-index:2;
+}
+
+.corner::after{
+  content:"✦";
+  position:absolute;
+
+  top:50%;
+  left:50%;
+
+  transform:translate(-50%,-50%);
+
+  font-size:30px;
+  color:#176b45;
+}
+
+.corner.tl{
+  top:35px;
+  left:35px;
+}
+
+.corner.tr{
+  top:35px;
+  right:35px;
+}
+
+.corner.bl{
+  bottom:35px;
+  left:35px;
+}
+
+.corner.br{
+  bottom:35px;
+  right:35px;
+}
+
+/* CONTENT */
+
+.content{
+  position:relative;
+  z-index:5;
+}
+
+/* BRAND */
+
+.brand{
+  text-align:center;
+  margin-top:20px;
+}
+
+.brand-logo{
+  width:90px;
+  height:90px;
+
+  margin:auto;
+
+  border-radius:50%;
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #fff3b0,
+      #d4af37 35%,
+      #9d7414 75%,
+      #654600
+    );
+
+  border:5px solid #fff;
+  outline:3px solid #c9a84b;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  color:#fff;
+
+  font-family:Arial,sans-serif;
+  font-size:42px;
+  font-weight:900;
+
+  box-shadow:
+    0 5px 15px rgba(0,0,0,.2);
+}
+
+.brand-name{
+  margin-top:16px;
+
+  font-family:Arial,sans-serif;
+
+  font-size:42px;
+  font-weight:900;
+  letter-spacing:4px;
+
+  color:#176b45;
+
+  text-transform:uppercase;
+}
+
+.brand-sub{
+  margin-top:4px;
+
+  font-family:Arial,sans-serif;
+
+  font-size:12px;
+  letter-spacing:5px;
+
+  color:#a27b21;
+  text-transform:uppercase;
+}
+
+/* TITLE */
+
+.title-line{
+  display:flex;
+  align-items:center;
+  gap:18px;
+
+  margin:38px 0 12px;
+}
+
+.title-line span{
+  height:1px;
+  flex:1;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #c9a84b,
+      transparent
+    );
+}
+
+.title{
+  text-align:center;
+
+  font-size:35px;
+  font-weight:700;
+
+  letter-spacing:3px;
+
+  color:#17284c;
+
+  text-transform:uppercase;
+}
+
+.subtitle{
+  text-align:center;
+
+  font-family:Arial,sans-serif;
+
+  font-size:13px;
+  letter-spacing:1.5px;
+
+  color:#687080;
+
+  margin-bottom:35px;
+}
+
+/* CERTIFICATE NUMBER */
+
+.cert-number{
+  text-align:center;
+
+  font-family:Arial,sans-serif;
+
+  font-size:12px;
+
+  color:#777;
+
+  margin-bottom:25px;
+}
+
+.cert-number strong{
+  color:#176b45;
+}
+
+/* INVESTMENT TABLE */
+
+.details{
+  width:100%;
+
+  border:1px solid #d7c486;
+
+  background:rgba(255,255,255,.8);
+}
+
+.row{
+  display:grid;
+
+  grid-template-columns:42% 58%;
+
+  min-height:55px;
+
+  border-bottom:1px solid #e7e0c9;
+}
+
+.row:last-child{
+  border-bottom:none;
+}
+
+.label{
+  padding:17px 20px;
+
+  font-family:Arial,sans-serif;
+
+  font-size:13px;
+  font-weight:700;
+
+  color:#31405c;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(23,107,69,.055),
+      transparent
+    );
+}
+
+.value{
+  padding:17px 20px;
+
+  text-align:right;
+
+  font-family:Arial,sans-serif;
+
+  font-size:14px;
+  font-weight:600;
+
+  color:#18243b;
+}
+
+/* MATURITY */
+
+.maturity{
+  margin-top:28px;
+
+  padding:20px;
+
+  border:2px solid #c9a84b;
+
+  text-align:center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fffdf4,
+      #f7f1dc
+    );
+}
+
+.maturity-label{
+  font-family:Arial,sans-serif;
+
+  font-size:11px;
+
+  letter-spacing:2px;
+
+  text-transform:uppercase;
+
+  color:#8c6b1c;
+}
+
+.maturity-value{
+  margin-top:6px;
+
+  font-family:Georgia,serif;
+
+  font-size:32px;
+
+  font-weight:bold;
+
+  color:#176b45;
+}
+
+/* VERIFIED */
+
+.verified{
+  text-align:center;
+
+  margin:28px 0 35px;
+}
+
+.verified-badge{
+  display:inline-flex;
+
+  align-items:center;
+  justify-content:center;
+
+  width:145px;
+  height:145px;
+
+  border-radius:50%;
+
+  background:
+    radial-gradient(
+      circle,
+      #f7e5a2,
+      #c9a84b 45%,
+      #8d6818 100%
+    );
+
+  border:7px double #fff;
+
+  outline:2px solid #a27b21;
+
+  box-shadow:
+    0 5px 15px rgba(0,0,0,.16);
+
+  color:#fff;
+
+  font-family:Arial,sans-serif;
+
+  font-size:13px;
+  font-weight:900;
+
+  text-align:center;
+
+  line-height:1.5;
+}
+
+.verified-text{
+  margin-top:10px;
+
+  font-family:Arial,sans-serif;
+
+  font-size:12px;
+
+  color:#176b45;
+
+  font-weight:bold;
+}
+
+/* FOOTER */
+
+.footer{
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:50px;
+
+  margin-top:15px;
+
+  align-items:end;
+}
+
+.footer-box{
+  text-align:center;
+
+  font-family:Arial,sans-serif;
+}
+
+.signature{
+  height:48px;
+
+  border-bottom:1px solid #333;
+
+  margin-bottom:8px;
+
+  font-family:"Brush Script MT",
+              "Segoe Script",
+              cursive;
+
+  font-size:28px;
+
+  color:#17284c;
+}
+
+.footer-label{
+  font-size:11px;
+
+  color:#555;
+
+  text-transform:uppercase;
+
+  letter-spacing:1px;
+}
+
+.issue-date{
+  height:48px;
+
+  border-bottom:1px solid #333;
+
+  margin-bottom:8px;
+
+  padding-top:18px;
+
+  font-size:14px;
+
+  color:#17284c;
+}
+
+/* BOTTOM */
+
+.bottom-note{
+  text-align:center;
+
+  margin-top:35px;
+
+  font-family:Arial,sans-serif;
+
+  font-size:9px;
+
+  color:#888;
+
+  letter-spacing:.8px;
+}
+
+/* PRINT BUTTON */
+
+.print-area{
+  max-width:900px;
+
+  margin:20px auto 0;
+
+  text-align:center;
+}
+
+.print-btn{
+  border:0;
+
+  padding:15px 35px;
+
+  border-radius:8px;
+
+  background:#176b45;
+
+  color:#fff;
+
+  font-size:15px;
+
+  font-weight:bold;
+
+  cursor:pointer;
+
+  box-shadow:
+    0 8px 20px rgba(23,107,69,.25);
+}
+
+.print-btn:hover{
+  background:#0f5637;
+}
+
+/* PRINT */
+
+@media print{
+
+  @page{
+    size:A4 portrait;
+    margin:0;
+  }
+
+  body{
+    background:white;
+    padding:0;
+  }
+
+  .certificate{
+    width:210mm;
+    min-height:297mm;
+
+    max-width:none;
+
+    margin:0;
+
+    padding:18mm 18mm 14mm;
+
+    border-width:8px;
+
+    box-shadow:none;
+  }
+
+  .print-area{
+    display:none;
+  }
+
+  .watermark{
+    display:block;
+  }
+
+}
+
+/* MOBILE */
+
+@media(max-width:650px){
+
+  body{
+    padding:10px;
+  }
+
+  .certificate{
+    padding:55px 25px 35px;
+  }
+
+  .brand-name{
+    font-size:30px;
+    letter-spacing:2px;
+  }
+
+  .title{
+    font-size:24px;
+  }
+
+  .subtitle{
+    font-size:10px;
+  }
+
+  .row{
+    grid-template-columns:44% 56%;
+  }
+
+  .label,
+  .value{
+    padding:13px 10px;
+    font-size:11px;
+  }
+
+  .footer{
+    gap:20px;
+  }
+
+  .corner{
+    width:50px;
+    height:50px;
+  }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="certificate">
+
+  <div class="watermark">
+    SAVE MONEY
+  </div>
+
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div class="content">
+
+    <!-- BRAND -->
+
+    <div class="brand">
+
+      <div class="brand-logo">
+        SM
+      </div>
+
+      <div class="brand-name">
+        SAVE MONEY
+      </div>
+
+      <div class="brand-sub">
+        Investment & Financial Services
+      </div>
+
+    </div>
+
+
+    <!-- TITLE -->
+
+    <div class="title-line">
+      <span></span>
+
+      <div class="title">
+        Investment Certificate
+      </div>
+
+      <span></span>
+    </div>
+
+    <div class="subtitle">
+      OFFICIAL CERTIFICATE OF INVESTMENT
+    </div>
+
+
+    <!-- CERTIFICATE NUMBER -->
+
+    <div class="cert-number">
+
+      Certificate No:
+      <strong>${safe(certNo)}</strong>
+
+    </div>
+
+
+    <!-- DETAILS -->
+
+    <div class="details">
+
+      <div class="row">
+
+        <div class="label">
+          Monthly Investment
+        </div>
+
+        <div class="value">
+          ₹${safe(amount)}
+        </div>
+
+      </div>
+
+
+      <div class="row">
+
+        <div class="label">
+          Investment Tenure
+        </div>
+
+        <div class="value">
+          ${safe(years)} Years
+        </div>
+
+      </div>
+
+
+      <div class="row">
+
+        <div class="label">
+          Return Rate
+        </div>
+
+        <div class="value">
+          ${safe(rate)}%
+        </div>
+
+      </div>
+
+
+      <div class="row">
+
+        <div class="label">
+          Total Plan Amount
+        </div>
+
+        <div class="value">
+          ₹${safe(totalPlanAmount)}
+        </div>
+
+      </div>
+
+
+      <div class="row">
+
+        <div class="label">
+          Total Interest
+        </div>
+
+        <div class="value">
+          ₹${safe(totalInterest)}
+        </div>
+
+      </div>
+
+
+      <div class="row">
+
+        <div class="label">
+          Maturity Amount
+        </div>
+
+        <div class="value">
+          ₹${safe(maturityAmount)}
+        </div>
+
+      </div>
+
+
+      <div class="row">
+
+        <div class="label">
+          Investment Status
+        </div>
+
+        <div class="value"
+             style="color:#176b45;font-weight:800;">
+
+          ${safe(status)}
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- MATURITY -->
+
+    <div class="maturity">
+
+      <div class="maturity-label">
+        Guaranteed Maturity Value
+      </div>
+
+      <div class="maturity-value">
+        ₹${safe(maturityAmount)}
+      </div>
+
+    </div>
+
+
+    <!-- VERIFIED -->
+
+    <div class="verified">
+
+      <div class="verified-badge">
+
+        ✓<br>
+        VERIFIED<br>
+        INVESTMENT<br>
+        SAVE MONEY
+
+      </div>
+
+      <div class="verified-text">
+        This certificate represents a verified Save Money investment.
+      </div>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <div class="footer">
+
+      <div class="footer-box">
+
+        <div class="issue-date">
+          ${safe(issueDate)}
+        </div>
+
+        <div class="footer-label">
+          Issue Date
+        </div>
+
+      </div>
+
+
+      <div class="footer-box">
+
+        <div class="signature">
+          Save Money
+        </div>
+
+        <div class="footer-label">
+          Authorized Signature
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="bottom-note">
+
+      This certificate is electronically generated and is valid
+      subject to the terms and conditions of the investment plan.
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<div class="print-area">
+
+  <button
+    class="print-btn"
+    onclick="window.print()">
+
+    Download / Print Certificate
+
+  </button>
+
+</div>
+
+
+</body>
+
+</html>
+    `);
+
   } catch (err) {
+
     console.log("CERTIFICATE ERROR:", err);
+
     res.status(500).send("Server error");
+
   }
 });
-
 
 
     
