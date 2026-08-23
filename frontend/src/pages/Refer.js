@@ -715,9 +715,12 @@ export default function Refer() {
                       <h2 style={{ margin: "4px 0 0", color: "#ea580c", fontSize: "22px" }}>{performance?.directActiveCount || 0} / 3</h2>
                     </div>
                     <div style={{ borderLeft: "1px solid #fed7aa" }}>
-                      <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>Remaining Needed</small>
-                      <h2 style={{ margin: "4px 0 0", color: "#dc2626", fontSize: "22px" }}>{performance?.remaining || 0}</h2>
-                    </div>
+  <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>Remaining Needed</small>
+  <h2 style={{ margin: "4px 0 0", color: "#dc2626", fontSize: "22px" }}>
+    {Math.max(0, 3 - Number(performance?.directActiveCount || 0))}
+  </h2>
+</div>
+
                   </div>
 
                   <div>
