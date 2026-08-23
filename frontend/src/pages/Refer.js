@@ -712,7 +712,7 @@ export default function Refer() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", background: "#ffffff", padding: "15px", borderRadius: "14px", border: "1px solid #fed7aa", textAlign: "center", marginBottom: "15px" }}>
                     <div>
                       <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>Completed Active Refers</small>
-                      <h2 style={{ margin: "4px 0 0", color: "#ea580c", fontSize: "22px" }}>{performance?.directActiveCount || 0} / 2</h2>
+                      <h2 style={{ margin: "4px 0 0", color: "#ea580c", fontSize: "22px" }}>{performance?.directActiveCount || 0} / 3</h2>
                     </div>
                     <div style={{ borderLeft: "1px solid #fed7aa" }}>
                       <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>Remaining Needed</small>
