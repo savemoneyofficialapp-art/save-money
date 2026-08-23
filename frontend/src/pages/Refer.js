@@ -697,7 +697,7 @@ export default function Refer() {
                 <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "20px", padding: "25px", textAlign: "center" }}>
                   <div style={{ fontSize: "40px", marginBottom: "10px" }}>❌</div>
                   <h3 style={{ color: "#dc2626", margin: "0 0 8px 0", fontSize: "20px" }}>Performance Bonus Expired</h3>
-                  <p style={{ color: "#991b1b", margin: 0, fontSize: "14px", lineHeight: "1.5" }}>You failed to complete 10 active referrals within 30 days of registration.</p>
+                  <p style={{ color: "#991b1b", margin: 0, fontSize: "14px", lineHeight: "1.5" }}>You failed to complete 3 active referrals within 30 days of registration.</p>
                 </div>
               ) : (
                 <div style={{ background: "#fff7ed", border: "1px solid #ffedd5", borderRadius: "20px", padding: "20px" }}>
@@ -707,12 +707,12 @@ export default function Refer() {
                   </div>
 
                   <h3 style={{ color: "#9a3412", fontSize: "18px", margin: "0 0 6px 0" }}>Unlock Performance Bonus</h3>
-                  <p style={{ color: "#c2410c", fontSize: "13px", margin: "0 0 20px 0", lineHeight: "1.4" }}>Complete 10 active referrals within 30 days of account creation to unlock your performance bonus.</p>
+                  <p style={{ color: "#c2410c", fontSize: "13px", margin: "0 0 20px 0", lineHeight: "1.4" }}>Complete 3 active referrals within 30 days of account creation to unlock your performance bonus.</p>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", background: "#ffffff", padding: "15px", borderRadius: "14px", border: "1px solid #fed7aa", textAlign: "center", marginBottom: "15px" }}>
                     <div>
                       <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>Completed Active Refers</small>
-                      <h2 style={{ margin: "4px 0 0", color: "#ea580c", fontSize: "22px" }}>{performance?.directActiveCount || 0} / 10</h2>
+                      <h2 style={{ margin: "4px 0 0", color: "#ea580c", fontSize: "22px" }}>{performance?.directActiveCount || 0} / 2</h2>
                     </div>
                     <div style={{ borderLeft: "1px solid #fed7aa" }}>
                       <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>Remaining Needed</small>
@@ -722,7 +722,7 @@ export default function Refer() {
 
                   <div>
                     <div style={{ width: "100%", height: "8px", background: "#fed7aa", borderRadius: "10px", overflow: "hidden" }}>
-                      <div style={{ width: `${Math.min(((performance?.directActiveCount || 0) / 10) * 100, 100)}%`, height: "100%", background: "#ea580c", borderRadius: "10px", transition: "width 0.3s ease" }} />
+                      <div style={{ width: `${Math.min(((performance?.directActiveCount || 0) / 3) * 100, 100)}%`, height: "100%", background: "#ea580c", borderRadius: "10px", transition: "width 0.3s ease" }} />
                     </div>
                   </div>
                 </div>
