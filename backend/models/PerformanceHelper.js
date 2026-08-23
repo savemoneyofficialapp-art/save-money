@@ -51,7 +51,7 @@ async function updatePerformanceStatus(email) {
 
     }
 
-    if (qualified >= 10) {
+    if (qualified >= 3) {
 
         user.performanceEnabled = true;
 
