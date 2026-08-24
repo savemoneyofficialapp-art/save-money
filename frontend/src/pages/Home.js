@@ -15,8 +15,9 @@ export default function Home() {
   const [latestUpdate, setLatestUpdate] = useState("No new announcement");
   const [loading, setLoading] = useState(true);
 
-  // 👇 ড্রয়ার (Sidebar) ওপেন/ক্লোজ স্টেট
+  // 👇 ড্রয়ার ওপেন/ক্লোজ স্টেট ও ডাউনলোডিং অ্যানিমেশন স্টেট
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDownloadingPlan, setIsDownloadingPlan] = useState(false);
 
   // 👇 পপআপ মোডালের স্টেট
   const [showOfferPopup, setShowOfferPopup] = useState(false);
@@ -72,7 +73,6 @@ export default function Home() {
       const currentEmail = localStorage.getItem("email");
       if (!currentEmail) return;
 
-      // সাবস্ক্রিপশন অবজেক্টকে ক্লিন করে পার্স করা হলো যাতে endpoint লিক বা ড্রপ না হয়
       const subscriptionData = JSON.parse(JSON.stringify(subscription));
 
       const subRes = await fetch(`${API}/save-push-subscription`, {
@@ -95,7 +95,6 @@ export default function Home() {
     }
   };
 
-  // হেল্পার ফাংশন: VAPID Key কনভার্ট করার জন্য
   function urlBase64ToUint8Array(base64String) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
@@ -107,7 +106,24 @@ export default function Home() {
     return outputArray;
   }
 
-  // 👇 পপআপ ফটো ডাউনলোডের হ্যান্ডলার
+  // 👇 PLAN PDF ডাউনলোডের জন্য হ্যান্ডলার (এনিমেশন সহ)
+  const handleDownloadPlan = () => {
+    if (isDownloadingPlan) return;
+    setIsDownloadingPlan(true);
+
+    // কৃত্রিম ডিলে বা ডাউনলোড ট্রিগার
+    setTimeout(() => {
+      const link = document.createElement("a");
+      link.href = "/SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      link.download = "SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setIsDownloadingPlan(false);
+    }, 1500); // ১.৫ সেকেন্ড লোডিং অ্যানিমেশন দেখাবে
+  };
+
   const handleDownloadImage = async (imageUrl) => {
     try {
       const response = await fetch(imageUrl);
@@ -134,11 +150,8 @@ export default function Home() {
     loadHome();
     loadNotifications();
     loadLatestUpdate();
-
-    // হোম পেজ লোড হওয়ার সময় পুশ নোটিফিকেশন রেজিস্ট্রেশন কল করা হলো
     registerPushNotification();
 
-    // 👇 লগইন করে আসার পর পপআপ শো করার চেক
     const flag = localStorage.getItem("showLoginPopup");
     if (flag === "true") {
       setShowOfferPopup(true);
@@ -375,28 +388,50 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
-      {/* 👇 SIDEBAR / DRAWER COMPONENT */}
-      {isDrawerOpen && (
-        <div style={styles.drawerOverlay} onClick={() => setIsDrawerOpen(false)}>
-          <div style={styles.drawerContainer} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.drawerHeader}>
+      {/* 👇 ANIMATED SIDEBAR / DRAWER */}
+      <div style={{
+        ...styles.drawerOverlay,
+        opacity: isDrawerOpen ? 1 : 0,
+        visibility: isDrawerOpen ? "visible" : "hidden"
+      }} onClick={() => setIsDrawerOpen(false)}>
+        <div style={{
+          ...styles.drawerContainer,
+          transform: isDrawerOpen ? "translateX(0)" : "translateX(-100%)"
+        }} onClick={(e) => e.stopPropagation()}>
+          
+          <div style={styles.drawerHeader}>
+            <div style={styles.drawerBrand}>
+              <img 
+                src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
+                alt="Logo" 
+                style={styles.drawerLogoImg} 
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
               <h3 style={styles.drawerLogoText}>Save Money</h3>
-              <button style={styles.drawerCloseBtn} onClick={() => setIsDrawerOpen(false)}>✕</button>
             </div>
-            <div style={styles.drawerBody}>
-              <a 
-                href="/SAVE_MONEY_PRIVATE_LIMITED.pdf" 
-                download="SAVE_MONEY_PRIVATE_LIMITED.pdf"
-                style={styles.drawerPlanLink}
-                onClick={() => setIsDrawerOpen(false)}
-              >
-                <span>📁</span>
-                <span>PLAN</span>
-              </a>
-            </div>
+            <button style={styles.drawerCloseBtn} onClick={() => setIsDrawerOpen(false)}>✕</button>
           </div>
+
+          <div style={styles.drawerBody}>
+            {/* 👇 সুন্দর প্ল্যান ডাউনলোড বোতাম উইথ প্রোগ্রেস অ্যানিমেশন */}
+            <button 
+              style={{
+                ...styles.drawerPlanBtn,
+                ...(isDownloadingPlan ? styles.drawerPlanBtnLoading : {})
+              }}
+              onClick={handleDownloadPlan}
+              disabled={isDownloadingPlan}
+            >
+              <span style={styles.drawerPlanIcon}>{isDownloadingPlan ? "⏳" : "📥"}</span>
+              <span style={styles.drawerPlanText}>PLAN</span>
+              {isDownloadingPlan && <div style={styles.progressShutter}></div>}
+            </button>
+          </div>
+
         </div>
-      )}
+      </div>
 
       {/* 👇 PHOTO POPUP MODAL */}
       {showOfferPopup && (
@@ -942,28 +977,8 @@ function TrustMiniCard({ icon, title, subtitle }) {
   );
 }
 
-function BottomNavItem({ icon, title, active, onClick }) {
-  return (
-    <button
-      style={{
-        ...styles.bottomNavItem,
-        ...(active ? styles.bottomNavItemActive : {})
-      }}
-      onClick={onClick}
-    >
-      <span style={styles.bottomNavIcon}>
-        {icon}
-      </span>
-
-      <small style={styles.bottomNavText}>
-        {title}
-      </small>
-    </button>
-  );
-}
-
 const styles = {
-  // 👇 Drawer Styles
+  // 👇 Animated Drawer Styles
   drawerOverlay: {
     position: "fixed",
     top: 0,
@@ -975,17 +990,19 @@ const styles = {
     zIndex: 100002,
     display: "flex",
     justifyContent: "flex-start",
-    animation: "fadeIn 0.3s ease"
+    transition: "opacity 0.3s ease, visibility 0.3s ease"
   },
   drawerContainer: {
-    background: "#0f172a",
+    background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
     width: "280px",
     height: "100%",
     padding: "20px",
     display: "flex",
     flexDirection: "column",
-    boxShadow: "5px 0 25px rgba(0,0,0,0.5)",
-    borderRight: "1px solid #1e293b"
+    boxShadow: "5px 0 30px rgba(0,0,0,0.6)",
+    borderRight: "1px solid #1e293b",
+    transform: "translateX(-100%)",
+    transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   drawerHeader: {
     display: "flex",
@@ -995,9 +1012,20 @@ const styles = {
     borderBottom: "1px solid #1e293b",
     paddingBottom: "15px"
   },
+  drawerBrand: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  },
+  drawerLogoImg: {
+    width: "36px",
+    height: "36px",
+    objectFit: "contain",
+    borderRadius: "8px"
+  },
   drawerLogoText: {
     margin: 0,
-    fontSize: "18px",
+    fontSize: "17px",
     fontWeight: "900",
     color: "#38bdf8"
   },
@@ -1018,20 +1046,46 @@ const styles = {
   drawerBody: {
     display: "flex",
     flexDirection: "column",
-    gap: "10px"
+    gap: "12px"
   },
-  drawerPlanLink: {
+  drawerPlanBtn: {
+    position: "relative",
+    overflow: "hidden",
     display: "flex",
     alignItems: "center",
-    gap: "12px",
-    padding: "12px 16px",
+    justifyContent: "center",
+    gap: "10px",
+    padding: "14px 20px",
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
     color: "#ffffff",
-    borderRadius: "12px",
-    textDecoration: "none",
-    fontSize: "14px",
-    fontWeight: "800",
-    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)"
+    borderRadius: "14px",
+    border: "none",
+    fontSize: "15px",
+    fontWeight: "900",
+    cursor: "pointer",
+    boxShadow: "0 4px 15px rgba(37, 99, 235, 0.4)",
+    transition: "transform 0.2s ease"
+  },
+  drawerPlanBtnLoading: {
+    background: "linear-gradient(135deg, #16a34a, #15803d)",
+    cursor: "wait"
+  },
+  progressShutter: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    height: "100%",
+    background: "rgba(255, 255, 255, 0.25)",
+    animation: "shutterProgress 1.5s linear infinite",
+    pointerEvents: "none"
+  },
+  drawerPlanIcon: {
+    fontSize: "18px",
+    zIndex: 2
+  },
+  drawerPlanText: {
+    zIndex: 2,
+    letterSpacing: "1px"
   },
 
   popupOverlay: {
@@ -1730,9 +1784,10 @@ const keyframes = `
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
 }
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes shutterProgress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
 }
 `;
 try {
