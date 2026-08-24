@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API } from "../config";
 
@@ -16,6 +16,22 @@ export default function Login() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // পেজ লোড হওয়ার সময় Remember Me চেক করা থাকলে ডেটা রিকভার করবে
+  useEffect(() => {
+    const savedRemember = localStorage.getItem("rememberLogin");
+    const savedMode = localStorage.getItem("rememberMode");
+    if (savedRemember) {
+      setRemember(true);
+      if (savedMode === "mobile") {
+        setMobile(savedRemember);
+        setMode("mobile");
+      } else {
+        setEmail(savedRemember);
+        setMode("email");
+      }
+    }
+  }, []);
+
   const saveLogin = (data) => {
     const token = data.token || data.accessToken;
 
@@ -32,6 +48,9 @@ export default function Login() {
     if (remember) {
       localStorage.setItem("rememberLogin", mode === "email" ? email : mobile);
       localStorage.setItem("rememberMode", mode);
+    } else {
+      localStorage.removeItem("rememberLogin");
+      localStorage.removeItem("rememberMode");
     }
 
     const role = data.role || data.user?.role || "user";
@@ -156,6 +175,22 @@ export default function Login() {
     }
   };
 
+  // Social Login Handlers
+  const handleGoogleLogin = () => {
+    console.log("Google Login Clicked");
+    // 여기에 Google Login লজিক যুক্ত করতে পারেন
+  };
+
+  const handleFacebookLogin = () => {
+    console.log("Facebook Login Clicked");
+    // 여기에 Facebook Login লজিক যুক্ত করতে পারেন
+  };
+
+  const handleAppleLogin = () => {
+    console.log("Apple Login Clicked");
+    // 여기에 Apple Login লজিক যুক্ত করতে পারেন
+  };
+
   return (
     <div style={styles.page}>
 
@@ -192,12 +227,10 @@ export default function Login() {
           </h1>
 
          <div style={styles.tagline}>
-  <span style={styles.taglineLine}></span>
-
-  <p>Save Today, Secure Tomorrow</p>
-
-  <span style={styles.taglineLine}></span>
-</div>
+            <span style={styles.taglineLine}></span>
+            <p>Save Today, Secure Tomorrow</p>
+            <span style={styles.taglineLine}></span>
+          </div>
 
           <h2 style={styles.welcomeTitle}>Welcome Back!</h2>
           <p style={styles.welcomeSub}>
@@ -320,19 +353,20 @@ export default function Login() {
               Remember Me
             </label>
 
-           <button
-  type="button"
-  style={styles.forgot}
-  onClick={() => {
-    console.log("Forgot clicked");
-    navigate("/forgot-password");
-  }}
->
-  Forgot Password?
-</button>
+            <button
+              type="button"
+              style={styles.forgot}
+              onClick={() => {
+                console.log("Forgot clicked");
+                navigate("/forgot-password");
+              }}
+            >
+              Forgot Password?
+            </button>
           </div>
 
           <button
+            type="button"
             style={styles.loginBtn}
             onClick={handleLogin}
             disabled={loading}
@@ -350,9 +384,9 @@ export default function Login() {
 
           <div style={styles.socialRow}>
             <p>Login with</p>
-            <button type="button" style={styles.googleBtn}>G</button>
-            <button type="button" style={styles.facebookBtn}>f</button>
-            <button type="button" style={styles.appleBtn}></button>
+            <button type="button" style={styles.googleBtn} onClick={handleGoogleLogin}>G</button>
+            <button type="button" style={styles.facebookBtn} onClick={handleFacebookLogin}>f</button>
+            <button type="button" style={styles.appleBtn} onClick={handleAppleLogin}></button>
           </div>
 
         </div>
@@ -366,6 +400,7 @@ export default function Login() {
           </div>
 
           <button
+            type="button"
             style={styles.registerBtn}
             onClick={() => navigate("/register")}
           >
@@ -659,11 +694,11 @@ const styles = {
   },
 
   taglineLine: {
-  width: "60px",
-  height: "3px",
-  borderRadius: "10px",
-  background: "linear-gradient(135deg,#7c3aed,#ec4899)"
-},
+    width: "60px",
+    height: "3px",
+    borderRadius: "10px",
+    background: "linear-gradient(135deg,#7c3aed,#ec4899)"
+  },
 
   welcomeTitle: {
     margin: "25px 0 6px",
@@ -826,19 +861,20 @@ const styles = {
     gap: "12px",
     color: "#64748b",
     fontSize: "16px",
-    alignItems: "center"
+    alignItems: "center",
+    cursor: "pointer"
   },
 
   forgot: {
-  border: "none",
-  background: "transparent",
-  color: "#6d28d9",
-  fontSize: "16px",
-  fontWeight: "800",
-  cursor: "pointer",
-  position: "relative",
-  zIndex: 50
-},
+    border: "none",
+    background: "transparent",
+    color: "#6d28d9",
+    fontSize: "16px",
+    fontWeight: "800",
+    cursor: "pointer",
+    position: "relative",
+    zIndex: 50
+  },
 
   loginBtn: {
     marginTop: "30px",
@@ -910,7 +946,8 @@ const styles = {
     background: "white",
     color: "#ef4444",
     fontWeight: "900",
-    fontSize: "20px"
+    fontSize: "20px",
+    cursor: "pointer"
   },
 
   facebookBtn: {
@@ -921,7 +958,8 @@ const styles = {
     background: "#2563eb",
     color: "white",
     fontWeight: "900",
-    fontSize: "22px"
+    fontSize: "22px",
+    cursor: "pointer"
   },
 
   appleBtn: {
@@ -932,7 +970,8 @@ const styles = {
     background: "#111827",
     color: "white",
     fontWeight: "900",
-    fontSize: "22px"
+    fontSize: "22px",
+    cursor: "pointer"
   },
 
   registerCard: {
