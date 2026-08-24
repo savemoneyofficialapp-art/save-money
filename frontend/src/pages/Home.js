@@ -15,6 +15,9 @@ export default function Home() {
   const [latestUpdate, setLatestUpdate] = useState("No new announcement");
   const [loading, setLoading] = useState(true);
 
+  // 👇 ড্রয়ার (Sidebar) ওপেন/ক্লোজ স্টেট
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
   // 👇 পপআপ মোডালের স্টেট
   const [showOfferPopup, setShowOfferPopup] = useState(false);
 
@@ -372,6 +375,29 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
+      {/* 👇 SIDEBAR / DRAWER COMPONENT */}
+      {isDrawerOpen && (
+        <div style={styles.drawerOverlay} onClick={() => setIsDrawerOpen(false)}>
+          <div style={styles.drawerContainer} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.drawerHeader}>
+              <h3 style={styles.drawerLogoText}>Save Money</h3>
+              <button style={styles.drawerCloseBtn} onClick={() => setIsDrawerOpen(false)}>✕</button>
+            </div>
+            <div style={styles.drawerBody}>
+              <a 
+                href="/SAVE_MONEY_PRIVATE_LIMITED.pdf" 
+                download="SAVE_MONEY_PRIVATE_LIMITED.pdf"
+                style={styles.drawerPlanLink}
+                onClick={() => setIsDrawerOpen(false)}
+              >
+                <span>📁</span>
+                <span>PLAN</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 👇 PHOTO POPUP MODAL */}
       {showOfferPopup && (
         <div style={styles.popupOverlay}>
@@ -419,7 +445,10 @@ export default function Home() {
 
       {/* TOP HEADER */}
       <div style={styles.topHeader}>
-        <button style={styles.menuButton}>
+        <button 
+          style={styles.menuButton}
+          onClick={() => setIsDrawerOpen(true)}
+        >
           ☰
         </button>
 
@@ -934,6 +963,77 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
+  // 👇 Drawer Styles
+  drawerOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(2, 6, 23, 0.75)",
+    backdropFilter: "blur(6px)",
+    zIndex: 100002,
+    display: "flex",
+    justifyContent: "flex-start",
+    animation: "fadeIn 0.3s ease"
+  },
+  drawerContainer: {
+    background: "#0f172a",
+    width: "280px",
+    height: "100%",
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+    boxShadow: "5px 0 25px rgba(0,0,0,0.5)",
+    borderRight: "1px solid #1e293b"
+  },
+  drawerHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "25px",
+    borderBottom: "1px solid #1e293b",
+    paddingBottom: "15px"
+  },
+  drawerLogoText: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "900",
+    color: "#38bdf8"
+  },
+  drawerCloseBtn: {
+    background: "#1e293b",
+    border: "none",
+    color: "#ffffff",
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    fontSize: "14px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  drawerBody: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px"
+  },
+  drawerPlanLink: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: "12px 16px",
+    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+    color: "#ffffff",
+    borderRadius: "12px",
+    textDecoration: "none",
+    fontSize: "14px",
+    fontWeight: "800",
+    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)"
+  },
+
   popupOverlay: {
     position: "fixed",
     top: 0,
@@ -1629,6 +1729,10 @@ const keyframes = `
 @keyframes marquee {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 `;
 try {
