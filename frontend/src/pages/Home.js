@@ -977,6 +977,21 @@ function TrustMiniCard({ icon, title, subtitle }) {
   );
 }
 
+function BottomNavItem({ icon, title, active, onClick }) {
+  return (
+    <button
+      style={{
+        ...styles.bottomNavItem,
+        ...(active ? styles.bottomNavItemActive : {})
+      }}
+      onClick={onClick}
+    >
+      <span style={styles.bottomNavIcon}>{icon}</span>
+      <span style={styles.bottomNavText}>{title}</span>
+    </button>
+  );
+}
+
 const styles = {
   // 👇 Animated Drawer Styles
   drawerOverlay: {
