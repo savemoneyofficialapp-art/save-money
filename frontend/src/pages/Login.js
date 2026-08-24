@@ -16,18 +16,19 @@ export default function Login() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // পেজ লোড হওয়ার সময় Remember Me চেক করা থাকলে ডেটা রিকভার করবে
+  // পেজ লোড হওয়ার সময় Remember Me চেক করা থাকলে ডেটা রিকভার করে ফিল্ডে বসিয়ে দিবে
   useEffect(() => {
-    const savedRemember = localStorage.getItem("rememberLogin");
-    const savedMode = localStorage.getItem("rememberMode");
-    if (savedRemember) {
-      setRemember(true);
+    const savedRemember = localStorage.getItem("rememberMe") === "true";
+    const savedMode = localStorage.getItem("rememberMode") || "email";
+    const savedLogin = localStorage.getItem("rememberLogin") || "";
+
+    setRemember(savedRemember);
+    if (savedRemember && savedLogin) {
+      setMode(savedMode);
       if (savedMode === "mobile") {
-        setMobile(savedRemember);
-        setMode("mobile");
+        setMobile(savedLogin);
       } else {
-        setEmail(savedRemember);
-        setMode("email");
+        setEmail(savedLogin);
       }
     }
   }, []);
@@ -45,10 +46,13 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify(data.user));
     }
 
+    // Remember Me লজিক সঠিকভাবে হ্যান্ডেল করা
     if (remember) {
+      localStorage.setItem("rememberMe", "true");
       localStorage.setItem("rememberLogin", mode === "email" ? email : mobile);
       localStorage.setItem("rememberMode", mode);
     } else {
+      localStorage.removeItem("rememberMe");
       localStorage.removeItem("rememberLogin");
       localStorage.removeItem("rememberMode");
     }
@@ -175,20 +179,16 @@ export default function Login() {
     }
   };
 
-  // Social Login Handlers
   const handleGoogleLogin = () => {
     console.log("Google Login Clicked");
-    // 여기에 Google Login লজিক যুক্ত করতে পারেন
   };
 
   const handleFacebookLogin = () => {
     console.log("Facebook Login Clicked");
-    // 여기에 Facebook Login লজিক যুক্ত করতে পারেন
   };
 
   const handleAppleLogin = () => {
     console.log("Apple Login Clicked");
-    // 여기에 Apple Login লজিক যুক্ত করতে পারেন
   };
 
   return (
@@ -227,10 +227,10 @@ export default function Login() {
           </h1>
 
          <div style={styles.tagline}>
-            <span style={styles.taglineLine}></span>
-            <p>Save Today, Secure Tomorrow</p>
-            <span style={styles.taglineLine}></span>
-          </div>
+          <span style={styles.taglineLine}></span>
+          <p>Save Today, Secure Tomorrow</p>
+          <span style={styles.taglineLine}></span>
+        </div>
 
           <h2 style={styles.welcomeTitle}>Welcome Back!</h2>
           <p style={styles.welcomeSub}>
@@ -353,7 +353,7 @@ export default function Login() {
               Remember Me
             </label>
 
-            <button
+           <button
               type="button"
               style={styles.forgot}
               onClick={() => {
