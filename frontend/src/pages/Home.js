@@ -13,7 +13,7 @@ export default function Home() {
   const [user, setUser] = useState({});
   const [notificationCount, setNotificationCount] = useState(0);
   const [latestUpdate, setLatestUpdate] = useState("No new announcement");
-  const [latestUpdateText, setLatestUpdateText] = useState(""); // 👈 নতুন স্টেট যোগ করা হয়েছে
+  const [latestUpdateText, setLatestUpdateText] = useState("");
   const [loading, setLoading] = useState(true);
 
   // 👇 ড্রয়ার ওপেন/ক্লোজ স্টেট ও ডাউনলোডিং অ্যানিমেশন স্টেট
@@ -153,11 +153,18 @@ export default function Home() {
     loadLatestUpdate();
     registerPushNotification();
 
+    // 👇 প্রতি ১০ সেকেন্ড পর পর অটোমেটিক নতুন আপডেট চেক করবে
+    const interval = setInterval(() => {
+      loadLatestUpdate();
+    }, 10000);
+
     const flag = localStorage.getItem("showLoginPopup");
     if (flag === "true") {
       setShowOfferPopup(true);
       localStorage.removeItem("showLoginPopup");
     }
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadHome = async () => {
@@ -221,25 +228,27 @@ export default function Home() {
     }
   };
 
-  // Home.jsx এর ভেতরে
-const loadLatestUpdate = async () => {
-  try {
-    const res = await fetch(`${API}/latest-news`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: token
+  // 👇 লেটেস্ট আপডেট লোড করার সম্পূর্ণ আপগ্রেডেড ফাংশন
+  const loadLatestUpdate = async () => {
+    try {
+      const res = await fetch(`${API}/latest-news`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token
+        }
+      });
+      const data = await res.json();
+      if (data) {
+        const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
+        if (msg) {
+          setLatestUpdateText(msg);
+        }
       }
-    });
-    const data = await res.json();
-    if (data && data.message) {
-      setLatestUpdateText(data.message);
+    } catch (err) {
+      console.error("Failed to load news", err);
     }
-  } catch (err) {
-    console.error("Failed to load news", err);
-  }
-};
-
+  };
 
   const handleLogout = async () => {
     try {
