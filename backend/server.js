@@ -5457,38 +5457,55 @@ async (req, res) => {
 
 
 // server.js বা আপনার News Route-এ
+// ১. অ্যাডমিন থেকে আপডেট সেভ করার POST API
 app.post("/latest-news", async (req, res) => {
   try {
     const { message } = req.body;
+
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    // আগের মেসেজ থাকলে তা আপডেট করবে, না থাকলে নতুন তৈরি করবে
-    const news = await NewsModel.findOneAndUpdate(
+    // ডাটাবেজে আপডেট করা বা নতুন তৈরি করা
+    const updatedNews = await NewsModel.findOneAndUpdate(
       {},
       { message: message, updatedAt: new Date() },
-      { upsert: true, returnDocument: 'after' } // 'new: true' এর বদলে 'returnDocument: after' ব্যবহার করা হয়েছে
+      { upsert: true, returnDocument: 'after' }
     );
 
-    return res.status(200).json({ success: true, message: news.message });
+    return res.status(200).json({
+      success: true,
+      message: updatedNews.message,
+      latestUpdate: updatedNews.message,
+      announcement: updatedNews.message
+    });
   } catch (err) {
-    return res.status(500).json({ error: "Server Error" });
+    console.error("News Save Error:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
-// GET Request (যাতে ইউজার মেসেজটি দেখতে পায়)
+// ২. হোম পেজের জন্য GET API (সবার জন্য উন্মুক্ত)
 app.get("/latest-news", async (req, res) => {
   try {
     const news = await NewsModel.findOne().sort({ updatedAt: -1 });
-    return res.status(200).json({ 
+    
+    const text = news && news.message ? news.message : "No new announcement";
+
+    return res.status(200).json({
       success: true,
-      message: news ? news.message : "No new announcement" 
+      message: text,
+      latestUpdate: text,
+      announcement: text
     });
   } catch (err) {
-    return res.status(500).json({ error: "Failed to fetch news" });
+    return res.status(500).json({ 
+      message: "No new announcement",
+      latestUpdate: "No new announcement" 
+    });
   }
 });
+
 
 
 
