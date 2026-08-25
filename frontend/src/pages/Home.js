@@ -232,16 +232,22 @@ export default function Home() {
   const loadLatestUpdate = async () => {
   try {
     const res = await fetch(`${API}/latest-news`, {
-      method: "GET"
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
     });
     
     if (!res.ok) return;
 
     const data = await res.json();
     if (data) {
-      const msg = data.message || data.latestUpdate || (typeof data === 'string' ? data : "");
+      // ব্যাকএন্ড থেকে আসা মেসেজটি নিখুঁতভাবে রিসিভ করা
+      const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
+      
       if (msg) {
         setLatestUpdateText(msg);
+        setLatestUpdate(msg); // 👈 এই লাইনটি যুক্ত করলে ফলব্যাক টেক্সট ওভাররাইড হয়ে যাবে
       }
     }
   } catch (err) {
@@ -587,7 +593,10 @@ export default function Home() {
             <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "900", color: "#fff" }}>Latest Update</h3>
             
             <div style={styles.marqueeWrapper}>
-              <p style={styles.marqueeText}>{latestUpdateText || latestUpdate}</p>
+              <p style={styles.marqueeText}>
+  {latestUpdateText ? latestUpdateText : "No new announcement"}
+</p>
+
             </div>
           </div>
         </div>
