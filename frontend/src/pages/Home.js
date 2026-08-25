@@ -234,26 +234,28 @@ export default function Home() {
     const res = await fetch(`${API}/latest-news`, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json"
+        "Cache-Control": "no-cache" // যাতে ব্রাউজার পুরাতন নোটিশ ক্যাশ করে না রাখে
       }
     });
-    
+
     if (!res.ok) return;
 
     const data = await res.json();
+    
     if (data) {
-      // ব্যাকএন্ড থেকে আসা মেসেজটি নিখুঁতভাবে রিসিভ করা
+      // ব্যাকএন্ডের যে কোনো ফিল্ড থেকে টেক্সট তুলে আনা
       const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
-      
-      if (msg) {
+
+      if (msg && msg.trim() !== "") {
         setLatestUpdateText(msg);
-        setLatestUpdate(msg); // 👈 এই লাইনটি যুক্ত করলে ফলব্যাক টেক্সট ওভাররাইড হয়ে যাবে
+        setLatestUpdate(msg);
       }
     }
   } catch (err) {
-    console.error("Failed to load news", err);
+    console.error("Failed to fetch latest news:", err);
   }
 };
+
 
   const handleLogout = async () => {
     try {
