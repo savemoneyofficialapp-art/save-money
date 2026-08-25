@@ -5456,38 +5456,40 @@ async (req, res) => {
 });
 
 
-// আপনার আগের রাউটটি এভাবেই রাখুন
+// server.js বা আপনার News Route-এ
 app.post("/latest-news", async (req, res) => {
   try {
     const { message } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
 
-    // { returnDocument: 'after' } ব্যবহার করা হয়েছে ওয়ার্নিং সরানোর জন্য
-    const updatedNews = await NewsModel.findOneAndUpdate(
-      {}, 
-      { message: message }, 
-      { upsert: true, returnDocument: 'after' }
+    // আগের মেসেজ থাকলে তা আপডেট করবে, না থাকলে নতুন তৈরি করবে
+    const news = await NewsModel.findOneAndUpdate(
+      {},
+      { message: message, updatedAt: new Date() },
+      { upsert: true, returnDocument: 'after' } // 'new: true' এর বদলে 'returnDocument: after' ব্যবহার করা হয়েছে
     );
 
-    return res.status(200).json({ 
-      success: true, 
-      message: updatedNews.message,
-      latestUpdate: updatedNews.message 
-    });
+    return res.status(200).json({ success: true, message: news.message });
   } catch (err) {
     return res.status(500).json({ error: "Server Error" });
   }
 });
 
-
-// হোম পেজে নিউজ দেখানোর জন্য এই GET রাউটটি ব্যবহার করুন
+// GET Request (যাতে ইউজার মেসেজটি দেখতে পায়)
 app.get("/latest-news", async (req, res) => {
   try {
-    const data = await News.findOne({});
-    res.json({ message: data ? data.message : "" });
-  } catch (error) {
-    res.status(500).json({ message: "" });
+    const news = await NewsModel.findOne().sort({ updatedAt: -1 });
+    return res.status(200).json({ 
+      message: news ? news.message : "No new announcement",
+      latestUpdate: news ? news.message : "No new announcement"
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to fetch news" });
   }
 });
+
 
 
 
