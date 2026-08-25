@@ -5457,16 +5457,27 @@ async (req, res) => {
 
 
 // আপনার আগের রাউটটি এভাবেই রাখুন
-app.post("/update-latest-news", async (req, res) => {
+app.post("/latest-news", async (req, res) => {
   try {
     const { message } = req.body;
-    // ডাটাবেসে আপডেট সেভ করা
-    await News.findOneAndUpdate({}, { message }, { upsert: true, new: true });
-    res.json({ success: true, message: "Latest update saved!" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Error saving update" });
+
+    // { returnDocument: 'after' } ব্যবহার করা হয়েছে ওয়ার্নিং সরানোর জন্য
+    const updatedNews = await NewsModel.findOneAndUpdate(
+      {}, 
+      { message: message }, 
+      { upsert: true, returnDocument: 'after' }
+    );
+
+    return res.status(200).json({ 
+      success: true, 
+      message: updatedNews.message,
+      latestUpdate: updatedNews.message 
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Server Error" });
   }
 });
+
 
 // হোম পেজে নিউজ দেখানোর জন্য এই GET রাউটটি ব্যবহার করুন
 app.get("/latest-news", async (req, res) => {
