@@ -5482,13 +5482,14 @@ app.get("/latest-news", async (req, res) => {
   try {
     const news = await NewsModel.findOne().sort({ updatedAt: -1 });
     return res.status(200).json({ 
-      message: news ? news.message : "No new announcement",
-      latestUpdate: news ? news.message : "No new announcement"
+      success: true,
+      message: news ? news.message : "No new announcement" 
     });
   } catch (err) {
     return res.status(500).json({ error: "Failed to fetch news" });
   }
 });
+
 
 
 
