@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { API } from "../config";
+import { API, apiGet } from "../config"; // 👈 apiGet ইমপোর্ট যুক্ত করা হয়েছে
 
 export default function Home() {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ export default function Home() {
   const [user, setUser] = useState({});
   const [notificationCount, setNotificationCount] = useState(0);
   const [latestUpdate, setLatestUpdate] = useState("No new announcement");
+  const [latestUpdateText, setLatestUpdateText] = useState(""); // 👈 নতুন স্টেট যোগ করা হয়েছে
   const [loading, setLoading] = useState(true);
 
   // 👇 ড্রয়ার ওপেন/ক্লোজ স্টেট ও ডাউনলোডিং অ্যানিমেশন স্টেট
@@ -221,21 +222,20 @@ export default function Home() {
   };
 
   // Home.jsx এর ভেতরে
-const loadLatestUpdate = async () => {
-  try {
-    const res = await apiGet("/latest-news");
-    if (res && res.message) {
-      setLatestUpdateText(res.message);
+  const loadLatestUpdate = async () => {
+    try {
+      const res = await apiGet("/latest-news");
+      if (res && res.message) {
+        setLatestUpdateText(res.message);
+      }
+    } catch (err) {
+      console.error("Failed to load news", err);
     }
-  } catch (err) {
-    console.error("Failed to load news", err);
-  }
-};
+  };
 
   useEffect(() => {
-  loadLatestUpdate();
-}, []);
-
+    loadLatestUpdate();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -575,7 +575,7 @@ const loadLatestUpdate = async () => {
             <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "900", color: "#fff" }}>Latest Update</h3>
             
             <div style={styles.marqueeWrapper}>
-              <p style={styles.marqueeText}>{latestUpdate}</p>
+              <p style={styles.marqueeText}>{latestUpdateText || latestUpdate}</p>
             </div>
           </div>
         </div>
