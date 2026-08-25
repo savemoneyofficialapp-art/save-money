@@ -220,22 +220,18 @@ export default function Home() {
     }
   };
 
-  const loadLatestUpdate = async () => {
-    try {
-      const res = await fetch(`${API}/latest-news`, {
-        method: "GET",
-        headers: {
-          authorization: token
-        }
-      });
-      const data = await res.json();
-      if (data && data.message) {
-        setLatestUpdate(data.message);
-      }
-    } catch (err) {
-      console.log("Latest update fetch error:", err);
+  // Home.jsx এর ভেতরে
+const loadLatestUpdate = async () => {
+  try {
+    const res = await apiGet("/latest-news");
+    if (res && res.message) {
+      setLatestUpdateText(res.message);
     }
-  };
+  } catch (err) {
+    console.error("Failed to load news", err);
+  }
+};
+
 
   const handleLogout = async () => {
     try {
@@ -1431,15 +1427,13 @@ const styles = {
     width: "100%",
     overflow: "hidden",
     whiteSpace: "nowrap",
-    boxSizing: "border-box",
-    marginTop: "4px"
+    boxSizing: "border-box"
   },
 
   marqueeText: {
     display: "inline-block",
     paddingLeft: "100%",
-    animation: "marquee 12s linear infinite",
-    margin: 0,
+    animation: "marquee 15s linear infinite",
     fontSize: "13px",
     fontWeight: "700",
     color: "#fff"
