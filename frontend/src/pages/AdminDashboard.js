@@ -241,21 +241,22 @@ export default function AdminDashboard() {
 
   // Updated Handler for sending App Latest Update / /latest-news synced
   const handleSendLatestUpdate = async () => {
-    if (!latestUpdateText.trim()) {
-      toast.info("Please enter latest update text");
-      return;
-    }
+  if (!latestUpdateText.trim()) {
+    toast.info("Please enter latest update text");
+    return;
+  }
 
-    const d = await apiPost("/broadcast", { 
-      title: "App Latest Update", 
-      message: latestUpdateText 
-    });
+  // আপনার দেওয়া আসল API রাউটটি এখানে কল করা হয়েছে
+  const d = await apiPost("/update-latest-news", { 
+    message: latestUpdateText 
+  });
 
-    if (!d) return;
+  if (!d) return;
 
-    toast.success("Latest update sent successfully to Home page!");
-    setLatestUpdateText("");
-  };
+  toast.success("Latest update saved successfully!");
+  setLatestUpdateText("");
+};
+
 
   const fileUrl = (file) => {
     if (!file) return "#";
