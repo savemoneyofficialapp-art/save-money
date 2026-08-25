@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { API, apiGet } from "../config"; // 👈 apiGet ইমপোর্ট যুক্ত করা হয়েছে
+import { API } from "../config";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -222,20 +222,24 @@ export default function Home() {
   };
 
   // Home.jsx এর ভেতরে
-  const loadLatestUpdate = async () => {
-    try {
-      const res = await apiGet("/latest-news");
-      if (res && res.message) {
-        setLatestUpdateText(res.message);
+const loadLatestUpdate = async () => {
+  try {
+    const res = await fetch(`${API}/latest-news`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: token
       }
-    } catch (err) {
-      console.error("Failed to load news", err);
+    });
+    const data = await res.json();
+    if (data && data.message) {
+      setLatestUpdateText(data.message);
     }
-  };
+  } catch (err) {
+    console.error("Failed to load news", err);
+  }
+};
 
-  useEffect(() => {
-    loadLatestUpdate();
-  }, []);
 
   const handleLogout = async () => {
     try {
