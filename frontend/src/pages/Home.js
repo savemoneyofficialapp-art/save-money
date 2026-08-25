@@ -232,6 +232,10 @@ const loadLatestUpdate = async () => {
   }
 };
 
+  useEffect(() => {
+  loadLatestUpdate();
+}, []);
+
 
   const handleLogout = async () => {
     try {
