@@ -230,25 +230,27 @@ export default function Home() {
 
   // 👇 লেটেস্ট আপডেট লোড করার সম্পূর্ণ আপগ্রেডেড ফাংশন
   const loadLatestUpdate = async () => {
-    try {
-      const res = await fetch(`${API}/latest-news`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token
-        }
-      });
-      const data = await res.json();
-      if (data) {
-        const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
-        if (msg) {
-          setLatestUpdateText(msg);
-        }
+  try {
+    const res = await fetch(`${API}/latest-news`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: token
       }
-    } catch (err) {
-      console.error("Failed to load news", err);
+    });
+    const data = await res.json();
+    if (data) {
+      // ব্যাকএন্ড থেকে যে কোনো ফরম্যাটেই আসুক না কেন তা সেট করবে
+      const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
+      if (msg) {
+        setLatestUpdateText(msg);
+      }
     }
-  };
+  } catch (err) {
+    console.error("Failed to load news", err);
+  }
+};
+
 
   const handleLogout = async () => {
     try {
