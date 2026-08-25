@@ -232,16 +232,14 @@ export default function Home() {
   const loadLatestUpdate = async () => {
   try {
     const res = await fetch(`${API}/latest-news`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: token
-      }
+      method: "GET"
     });
+    
+    if (!res.ok) return;
+
     const data = await res.json();
     if (data) {
-      // ব্যাকএন্ড থেকে যে কোনো ফরম্যাটেই আসুক না কেন তা সেট করবে
-      const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
+      const msg = data.message || data.latestUpdate || (typeof data === 'string' ? data : "");
       if (msg) {
         setLatestUpdateText(msg);
       }
@@ -250,7 +248,6 @@ export default function Home() {
     console.error("Failed to load news", err);
   }
 };
-
 
   const handleLogout = async () => {
     try {
