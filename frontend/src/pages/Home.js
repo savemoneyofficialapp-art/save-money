@@ -112,6 +112,7 @@ export default function Home() {
     if (isDownloadingPlan) return;
     setIsDownloadingPlan(true);
 
+    // কৃত্রিম ডিলে বা ডাউনলোড ট্রিগার
     setTimeout(() => {
       const link = document.createElement("a");
       link.href = "/SAVE_MONEY_PRIVATE_LIMITED.pdf";
@@ -121,7 +122,7 @@ export default function Home() {
       document.body.removeChild(link);
 
       setIsDownloadingPlan(false);
-    }, 1500);
+    }, 1500); // ১.৫ সেকেন্ড লোডিং অ্যানিমেশন দেখাবে
   };
 
   const handleDownloadImage = async (imageUrl) => {
@@ -152,6 +153,7 @@ export default function Home() {
     loadLatestUpdate();
     registerPushNotification();
 
+    // 👇 প্রতি ১০ সেকেন্ড পর পর অটোমেটিক নতুন আপডেট চেক করবে
     const interval = setInterval(() => {
       loadLatestUpdate();
     }, 10000);
@@ -226,31 +228,34 @@ export default function Home() {
     }
   };
 
+  // 👇 লেটেস্ট আপডেট লোড করার সম্পূর্ণ আপগ্রেডেড ফাংশন
   const loadLatestUpdate = async () => {
-    try {
-      const res = await fetch(`${API}/latest-news`, {
-        method: "GET",
-        headers: {
-          "Cache-Control": "no-cache"
-        }
-      });
-
-      if (!res.ok) return;
-
-      const data = await res.json();
-      
-      if (data) {
-        const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
-
-        if (msg && msg.trim() !== "") {
-          setLatestUpdateText(msg);
-          setLatestUpdate(msg);
-        }
+  try {
+    const res = await fetch(`${API}/latest-news`, {
+      method: "GET",
+      headers: {
+        "Cache-Control": "no-cache" // যাতে ব্রাউজার পুরাতন নোটিশ ক্যাশ করে না রাখে
       }
-    } catch (err) {
-      console.error("Failed to fetch latest news:", err);
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    
+    if (data) {
+      // ব্যাকএন্ডের যে কোনো ফিল্ড থেকে টেক্সট তুলে আনা
+      const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
+
+      if (msg && msg.trim() !== "") {
+        setLatestUpdateText(msg);
+        setLatestUpdate(msg);
+      }
     }
-  };
+  } catch (err) {
+    console.error("Failed to fetch latest news:", err);
+  }
+};
+
 
   const handleLogout = async () => {
     try {
@@ -403,15 +408,6 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
-      {/* 👇 FLOATING RAKHI ANIMATION ELEMENTS */}
-      <div style={styles.rakhiContainer}>
-        <span style={{ ...styles.floatingRakhi, left: "10%", animationDuration: "7s", animationDelay: "0s" }}>🪢</span>
-        <span style={{ ...styles.floatingRakhi, left: "30%", animationDuration: "9s", animationDelay: "2s" }}>🌸</span>
-        <span style={{ ...styles.floatingRakhi, left: "50%", animationDuration: "6s", animationDelay: "1s" }}>🪔</span>
-        <span style={{ ...styles.floatingRakhi, left: "70%", animationDuration: "8s", animationDelay: "3s" }}>🪢</span>
-        <span style={{ ...styles.floatingRakhi, left: "85%", animationDuration: "10s", animationDelay: "0.5s" }}>✨</span>
-      </div>
-
       {/* 👇 ANIMATED SIDEBAR / DRAWER */}
       <div style={{
         ...styles.drawerOverlay,
@@ -439,6 +435,7 @@ export default function Home() {
           </div>
 
           <div style={styles.drawerBody}>
+            {/* 👇 সুন্দর প্ল্যান ডাউনলোড বোতাম উইথ প্রোগ্রেস অ্যানিমেশন */}
             <button 
               style={{
                 ...styles.drawerPlanBtn,
@@ -574,15 +571,46 @@ export default function Home() {
           </p>
         </div>
 
-        {/* 👇 RAKSHA BANDHAN ANIMATED BANNER (MARKED AREA) */}
-        <div style={styles.rakshaBandhanBanner}>
-          <div style={styles.rakshaGlow}></div>
-          <span style={styles.rakshaIconLeft}>🪢</span>
-          <div style={styles.rakshaTextWrapper}>
-            <h2 style={styles.rakshaTitle}>HAPPY</h2>
-            <h3 style={styles.rakshaSubtitle}>RAKSHA BANDHAN</h3>
-          </div>
-          <span style={styles.rakshaIconRight}>✨</span>
+        {/* 👇 HAPPY RAKSHA BANDHAN WITH LIGHT REFLECT ANIMATION */}
+        <div style={styles.rakshaBandhanWrapper}>
+          <div style={styles.lightReflectShine}></div>
+          <svg viewBox="0 0 280 120" style={styles.rakhiSvg}>
+            {/* Upper & Lower Connecting Strings */}
+            <path d="M 60,60 C 90,30 200,20 255,45 Z" fill="none" stroke="#f6ad55" strokeWidth="2.5" />
+            <path d="M 60,60 C 90,100 160,110 255,45" fill="none" stroke="#f6ad55" strokeWidth="2.5" />
+            
+            {/* Tassels */}
+            <path d="M 245,47 Q 260,35 270,30 Q 258,40 272,43 Z" fill="#e53e3e" />
+            <path d="M 245,47 Q 255,55 265,60 Q 255,52 263,48 Z" fill="#e53e3e" />
+            
+            {/* Rakhi Flower Symbol */}
+            <g transform="translate(60,60)">
+              {[...Array(12)].map((_, i) => (
+                <circle
+                  key={i}
+                  cx={26 * Math.cos((i * 30 * Math.PI) / 180)}
+                  cy={26 * Math.sin((i * 30 * Math.PI) / 180)}
+                  r="5"
+                  fill="#e53e3e"
+                />
+              ))}
+              <circle cx="0" cy="0" r="23" fill="#e53e3e" />
+              <circle cx="0" cy="0" r="16" fill="#ffffff" />
+              <circle cx="0" cy="0" r="12" fill="#1a365d" />
+              <circle cx="0" cy="0" r="7" fill="#63b3ed" />
+            </g>
+
+            {/* Typography */}
+            <text x="76" y="32" fill="#ffffff" fontSize="13" fontWeight="bold" fontFamily="sans-serif" letterSpacing="2">
+              HAPPY
+            </text>
+            <text x="76" y="62" fill="#fc8181" fontSize="23" fontWeight="900" fontFamily="serif">
+              Raksha
+            </text>
+            <text x="76" y="90" fill="#fc8181" fontSize="23" fontWeight="900" fontFamily="serif">
+              Bandhan
+            </text>
+          </svg>
         </div>
 
         <div style={styles.heroWalletCard}>
@@ -610,8 +638,9 @@ export default function Home() {
             
             <div style={styles.marqueeWrapper}>
               <p style={styles.marqueeText}>
-                {latestUpdateText ? latestUpdateText : "No new announcement"}
-              </p>
+  {latestUpdateText ? latestUpdateText : "No new announcement"}
+</p>
+
             </div>
           </div>
         </div>
@@ -1029,81 +1058,41 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // 👇 Raksha Bandhan Floating Element Styles
-  rakhiContainer: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    pointerEvents: "none",
-    zIndex: 9999,
-    overflow: "hidden"
-  },
-  floatingRakhi: {
-    position: "absolute",
-    bottom: "-50px",
-    fontSize: "24px",
-    opacity: 0.5,
-    animationName: "floatUpRakhi",
-    animationTimingFunction: "linear",
-    animationIterationCount: "infinite"
-  },
-
-  // 👇 Raksha Bandhan Banner Styles (Marked Area)
-  rakshaBandhanBanner: {
+  // 👇 Raksha Bandhan Banner & Light Reflect Styles
+  rakshaBandhanWrapper: {
     position: "relative",
-    flex: 1,
+    flex: 1.2,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "8px 12px",
+    height: "100px",
+    margin: "0 8px",
     borderRadius: "16px",
-    background: "linear-gradient(135deg, rgba(255, 183, 3, 0.2), rgba(255, 0, 110, 0.25))",
-    border: "1px solid rgba(255, 215, 0, 0.6)",
-    boxShadow: "0 0 15px rgba(255, 0, 110, 0.3)",
     overflow: "hidden",
-    zIndex: 2,
-    margin: "0 6px"
-  },
-  rakshaGlow: {
-    position: "absolute",
-    inset: 0,
-    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
-    animation: "rakshaPulse 2.5s infinite"
-  },
-  rakshaIconLeft: {
-    fontSize: "20px",
-    marginRight: "6px",
-    animation: "bounceRakhi 2s infinite"
-  },
-  rakshaIconRight: {
-    fontSize: "18px",
-    marginLeft: "6px",
-    animation: "bounceRakhi 2s infinite 1s"
-  },
-  rakshaTextWrapper: {
-    textAlign: "center",
+    background: "rgba(0, 0, 0, 0.25)",
+    border: "1px solid rgba(254, 215, 170, 0.25)",
     zIndex: 2
   },
-  rakshaTitle: {
-    margin: 0,
-    fontSize: "12px",
-    fontWeight: "900",
-    color: "#ffd700",
-    letterSpacing: "1px",
-    textShadow: "0 0 8px rgba(255, 215, 0, 0.7)"
+  rakhiSvg: {
+    width: "100%",
+    height: "100%",
+    maxHeight: "95px",
+    objectFit: "contain"
   },
-  rakshaSubtitle: {
-    margin: "2px 0 0",
-    fontSize: "14px",
-    fontWeight: "900",
-    color: "#ff007f",
-    letterSpacing: "1px",
-    textShadow: "0 0 10px rgba(255, 0, 127, 0.8)",
-    animation: "rakshaTextGlow 1.5s ease-in-out infinite alternate"
+  lightReflectShine: {
+    position: "absolute",
+    top: 0,
+    left: "-100%",
+    width: "60%",
+    height: "100%",
+    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+    transform: "skewX(-25deg)",
+    animation: "lightReflect 3s infinite",
+    pointerEvents: "none",
+    zIndex: 3
   },
 
+  // 👇 Animated Drawer Styles
   drawerOverlay: {
     position: "fixed",
     top: 0,
@@ -1901,34 +1890,16 @@ const styles = {
   }
 };
 
-// 👇 Keyframe Animations for Marquee, Floating Rakhis, & Glows
 const styleSheet = document.styleSheets[0];
 const keyframes = `
 @keyframes marquee {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
 }
-
-@keyframes floatUpRakhi {
-  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-  20% { opacity: 0.6; }
-  80% { opacity: 0.6; }
-  100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-}
-
-@keyframes rakshaPulse {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-@keyframes bounceRakhi {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-3px) scale(1.1); }
-}
-
-@keyframes rakshaTextGlow {
-  from { text-shadow: 0 0 5px #ff007f, 0 0 10px #ff007f; }
-  to { text-shadow: 0 0 12px #ff007f, 0 0 20px #ff007f, 0 0 30px #ffd700; }
+@keyframes lightReflect {
+  0% { left: -100%; }
+  20% { left: 200%; }
+  100% { left: 200%; }
 }
 `;
 try {
