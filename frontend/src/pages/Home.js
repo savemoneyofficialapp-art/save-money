@@ -112,6 +112,7 @@ export default function Home() {
     if (isDownloadingPlan) return;
     setIsDownloadingPlan(true);
 
+    // কৃত্রিম ডিলে বা ডাউনলোড ট্রিগার
     setTimeout(() => {
       const link = document.createElement("a");
       link.href = "/SAVE_MONEY_PRIVATE_LIMITED.pdf";
@@ -121,7 +122,7 @@ export default function Home() {
       document.body.removeChild(link);
 
       setIsDownloadingPlan(false);
-    }, 1500);
+    }, 1500); // ১.৫ সেকেন্ড লোডিং অ্যানিমেশন দেখাবে
   };
 
   const handleDownloadImage = async (imageUrl) => {
@@ -152,6 +153,7 @@ export default function Home() {
     loadLatestUpdate();
     registerPushNotification();
 
+    // 👇 প্রতি ১০ সেকেন্ড পর পর অটোমেটিক নতুন আপডেট চেক করবে
     const interval = setInterval(() => {
       loadLatestUpdate();
     }, 10000);
@@ -226,31 +228,34 @@ export default function Home() {
     }
   };
 
+  // 👇 লেটেস্ট আপডেট লোড করার সম্পূর্ণ আপগ্রেডেড ফাংশন
   const loadLatestUpdate = async () => {
-    try {
-      const res = await fetch(`${API}/latest-news`, {
-        method: "GET",
-        headers: {
-          "Cache-Control": "no-cache"
-        }
-      });
-
-      if (!res.ok) return;
-
-      const data = await res.json();
-      
-      if (data) {
-        const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
-
-        if (msg && msg.trim() !== "") {
-          setLatestUpdateText(msg);
-          setLatestUpdate(msg);
-        }
+  try {
+    const res = await fetch(`${API}/latest-news`, {
+      method: "GET",
+      headers: {
+        "Cache-Control": "no-cache" // যাতে ব্রাউজার পুরাতন নোটিশ ক্যাশ করে না রাখে
       }
-    } catch (err) {
-      console.error("Failed to fetch latest news:", err);
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    
+    if (data) {
+      // ব্যাকএন্ডের যে কোনো ফিল্ড থেকে টেক্সট তুলে আনা
+      const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
+
+      if (msg && msg.trim() !== "") {
+        setLatestUpdateText(msg);
+        setLatestUpdate(msg);
+      }
     }
-  };
+  } catch (err) {
+    console.error("Failed to fetch latest news:", err);
+  }
+};
+
 
   const handleLogout = async () => {
     try {
@@ -342,6 +347,7 @@ export default function Home() {
       clearInterval(intervalId);
       window.removeEventListener("mousemove", resetTimer);
       window.removeEventListener("keydown", resetTimer);
+      window.removeEventListener("click", resetTimer);
       window.removeEventListener("scroll", resetTimer);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
@@ -429,6 +435,7 @@ export default function Home() {
           </div>
 
           <div style={styles.drawerBody}>
+            {/* 👇 সুন্দর প্ল্যান ডাউনলোড বোতাম উইথ প্রোগ্রেস অ্যানিমেশন */}
             <button 
               style={{
                 ...styles.drawerPlanBtn,
@@ -491,50 +498,39 @@ export default function Home() {
         </div>
       )}
 
-      {/* TOP HEADER WITH RAKSHA BANDHAN BANNER (Exact screen recording style) */}
+      {/* TOP HEADER */}
       <div style={styles.topHeader}>
-        <div style={styles.headerLeftGroup}>
-          <button 
-            style={styles.menuButton}
-            onClick={() => setIsDrawerOpen(true)}
-          >
-            ☰
-          </button>
+        <button 
+          style={styles.menuButton}
+          onClick={() => setIsDrawerOpen(true)}
+        >
+          ☰
+        </button>
 
-          {/* 👇 RAKSHA BANDHAN FESTIVE BADGE / LOGO */}
-          <div style={styles.rakshaBandhanBadge}>
-            <div style={styles.rakhiGraphic}>
-              <span style={styles.rakhiIcon}>🏮</span>
-              <span style={styles.rakhiThread}>🏵️</span>
-            </div>
-            <div style={styles.rakhiTextGroup}>
-              <span style={styles.rakhiTagline}>HAPPY</span>
-              <span style={styles.rakhiTitle}>Raksha Bandhan</span>
-            </div>
-          </div>
-        </div>
+        <h2 style={styles.headerTitle}>
+          Welcome, {name}
+        </h2>
 
-        <div style={styles.headerRightGroup}>
-          <button
-            style={styles.notificationButton}
-            onClick={() => go("/notifications")}
-          >
-            <span>🔔</span>
+        <button
+          style={styles.notificationButton}
+          onClick={() => go("/notifications")}
+        >
+          <span>🔔</span>
 
-            {notificationCount > 0 && (
-              <small style={styles.notificationBadge}>
-                {notificationCount}
-              </small>
-            )}
-          </button>
+          {notificationCount > 0 && (
+            <small style={styles.notificationBadge}>
+              {notificationCount}
+            </small>
+          )}
+        </button>
 
-          <button
-            style={styles.logoutBtn}
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </div>
+        <button
+          style={styles.logoutBtn}
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+
       </div>
 
       {/* HERO PROFILE + WALLET */}
@@ -575,6 +571,19 @@ export default function Home() {
           </p>
         </div>
 
+        {/* 👇 RAKSHA BANDHAN ANIMATED BANNER (চিহ্নিত স্থানে যুক্ত করা হয়েছে) */}
+        <div 
+          style={styles.rakhiBannerWrapper}
+          onClick={() => go("/invest-now")}
+        >
+          <div style={styles.rakhiGlowEffect}></div>
+          <div style={styles.rakhiIconAnim}>📿</div>
+          <div style={styles.rakhiTextContainer}>
+            <div style={styles.rakhiTitle}>Rakhi Special</div>
+            <div style={styles.rakhiSubtitle}>Exclusive Offer 🎁</div>
+          </div>
+        </div>
+
         <div style={styles.heroWalletCard}>
           <p>Total Wallet</p>
 
@@ -600,8 +609,9 @@ export default function Home() {
             
             <div style={styles.marqueeWrapper}>
               <p style={styles.marqueeText}>
-                {latestUpdateText ? latestUpdateText : "No new announcement"}
-              </p>
+  {latestUpdateText ? latestUpdateText : "No new announcement"}
+</p>
+
             </div>
           </div>
         </div>
@@ -1019,6 +1029,58 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
+  // 👇 Raksha Bandhan Animated Banner Styles
+  rakhiBannerWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "8px 14px",
+    background: "linear-gradient(135deg, #ff007a 0%, #7928ca 50%, #ff4d4d 100%)",
+    borderRadius: "16px",
+    border: "1.5px solid #ffcc00",
+    boxShadow: "0 0 18px rgba(255, 0, 122, 0.5)",
+    cursor: "pointer",
+    zIndex: 2,
+    overflow: "hidden",
+    animation: "rakhiPulse 2s infinite ease-in-out"
+  },
+  rakhiGlowEffect: {
+    position: "absolute",
+    top: "-50%",
+    left: "-50%",
+    width: "200%",
+    height: "200%",
+    background: "radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%)",
+    animation: "rakhiShimmer 3s infinite linear",
+    pointerEvents: "none"
+  },
+  rakhiIconAnim: {
+    fontSize: "22px",
+    animation: "rakhiBounce 1.5s infinite ease-in-out",
+    zIndex: 2
+  },
+  rakhiTextContainer: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    zIndex: 2
+  },
+  rakhiTitle: {
+    fontSize: "13px",
+    fontWeight: "900",
+    color: "#ffffff",
+    letterSpacing: "0.5px",
+    textShadow: "0 1px 3px rgba(0,0,0,0.4)"
+  },
+  rakhiSubtitle: {
+    fontSize: "10px",
+    fontWeight: "800",
+    color: "#ffea00",
+    textShadow: "0 1px 2px rgba(0,0,0,0.3)"
+  },
+
+  // 👇 Animated Drawer Styles
   drawerOverlay: {
     position: "fixed",
     top: 0,
@@ -1265,98 +1327,35 @@ const styles = {
   },
 
   topHeader: {
-    height: "70px",
+    height: "64px",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: "6px"
-  },
-
-  headerLeftGroup: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px"
-  },
-
-  headerRightGroup: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px"
+    justifyContent: "space-between"
   },
 
   menuButton: {
     background: "transparent",
     border: "none",
     color: "white",
-    fontSize: "28px",
+    fontSize: "30px",
     cursor: "pointer"
   },
 
-  /* 👇 Raksha Bandhan Festive Top Left Styling */
-  rakshaBandhanBadge: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    background: "linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(245, 158, 11, 0.25))",
-    padding: "4px 10px 4px 6px",
-    borderRadius: "25px",
-    border: "1px solid rgba(251, 191, 36, 0.5)",
-    boxShadow: "0 0 12px rgba(245, 158, 11, 0.3)"
-  },
-
-  rakhiGraphic: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #dc2626, #b91c1c)",
-    border: "1.5px solid #fde047",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.4)"
-  },
-
-  rakhiIcon: {
-    fontSize: "14px"
-  },
-
-  rakhiThread: {
-    position: "absolute",
-    fontSize: "10px",
-    top: "-3px",
-    right: "-3px"
-  },
-
-  rakhiTextGroup: {
-    display: "flex",
-    flexDirection: "column"
-  },
-
-  rakhiTagline: {
-    fontSize: "9px",
-    fontWeight: "900",
-    color: "#fde047",
-    letterSpacing: "0.8px",
-    lineHeight: "10px"
-  },
-
-  rakhiTitle: {
-    fontSize: "12px",
-    fontWeight: "900",
-    color: "#ffffff",
-    lineHeight: "14px"
+  headerTitle: {
+    margin: 0,
+    fontSize: "19px",
+    fontWeight: "800"
   },
 
   logoutBtn: {
-    height: "38px",
-    padding: "0 14px",
+    height: "42px",
+    padding: "0 18px",
     border: "none",
-    borderRadius: "12px",
+    borderRadius: "14px",
     background: "linear-gradient(135deg,#ef4444,#dc2626)",
     color: "white",
     fontWeight: "800",
-    fontSize: "13px",
+    fontSize: "14px",
     boxShadow: "0 4px 14px rgba(239,68,68,0.35)",
     cursor: "pointer"
   },
@@ -1366,7 +1365,7 @@ const styles = {
     background: "transparent",
     border: "none",
     color: "white",
-    fontSize: "24px",
+    fontSize: "25px",
     cursor: "pointer"
   },
 
@@ -1884,6 +1883,22 @@ const keyframes = `
 @keyframes marquee {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
+}
+
+@keyframes rakhiPulse {
+  0% { transform: scale(1); boxShadow: 0 0 12px rgba(255, 0, 122, 0.4); }
+  50% { transform: scale(1.05); boxShadow: 0 0 22px rgba(255, 204, 0, 0.8); }
+  100% { transform: scale(1); boxShadow: 0 0 12px rgba(255, 0, 122, 0.4); }
+}
+
+@keyframes rakhiShimmer {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes rakhiBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 `;
 try {
