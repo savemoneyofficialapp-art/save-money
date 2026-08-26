@@ -571,46 +571,18 @@ export default function Home() {
           </p>
         </div>
 
-        {/* 👇 HAPPY RAKSHA BANDHAN WITH LIGHT REFLECT ANIMATION */}
-        <div style={styles.rakshaBandhanWrapper}>
-          <div style={styles.lightReflectShine}></div>
-          <svg viewBox="0 0 280 120" style={styles.rakhiSvg}>
-            {/* Upper & Lower Connecting Strings */}
-            <path d="M 60,60 C 90,30 200,20 255,45 Z" fill="none" stroke="#f6ad55" strokeWidth="2.5" />
-            <path d="M 60,60 C 90,100 160,110 255,45" fill="none" stroke="#f6ad55" strokeWidth="2.5" />
-            
-            {/* Tassels */}
-            <path d="M 245,47 Q 260,35 270,30 Q 258,40 272,43 Z" fill="#e53e3e" />
-            <path d="M 245,47 Q 255,55 265,60 Q 255,52 263,48 Z" fill="#e53e3e" />
-            
-            {/* Rakhi Flower Symbol */}
-            <g transform="translate(60,60)">
-              {[...Array(12)].map((_, i) => (
-                <circle
-                  key={i}
-                  cx={26 * Math.cos((i * 30 * Math.PI) / 180)}
-                  cy={26 * Math.sin((i * 30 * Math.PI) / 180)}
-                  r="5"
-                  fill="#e53e3e"
-                />
-              ))}
-              <circle cx="0" cy="0" r="23" fill="#e53e3e" />
-              <circle cx="0" cy="0" r="16" fill="#ffffff" />
-              <circle cx="0" cy="0" r="12" fill="#1a365d" />
-              <circle cx="0" cy="0" r="7" fill="#63b3ed" />
-            </g>
-
-            {/* Typography */}
-            <text x="76" y="32" fill="#ffffff" fontSize="13" fontWeight="bold" fontFamily="sans-serif" letterSpacing="2">
-              HAPPY
-            </text>
-            <text x="76" y="62" fill="#fc8181" fontSize="23" fontWeight="900" fontFamily="serif">
-              Raksha
-            </text>
-            <text x="76" y="90" fill="#fc8181" fontSize="23" fontWeight="900" fontFamily="serif">
-              Bandhan
-            </text>
-          </svg>
+        {/* 👇 HAPPY RAKSHA BANDHAN BRANDING BANNER */}
+        <div style={styles.rakhiBannerWrapper}>
+          <div style={styles.rakhiCircle}>
+            <div style={styles.rakhiInnerCircle}>
+              <div style={styles.rakhiDot}></div>
+            </div>
+          </div>
+          <div style={styles.rakhiTextContainer}>
+            <span style={styles.rakhiHappyText}>HAPPY</span>
+            <span style={styles.rakhiMainText}>Raksha</span>
+            <span style={styles.rakhiMainText}>Bandhan</span>
+          </div>
         </div>
 
         <div style={styles.heroWalletCard}>
@@ -1058,38 +1030,66 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // 👇 Raksha Bandhan Banner & Light Reflect Styles
-  rakshaBandhanWrapper: {
-    position: "relative",
-    flex: 1.2,
+  // 👇 Raksha Bandhan Custom UI Styles
+  rakhiBannerWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    background: "rgba(15, 23, 42, 0.65)",
+    padding: "8px 14px",
+    borderRadius: "16px",
+    border: "1.5px solid rgba(244, 63, 94, 0.4)",
+    boxShadow: "0 4px 15px rgba(244, 63, 94, 0.2)",
+    zIndex: 2,
+    margin: "0 6px"
+  },
+  rakhiCircle: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #e11d48, #be123c)",
+    border: "2px dashed #fde047",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    height: "100px",
-    margin: "0 8px",
-    borderRadius: "16px",
-    overflow: "hidden",
-    background: "rgba(0, 0, 0, 0.25)",
-    border: "1px solid rgba(254, 215, 170, 0.25)",
-    zIndex: 2
+    boxShadow: "0 0 10px rgba(225, 29, 72, 0.6)",
+    flexShrink: 0
   },
-  rakhiSvg: {
-    width: "100%",
-    height: "100%",
-    maxHeight: "95px",
-    objectFit: "contain"
+  rakhiInnerCircle: {
+    width: "18px",
+    height: "18px",
+    borderRadius: "50%",
+    background: "#ffffff",
+    border: "2px solid #2563eb",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
   },
-  lightReflectShine: {
-    position: "absolute",
-    top: 0,
-    left: "-100%",
-    width: "60%",
-    height: "100%",
-    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
-    transform: "skewX(-25deg)",
-    animation: "lightReflect 3s infinite",
-    pointerEvents: "none",
-    zIndex: 3
+  rakhiDot: {
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%",
+    background: "#0284c7"
+  },
+  rakhiTextContainer: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center"
+  },
+  rakhiHappyText: {
+    fontSize: "10px",
+    fontWeight: "900",
+    letterSpacing: "2.5px",
+    color: "#ffffff",
+    lineHeight: "1"
+  },
+  rakhiMainText: {
+    fontSize: "17px",
+    fontWeight: "900",
+    color: "#fb7185",
+    fontFamily: "'Georgia', 'Cambria', serif",
+    textShadow: "0 2px 8px rgba(251, 113, 133, 0.5)",
+    lineHeight: "1.1"
   },
 
   // 👇 Animated Drawer Styles
@@ -1895,11 +1895,6 @@ const keyframes = `
 @keyframes marquee {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
-}
-@keyframes lightReflect {
-  0% { left: -100%; }
-  20% { left: 200%; }
-  100% { left: 200%; }
 }
 `;
 try {
