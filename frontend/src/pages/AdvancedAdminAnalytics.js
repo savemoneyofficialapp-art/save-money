@@ -130,7 +130,7 @@ export default function AdvancedAdminAnalytics() {
 
         <div style={{ ...styles.card, borderLeft: "4px solid #ec4899", gridColumn: "span 2" }}>
           <p style={styles.cardLabel}>💼 Total Ecosystem Wallet Balance</p>
-          <h2 style={{ ...styles.cardValue, color: "#f472b6" }}>₹{Number(data.totalWallet || 0).toLocaleString("en-IN")}</h2>
+          <h2 style={{ ...styles.cardValue, color: "#f472b6" }}>₹{Number(data.balance || 0).toLocaleString("en-IN")}</h2>
         </div>
 
         <div style={{ ...styles.card, borderLeft: "4px solid #06b6d4", gridColumn: "span 2" }}>
@@ -267,7 +267,7 @@ export default function AdvancedAdminAnalytics() {
               <span style={{ ...styles.miniStateBadge, color: u.activeStatus === "active" ? "#22c55e" : "#94a3b8" }}>
                 Status: {u.activeStatus || "inactive"}
               </span>
-              <b style={{ color: "#22c55e", fontSize: "14px", marginTop: "4px" }}>₹{Number(u.wallet || 0).toLocaleString("en-IN")}</b>
+              <b style={{ color: "#22c55e", fontSize: "14px", marginTop: "4px" }}>₹{Number(u.balance || 0).toLocaleString("en-IN")}</b>
             </div>
           </div>
         ))}
