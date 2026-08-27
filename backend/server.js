@@ -5347,8 +5347,7 @@ app.post("/admin/wallet-adjust", async (req, res) => {
 
     const oldBalance = Number(
       user.balance ??
-      user.wallet ??
-      user.walletBalance ??
+      
       0
     );
 
@@ -5366,8 +5365,7 @@ app.post("/admin/wallet-adjust", async (req, res) => {
     }
 
     user.balance = newBalance;
-    user.wallet = newBalance;
-    user.walletBalance = newBalance;
+    
 
     await user.save();
 
@@ -5395,9 +5393,7 @@ title: type === "add" ? "Admin Credit" : "Admin Debit",      description: reason
     return res.json({
       success: true,
       msg: "Wallet updated",
-      wallet: newBalance,
       balance: newBalance,
-      walletBalance: newBalance
     });
   } catch (err) {
     console.log("ADMIN WALLET ADJUST ERROR:", err);
