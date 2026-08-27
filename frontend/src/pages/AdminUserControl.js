@@ -203,7 +203,7 @@ export default function AdminUserControl() {
               <div style={styles.infoMetaGrid}>
                 <p style={styles.metaText}><b>📞 Contact:</b> {u.mobile || "N/A"}</p>
                 <p style={styles.metaText}><b>🆔 Wallet ID:</b> <span style={{ fontFamily: "monospace", color: "#fbbf24" }}>{u.walletId || "N/A"}</span></p>
-                <p style={styles.metaText}><b>💰 Live Balance:</b> <span style={{ color: "#22c55e", fontWeight: "800" }}>₹{Number(u.wallet || 0).toLocaleString("en-IN")}</span></p>
+                <p style={styles.metaText}><b>💰 Live Balance:</b> <span style={{ color: "#22c55e", fontWeight: "800" }}>₹{Number(u.balance || 0).toLocaleString("en-IN")}</span></p>
                 <p style={styles.metaText}><b>🪪 KYC Status:</b> <span style={{ color: u.kycStatus === "approved" ? "#22c55e" : "#fbbf24" }}>{u.kycStatus || "Not Submitted"}</span></p>
                 <p style={styles.metaText}><b>⚡ Active State:</b> {u.activeStatus || "Inactive"}</p>
               </div>
