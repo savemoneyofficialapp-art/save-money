@@ -437,7 +437,7 @@ async function payRoyaltyBonus(newInvestorEmail, amount) {
 
   const royalty = Math.floor(amount * 0.01);
 
-  rb.wallet += royalty;
+  rb.balance += royalty;
 
   rb.thisMonthTurnover += amount;
 
@@ -450,7 +450,7 @@ async function payRoyaltyBonus(newInvestorEmail, amount) {
 
   await rb.save();
 
-  owner.wallet += royalty;
+  owner.balance += royalty;
 
   await owner.save();
 }
@@ -1757,9 +1757,6 @@ if (
 
     const walletBalance = Number(
       user.balance ??
-      user.wallet ??
-      user.walletBalance ??
-      user.amount ??
       0
     );
 
@@ -1774,8 +1771,6 @@ if (
     const newBalance = walletBalance - investAmount;
 
     user.balance = newBalance;
-    user.wallet = newBalance;
-    user.walletBalance = newBalance;
 
     await user.save();
 
@@ -2055,7 +2050,7 @@ app.post("/renew-invest", async (req, res) => {
     );
 
     // ইউজারের ওয়ালেট ব্যালেন্স চেক (যে কোনো একটি ভেরিয়েবলে ব্যালেন্স থাকলেই যেন কাজ করে)
-    const balance = Number(user.balance || user.wallet || user.walletBalance || 0);
+    const balance = Number(user.balance || 0);
 
     if (balance < renewAmount) {
       return res.json({
@@ -2066,8 +2061,6 @@ app.post("/renew-invest", async (req, res) => {
 
     // ইউজারের সবকটি ওয়ালেট ফিল্ড থেকে ব্যালেন্স মাইনাস করা
     user.balance = Math.max(0, Number(user.balance || 0) - renewAmount);
-    user.wallet = Math.max(0, Number(user.wallet || 0) - renewAmount);
-    user.walletBalance = Math.max(0, Number(user.walletBalance || 0) - renewAmount);
     
     user.activeStatus = "Active";
     user.status = "Active";
@@ -2436,7 +2429,7 @@ app.post("/wallet-data", auth, async (req, res) => {
     }).sort({ date: -1 });
 
     res.json({
-      wallet: Number(user.balance || user.wallet || 0),
+      wallet: Number(user.balance || 0),
       referralIncome: Number(user.referralIncome || 0),
       performanceIncome: Number(user.performanceIncome || 0),
       teamIncome: Number(user.teamIncome || 0),
@@ -2834,7 +2827,7 @@ app.post("/user-dashboard-chart", auth, async (req, res) => {
 
     res.json({
 
-      wallet: user.wallet || 0,
+      wallet: user.balance || 0,
 
       totalBonus,
 
@@ -2930,7 +2923,7 @@ app.post('/wallet-transfer', async (req, res) => {
             });
         }
 
-        const senderBalance = Number(sender.balance || sender.wallet || 0);
+        const senderBalance = Number(sender.balance || 0);
 
         // ১. চেক করা হচ্ছে কমপক্ষে ২০০০ টাকার কম কিনা
         if (senderBalance < 2000) {
@@ -2952,7 +2945,7 @@ app.post('/wallet-transfer', async (req, res) => {
 
         // ব্যালেন্স আপডেট
         sender.balance = senderBalance - transferAmount;
-        receiver.balance = Number(receiver.balance || receiver.wallet || 0) + transferAmount;
+        receiver.balance = Number(receiver.balance || 0) + transferAmount;
 
         await sender.save();
         await receiver.save();
@@ -3698,9 +3691,6 @@ app.post("/dashboard", auth, async (req, res) => {
       mobile: user.mobile,
       wallet: Number(
         user.balance ??
-        user.wallet ??
-        user.walletBalance ??
-        user.amount ??
         0
       ),
       walletId: user.walletId,
@@ -3841,7 +3831,7 @@ app.get("/admin-analytics", auth, adminAuth, async (req, res) => {
       $group: {
         _id: null,
         total: {
-          $sum: "$wallet"
+          $sum: "$balance"
         }
       }
     }
@@ -4596,7 +4586,7 @@ app.get("/admin-advanced-analytics", auth, adminAuth, async (req, res) => {
     const bannedUsers = await User.countDocuments({ banned: true });
 
     const totalWallet = await User.aggregate([
-      { $group: { _id: null, total: { $sum: "$wallet" } } }
+      { $group: { _id: null, total: { $sum: "$balance" } } }
     ]);
 
     const totalInvestment = await Investment.aggregate([
@@ -4670,7 +4660,7 @@ app.get("/admin-advanced-analytics", auth, adminAuth, async (req, res) => {
       kycApproved,
       kycPending,
       bannedUsers,
-      totalWallet: totalWallet[0]?.total || 0,
+      totalWallet: totalBalance[0]?.total || 0,
       totalInvestment: totalInvestment[0]?.total || 0,
       topEarners,
       topReferrers,
@@ -4945,7 +4935,7 @@ async (req, res) => {
     email: reqData.email
   });
 
-  user.wallet += Number(reqData.amount);
+  user.balance += Number(reqData.amount);
 
   await user.save();
 
@@ -5223,13 +5213,11 @@ app.post("/admin/deposit-approve", auth, async (req, res) => {
     }  
 
     // ইউজারের ব্যালেন্স সেফলি আপডেট করা (আপনার বিদ্যমান লজিক ঠিক রাখা হয়েছে)
-    const oldBalance = Number(user.balance ?? user.wallet ?? user.walletBalance ?? 0);  
+    const oldBalance = Number(user.balance ?? 0);  
     const addAmount = Number(request.amount || 0);  
     const newBalance = oldBalance + addAmount;  
 
-    user.balance = newBalance;  
-    user.wallet = newBalance;  
-    user.walletBalance = newBalance;  
+    user.balance = newBalance;   
     await user.save();  
 
     // ডিপোজিট রিকোয়েস্টের স্ট্যাটাস পরিবর্তন
@@ -6711,132 +6699,6 @@ msg:"Server error"
 
 });
 
-app.post("/create-razorpay-order", async (req, res) => {
-  try {
-    const { email, amount } = req.body;
-    const addAmount = Number(amount);
-
-    if (!email || addAmount < 100) {
-      return res.json({ success: false, msg: "Minimum add cash ₹100" });
-    }
-
-    if (addAmount > 50000) {
-      return res.json({ success: false, msg: "Maximum add cash ₹50,000" });
-    }
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-
-    if (!user) {
-      return res.json({ success: false, msg: "User not found" });
-    }
-
-    const order = await razorpay.orders.create({
-      amount: addAmount * 100,
-      currency: "INR",
-      receipt: `wallet_${Date.now()}`
-    });
-
-    await WalletTransaction.create({
-      email: user.email,
-      walletId: user.walletId || user.referralCode || user._id.toString(),
-      type: "credit",
-      title: "Add Cash",
-      description: "Razorpay payment initiated",
-      amount: addAmount,
-      status: "Pending",
-      openingBalance: Number(user.balance || 0),
-      closingBalance: Number(user.balance || 0),
-      razorpayOrderId: order.id
-    });
-
-    res.json({
-      success: true,
-      key: process.env.RAZORPAY_KEY_ID,
-      order
-    });
-
-  } catch (err) {
-    console.log("RAZORPAY ORDER ERROR:", err);
-    res.status(500).json({ success: false, msg: "Order create failed" });
-  }
-});
-
-app.post("/verify-razorpay-payment", async (req, res) => {
-  try {
-    const {
-      email,
-      amount,
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature
-    } = req.body;
-
-    const alreadyPaid = await WalletTransaction.findOne({
-      razorpayPaymentId: razorpay_payment_id
-    });
-
-    if (alreadyPaid) {
-      return res.json({
-        success: false,
-        msg: "This payment is already credited"
-      });
-    }
-
-    const expectedSign = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(razorpay_order_id + "|" + razorpay_payment_id)
-      .digest("hex");
-
-    if (expectedSign !== razorpay_signature) {
-      await WalletTransaction.updateOne(
-        { razorpayOrderId: razorpay_order_id },
-        { $set: { status: "Failed", description: "Signature verification failed" } }
-      );
-
-      return res.json({ success: false, msg: "Payment verification failed" });
-    }
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-
-    if (!user) {
-      return res.json({ success: false, msg: "User not found" });
-    }
-
-    const openingBalance = Number(user.balance || 0);
-    const closingBalance = openingBalance + Number(amount);
-
-    user.balance = closingBalance;
-    await user.save();
-
-    await WalletTransaction.updateOne(
-      { razorpayOrderId: razorpay_order_id },
-      {
-        $set: {
-          status: "Success",
-          description: "Wallet cash added by Razorpay",
-          openingBalance,
-          closingBalance,
-          razorpayPaymentId: razorpay_payment_id,
-          razorpaySignature: razorpay_signature
-        }
-      }
-    );
-
-    res.json({
-      success: true,
-      msg: "Wallet balance added successfully"
-    });
-
-  } catch (err) {
-    console.log("RAZORPAY VERIFY ERROR:", err);
-
-    if (err.code === 11000) {
-      return res.json({ success: false, msg: "Duplicate payment detected" });
-    }
-
-    res.status(500).json({ success: false, msg: "Payment verify failed" });
-  }
-});
 
 app.post("/wallet-history", async (req, res) => {
   try {
@@ -7051,7 +6913,6 @@ app.post("/daily-reward", async (req, res) => {
     await reward.save();
 
     // ইউজারের ওয়ালেট ব্যালেন্স আপডেট
-    user.wallet = Number(user.wallet || 0) + amount;
     user.balance = Number(user.balance || 0) + amount;
     user.totalEarning = Number(user.totalEarning || 0) + amount;
 
@@ -7075,7 +6936,6 @@ app.post("/daily-reward", async (req, res) => {
         : "Reward Claimed Successfully",
       amount,
       special,
-      wallet: user.wallet,
       balance: user.balance,
       walletHistory,
       reward
@@ -9184,9 +9044,7 @@ cron.schedule("0 0 * * *", async () => {
             filter: { _id: user._id },
             update: {
               $inc: {
-                wallet: remainingBalance,
                 balance: remainingBalance,
-                walletBalance: remainingBalance
               },
               $set: { todayBalance: 0 } // টুডে ওয়ালেট ক্লিয়ার হয়ে যাবে
             }
@@ -9301,14 +9159,13 @@ cron.schedule("0 0 * * *",  async () => {
             );
 
             // ইউজারের অ্যাকাউন্ট ব্যালেন্স চেক
-            const balance = Number(user.balance || user.wallet || user.walletBalance || 0);
+            const balance = Number(user.balance || 0);
 
             // ব্যালেন্স পর্যাপ্ত থাকলে অ্যাকাউন্ট ডেবিট হবে
             if (balance >= renewAmount) {
                 // ইউজারের ওয়ালেট থেকে ব্যালেন্স মাইনাস করা
                 user.balance = Math.max(0, Number(user.balance || 0) - renewAmount);
-                user.wallet = Math.max(0, Number(user.wallet || 0) - renewAmount);
-                user.walletBalance = Math.max(0, Number(user.walletBalance || 0) - renewAmount);
+                
                 
                 user.activeStatus = "Active";
                 user.status = "Active";
