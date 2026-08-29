@@ -132,7 +132,7 @@ export default function Home() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "INDEPENDENCE_OFFER.png";
+      link.download = "OFFER_BANNAR.png";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -569,20 +569,6 @@ export default function Home() {
           <p style={styles.heroSubtitle}>
             Save Money, Secure Future 💚
           </p>
-        </div>
-
-        {/* 👇 HAPPY RAKSHA BANDHAN BRANDING BANNER */}
-        <div style={styles.rakhiBannerWrapper}>
-          <div style={styles.rakhiCircle}>
-            <div style={styles.rakhiInnerCircle}>
-              <div style={styles.rakhiDot}></div>
-            </div>
-          </div>
-          <div style={styles.rakhiTextContainer}>
-            <span style={styles.rakhiHappyText}>HAPPY</span>
-            <span style={styles.rakhiMainText}>Raksha</span>
-            <span style={styles.rakhiMainText}>Bandhan</span>
-          </div>
         </div>
 
         <div style={styles.heroWalletCard}>
@@ -1030,68 +1016,6 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // 👇 Raksha Bandhan Custom UI Styles
-  rakhiBannerWrapper: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    background: "rgba(15, 23, 42, 0.65)",
-    padding: "8px 14px",
-    borderRadius: "16px",
-    border: "1.5px solid rgba(244, 63, 94, 0.4)",
-    boxShadow: "0 4px 15px rgba(244, 63, 94, 0.2)",
-    zIndex: 2,
-    margin: "0 6px"
-  },
-  rakhiCircle: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #e11d48, #be123c)",
-    border: "2px dashed #fde047",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 0 10px rgba(225, 29, 72, 0.6)",
-    flexShrink: 0
-  },
-  rakhiInnerCircle: {
-    width: "18px",
-    height: "18px",
-    borderRadius: "50%",
-    background: "#ffffff",
-    border: "2px solid #2563eb",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  rakhiDot: {
-    width: "8px",
-    height: "8px",
-    borderRadius: "50%",
-    background: "#0284c7"
-  },
-  rakhiTextContainer: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center"
-  },
-  rakhiHappyText: {
-    fontSize: "10px",
-    fontWeight: "900",
-    letterSpacing: "2.5px",
-    color: "#ffffff",
-    lineHeight: "1"
-  },
-  rakhiMainText: {
-    fontSize: "17px",
-    fontWeight: "900",
-    color: "#fb7185",
-    fontFamily: "'Georgia', 'Cambria', serif",
-    textShadow: "0 2px 8px rgba(251, 113, 133, 0.5)",
-    lineHeight: "1.1"
-  },
-
   // 👇 Animated Drawer Styles
   drawerOverlay: {
     position: "fixed",
