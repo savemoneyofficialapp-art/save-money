@@ -183,11 +183,6 @@ activeStatus: {
   unique: true
 },
 
-  wallet: {
-    type: Number,
-    default: 0
-  },
-
   monthlyDirects: {
   type: Number,
   default: 0
@@ -205,11 +200,6 @@ balance: {
 
 // এই দুটি ফিল্ড নতুন যোগ করুন 
 todayBalance: {
-  type: Number,
-  default: 0
-},
-
-walletBalance: {
   type: Number,
   default: 0
 },
