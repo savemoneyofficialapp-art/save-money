@@ -130,7 +130,7 @@ export default function AdvancedAdminAnalytics() {
 
         <div style={{ ...styles.card, borderLeft: "4px solid #ec4899", gridColumn: "span 2" }}>
           <p style={styles.cardLabel}>💼 Total Ecosystem Wallet Balance</p>
-          <h2 style={{ ...styles.cardValue, color: "#f472b6" }}>₹{Number(data.balance || 0).toLocaleString("en-IN")}</h2>
+          <h2 style={{ ...styles.cardValue, color: "#f472b6" }}>₹{Number(data.wallet || 0).toLocaleString("en-IN")}</h2>
         </div>
 
         <div style={{ ...styles.card, borderLeft: "4px solid #06b6d4", gridColumn: "span 2" }}>
