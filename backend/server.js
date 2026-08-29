@@ -4586,7 +4586,7 @@ app.get("/admin-advanced-analytics", auth, adminAuth, async (req, res) => {
     const bannedUsers = await User.countDocuments({ banned: true });
 
     const totalWallet = await User.aggregate([
-      { $group: { _id: null, total: { $sum: "$balance" } } }
+      { $group: { _id: null, total: { $sum: "$amount" } } }
     ]);
 
     const totalInvestment = await Investment.aggregate([
@@ -4660,7 +4660,7 @@ app.get("/admin-advanced-analytics", auth, adminAuth, async (req, res) => {
       kycApproved,
       kycPending,
       bannedUsers,
-      totalWallet: totalBalance[0]?.total || 0,
+      totalWallet: totalWallet[0]?.total || 0,
       totalInvestment: totalInvestment[0]?.total || 0,
       topEarners,
       topReferrers,
