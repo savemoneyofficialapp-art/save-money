@@ -415,7 +415,7 @@ export default function AdminDashboard() {
 
         <div style={styles.card}>
           <p style={styles.cardLabel}>Liquidity In Wallet</p>
-          <h2 style={{ ...styles.cardVal, color: "#eab308" }}>{money(data.totalWallet || 0)}</h2>
+          <h2 style={{ ...styles.cardVal, color: "#eab308" }}>{money(data.totalBalance || 0)}</h2>
         </div>
 
         <div style={styles.card}>
