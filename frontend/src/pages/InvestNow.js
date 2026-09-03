@@ -56,7 +56,7 @@ export default function InvestNow() {
       }
     } catch (err) {
       console.log("INVESTMENT SUMMARY ERROR:", err);
-    } fontally {
+    } finally {
       setLoading(false);
     }
   };
@@ -98,7 +98,7 @@ export default function InvestNow() {
           "Make a smart move and unlock upgraded growth opportunities.",
         icon: "rocket",
         button: "Upgrade Now",
-        onClick: () => navigate("/one-time") // এখানে এখন /one-time পেজে নেভিগেট করবে
+        onClick: () => navigate("/one-time")
       }
     ];
   }, [navigate]);
