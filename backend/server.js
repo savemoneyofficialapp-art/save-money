@@ -7366,6 +7366,60 @@ app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req
   }
 });
 
+app.get("/admin/onetime-cash-requests", async (req, res) => {
+  try {
+    const requests = await OneTimeCashModel.find({ status: "pending" }); // আপনার মডেল অনুযায়ী পরিবর্তন করুন
+    res.json({ success: true, requests });
+  } catch (err) {
+    res.json({ success: true, requests: [] });
+  }
+});
+
+// 2. Fetch OneTime Withdraw Requests
+app.get("/admin/onetime-withdraw-requests", async (req, res) => {
+  try {
+    const requests = await OneTimeWithdrawModel.find({ status: "Pending" });
+    res.json({ success: true, requests });
+  } catch (err) {
+    res.json({ success: true, requests: [] });
+  }
+});
+
+// 3. Fetch OneTime Investments
+app.get("/admin/onetime-investments", async (req, res) => {
+  try {
+    const investments = await OneTimeInvestmentModel.find();
+    res.json({ success: true, investments });
+  } catch (err) {
+    res.json({ success: true, investments: [] });
+  }
+});
+
+// 4. Adjust OneTime Wallet Balance
+app.post("/admin/onetime-adjust-wallet", async (req, res) => {
+  try {
+    const { email, amount, type, reason } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) return res.json({ success: false, msg: "User not found" });
+
+    const currentBal = Number(user.onetimeWallet || 0);
+    const adjustAmt = Number(amount);
+
+    if (type === "add") {
+      user.onetimeWallet = currentBal + adjustAmt;
+    } else {
+      user.onetimeWallet = Math.max(0, currentBal - adjustAmt);
+    }
+
+    await user.save();
+    res.json({ success: true, msg: `Wallet updated! New Balance: ₹${user.onetimeWallet}` });
+  } catch (err) {
+    res.json({ success: false, msg: "Server Error updating wallet" });
+  }
+});
+
+
     
 
 
