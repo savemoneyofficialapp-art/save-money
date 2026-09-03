@@ -38,6 +38,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const BankDetails = require("./models/BankDetails");
 const WithdrawRequest = require("./models/WithdrawRequest");
+const Withdrawal = require("./models/Withdrawal");
 const AutoWithdraw = require("./models/AutoWithdraw");
 const { P2PUser, P2PReview } = require("./models/p2p");
 const sendPushNotification = require("./utils/sendPush");
