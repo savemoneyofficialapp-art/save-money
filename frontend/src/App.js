@@ -46,6 +46,8 @@ import AdminUserControl from "./pages/AdminUserControl";
 import AboutCompany from "./pages/AboutCompany";
 
 import InvestNow from "./pages/InvestNow";
+import OneTime from "./pages/OneTime";
+
 
 import BankDetails from "./pages/BankDetails";
 import Withdraw from "./pages/Withdraw";
@@ -181,6 +183,15 @@ function App() {
           }
         />
 
+          <Route
+          path="/one-time"
+          element={
+            <ProtectedRoute>
+              <OneTime />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/my-investment"
           element={
@@ -311,6 +322,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
 
         {/* 🛠️ অ্যাডমিন রুটস */}
         <Route
