@@ -98,7 +98,7 @@ export default function InvestNow() {
           "Make a smart move and unlock upgraded growth opportunities.",
         icon: "rocket",
         button: "Upgrade Now",
-        onClick: comingSoon
+        onClick: () => navigate("/one-time")
       }
     ];
   }, []);
