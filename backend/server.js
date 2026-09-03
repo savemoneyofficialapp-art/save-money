@@ -1163,6 +1163,11 @@ const storage = new CloudinaryStorage({
       folder = "save-money/photo";
     }
 
+        // 🟢 নতুন যুক্ত করুন: স্ক্রিনশট আপলোডের জন্য ফোল্ডার
+    if (file.fieldname === "screenshot") {
+      folder = "save-money/screenshots";
+    }
+
     return {
       folder,
       allowed_formats: [
@@ -7319,6 +7324,45 @@ app.post("/api/onetime/withdraw", async (req, res) => {
     res.status(500).json({ message: "Server error during withdrawal" });
   }
 });
+
+               // ==================== DEPOSIT SCREENSHOT UPLOAD API ====================
+app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req, res) => {
+  try {
+    const { email, amount, transactionId } = req.body;
+
+    // Cloudinary থেকে ইমেজের ডাইরেক্ট URL পাওয়া যাবে req.file.path এ
+    const screenshotUrl = req.file ? req.file.path : "";
+
+    if (!email || !amount || !transactionId || !screenshotUrl) {
+      return res.status(400).json({ 
+        message: "Please fill all required fields and upload payment screenshot" 
+      });
+    }
+
+    // আপনার স্ক্রিনশটের Txn মডেলে ডাটা সেভ
+    const newTxn = new Txn({
+      email,
+      amount: Number(amount),
+      status: "Pending",
+      type: "Deposit",
+      date: new Date().toISOString().split("T")[0],
+      screenshot: screenshotUrl,
+      transactionId: transactionId
+    });
+
+    await newTxn.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Deposit proof uploaded successfully! Pending admin approval.",
+      data: newTxn
+    });
+  } catch (err) {
+    console.error("Deposit API Error:", err);
+    return res.status(500).json({ message: "Server error processing deposit request" });
+  }
+});
+
     
 
 
