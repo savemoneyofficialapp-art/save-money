@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { API } from "../config";
 
-export default function AdminOneTime() {
+export default function AdminDashboard() {
   const token = localStorage.getItem("token");
 
   const [data, setData] = useState(null);
@@ -241,20 +241,20 @@ export default function AdminOneTime() {
 
   // Updated Handler for sending App Latest Update / /latest-news synced
   const handleSendLatestUpdate = async () => {
-    if (!latestUpdateText.trim()) {
-      toast.info("Please enter latest update text");
-      return;
-    }
+  if (!latestUpdateText.trim()) {
+    toast.info("Please enter latest update text");
+    return;
+  }
 
-    const d = await apiPost("/update-latest-news", { 
-      message: latestUpdateText 
-    });
+  const d = await apiPost("/update-latest-news", { 
+    message: latestUpdateText 
+  });
 
-    if (!d) return;
+  if (!d) return;
 
-    toast.success("Latest update saved successfully!");
-    setLatestUpdateText("");
-  };
+  toast.success("Latest update saved successfully!");
+  setLatestUpdateText("");
+};
 
   const fileUrl = (file) => {
     if (!file) return "#";
@@ -387,6 +387,10 @@ export default function AdminOneTime() {
         </button>
         <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-addon")}>
           🧩 ADD ON
+        </button>
+        {/* AOT Button Added Here */}
+        <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-onetime")}>
+          ⚡ AOT
         </button>
       </div>
 
@@ -924,7 +928,7 @@ const styles = {
   },
   quick: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
+    gridTemplateColumns: "repeat(2, 1fr)",
     gap: "14px",
     marginBottom: "35px"
   },
