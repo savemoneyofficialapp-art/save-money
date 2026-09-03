@@ -1,1319 +1,692 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { API } from "../config";
 
-export default function OneTime() {
-  const navigate = useNavigate();
+export default function OneTimeInvestment() {
+  const token = localStorage.getItem("token");
 
-  // 🔹 Telegram Link & Wallet Info Configuration
-  const TELEGRAM_LINK = "https://t.me/your_telegram_channel"; // আপনার টেলিগ্রাম লিংক দিন
-  const COMPANY_WALLET_ADDRESS = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"; // আপনার ওয়ালেট অ্যাড্রেস
+  // Independent One-Time Wallet & Investment States
+  const [oneTimeWallet, setOneTimeWallet] = useState(0);
+  const [totalInvested, setTotalInvested] = useState(0);
+  const [totalEarnings, setTotalEarnings] = useState(0);
 
-  // 🔹 Local Storage & Auth Data
-  const email = localStorage.getItem("email") || "";
-  const token = localStorage.getItem("token") || "";
-  const localName = localStorage.getItem("name") || "User";
+  // Form States
+  const [duration, setDuration] = useState("60 Days (1.5%)");
+  const [frequency, setFrequency] = useState("Daily");
+  const [amount, setAmount] = useState("5000");
 
-  // 🔹 State Management
-  const [user, setUser] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [notificationCount, setNotificationCount] = useState(0);
+  // Popups & Requests
+  const [addFundModal, setAddFundModal] = useState(false);
+  const [withdrawModal, setWithdrawModal] = useState(false);
 
-  // 🔹 Tenure / Duration Options (15 দিন, 30 দিন, 40 দিন, 60 দিন, 100 দিন)
-  const TENURE_OPTIONS = [
-    { days: 15, rate: 0.6, label: "15 Days (0.6%)" },
-    { days: 30, rate: 0.8, label: "30 Days (0.8%)" },
-    { days: 40, rate: 1.0, label: "40 Days (1.0%)" },
-    { days: 60, rate: 1.5, label: "60 Days (1.5%)" },
-    { days: 100, rate: 2.0, label: "100 Days (2.0%)" }
-  ];
+  // Add Fund Form Inputs
+  const [fundAmount, setFundAmount] = useState("");
+  const [txnId, setTxnId] = useState("");
+  const [screenshot, setScreenshot] = useState(null);
 
-  const [selectedTenure, setSelectedTenure] = useState(TENURE_OPTIONS[0]);
-  const [returnFrequency, setReturnFrequency] = useState("daily"); // 'daily' or 'weekly'
-  const [investmentAmount, setInvestmentAmount] = useState(10000); // Pre-filled amount
-
-  // 🔹 Modals State
-  const [showAmountModal, setShowAmountModal] = useState(false);
-  const [showAddFundModal, setShowAddFundModal] = useState(false);
-  const [showBankModal, setShowBankModal] = useState(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-
-  // 🔹 Bank & Withdraw States
+  // Withdraw Form Inputs
+  const [withdrawAmount, setWithdrawAmount] = useState("");
   const [bankDetails, setBankDetails] = useState({
+    accountHolderName: "",
     accountNumber: "",
-    ifscCode: "",
     bankName: "",
-    holderName: ""
+    ifscCode: "",
+    upiId: ""
   });
-  const [hasBankAdded, setHasBankAdded] = useState(false);
-  const [selectedWithdrawAmount, setSelectedWithdrawAmount] = useState(100);
-  const [hasWithdrawnToday, setHasWithdrawnToday] = useState(false);
 
-  // 🔹 History Data State
-  const [historyList, setHistoryList] = useState([]);
+  const [history, setHistory] = useState([]);
 
-  // 🔹 Toast Notification
-  const [toastMessage, setToastMessage] = useState("");
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(""), 3000);
-  };
-
-  // 🔹 Profile Photo Generator (Home.js এর সাথে ১০০% মিল রেখে)
-  const fileUrl = (file) => {
-    if (!file) return "";
-    if (file.startsWith("http")) return file;
-    return `${API}/uploads/${file}`;
-  };
-
-  const profilePhoto = useMemo(() => {
-    return fileUrl(
-      user?.photo ||
-      user?.profilePhoto ||
-      user?.selfiePhoto ||
-      ""
-    );
-  }, [user]);
-
-  // 🔹 Page Load & Data Fetching
   useEffect(() => {
-    window.scrollTo(0, 0);
-    loadDashboardData();
-    loadOneTimeNotifications();
-    loadInvestmentHistory();
+    fetchOneTimeData();
   }, []);
 
-  // 1️⃣ ড্যাশবোর্ড ও ইউজার ডেটা লোড
-  const loadDashboardData = async () => {
+  const safeJson = async (res) => {
     try {
-      setLoading(true);
-      const res = await fetch(`${API}/dashboard`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token
-        },
-        body: JSON.stringify({ email })
-      });
-      const data = await res.json();
-
-      if (data?.msg === "Token expired or invalid") {
-        localStorage.clear();
-        navigate("/login");
-        return;
-      }
-
-      setUser(data || {});
-      if (data?.bankDetails?.accountNumber) {
-        setHasBankAdded(true);
-        setBankDetails(data.bankDetails);
-      }
-      if (data?.hasWithdrawnToday) {
-        setHasWithdrawnToday(data.hasWithdrawnToday);
-      }
-    } catch (err) {
-      console.error("Dashboard Data Fetch Error:", err);
-    } finally {
-      setLoading(false);
+      return await res.json();
+    } catch {
+      return { msg: "Invalid server response" };
     }
   };
 
-  // 2️⃣ শুধু 'One Timer' নোটিফিকেশন ফিল্টার
-  const loadOneTimeNotifications = async () => {
+  const fetchOneTimeData = async () => {
     try {
-      const res = await fetch(`${API}/get-notifications`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token
-        },
-        body: JSON.stringify({ email })
+      const res = await fetch(`${API}/one-time/user-data`, {
+        headers: { authorization: token || "" }
       });
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        // শুধু One Time সংক্রান্ত নোটিফিকেশন ফিল্টার
-        const oneTimeNotifs = data.filter(
-          (n) => !n.read && (n.type === "onetime" || n.category === "onetime")
-        );
-        setNotificationCount(oneTimeNotifs.length);
+      const d = await safeJson(res);
+      if (d.success) {
+        setOneTimeWallet(d.oneTimeWalletBalance || 0);
+        setTotalInvested(d.totalInvested || 0);
+        setTotalEarnings(d.totalEarnings || 0);
+        setHistory(d.history || []);
       }
     } catch (err) {
-      console.error("Notification Fetch Error:", err);
+      console.error("Fetch One-Time Data Error:", err);
     }
   };
 
-  // 3️⃣ বিনিয়োগ ও ট্রানজেকশন হিস্ট্রি লোড
-  const loadInvestmentHistory = async () => {
-    try {
-      const res = await fetch(`${API}/one-time-history`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token
-        },
-        body: JSON.stringify({ email })
-      });
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setHistoryList(data);
-      }
-    } catch (err) {
-      console.error("History Fetch Error:", err);
-    }
-  };
-
-  // 🔹 রিটার্ন ও পে-আউট ক্যালকুলেশন
-  const calculations = useMemo(() => {
-    const amount = Number(investmentAmount) || 0;
-    const dailyRate = selectedTenure.rate / 100;
-
-    const dailyReturn = amount * dailyRate;
-    const weeklyReturn = dailyReturn * 7;
-    const totalReturn = dailyReturn * selectedTenure.days;
-    const totalPayout = amount + totalReturn;
-
-    return {
-      dailyReturn,
-      weeklyReturn,
-      totalReturn,
-      totalPayout
-    };
-  }, [investmentAmount, selectedTenure]);
-
-  // 🔹 ব্যাংক অ্যাকাউন্ট সেভ করা
-  const handleSaveBank = async (e) => {
+  // Submit Add Fund Request with Screenshot
+  const handleAddFundSubmit = async (e) => {
     e.preventDefault();
-    if (!bankDetails.accountNumber || !bankDetails.ifscCode || !bankDetails.holderName) {
-      showToast("সব ব্যাংক ডিটেইলস সঠিক ভাবে পূরণ করুন");
+    if (!fundAmount || !txnId || !screenshot) {
+      toast.error("Please fill all fields and upload payment screenshot.");
       return;
     }
+
+    const formData = new FormData();
+    formData.append("amount", fundAmount);
+    formData.append("txnId", txnId);
+    formData.append("screenshot", screenshot);
+
     try {
-      const res = await fetch(`${API}/save-bank-details`, {
+      const res = await fetch(`${API}/one-time/add-fund-request`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token
-        },
-        body: JSON.stringify({ email, ...bankDetails })
+        headers: { authorization: token || "" },
+        body: formData
       });
-      const data = await res.json();
-      if (res.ok) {
-        setHasBankAdded(true);
-        setShowBankModal(false);
-        setShowWithdrawModal(true);
-        showToast("ব্যাংক অ্যাকাউন্ট সফলভাবে যুক্ত হয়েছে!");
+      const d = await safeJson(res);
+      if (d.success) {
+        toast.success("Add fund request submitted! Pending admin approval.");
+        setAddFundModal(false);
+        setFundAmount("");
+        setTxnId("");
+        setScreenshot(null);
       } else {
-        showToast(data.message || "ব্যাংক অ্যাকাউন্ট যুক্ত করতে ব্যর্থ হয়েছে");
+        toast.error(d.msg || "Failed to submit add fund request.");
       }
     } catch (err) {
-      showToast("নেটওয়ার্ক সমস্যা! আবার চেষ্টা করুন");
+      toast.error("Network error submitting request.");
     }
   };
 
-  // 🔹 উইথড্র বাটনে ক্লিক হ্যান্ডলার
-  const handleWithdrawClick = () => {
-    if (!hasBankAdded) {
-      setShowBankModal(true);
-    } else {
-      setShowWithdrawModal(true);
-    }
-  };
-
-  // 🔹 উইথড্র রিকোয়েস্ট সাবমিট করা
-  const handleWithdrawSubmit = async () => {
-    const returnBalance = Number(user?.oneTimeReturnBalance || user?.wallet || 0);
-
-    if (hasWithdrawnToday) {
-      showToast("দিনে এক বারই উইথড্র করা সম্ভব। রিজেক্ট হলে পুনরায় চেষ্টা করতে পারবেন।");
+  // Submit Withdraw Request
+  const handleWithdrawSubmit = async (e) => {
+    e.preventDefault();
+    if (!withdrawAmount || Number(withdrawAmount) <= 0) {
+      toast.error("Enter a valid withdrawal amount.");
       return;
     }
-
-    if (selectedWithdrawAmount > returnBalance) {
-      showToast("আপনার ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই!");
+    if (Number(withdrawAmount) > oneTimeWallet) {
+      toast.error("Insufficient One-Time Wallet Balance.");
       return;
     }
 
     try {
-      const res = await fetch(`${API}/withdraw-request`, {
+      const res = await fetch(`${API}/one-time/withdraw-request`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          authorization: token
+          authorization: token || ""
         },
-        body: JSON.stringify({
-          email,
-          amount: selectedWithdrawAmount,
-          type: "onetime"
-        })
+        body: JSON.stringify({ amount: withdrawAmount, bankDetails })
       });
-      const data = await res.json();
-      if (res.ok) {
-        showToast("উইথড্র রিকোয়েস্ট সফল হয়েছে!");
-        setHasWithdrawnToday(true);
-        setShowWithdrawModal(false);
-        loadDashboardData();
-        loadInvestmentHistory();
+      const d = await safeJson(res);
+      if (d.success) {
+        toast.success("Withdrawal request submitted successfully!");
+        setWithdrawModal(false);
+        setWithdrawAmount("");
+        fetchOneTimeData();
       } else {
-        showToast(data.message || "উইথড্র রিকোয়েস্ট ব্যর্থ হয়েছে");
+        toast.error(d.msg || "Withdrawal request failed.");
       }
     } catch (err) {
-      showToast("সার্ভার ত্রুটি! কিছুক্ষণ পর চেষ্টা করুন");
+      toast.error("Network error submitting withdrawal.");
     }
   };
 
-  // 🔹 এড ফান্ড - টেলিগ্রাম রিডাইরেক্ট
-  const handleTelegramRedirect = () => {
-    const walletId = user?.walletId || user?._id || email;
-    const msg = `হ্যালো, আমি ফান্ড ডিপোজিট করেছি।\nআমার ওয়ালেট আইডি: ${walletId}`;
-    const fullUrl = `${TELEGRAM_LINK}?text=${encodeURIComponent(msg)}`;
-    window.open(fullUrl, "_blank");
-  };
-
-  if (loading) {
-    return (
-      <div style={styles.loadingContainer}>
-        <div style={styles.loadingSpinner}></div>
-        <p style={{ color: "#38bdf8", marginTop: "15px", fontWeight: "700" }}>
-          One Time Investment Dashboard লোড হচ্ছে...
-        </p>
-      </div>
-    );
-  }
+  const money = (n) =>
+    `₹${Number(n || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
 
   return (
-    <div style={styles.page}>
-      
-      {/* 🔔 TOAST MESSAGE */}
-      {toastMessage && <div style={styles.toast}>{toastMessage}</div>}
-
-      {/* 🟢 TOP HEADER */}
-      <header style={styles.topHeader}>
-        <div style={styles.brandContainer}>
-          <img
-            src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"}
-            alt="Logo"
-            style={styles.logoImg}
-            onError={(e) => { e.target.style.display = "none"; }}
-          />
-          <div>
-            <h1 style={styles.brandTitle}>SAVE MONEY</h1>
-            <p style={styles.brandSub}>Invest Small, Earn Big</p>
-          </div>
+    <div style={styles.pageContainer}>
+      {/* Top Welcome Header */}
+      <div style={styles.topHeader}>
+        <div>
+          <h2 style={styles.brandTitle}>SAVE MONEY</h2>
+          <p style={styles.brandSubtitle}>One-Time High Yield Investment</p>
         </div>
-
-        <div style={styles.headerWelcome}>
-          <h2 style={styles.welcomeText}>Welcome Back! 👋</h2>
-          <p style={styles.welcomeSub}>Invest smartly and secure your future with us</p>
+        <div style={styles.welcomePill}>
+          <span>Welcome Back! 👋</span>
         </div>
+      </div>
 
-        <div style={styles.headerRight}>
-          <button style={styles.notifBtn} onClick={() => navigate("/notifications")}>
-            🔔
-            {notificationCount > 0 && (
-              <span style={styles.notifBadge}>{notificationCount}</span>
-            )}
-          </button>
-          
-          <div style={styles.profileCircle}>
-            {profilePhoto ? (
-              <img src={profilePhoto} alt="User" style={styles.profileImg} />
-            ) : (
-              <span style={{ fontSize: "20px" }}>👤</span>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* 📊 SUMMARY CARDS (TOP 4 STATS) */}
-      <section style={styles.summaryCard}>
+      {/* Stats / Independent Wallet Banner */}
+      <div style={styles.statsBanner}>
         <div style={styles.statBox}>
-          <span style={styles.statIcon}>👛</span>
-          <span style={styles.statTitle}>Total Invested</span>
-          <strong style={styles.statValue}>
-            ₹ {(user?.totalOneTimeInvested || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-          </strong>
+          <p style={styles.statLabel}>Total Invested</p>
+          <h3 style={styles.statValue}>{money(totalInvested)}</h3>
         </div>
-
         <div style={styles.statBox}>
-          <span style={styles.statIcon}>📈</span>
-          <span style={styles.statTitle}>Total Returns</span>
-          <strong style={styles.statValue}>
-            ₹ {(user?.totalOneTimeReturns || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-          </strong>
+          <p style={styles.statLabel}>Total Earnings</p>
+          <h3 style={styles.statValue}>{money(totalEarnings)}</h3>
         </div>
-
-        <div style={styles.statBox}>
-          <span style={styles.statIcon}>💰</span>
-          <span style={styles.statTitle}>Total Earnings</span>
-          <strong style={styles.statValue}>
-            ₹ {(user?.totalOneTimeEarnings || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-          </strong>
+        <div style={{ ...styles.statBox, borderRight: "none" }}>
+          <p style={{ ...styles.statLabel, color: "#38bdf8" }}>One-Time Wallet</p>
+          <h3 style={{ ...styles.statValue, color: "#22c55e" }}>{money(oneTimeWallet)}</h3>
         </div>
+      </div>
 
-        <div style={styles.statBox}>
-          <span style={styles.statIcon}>💳</span>
-          <span style={styles.statTitle}>Available Balance</span>
-          <strong style={styles.statValue}>
-            ₹ {(user?.oneTimeReturnBalance || user?.wallet || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-          </strong>
-        </div>
-      </section>
-
-      {/* 🛠 MAIN INVESTMENT FORM CARD */}
-      <main style={styles.mainCard}>
-        <h2 style={styles.cardHeaderTitle}>Make a New Investment</h2>
+      {/* Make Investment Card */}
+      <div style={styles.card}>
+        <h3 style={styles.cardHeaderTitle}>Make a New Investment</h3>
 
         <div style={styles.formGrid}>
-          
-          {/* 1. Select Investment Duration */}
-          <div style={styles.fieldGroup}>
-            <label style={styles.label}>
-              📅 Select Investment Duration
-            </label>
+          <div>
+            <label style={styles.label}>Select Investment Duration</label>
             <select
               style={styles.selectInput}
-              value={selectedTenure.days}
-              onChange={(e) => {
-                const tenure = TENURE_OPTIONS.find((t) => t.days === Number(e.target.value));
-                if (tenure) setSelectedTenure(tenure);
-              }}
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
             >
-              {TENURE_OPTIONS.map((opt) => (
-                <option key={opt.days} value={opt.days}>
-                  {opt.label}
-                </option>
-              ))}
+              <option>60 Days (1.5% Daily)</option>
+              <option>90 Days (2.0% Daily)</option>
+              <option>120 Days (2.5% Daily)</option>
             </select>
           </div>
 
-          {/* 2. Choose Return Frequency */}
-          <div style={styles.fieldGroup}>
-            <label style={styles.label}>
-              🔄 Choose Return Frequency
-            </label>
-            <div style={styles.freqToggleGroup}>
+          <div>
+            <label style={styles.label}>Choose Return Frequency</label>
+            <div style={styles.freqGroup}>
               <button
-                type="button"
-                style={{
-                  ...styles.freqBtn,
-                  ...(returnFrequency === "daily" ? styles.freqBtnActive : {})
-                }}
-                onClick={() => setReturnFrequency("daily")}
+                style={frequency === "Daily" ? styles.freqBtnActive : styles.freqBtn}
+                onClick={() => setFrequency("Daily")}
               >
                 Daily
               </button>
               <button
-                type="button"
-                style={{
-                  ...styles.freqBtn,
-                  ...(returnFrequency === "weekly" ? styles.freqBtnActive : {})
-                }}
-                onClick={() => setReturnFrequency("weekly")}
+                style={frequency === "Weekly" ? styles.freqBtnActive : styles.freqBtn}
+                onClick={() => setFrequency("Weekly")}
               >
                 Weekly
               </button>
             </div>
           </div>
 
-          {/* 3. Enter Investment Amount */}
-          <div style={styles.fieldGroup}>
-            <label style={styles.label}>
-              💵 Enter Investment Amount
-            </label>
-            <div style={styles.amountInputWrap}>
-              <span style={styles.currencyPrefix}>₹</span>
-              <input
-                type="number"
-                style={styles.amountInput}
-                value={investmentAmount}
-                readOnly
-                onClick={() => setShowAmountModal(true)}
-              />
-            </div>
-            <small style={styles.inputHelp}>Click to select amount</small>
+          <div>
+            <label style={styles.label}>Enter Investment Amount</label>
+            <input
+              type="number"
+              style={styles.textInput}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
           </div>
         </div>
 
-        {/* 🟩 RETURN CARDS (CONDITIONAL DISPLAY) */}
-        <div style={styles.returnCardContainer}>
-          {returnFrequency === "daily" ? (
-            <div style={{ ...styles.returnBox, ...styles.returnBoxDaily }}>
-              <span style={styles.returnBoxTitle}>You Will Get Daily Return</span>
-              <h2 style={styles.returnBoxValue}>
-                ₹ {calculations.dailyReturn.toFixed(2)}
-              </h2>
-              <span style={styles.returnBoxNote}>(Approx.)</span>
-            </div>
-          ) : (
-            <div style={{ ...styles.returnBox, ...styles.returnBoxWeekly }}>
-              <span style={styles.returnBoxTitle}>You Will Get Weekly Return</span>
-              <h2 style={{ ...styles.returnBoxValue, color: "#2563eb" }}>
-                ₹ {calculations.weeklyReturn.toFixed(2)}
-              </h2>
-              <span style={styles.returnBoxNote}>(Approx.)</span>
-            </div>
-          )}
+        {/* Dynamic Return Calculation Preview */}
+        <div style={styles.returnPreviewBox}>
+          <p style={{ margin: 0, color: "#15803d", fontWeight: "600", fontSize: "14px" }}>
+            You Will Get Daily Return
+          </p>
+          <h2 style={{ margin: "5px 0", color: "#16a34a", fontSize: "28px" }}>
+            ₹{((Number(amount) * 1.5) / 100).toFixed(2)}
+          </h2>
+          <small style={{ color: "#65a30d" }}>(Approximate Estimate)</small>
         </div>
 
-        {/* 📋 BREAKDOWN STRIP */}
+        {/* Investment Breakdown Summary */}
         <div style={styles.breakdownGrid}>
-          <div style={styles.breakItem}>
-            <span style={styles.breakLabel}>Investment Amount</span>
-            <strong style={styles.breakVal}>₹ {Number(investmentAmount).toLocaleString("en-IN")}</strong>
+          <div>
+            <span>Investment Amount</span>
+            <b>₹{amount || 0}</b>
           </div>
-          <div style={styles.breakItem}>
-            <span style={styles.breakLabel}>Duration</span>
-            <strong style={styles.breakVal}>{selectedTenure.days} Days</strong>
+          <div>
+            <span>Duration</span>
+            <b>{duration}</b>
           </div>
-          <div style={styles.breakItem}>
-            <span style={styles.breakLabel}>Total Return (Approx.)</span>
-            <strong style={styles.breakVal}>₹ {calculations.totalReturn.toFixed(2)}</strong>
+          <div>
+            <span>Total Returns (Approx)</span>
+            <b>₹{(Number(amount) * 0.9).toFixed(2)}</b>
           </div>
-          <div style={styles.breakItem}>
-            <span style={styles.breakLabel}>Total Payout (Principal + Return)</span>
-            <strong style={styles.breakVal}>₹ {calculations.totalPayout.toFixed(2)}</strong>
+          <div>
+            <span>Total Payout</span>
+            <b>₹{(Number(amount) * 1.9).toFixed(2)}</b>
           </div>
         </div>
 
-        {/* 🔘 ACTION BUTTONS */}
-        <div style={styles.actionBtnGrid}>
-          <button
-            style={styles.addFundBtn}
-            onClick={() => setShowAddFundModal(true)}
-          >
-            <span style={{ fontSize: "20px" }}>➕</span> Add Invest
-            <br />
-            <small style={{ fontSize: "11px", fontWeight: "normal" }}>Invest More</small>
+        {/* Action Buttons */}
+        <div style={styles.actionRow}>
+          <button style={styles.addFundBtn} onClick={() => setAddFundModal(true)}>
+            ➕ Add Fund
           </button>
-
-          <button
-            style={styles.withdrawBtn}
-            onClick={handleWithdrawClick}
-          >
-            <span style={{ fontSize: "20px" }}>↗</span> Withdraw
-            <br />
-            <small style={{ fontSize: "11px", fontWeight: "normal" }}>Withdraw Funds</small>
+          <button style={styles.withdrawBtn} onClick={() => setWithdrawModal(true)}>
+            ↗ Withdraw
           </button>
         </div>
-      </main>
+      </div>
 
-      {/* 📜 INVESTMENT HISTORY TABLE */}
-      <section style={styles.historySection}>
-        <div style={styles.historyHeader}>
-          <h3 style={{ margin: 0, fontSize: "18px", color: "#0f172a" }}>Investment History</h3>
-          <span style={styles.viewAllText}>View All</span>
+      {/* Investment History Table */}
+      <div style={styles.card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={styles.cardHeaderTitle}>Investment History</h3>
+          <span style={{ color: "#22c55e", fontSize: "13px", cursor: "pointer", fontWeight: "bold" }}>View All</span>
         </div>
 
-        <div style={styles.tableWrapper}>
-          <table style={styles.table}>
-            <thead>
-              <tr style={styles.tableHeaderRow}>
-                <th style={styles.th}>Date</th>
-                <th style={styles.th}>Duration</th>
-                <th style={styles.th}>Invested Amount</th>
-                <th style={styles.th}>Return Frequency</th>
-                <th style={styles.th}>Status</th>
-                <th style={styles.th}>Maturity Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {historyList.length === 0 ? (
+        {history.length === 0 ? (
+          <p style={styles.emptyText}>No investment history available.</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={styles.table}>
+              <thead>
                 <tr>
-                  <td colSpan="6" style={styles.emptyTd}>
-                    No investment history available
-                  </td>
+                  <th>Date</th>
+                  <th>Duration</th>
+                  <th>Amount</th>
+                  <th>Frequency</th>
+                  <th>Status</th>
                 </tr>
-              ) : (
-                historyList.map((item, idx) => (
-                  <tr key={idx} style={styles.tableRow}>
-                    <td style={styles.td}>{item.date || "-"}</td>
-                    <td style={styles.td}>{item.duration || "-"}</td>
-                    <td style={styles.td}>₹ {Number(item.amount || 0).toLocaleString()}</td>
-                    <td style={styles.td}>
-                      <span
-                        style={{
-                          ...styles.badgeFrequency,
-                          background: item.frequency === "daily" ? "#dcfce7" : "#dbeafe",
-                          color: item.frequency === "daily" ? "#15803d" : "#1d4ed8"
-                        }}
-                      >
-                        {item.frequency || "Daily"}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
-                      <span
-                        style={{
-                          ...styles.badgeStatus,
-                          background: item.status === "Active" ? "#dcfce7" : "#fef3c7",
-                          color: item.status === "Active" ? "#16a34a" : "#d97706"
-                        }}
-                      >
-                        {item.status || "Active"}
-                      </span>
-                    </td>
-                    <td style={styles.td}>{item.maturityDate || "-"}</td>
+              </thead>
+              <tbody>
+                {history.map((item, idx) => (
+                  <tr key={idx}>
+                    <td>{new Date(item.date).toLocaleDateString()}</td>
+                    <td>{item.duration}</td>
+                    <td>{money(item.amount)}</td>
+                    <td>{item.frequency}</td>
+                    <td style={{ color: "#22c55e", fontWeight: "bold" }}>{item.status}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-      {/* 🛡️ TRUST BANNER */}
-      <section style={styles.trustBanner}>
+      {/* Security Footer Banner */}
+      <div style={styles.footerBanner}>
         <div>
-          <h3 style={{ margin: 0, fontSize: "16px", color: "#0f172a" }}>
-            Invest Small, Earn Big Returns Together
-          </h3>
-          <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#64748b" }}>
-            Start investing today and secure your future.
+          <b>Invest Small, Earn Big Returns Together</b>
+          <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+            Start investing today and secure your financial future.
           </p>
         </div>
-        <div style={styles.trustBadge}>
-          🛡️ 100% Secure
-          <br />
-          <small style={{ fontSize: "10px", color: "#16a34a" }}>Safe & Trusted Platform</small>
-        </div>
-      </section>
+        <span style={styles.secureBadge}>🛡️ 100% Secure</span>
+      </div>
 
-      {/* ------------------- MODALS ------------------- */}
-
-      {/* 1️⃣ PRE-FILLED AMOUNT POPUP MODAL */}
-      {showAmountModal && (
+      {/* MODAL 1: ADD FUND (SCREENSHOT UPLOAD) */}
+      {addFundModal && (
         <div style={styles.modalOverlay}>
-          <div style={styles.modalCardSmall}>
+          <div style={styles.modalBox}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0 }}>Select Investment Amount</h3>
-              <button style={styles.closeBtn} onClick={() => setShowAmountModal(false)}>✕</button>
+              <h3 style={{ margin: 0 }}>Add Fund to One-Time Wallet</h3>
+              <button style={styles.closeBtn} onClick={() => setAddFundModal(false)}>✕</button>
             </div>
-            <div style={styles.presetGrid}>
-              {[
-                { label: "5k", val: 5000 },
-                { label: "7.5k", val: 7500 },
-                { label: "10k", val: 10000 },
-                { label: "50k", val: 50000 },
-                { label: "100k", val: 100000 },
-                { label: "500k", val: 500000 }
-              ].map((item) => (
-                <button
-                  key={item.val}
-                  style={styles.presetBtn}
-                  onClick={() => {
-                    setInvestmentAmount(item.val);
-                    setShowAmountModal(false);
-                  }}
-                >
-                  ₹ {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+            <form onSubmit={handleAddFundSubmit} style={{ marginTop: "15px" }}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Deposit Amount (₹)</label>
+                <input
+                  type="number"
+                  style={styles.textInput}
+                  placeholder="e.g. 5000"
+                  value={fundAmount}
+                  onChange={(e) => setFundAmount(e.target.value)}
+                  required
+                />
+              </div>
 
-      {/* 2️⃣ ADD FUND POPUP MODAL */}
-      {showAddFundModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
-            <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0 }}>Add Investment Funds</h3>
-              <button style={styles.closeBtn} onClick={() => setShowAddFundModal(false)}>✕</button>
-            </div>
-            <p style={{ fontSize: "13px", color: "#64748b" }}>
-              নিচের ওয়ালেট অ্যাড্রেসে পেমেন্ট করে স্ক্রিনশট এবং ওয়ালেট আইডি টেলিগ্রামে সেন্ড করুন:
-            </p>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>UTR / Payment Transaction ID</label>
+                <input
+                  type="text"
+                  style={styles.textInput}
+                  placeholder="Enter 12-digit UTR/Txn Hash"
+                  value={txnId}
+                  onChange={(e) => setTxnId(e.target.value)}
+                  required
+                />
+              </div>
 
-            <div style={styles.walletBox}>
-              <span style={{ fontSize: "12px", wordBreak: "break-all", fontWeight: "bold" }}>
-                {COMPANY_WALLET_ADDRESS}
-              </span>
-              <button
-                style={styles.copyBtn}
-                onClick={() => {
-                  navigator.clipboard.writeText(COMPANY_WALLET_ADDRESS);
-                  showToast("ওয়ালেট অ্যাড্রেস কপি করা হয়েছে!");
-                }}
-              >
-                📋 Copy
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Upload Payment Screenshot</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ ...styles.textInput, padding: "8px" }}
+                  onChange={(e) => setScreenshot(e.target.files[0])}
+                  required
+                />
+              </div>
+
+              <button type="submit" style={styles.submitBtn}>
+                Submit Request For Admin Review
               </button>
-            </div>
-
-            <div style={{ marginTop: "20px" }}>
-              <button style={styles.telegramSubmitBtn} onClick={handleTelegramRedirect}>
-                ✈️ Send Screenshot on Telegram
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 3️⃣ ADD BANK ACCOUNT POPUP MODAL */}
-      {showBankModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
-            <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0 }}>Add Bank Account Details</h3>
-              <button style={styles.closeBtn} onClick={() => setShowBankModal(false)}>✕</button>
-            </div>
-            <p style={{ fontSize: "12px", color: "#ef4444" }}>
-              উইথড্র করার পূর্বে আপনার সঠিক ব্যাংক ডিটেইলস যুক্ত করতে হবে।
-            </p>
-            <form onSubmit={handleSaveBank} style={styles.bankForm}>
-              <input
-                type="text"
-                placeholder="Account Holder Name"
-                style={styles.formInput}
-                value={bankDetails.holderName}
-                onChange={(e) => setBankDetails({ ...bankDetails, holderName: e.target.value })}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Bank Name"
-                style={styles.formInput}
-                value={bankDetails.bankName}
-                onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Account Number"
-                style={styles.formInput}
-                value={bankDetails.accountNumber}
-                onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
-                required
-              />
-              <input
-                type="text"
-                placeholder="IFSC Code"
-                style={styles.formInput}
-                value={bankDetails.ifscCode}
-                onChange={(e) => setBankDetails({ ...bankDetails, ifscCode: e.target.value })}
-                required
-              />
-              <button type="submit" style={styles.saveBankBtn}>Save & Proceed to Withdraw</button>
             </form>
           </div>
         </div>
       )}
 
-      {/* 4️⃣ WITHDRAW POPUP MODAL */}
-      {showWithdrawModal && (
+      {/* MODAL 2: WITHDRAW FROM ONE-TIME WALLET */}
+      {withdrawModal && (
         <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
+          <div style={styles.modalBox}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0 }}>Withdraw Return Funds</h3>
-              <button style={styles.closeBtn} onClick={() => setShowWithdrawModal(false)}>✕</button>
+              <h3 style={{ margin: 0 }}>Withdraw One-Time Funds</h3>
+              <button style={styles.closeBtn} onClick={() => setWithdrawModal(false)}>✕</button>
             </div>
+            <form onSubmit={handleWithdrawSubmit} style={{ marginTop: "15px" }}>
+              <p style={{ color: "#22c55e", fontSize: "14px", fontWeight: "bold" }}>
+                Available Balance: {money(oneTimeWallet)}
+              </p>
 
-            <div style={styles.balanceInfoBox}>
-              <span>Return Wallet Balance:</span>
-              <strong>
-                ₹ {(user?.oneTimeReturnBalance || user?.wallet || 0).toFixed(2)}
-              </strong>
-            </div>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Withdrawal Amount (₹)</label>
+                <input
+                  type="number"
+                  style={styles.textInput}
+                  placeholder="Enter amount"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  required
+                />
+              </div>
 
-            <p style={{ fontSize: "13px", margin: "12px 0 6px", fontWeight: "bold" }}>
-              Select Withdraw Amount:
-            </p>
-            <div style={styles.withdrawPresetGrid}>
-              {[100, 300, 500, 1000, 10000].map((amt) => (
-                <button
-                  key={amt}
-                  style={{
-                    ...styles.withdrawPresetBtn,
-                    ...(selectedWithdrawAmount === amt ? styles.withdrawPresetActive : {})
-                  }}
-                  onClick={() => setSelectedWithdrawAmount(amt)}
-                >
-                  ₹ {amt.toLocaleString()}
-                </button>
-              ))}
-            </div>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Account Holder Name</label>
+                <input
+                  type="text"
+                  style={styles.textInput}
+                  placeholder="Full Name"
+                  value={bankDetails.accountHolderName}
+                  onChange={(e) => setBankDetails({ ...bankDetails, accountHolderName: e.target.value })}
+                  required
+                />
+              </div>
 
-            <button style={styles.confirmWithdrawBtn} onClick={handleWithdrawSubmit}>
-              Confirm Withdraw
-            </button>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Bank Account Number</label>
+                <input
+                  type="text"
+                  style={styles.textInput}
+                  placeholder="Account Number"
+                  value={bankDetails.accountNumber}
+                  onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>IFSC Code</label>
+                <input
+                  type="text"
+                  style={styles.textInput}
+                  placeholder="Bank IFSC Code"
+                  value={bankDetails.ifscCode}
+                  onChange={(e) => setBankDetails({ ...bankDetails, ifscCode: e.target.value })}
+                  required
+                />
+              </div>
+
+              <button type="submit" style={{ ...styles.submitBtn, background: "#0ea5e9" }}>
+                Submit Withdraw Request
+              </button>
+            </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }
 
-// 🎨 EXACT STYLES MATCHING THE SCREENSHOT & THEME
 const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#030f26",
-    color: "#ffffff",
-    padding: "16px 16px 100px",
-    fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-  },
-  loadingContainer: {
-    minHeight: "100vh",
-    background: "#030f26",
+  pageContainer: {
+    minHeight: "100vh", // Stretches across full display height
+    width: "100%",
+    background: "#020617",
+    color: "#f8fafc",
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    padding: "16px 16px 40px",
+    boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "space-between"
   },
-  loadingSpinner: {
-    width: "45px",
-    height: "45px",
-    border: "4px solid #1e293b",
-    borderTop: "4px solid #38bdf8",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite"
-  },
-  toast: {
-    position: "fixed",
-    top: "20px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    background: "#0284c7",
-    color: "#fff",
-    padding: "12px 24px",
-    borderRadius: "30px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-    zIndex: 100005,
-    fontWeight: "bold",
-    fontSize: "14px",
-    textAlign: "center"
-  },
-
-  // TOP HEADER
   topHeader: {
     display: "flex",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: "16px"
-  },
-  brandContainer: {
-    display: "flex",
     alignItems: "center",
-    gap: "8px"
-  },
-  logoImg: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
-    border: "2px solid #22c55e"
+    marginBottom: "16px"
   },
   brandTitle: {
     margin: 0,
-    fontSize: "18px",
-    fontWeight: "900",
-    color: "#22c55e",
-    letterSpacing: "0.5px"
-  },
-  brandSub: {
-    margin: 0,
-    fontSize: "10px",
-    color: "#94a3b8"
-  },
-  headerWelcome: {
-    textAlign: "center"
-  },
-  welcomeText: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: "800"
-  },
-  welcomeSub: {
-    margin: 0,
-    fontSize: "11px",
-    color: "#94a3b8"
-  },
-  headerRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px"
-  },
-  notifBtn: {
-    position: "relative",
-    background: "rgba(255,255,255,0.1)",
-    border: "none",
-    color: "#fff",
     fontSize: "20px",
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
-    cursor: "pointer"
+    fontWeight: "800",
+    color: "#22c55e"
   },
-  notifBadge: {
-    position: "absolute",
-    top: "-2px",
-    right: "-2px",
-    background: "#ef4444",
-    color: "#fff",
-    fontSize: "10px",
-    width: "18px",
-    height: "18px",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "bold"
+  brandSubtitle: {
+    margin: "2px 0 0 0",
+    fontSize: "12px",
+    color: "#94a3b8"
   },
-  profileCircle: {
-    width: "42px",
-    height: "42px",
-    borderRadius: "50%",
-    background: "#fff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    border: "2px solid #22c55e"
+  welcomePill: {
+    background: "#0f172a",
+    border: "1px solid #334155",
+    padding: "6px 12px",
+    borderRadius: "20px",
+    fontSize: "13px",
+    color: "#e2e8f0"
   },
-  profileImg: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover"
-  },
-
-  // SUMMARY CARDS
-  summaryCard: {
-    background: "linear-gradient(90deg, #0284c7 0%, #16a34a 100%)",
-    borderRadius: "16px",
-    padding: "18px",
+  statsBanner: {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "12px",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.3)"
+    gridTemplateColumns: "1fr 1fr 1fr",
+    background: "linear-gradient(135deg, #0284c7 0%, #0d9488 100%)",
+    borderRadius: "16px",
+    padding: "14px 10px",
+    marginBottom: "20px",
+    boxShadow: "0 10px 20px rgba(0,0,0,0.3)"
   },
   statBox: {
     textAlign: "center",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center"
+    borderRight: "1px solid rgba(255,255,255,0.2)",
+    padding: "0 4px"
   },
-  statIcon: {
-    fontSize: "22px"
-  },
-  statTitle: {
+  statLabel: {
+    margin: 0,
     fontSize: "11px",
     color: "#e0f2fe",
-    marginTop: "4px"
+    fontWeight: "600",
+    textTransform: "uppercase"
   },
   statValue: {
-    fontSize: "18px",
-    fontWeight: "900",
-    color: "#ffffff",
-    marginTop: "2px"
+    margin: "4px 0 0 0",
+    fontSize: "15px",
+    fontWeight: "800",
+    color: "#ffffff"
   },
-
-  // MAIN CARD
-  mainCard: {
+  card: {
     background: "#ffffff",
+    color: "#0f172a",
     borderRadius: "20px",
     padding: "20px",
-    marginTop: "16px",
-    color: "#0f172a",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+    marginBottom: "20px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.4)"
   },
   cardHeaderTitle: {
-    margin: "0 0 16px",
+    margin: "0 0 16px 0",
     fontSize: "18px",
     fontWeight: "800",
     color: "#0f172a"
   },
   formGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "16px"
-  },
-  fieldGroup: {
     display: "flex",
-    flexDirection: "column"
+    flexDirection: "column",
+    gap: "14px"
   },
   label: {
+    display: "block",
     fontSize: "12px",
     fontWeight: "700",
-    color: "#334155",
-    marginBottom: "8px"
+    color: "#475569",
+    marginBottom: "6px"
   },
   selectInput: {
-    height: "45px",
-    borderRadius: "10px",
-    border: "1px solid #cbd5e1",
-    padding: "0 12px",
-    fontSize: "14px",
-    fontWeight: "600",
-    outline: "none"
-  },
-  freqToggleGroup: {
-    display: "flex",
-    gap: "8px",
-    height: "45px"
-  },
-  freqBtn: {
-    flex: 1,
+    width: "100%",
+    padding: "12px",
+    borderRadius: "12px",
     border: "1px solid #cbd5e1",
     background: "#f8fafc",
-    borderRadius: "10px",
-    fontWeight: "700",
     fontSize: "14px",
-    cursor: "pointer",
-    color: "#475569"
+    color: "#0f172a",
+    boxSizing: "border-box"
   },
-  freqBtnActive: {
-    background: "#16a34a",
-    color: "#ffffff",
-    borderColor: "#16a34a"
-  },
-  amountInputWrap: {
-    position: "relative",
-    display: "flex",
-    alignItems: "center"
-  },
-  currencyPrefix: {
-    position: "absolute",
-    left: "12px",
-    fontSize: "16px",
-    fontWeight: "bold",
-    color: "#64748b"
-  },
-  amountInput: {
+  textInput: {
     width: "100%",
-    height: "45px",
-    borderRadius: "10px",
-    border: "1px solid #cbd5e1",
-    paddingLeft: "30px",
-    paddingRight: "12px",
-    fontSize: "15px",
-    fontWeight: "800",
-    outline: "none",
-    cursor: "pointer",
-    background: "#f8fafc"
-  },
-  inputHelp: {
-    fontSize: "11px",
-    color: "#94a3b8",
-    marginTop: "4px"
-  },
-
-  // RETURN BOX
-  returnCardContainer: {
-    marginTop: "16px"
-  },
-  returnBox: {
-    borderRadius: "14px",
-    padding: "20px",
-    textAlign: "center",
-    border: "1px solid #bbf7d0"
-  },
-  returnBoxDaily: {
-    background: "#f0fdf4"
-  },
-  returnBoxWeekly: {
-    background: "#eff6ff",
-    borderColor: "#bfdbfe"
-  },
-  returnBoxTitle: {
-    fontSize: "13px",
-    fontWeight: "700",
-    color: "#166534"
-  },
-  returnBoxValue: {
-    margin: "6px 0 0",
-    fontSize: "28px",
-    fontWeight: "900",
-    color: "#16a34a"
-  },
-  returnBoxNote: {
-    fontSize: "11px",
-    color: "#64748b"
-  },
-
-  // BREAKDOWN
-  breakdownGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    border: "1px solid #e2e8f0",
-    borderRadius: "12px",
-    marginTop: "16px",
-    overflow: "hidden"
-  },
-  breakItem: {
     padding: "12px",
-    textAlign: "center",
-    borderRight: "1px solid #e2e8f0"
-  },
-  breakLabel: {
-    display: "block",
-    fontSize: "11px",
-    color: "#64748b"
-  },
-  breakVal: {
+    borderRadius: "12px",
+    border: "1px solid #cbd5e1",
+    background: "#f8fafc",
     fontSize: "14px",
-    fontWeight: "800",
-    color: "#0f172a"
+    color: "#0f172a",
+    boxSizing: "border-box"
   },
-
-  // ACTION BUTTONS
-  actionBtnGrid: {
+  freqGroup: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
+    gap: "8px"
+  },
+  freqBtn: {
+    padding: "10px",
+    borderRadius: "10px",
+    border: "1px solid #cbd5e1",
+    background: "#f8fafc",
+    color: "#475569",
+    fontWeight: "600",
+    cursor: "pointer"
+  },
+  freqBtnActive: {
+    padding: "10px",
+    borderRadius: "10px",
+    border: "none",
+    background: "#22c55e",
+    color: "#ffffff",
+    fontWeight: "800",
+    cursor: "pointer"
+  },
+  returnPreviewBox: {
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: "16px",
+    padding: "16px",
+    textAlign: "center",
+    margin: "18px 0"
+  },
+  breakdownGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr 1fr",
+    gap: "8px",
+    padding: "12px 0",
+    borderTop: "1px solid #f1f5f9",
+    borderBottom: "1px solid #f1f5f9",
+    fontSize: "11px",
+    textAlign: "center",
+    color: "#64748b"
+  },
+  actionRow: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "12px",
     marginTop: "16px"
   },
   addFundBtn: {
-    background: "#16a34a",
-    color: "#ffffff",
+    background: "#22c55e",
     border: "none",
-    borderRadius: "12px",
+    color: "#ffffff",
     padding: "14px",
-    fontSize: "16px",
+    borderRadius: "12px",
     fontWeight: "800",
-    cursor: "pointer",
-    boxShadow: "0 4px 12px rgba(22,163,74,0.3)"
+    fontSize: "15px",
+    cursor: "pointer"
   },
   withdrawBtn: {
-    background: "#030f26",
-    color: "#ffffff",
+    background: "#0f172a",
     border: "none",
-    borderRadius: "12px",
+    color: "#ffffff",
     padding: "14px",
-    fontSize: "16px",
+    borderRadius: "12px",
     fontWeight: "800",
+    fontSize: "15px",
     cursor: "pointer"
   },
-
-  // HISTORY
-  historySection: {
-    background: "#ffffff",
-    borderRadius: "20px",
-    padding: "20px",
-    marginTop: "16px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
-  },
-  historyHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "12px"
-  },
-  viewAllText: {
-    fontSize: "12px",
-    fontWeight: "bold",
-    color: "#16a34a",
-    cursor: "pointer"
-  },
-  tableWrapper: {
-    overflowX: "auto"
+  emptyText: {
+    textAlign: "center",
+    color: "#94a3b8",
+    fontSize: "13px",
+    margin: "20px 0"
   },
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    fontSize: "13px"
+    fontSize: "13px",
+    marginTop: "10px"
   },
-  tableHeaderRow: {
-    background: "#f8fafc",
-    textAlign: "left"
-  },
-  th: {
-    padding: "12px",
-    color: "#475569",
-    fontWeight: "700"
-  },
-  td: {
-    padding: "12px",
-    borderBottom: "1px solid #f1f5f9",
-    color: "#0f172a"
-  },
-  emptyTd: {
-    padding: "30px",
-    textAlign: "center",
-    color: "#94a3b8"
-  },
-  badgeFrequency: {
-    padding: "4px 8px",
-    borderRadius: "12px",
-    fontSize: "11px",
-    fontWeight: "bold"
-  },
-  badgeStatus: {
-    padding: "4px 8px",
-    borderRadius: "12px",
-    fontSize: "11px",
-    fontWeight: "bold"
-  },
-
-  // TRUST BANNER
-  trustBanner: {
+  footerBanner: {
     background: "#ffffff",
     borderRadius: "16px",
-    padding: "16px",
-    marginTop: "16px",
+    padding: "14px 18px",
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
+    color: "#0f172a",
+    marginTop: "auto"
   },
-  trustBadge: {
-    textAlign: "right",
-    fontSize: "14px",
-    fontWeight: "bold",
-    color: "#0f172a"
+  secureBadge: {
+    background: "#f0fdf4",
+    color: "#16a34a",
+    border: "1px solid #bbf7d0",
+    padding: "6px 10px",
+    borderRadius: "20px",
+    fontSize: "12px",
+    fontWeight: "700"
   },
-
-  // MODALS
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(0,0,0,0.7)",
+    background: "rgba(2,6,23,0.85)",
+    backdropFilter: "blur(4px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 100000,
-    padding: "16px"
+    padding: "16px",
+    zIndex: 9999
   },
-  modalCardSmall: {
+  modalBox: {
     background: "#ffffff",
-    borderRadius: "16px",
-    padding: "20px",
-    width: "100%",
-    maxWidth: "360px",
-    color: "#0f172a"
-  },
-  modalCard: {
-    background: "#ffffff",
+    color: "#0f172a",
+    width: "min(420px, 100%)",
     borderRadius: "20px",
     padding: "20px",
-    width: "100%",
-    maxWidth: "420px",
-    color: "#0f172a"
+    boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
   },
   modalHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "12px"
+    borderBottom: "1px solid #f1f5f9",
+    paddingBottom: "10px"
   },
   closeBtn: {
-    background: "#f1f5f9",
+    background: "none",
     border: "none",
-    borderRadius: "50%",
-    width: "30px",
-    height: "30px",
-    fontSize: "14px",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-  presetGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "10px",
-    marginTop: "12px"
-  },
-  presetBtn: {
-    padding: "12px",
-    borderRadius: "10px",
-    border: "1px solid #cbd5e1",
-    background: "#f8fafc",
-    fontWeight: "bold",
-    fontSize: "14px",
+    fontSize: "18px",
+    fontWeight: "800",
     cursor: "pointer",
-    color: "#0284c7"
+    color: "#64748b"
   },
-  walletBox: {
-    background: "#f1f5f9",
-    padding: "12px",
-    borderRadius: "10px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "8px",
-    marginTop: "12px"
+  inputGroup: {
+    marginBottom: "12px"
   },
-  copyBtn: {
-    background: "#0284c7",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    padding: "6px 10px",
-    fontSize: "11px",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-  telegramSubmitBtn: {
+  submitBtn: {
     width: "100%",
-    padding: "14px",
-    borderRadius: "10px",
+    background: "#22c55e",
     border: "none",
-    background: "#0088cc",
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: "14px",
-    cursor: "pointer"
-  },
-  bankForm: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    marginTop: "12px"
-  },
-  formInput: {
-    height: "42px",
-    borderRadius: "8px",
-    border: "1px solid #cbd5e1",
-    padding: "0 12px",
-    fontSize: "13px",
-    outline: "none"
-  },
-  saveBankBtn: {
-    height: "45px",
-    borderRadius: "10px",
-    border: "none",
-    background: "#16a34a",
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: "14px",
-    cursor: "pointer",
-    marginTop: "8px"
-  },
-  balanceInfoBox: {
-    background: "#f0fdf4",
-    border: "1px solid #bbf7d0",
-    padding: "12px",
-    borderRadius: "10px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    color: "#166534"
-  },
-  withdrawPresetGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "10px",
-    marginBottom: "16px"
-  },
-  withdrawPresetBtn: {
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #cbd5e1",
-    background: "#f8fafc",
-    fontWeight: "bold",
-    fontSize: "13px",
-    cursor: "pointer"
-  },
-  withdrawPresetActive: {
-    background: "#030f26",
     color: "#ffffff",
-    borderColor: "#030f26"
-  },
-  confirmWithdrawBtn: {
-    width: "100%",
     padding: "14px",
-    borderRadius: "10px",
-    border: "none",
-    background: "#16a34a",
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: "14px",
-    cursor: "pointer"
+    borderRadius: "12px",
+    fontWeight: "800",
+    fontSize: "15px",
+    cursor: "pointer",
+    marginTop: "10px"
   }
 };
