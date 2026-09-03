@@ -14,16 +14,21 @@ export default function OneTime() {
   const [history, setHistory] = useState([]);
 
   // Investment Form State
-  const [tenure, setTenure] = useState(15); // Default 15 days
-  const [rate, setRate] = useState(0.6); // Default 0.6%
-  const [frequency, setFrequency] = useState("daily"); // 'daily' or 'weekly'
-  const [amount, setAmount] = useState(10000); // Pre-filled amount
+  const [tenure, setTenure] = useState(15);
+  const [rate, setRate] = useState(0.6);
+  const [frequency, setFrequency] = useState("daily");
+  const [amount, setAmount] = useState(5000);
 
-  // Modals / Popups State
+  // Modals State
   const [showAmountModal, setShowAmountModal] = useState(false);
   const [showAddFundModal, setShowAddFundModal] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+
+  // Deposit Form State (Screenshot Upload)
+  const [txnId, setTxnId] = useState("");
+  const [screenshot, setScreenshot] = useState(null);
+  const [depositing, setDepositing] = useState(false);
 
   // Bank Form State
   const [bankForm, setBankForm] = useState({
@@ -33,22 +38,20 @@ export default function OneTime() {
     holderName: ""
   });
 
-  // Selected Withdraw Amount (100, 300, 500, 1000, 10000)
+  // Selected Withdraw Amount
   const [selectedWithdrawAmount, setSelectedWithdrawAmount] = useState(100);
+  const [withdrawing, setWithdrawing] = useState(false);
 
-  // Toast / Status Message State
+  // Toast State
   const [toast, setToast] = useState({ show: false, msg: "", type: "info" });
 
   const triggerToast = (msg, type = "info") => {
     setToast({ show: true, msg, type });
-    setTimeout(() => setToast({ show: false, msg: "", type: "info" }), 3000);
+    setTimeout(() => setToast({ show: false, msg: "", type: "info" }), 3500);
   };
 
-  // Telegram Link (Change with your real Telegram Username/Link)
-  const TELEGRAM_LINK = "https://t.me/your_telegram_username";
-  const COMPANY_WALLET_ADDRESS = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"; // Replace with your real address
+  const COMPANY_WALLET_ADDRESS = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
 
-  // Tenure Plans Map
   const tenurePlans = [
     { days: 15, rate: 0.6, label: "15 Days (0.6%)" },
     { days: 30, rate: 0.8, label: "30 Days (0.8%)" },
@@ -57,20 +60,18 @@ export default function OneTime() {
     { days: 100, rate: 2.0, label: "100 Days (2.0%)" }
   ];
 
-  // Pre-filled Amount Options for Investment Modal
+  // Styled Quick Investment Amount Presets
   const presetAmounts = [
-    { label: "5k", value: 5000 },
-    { label: "7.5k", value: 7500 },
-    { label: "10k", value: 10000 },
-    { label: "50k", value: 50000 },
-    { label: "100k", value: 100000 },
-    { label: "500k", value: 500000 }
+    { label: "5k", value: 5000, desc: "Starter", color: "linear-gradient(135deg, #22c55e, #16a34a)" },
+    { label: "7.5k", value: 7500, desc: "Basic", color: "linear-gradient(135deg, #0ea5e9, #0284c7)" },
+    { label: "10k", value: 10000, desc: "Popular", color: "linear-gradient(135deg, #8b5cf6, #7c3aed)" },
+    { label: "50k", value: 50000, desc: "Pro", color: "linear-gradient(135deg, #f59e0b, #d97706)" },
+    { label: "100k", value: 100000, desc: "VIP", color: "linear-gradient(135deg, #ec4899, #db2777)" },
+    { label: "500k", value: 500000, desc: "Master", color: "linear-gradient(135deg, #6366f1, #4f46e5)" }
   ];
 
-  // Withdraw Allowed Pre-filled Amounts ONLY
   const withdrawPresets = [100, 300, 500, 1000, 10000];
 
-  // ----------------- LOAD DATA FROM BACKEND -----------------
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -99,31 +100,18 @@ export default function OneTime() {
         triggerToast(data.message || "Failed to load dashboard", "error");
       }
     } catch (err) {
-      console.error("Error loading OneTime data:", err);
       triggerToast("Network error. Please try again.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // ----------------- CALCULATIONS -----------------
-  const dailyReturn = useMemo(() => {
-    return (Number(amount) * Number(rate)) / 100;
-  }, [amount, rate]);
+  // Calculations
+  const dailyReturn = useMemo(() => (Number(amount) * Number(rate)) / 100, [amount, rate]);
+  const weeklyReturn = useMemo(() => dailyReturn * 7, [dailyReturn]);
+  const totalReturn = useMemo(() => dailyReturn * tenure, [dailyReturn, tenure]);
+  const totalPayout = useMemo(() => Number(amount) + totalReturn, [amount, totalReturn]);
 
-  const weeklyReturn = useMemo(() => {
-    return dailyReturn * 7;
-  }, [dailyReturn]);
-
-  const totalReturn = useMemo(() => {
-    return dailyReturn * tenure;
-  }, [dailyReturn, tenure]);
-
-  const totalPayout = useMemo(() => {
-    return Number(amount) + totalReturn;
-  }, [amount, totalReturn]);
-
-  // Handle Tenure Select
   const handleTenureChange = (e) => {
     const selectedDays = Number(e.target.value);
     const plan = tenurePlans.find((p) => p.days === selectedDays);
@@ -133,7 +121,50 @@ export default function OneTime() {
     }
   };
 
-  // Handle Bank Form Save
+  // ----------------- SUBMIT DEPOSIT (SCREENSHOT) -----------------
+  const handleDepositSubmit = async (e) => {
+    e.preventDefault();
+    if (!txnId) {
+      triggerToast("Please enter Transaction ID / UTR No.", "error");
+      return;
+    }
+    if (!screenshot) {
+      triggerToast("Please select payment screenshot", "error");
+      return;
+    }
+
+    try {
+      setDepositing(true);
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("amount", amount);
+      formData.append("transactionId", txnId);
+      formData.append("screenshot", screenshot);
+
+      const res = await fetch(`${API}/api/onetime/deposit-request`, {
+        method: "POST",
+        headers: { authorization: token },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        triggerToast("Deposit proof submitted! Pending review.", "success");
+        setShowAddFundModal(false);
+        setTxnId("");
+        setScreenshot(null);
+        loadDashboardData();
+      } else {
+        triggerToast(data.message || "Failed to submit deposit", "error");
+      }
+    } catch (err) {
+      triggerToast("Error uploading deposit screenshot", "error");
+    } finally {
+      setDepositing(false);
+    }
+  };
+
+  // ----------------- SAVE BANK DETAILS -----------------
   const handleSaveBankDetails = async (e) => {
     e.preventDefault();
     if (!bankForm.accountNumber || !bankForm.ifsc || !bankForm.bankName || !bankForm.holderName) {
@@ -155,8 +186,7 @@ export default function OneTime() {
       if (res.ok) {
         setUser((prev) => ({ ...prev, bankDetails: bankForm }));
         setShowBankModal(false);
-        triggerToast("Bank Details Saved Successfully!", "success");
-        // Open withdraw modal right after saving bank details
+        triggerToast("Bank Details Saved!", "success");
         setShowWithdrawModal(true);
       } else {
         triggerToast(data.message || "Failed to save bank details", "error");
@@ -166,7 +196,7 @@ export default function OneTime() {
     }
   };
 
-  // Handle Withdraw Button Click
+  // ----------------- WITHDRAWAL SUBMIT (WITH STRICT VALIDATION) -----------------
   const handleWithdrawClick = () => {
     if (!user.bankDetails || !user.bankDetails.accountNumber) {
       setShowBankModal(true);
@@ -175,48 +205,52 @@ export default function OneTime() {
     }
   };
 
-  // Submit Withdrawal Request
   const handleWithdrawSubmit = async () => {
+    const currentBalance = user?.availableBalance || 0;
+
+    // Strict Client Balance Check
+    if (currentBalance < selectedWithdrawAmount) {
+      triggerToast(`Insufficient Wallet Balance! Your balance is ₹${currentBalance}`, "error");
+      return;
+    }
+
     try {
+      setWithdrawing(true);
       const res = await fetch(`${API}/api/onetime/withdraw`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           authorization: token
         },
-        body: JSON.stringify({
-          email,
-          amount: selectedWithdrawAmount
-        })
+        body: JSON.stringify({ email, amount: selectedWithdrawAmount })
       });
 
       const data = await res.json();
       if (res.ok) {
         triggerToast("Withdrawal Request Submitted!", "success");
         setShowWithdrawModal(false);
-        loadDashboardData(); // Refresh history & balance
+        loadDashboardData();
       } else {
-        triggerToast(data.message || "Withdrawal failed", "error");
+        triggerToast(data.message || "Withdrawal Failed", "error");
       }
     } catch (err) {
-      triggerToast("Error processing withdrawal", "error");
+      triggerToast("Network error during withdrawal", "error");
+    } finally {
+      setWithdrawing(false);
     }
   };
 
-  // Copy Wallet Address
   const handleCopyWallet = () => {
     navigator.clipboard.writeText(COMPANY_WALLET_ADDRESS);
     triggerToast("Wallet Address Copied!", "success");
   };
 
-  // Helper for Profile Photo
   const fileUrl = (file) => {
     if (!file) return "";
-    if (file.startsWith("http")) return file;
-    return `${API}/uploads/${file}`;
+    return file.startsWith("http") ? file : `${API}/uploads/${file}`;
   };
 
-  const profilePhoto = fileUrl(user?.photo || user?.profilePhoto || user?.selfiePhoto || "");
+  const profilePhoto = fileUrl(user?.photo || user?.profilePhoto || "");
 
   if (loading) {
     return (
@@ -228,292 +262,299 @@ export default function OneTime() {
 
   return (
     <div style={styles.page}>
-      {/* Toast Notification */}
-      {toast.show && (
-        <div style={{ ...styles.toast, background: toast.type === "error" ? "#ef4444" : "#22c55e" }}>
-          {toast.msg}
-        </div>
-      )}
-
-      {/* HEADER SECTION */}
-      <header style={styles.header}>
-        <div style={styles.brand}>
-          <img
-            src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"}
-            alt="Logo"
-            style={styles.logoImg}
-            onError={(e) => (e.target.style.display = "none")}
-          />
-          <div>
-            <h1 style={styles.brandTitle}>
-              SAVE <span style={{ color: "#20cf72" }}>MONEY</span>
-            </h1>
-            <p style={styles.brandSubtitle}>Invest Small, Earn Big</p>
+      <div style={styles.container}>
+        {/* Toast Alert */}
+        {toast.show && (
+          <div style={{ ...styles.toast, background: toast.type === "error" ? "#ef4444" : "#16a34a" }}>
+            {toast.msg}
           </div>
-        </div>
+        )}
 
-        <div style={styles.welcomeBox}>
-          <strong style={styles.welcomeTitle}>Welcome Back! 👋</strong>
-          <span style={styles.welcomeSub}>Invest smartly and secure your future with us</span>
-        </div>
-
-        <div style={styles.headerRight}>
-          {/* Notification Icon (Only One Timer Notifications) */}
-          <div style={styles.notifIconContainer} title="One Timer Notifications">
-            <span style={{ fontSize: "22px" }}>🔔</span>
-            {oneTimerNotifications.length > 0 && (
-              <span style={styles.notifBadge}>{oneTimerNotifications.length}</span>
-            )}
-          </div>
-
-          {/* User Profile Photo */}
-          <div style={styles.profileCircle}>
-            {profilePhoto ? (
-              <img src={profilePhoto} alt="User Profile" style={styles.profileImg} />
-            ) : (
-              <span style={{ fontSize: "24px", color: "#08a95b" }}>👤</span>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* TOP SUMMARY STATS CARD */}
-      <section style={styles.summaryCard}>
-        <div style={styles.statBox}>
-          <span style={styles.statIcon}>👛</span>
-          <span style={styles.statTitle}>Total Invested</span>
-          <strong style={styles.statValue}>₹ {(user?.totalInvested || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
-        </div>
-
-        <div style={styles.statBox}>
-          <span style={styles.statIcon}>📈</span>
-          <span style={styles.statTitle}>Total Returns</span>
-          <strong style={styles.statValue}>₹ {(user?.totalReturns || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
-        </div>
-
-        <div style={styles.statBox}>
-          <span style={styles.statIcon}>💵</span>
-          <span style={styles.statTitle}>Total Earnings</span>
-          <strong style={styles.statValue}>₹ {(user?.totalEarnings || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
-        </div>
-
-        <div style={styles.statBox}>
-          <span style={styles.statIcon}>🪙</span>
-          <span style={styles.statTitle}>Available Balance</span>
-          <strong style={styles.statValue}>₹ {(user?.availableBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
-        </div>
-      </section>
-
-      {/* MAKE A NEW INVESTMENT PANEL */}
-      <section style={styles.mainCard}>
-        <h2 style={styles.cardTitle}>
-          Make a New Investment
-          <div style={styles.titleLine}></div>
-        </h2>
-
-        <div style={styles.formGrid}>
-          {/* Select Investment Duration */}
-          <div style={styles.fieldGroup}>
-            <label style={styles.label}>📅 Select Investment Duration</label>
-            <select style={styles.select} value={tenure} onChange={handleTenureChange}>
-              {tenurePlans.map((p) => (
-                <option key={p.days} value={p.days}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Choose Return Frequency */}
-          <div style={styles.fieldGroup}>
-            <label style={styles.label}>🔄 Choose Return Frequency</label>
-            <div style={styles.frequencyToggle}>
-              <button
-                type="button"
-                style={{ ...styles.freqBtn, ...(frequency === "daily" ? styles.freqBtnActive : {}) }}
-                onClick={() => setFrequency("daily")}
-              >
-                Daily
-              </button>
-              <button
-                type="button"
-                style={{ ...styles.freqBtn, ...(frequency === "weekly" ? styles.freqBtnActive : {}) }}
-                onClick={() => setFrequency("weekly")}
-              >
-                Weekly
-              </button>
+        {/* HEADER */}
+        <header style={styles.header}>
+          <div style={styles.brand}>
+            <img
+              src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"}
+              alt="Logo"
+              style={styles.logoImg}
+              onError={(e) => (e.target.style.display = "none")}
+            />
+            <div>
+              <h1 style={styles.brandTitle}>
+                SAVE <span style={{ color: "#22c55e" }}>MONEY</span>
+              </h1>
+              <p style={styles.brandSubtitle}>Invest Small, Earn Big</p>
             </div>
           </div>
 
-          {/* Enter Investment Amount (Opens Modal on Click) */}
-          <div style={styles.fieldGroup}>
-            <label style={styles.label}>💵 Enter Investment Amount</label>
-            <div style={styles.amountInputWrap} onClick={() => setShowAmountModal(true)}>
-              <span style={{ fontSize: "16px", fontWeight: "bold" }}>₹</span>
-              <input style={styles.amountInput} type="text" readOnly value={amount} />
-            </div>
-            <small style={styles.helpText}>Click to select quick amount presets</small>
+          <div style={styles.welcomeBox}>
+            <strong style={styles.welcomeTitle}>Welcome Back! 👋</strong>
+            <span style={styles.welcomeSub}>Invest smartly & secure your future</span>
           </div>
-        </div>
 
-        {/* RETURN FREQUENCY CARDS (CONDITIONAL SHOW) */}
-        <div style={styles.returnGrid}>
-          {frequency === "daily" && (
-            <div style={styles.dailyReturnCard}>
-              <div style={styles.returnCardTitle}>You Will Get Daily Return</div>
-              <strong style={styles.returnCardValue}>₹ {dailyReturn.toFixed(2)}</strong>
-              <span style={styles.returnCardNote}>(Approx.)</span>
-            </div>
-          )}
-
-          {frequency === "weekly" && (
-            <div style={styles.weeklyReturnCard}>
-              <div style={{ ...styles.returnCardTitle, color: "#1557d6" }}>You Will Get Weekly Return</div>
-              <strong style={{ ...styles.returnCardValue, color: "#1557d6" }}>₹ {weeklyReturn.toFixed(2)}</strong>
-              <span style={styles.returnCardNote}>(Approx.)</span>
-            </div>
-          )}
-        </div>
-
-        {/* BREAKDOWN STRIP */}
-        <div style={styles.breakdownGrid}>
-          <div style={styles.breakBox}>
-            <span style={styles.breakLabel}>Investment Amount</span>
-            <strong style={styles.breakValue}>₹ {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
-          </div>
-          <div style={styles.breakBox}>
-            <span style={styles.breakLabel}>Duration</span>
-            <strong style={styles.breakValue}>{tenure} Days ({rate}%)</strong>
-          </div>
-          <div style={styles.breakBox}>
-            <span style={styles.breakLabel}>Total Return (Approx.)</span>
-            <strong style={styles.breakValue}>₹ {totalReturn.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
-          </div>
-          <div style={styles.breakBox}>
-            <span style={styles.breakLabel}>Total Payout (Principal + Return)</span>
-            <strong style={styles.breakValue}>₹ {totalPayout.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
-          </div>
-        </div>
-
-        {/* MAIN ACTION BUTTONS */}
-        <div style={styles.actionGrid}>
-          <button style={styles.addInvestBtn} onClick={() => setShowAddFundModal(true)}>
-            <span style={{ fontSize: "20px" }}>➕</span> Add Invest
-            <br />
-            <small style={{ fontSize: "12px", opacity: 0.8 }}>Invest More</small>
-          </button>
-
-          <button style={styles.withdrawBtn} onClick={handleWithdrawClick}>
-            <span style={{ fontSize: "20px" }}>➔</span> Withdraw
-            <br />
-            <small style={{ fontSize: "12px", opacity: 0.8 }}>Withdraw Funds</small>
-          </button>
-        </div>
-      </section>
-
-      {/* INVESTMENT & TRANSACTION HISTORY SECTION */}
-      <section style={styles.historyCard}>
-        <div style={styles.historyHeader}>
-          <h2 style={{ margin: 0, fontSize: "20px" }}>Investment History</h2>
-          <span style={styles.viewAllBtn}>View All</span>
-        </div>
-
-        <div style={styles.tableWrapper}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Date</th>
-                <th style={styles.th}>Duration</th>
-                <th style={styles.th}>Invested Amount</th>
-                <th style={styles.th}>Return Frequency</th>
-                <th style={styles.th}>Status</th>
-                <th style={styles.th}>Maturity Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.length === 0 ? (
-                <tr>
-                  <td colSpan="6" style={styles.emptyTd}>
-                    No history available
-                  </td>
-                </tr>
-              ) : (
-                history.map((item, idx) => (
-                  <tr key={idx}>
-                    <td style={styles.td}>{item.date || new Date(item.createdAt).toLocaleDateString("en-GB")}</td>
-                    <td style={styles.td}>{item.duration || `${item.durationDays || tenure} Days`}</td>
-                    <td style={styles.td}>₹ {Number(item.amount).toLocaleString("en-IN")}</td>
-                    <td style={styles.td}>
-                      <span style={item.frequency === "daily" ? styles.badgeDaily : styles.badgeWeekly}>
-                        {item.frequency || "Daily"}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
-                      <span style={{ ...styles.statusBadge, ...getStatusStyle(item.status) }}>
-                        {item.status || "Active"}
-                      </span>
-                    </td>
-                    <td style={styles.td}>{item.maturityDate || item.maturity || "-"}</td>
-                  </tr>
-                ))
+          <div style={styles.headerRight}>
+            <div style={styles.notifIconContainer} title="Notifications">
+              <span style={{ fontSize: "22px" }}>🔔</span>
+              {oneTimerNotifications.length > 0 && (
+                <span style={styles.notifBadge}>{oneTimerNotifications.length}</span>
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            </div>
 
-      {/* TRUST BANNER FOOTER */}
-      <section style={styles.trustBanner}>
-        <div>
-          <h3 style={{ margin: "0 0 4px 0", fontSize: "18px" }}>Invest Small, Earn Big Returns Together</h3>
-          <p style={{ margin: 0, opacity: 0.8, fontSize: "13px" }}>Start investing today and secure your future.</p>
-        </div>
-        <div style={{ textAlign: "right", color: "#16a34a", fontWeight: "bold" }}>
-          🛡 100% Secure
-          <br />
-          <small style={{ color: "#64748b" }}>Safe & Trusted Platform</small>
-        </div>
-      </section>
+            <div style={styles.profileCircle}>
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="User Profile" style={styles.profileImg} />
+              ) : (
+                <span style={{ fontSize: "22px", color: "#16a34a" }}>👤</span>
+              )}
+            </div>
+          </div>
+        </header>
 
-      {/* ----------------- MODALS / POPUPS ----------------- */}
+        {/* TOP STATS CARD */}
+        <section style={styles.summaryCard}>
+          <div style={styles.statBox}>
+            <span style={styles.statIcon}>👛</span>
+            <span style={styles.statTitle}>Total Invested</span>
+            <strong style={styles.statValue}>₹ {(user?.totalInvested || 0).toLocaleString("en-IN")}</strong>
+          </div>
 
-      {/* 1. AMOUNT SELECT POPUP */}
+          <div style={styles.statBox}>
+            <span style={styles.statIcon}>📈</span>
+            <span style={styles.statTitle}>Total Returns</span>
+            <strong style={styles.statValue}>₹ {(user?.totalReturns || 0).toLocaleString("en-IN")}</strong>
+          </div>
+
+          <div style={styles.statBox}>
+            <span style={styles.statIcon}>💵</span>
+            <span style={styles.statTitle}>Total Earnings</span>
+            <strong style={styles.statValue}>₹ {(user?.totalEarnings || 0).toLocaleString("en-IN")}</strong>
+          </div>
+
+          <div style={{ ...styles.statBox, borderRight: "none" }}>
+            <span style={styles.statIcon}>🪙</span>
+            <span style={styles.statTitle}>Available Balance</span>
+            <strong style={{ ...styles.statValue, color: "#fef08a" }}>
+              ₹ {(user?.availableBalance || 0).toLocaleString("en-IN")}
+            </strong>
+          </div>
+        </section>
+
+        {/* MAKE NEW INVESTMENT PANEL */}
+        <section style={styles.mainCard}>
+          <h2 style={styles.cardTitle}>
+            Make a New Investment
+            <div style={styles.titleLine}></div>
+          </h2>
+
+          <div style={styles.formGrid}>
+            {/* Select Investment Duration */}
+            <div style={styles.fieldGroup}>
+              <label style={styles.label}>📅 Select Duration</label>
+              <select style={styles.select} value={tenure} onChange={handleTenureChange}>
+                {tenurePlans.map((p) => (
+                  <option key={p.days} value={p.days}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Choose Return Frequency */}
+            <div style={styles.fieldGroup}>
+              <label style={styles.label}>🔄 Return Frequency</label>
+              <div style={styles.frequencyToggle}>
+                <button
+                  type="button"
+                  style={{ ...styles.freqBtn, ...(frequency === "daily" ? styles.freqBtnActive : {}) }}
+                  onClick={() => setFrequency("daily")}
+                >
+                  Daily
+                </button>
+                <button
+                  type="button"
+                  style={{ ...styles.freqBtn, ...(frequency === "weekly" ? styles.freqBtnActive : {}) }}
+                  onClick={() => setFrequency("weekly")}
+                >
+                  Weekly
+                </button>
+              </div>
+            </div>
+
+            {/* Enter Investment Amount */}
+            <div style={styles.fieldGroup}>
+              <label style={styles.label}>💵 Select / Enter Amount</label>
+              <div style={styles.amountInputWrap} onClick={() => setShowAmountModal(true)}>
+                <span style={{ fontSize: "16px", fontWeight: "bold", color: "#16a34a" }}>₹</span>
+                <input style={styles.amountInput} type="text" readOnly value={amount.toLocaleString("en-IN")} />
+                <span style={styles.changeBadge}>Change ⚙️</span>
+              </div>
+              <small style={styles.helpText}>Click to choose quick amount presets</small>
+            </div>
+          </div>
+
+          {/* RETURN FREQUENCY CARDS */}
+          <div style={styles.returnGrid}>
+            {frequency === "daily" ? (
+              <div style={styles.dailyReturnCard}>
+                <div style={styles.returnCardTitle}>You Will Get Daily Return</div>
+                <strong style={styles.returnCardValue}>₹ {dailyReturn.toFixed(2)}</strong>
+                <span style={styles.returnCardNote}>(Approx. Return Per Day)</span>
+              </div>
+            ) : (
+              <div style={styles.weeklyReturnCard}>
+                <div style={{ ...styles.returnCardTitle, color: "#1557d6" }}>You Will Get Weekly Return</div>
+                <strong style={{ ...styles.returnCardValue, color: "#1557d6" }}>₹ {weeklyReturn.toFixed(2)}</strong>
+                <span style={styles.returnCardNote}>(Approx. Return Per Week)</span>
+              </div>
+            )}
+          </div>
+
+          {/* BREAKDOWN STRIP */}
+          <div style={styles.breakdownGrid}>
+            <div style={styles.breakBox}>
+              <span style={styles.breakLabel}>Investment Amount</span>
+              <strong style={styles.breakValue}>₹ {Number(amount).toLocaleString("en-IN")}</strong>
+            </div>
+            <div style={styles.breakBox}>
+              <span style={styles.breakLabel}>Duration</span>
+              <strong style={styles.breakValue}>{tenure} Days ({rate}%)</strong>
+            </div>
+            <div style={styles.breakBox}>
+              <span style={styles.breakLabel}>Total Return</span>
+              <strong style={{ ...styles.breakValue, color: "#16a34a" }}>₹ {totalReturn.toLocaleString("en-IN")}</strong>
+            </div>
+            <div style={{ ...styles.breakBox, borderRight: "none" }}>
+              <span style={styles.breakLabel}>Total Payout</span>
+              <strong style={{ ...styles.breakValue, color: "#1d4ed8" }}>₹ {totalPayout.toLocaleString("en-IN")}</strong>
+            </div>
+          </div>
+
+          {/* MAIN BUTTONS */}
+          <div style={styles.actionGrid}>
+            <button style={styles.addInvestBtn} onClick={() => setShowAddFundModal(true)}>
+              ➕ Add Invest
+            </button>
+
+            <button style={styles.withdrawBtn} onClick={handleWithdrawClick}>
+              ➔ Withdraw
+            </button>
+          </div>
+        </section>
+
+        {/* INVESTMENT HISTORY */}
+        <section style={styles.historyCard}>
+          <div style={styles.historyHeader}>
+            <h2 style={{ margin: 0, fontSize: "18px" }}>Investment History</h2>
+            <span style={styles.viewAllBtn}>View All</span>
+          </div>
+
+          <div style={styles.tableWrapper}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Date</th>
+                  <th style={styles.th}>Duration</th>
+                  <th style={styles.th}>Amount</th>
+                  <th style={styles.th}>Frequency</th>
+                  <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Maturity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={styles.emptyTd}>No transaction history found</td>
+                  </tr>
+                ) : (
+                  history.map((item, idx) => (
+                    <tr key={idx}>
+                      <td style={styles.td}>{item.date || new Date(item.createdAt).toLocaleDateString("en-GB")}</td>
+                      <td style={styles.td}>{item.duration || `${item.durationDays || tenure} Days`}</td>
+                      <td style={styles.td}>₹ {Number(item.amount).toLocaleString("en-IN")}</td>
+                      <td style={styles.td}>
+                        <span style={item.frequency === "daily" ? styles.badgeDaily : styles.badgeWeekly}>
+                          {item.frequency || "Daily"}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{ ...styles.statusBadge, ...getStatusStyle(item.status) }}>
+                          {item.status || "Active"}
+                        </span>
+                      </td>
+                      <td style={styles.td}>{item.maturityDate || "-"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* TRUST BANNER FOOTER */}
+        <section style={styles.trustBanner}>
+          <div>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>Invest Small, Earn Big Returns Together</h3>
+            <p style={{ margin: 0, opacity: 0.8, fontSize: "12px", color: "#64748b" }}>
+              Start investing today and secure your future.
+            </p>
+          </div>
+          <div style={{ textAlign: "right", color: "#16a34a", fontWeight: "bold", fontSize: "13px" }}>
+            🛡 100% Secure
+            <br />
+            <small style={{ color: "#64748b" }}>Safe & Trusted Platform</small>
+          </div>
+        </section>
+      </div>
+
+      {/* ----------------- MODALS ----------------- */}
+
+      {/* 1. REDESIGNED INVESTMENT AMOUNT MODAL */}
       {showAmountModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
             <div style={styles.modalHeader}>
-              <h3>Select Investment Amount</h3>
+              <h3 style={{ margin: 0, fontSize: "18px" }}>Select Investment Amount</h3>
               <button style={styles.closeBtn} onClick={() => setShowAmountModal(false)}>✕</button>
             </div>
+            <p style={{ fontSize: "12px", color: "#64748b", marginTop: 0, marginBottom: "16px" }}>
+              Choose one of the plan presets below:
+            </p>
+
             <div style={styles.presetGrid}>
               {presetAmounts.map((p) => (
-                <button
+                <div
                   key={p.value}
-                  style={styles.presetBtn}
+                  style={{
+                    ...styles.presetCard,
+                    background: p.color,
+                    border: amount === p.value ? "3px solid #ffffff" : "none"
+                  }}
                   onClick={() => {
                     setAmount(p.value);
                     setShowAmountModal(false);
                   }}
                 >
-                  {p.label} (₹{p.value.toLocaleString("en-IN")})
-                </button>
+                  <span style={styles.presetBadge}>{p.desc}</span>
+                  <div style={styles.presetVal}>₹{p.value.toLocaleString("en-IN")}</div>
+                  <span style={styles.presetLabel}>({p.label})</span>
+                </div>
               ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* 2. ADD FUND / DEPOSIT POPUP */}
+      {/* 2. ADD FUND WITH SCREENSHOT UPLOAD (TELEGRAM REMOVED) */}
       {showAddFundModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
             <div style={styles.modalHeader}>
-              <h3>Add Investment Fund</h3>
+              <h3 style={{ margin: 0, fontSize: "18px" }}>Add Investment Fund</h3>
               <button style={styles.closeBtn} onClick={() => setShowAddFundModal(false)}>✕</button>
             </div>
 
-            <p style={{ fontSize: "14px", color: "#475569" }}>
-              Copy the wallet address below, make the payment, and click the button to send the payment screenshot along with your Wallet ID directly via Telegram.
+            <p style={{ fontSize: "13px", color: "#475569", margin: "0 0 12px 0" }}>
+              Send <strong style={{ color: "#16a34a" }}>₹{amount.toLocaleString("en-IN")}</strong> to company wallet & upload payment proof:
             </p>
 
             <div style={styles.walletBox}>
@@ -524,32 +565,43 @@ export default function OneTime() {
               </div>
             </div>
 
-            <div style={{ marginTop: "15px" }}>
-              <p style={{ fontSize: "12px", color: "#0f172a", fontWeight: "bold", marginBottom: "8px" }}>
-                Your Wallet / User ID: <span style={{ color: "#1557d6" }}>{user?._id || email}</span>
-              </p>
-              
-              <a
-                href={`${TELEGRAM_LINK}?text=${encodeURIComponent(
-                  `Hello Admin, I have made a OneTime Investment deposit.\nMy Email/Wallet ID: ${user?._id || email}\nAmount: ₹${amount}`
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                style={styles.telegramBtn}
-              >
-                ✈️ Send Screenshot on Telegram
-              </a>
-            </div>
+            <form onSubmit={handleDepositSubmit} style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div>
+                <label style={styles.label}>Transaction ID / UTR No.*</label>
+                <input
+                  style={styles.inputModal}
+                  placeholder="Enter 12-digit UTR or Txn Hash"
+                  value={txnId}
+                  onChange={(e) => setTxnId(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={styles.label}>Payment Screenshot Proof*</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={styles.fileInput}
+                  onChange={(e) => setScreenshot(e.target.files[0])}
+                  required
+                />
+              </div>
+
+              <button type="submit" style={styles.submitBtn} disabled={depositing}>
+                {depositing ? "Uploading Proof..." : "Submit Deposit Proof"}
+              </button>
+            </form>
           </div>
         </div>
       )}
 
-      {/* 3. ADD BANK ACCOUNT POPUP */}
+      {/* 3. ADD BANK ACCOUNT MODAL */}
       {showBankModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
             <div style={styles.modalHeader}>
-              <h3>Add Bank Details</h3>
+              <h3 style={{ margin: 0, fontSize: "18px" }}>Add Bank Details</h3>
               <button style={styles.closeBtn} onClick={() => setShowBankModal(false)}>✕</button>
             </div>
 
@@ -590,28 +642,42 @@ export default function OneTime() {
         </div>
       )}
 
-      {/* 4. WITHDRAWAL POPUP */}
+      {/* 4. WITHDRAWAL MODAL WITH BALANCE ALERT */}
       {showWithdrawModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
             <div style={styles.modalHeader}>
-              <h3>Withdraw Funds</h3>
+              <h3 style={{ margin: 0, fontSize: "18px" }}>Withdraw Funds</h3>
               <button style={styles.closeBtn} onClick={() => setShowWithdrawModal(false)}>✕</button>
             </div>
 
-            <div style={styles.withdrawBalanceInfo}>
+            <div
+              style={{
+                ...styles.withdrawBalanceInfo,
+                background: (user?.availableBalance || 0) < selectedWithdrawAmount ? "#fee2e2" : "#e0f2fe",
+                color: (user?.availableBalance || 0) < selectedWithdrawAmount ? "#991b1b" : "#0369a1"
+              }}
+            >
               <span>Available Wallet Balance:</span>
               <strong>₹ {(user?.availableBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
             </div>
 
-            <p style={{ fontSize: "13px", color: "#64748b", margin: "10px 0 6px" }}>
-              Select Pre-filled Withdrawal Amount (Cannot enter manual amount):
+            {/* In-Modal Alert Message */}
+            {(user?.availableBalance || 0) < selectedWithdrawAmount && (
+              <div style={styles.balanceAlertBox}>
+                ⚠️ You don't have enough balance to withdraw ₹{selectedWithdrawAmount.toLocaleString("en-IN")}.
+              </div>
+            )}
+
+            <p style={{ fontSize: "13px", color: "#64748b", margin: "12px 0 6px" }}>
+              Select Pre-filled Withdrawal Amount:
             </p>
 
             <div style={styles.withdrawPresetGrid}>
               {withdrawPresets.map((amt) => (
                 <button
                   key={amt}
+                  type="button"
                   style={{
                     ...styles.withdrawPresetBtn,
                     ...(selectedWithdrawAmount === amt ? styles.withdrawPresetActive : {})
@@ -623,12 +689,16 @@ export default function OneTime() {
               ))}
             </div>
 
-            <small style={{ color: "#ef4444", display: "block", marginTop: "10px" }}>
-              * You can withdraw only ONCE per day. If rejected, you can request again.
-            </small>
-
-            <button style={{ ...styles.submitBtn, marginTop: "15px" }} onClick={handleWithdrawSubmit}>
-              Confirm Withdrawal
+            <button
+              style={{
+                ...styles.submitBtn,
+                marginTop: "18px",
+                background: (user?.availableBalance || 0) < selectedWithdrawAmount ? "#94a3b8" : "#16a34a"
+              }}
+              onClick={handleWithdrawSubmit}
+              disabled={withdrawing}
+            >
+              {withdrawing ? "Processing..." : "Confirm Withdrawal"}
             </button>
           </div>
         </div>
@@ -637,7 +707,6 @@ export default function OneTime() {
   );
 }
 
-// Helper for status colors
 const getStatusStyle = (status) => {
   switch (status?.toLowerCase()) {
     case "active":
@@ -652,15 +721,25 @@ const getStatusStyle = (status) => {
   }
 };
 
-// CSS-IN-JS STYLES matching design 1000%
+// CSS-IN-JS STYLES (Full height display fix & modern design)
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #061b3a 0%, #0a2851 100%)",
-    padding: "20px",
+    width: "100%",
+    background: "linear-gradient(180deg, #061b3a 0%, #030e21 100%)",
+    padding: "16px",
     fontFamily: "Inter, Arial, sans-serif",
     color: "#0f172a",
-    boxSizing: "border-box"
+    boxSizing: "border-box",
+    display: "flex",
+    justifyContent: "center"
+  },
+  container: {
+    width: "100%",
+    maxWidth: "1100px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px"
   },
   loadingPage: {
     minHeight: "100vh",
@@ -677,53 +756,52 @@ const styles = {
     color: "white",
     padding: "12px 20px",
     borderRadius: "10px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
     zIndex: 99999,
-    fontWeight: "bold"
+    fontWeight: "bold",
+    fontSize: "14px"
   },
   header: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    color: "white",
-    marginBottom: "20px"
+    color: "white"
   },
   brand: {
     display: "flex",
     alignItems: "center",
-    gap: "12px"
+    gap: "10px"
   },
   logoImg: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "12px"
+    width: "42px",
+    height: "42px",
+    borderRadius: "10px"
   },
   brandTitle: {
     margin: 0,
-    fontSize: "22px",
-    fontWeight: "900",
-    letterSpacing: "0.5px"
+    fontSize: "20px",
+    fontWeight: "900"
   },
   brandSubtitle: {
     margin: 0,
-    fontSize: "12px",
+    fontSize: "11px",
     opacity: 0.8
   },
   welcomeBox: {
     textAlign: "center"
   },
   welcomeTitle: {
-    fontSize: "18px",
+    fontSize: "16px",
     display: "block"
   },
   welcomeSub: {
-    fontSize: "12px",
+    fontSize: "11px",
     opacity: 0.75
   },
   headerRight: {
     display: "flex",
     alignItems: "center",
-    gap: "15px"
+    gap: "12px"
   },
   notifIconContainer: {
     position: "relative",
@@ -738,22 +816,22 @@ const styles = {
     borderRadius: "50%",
     width: "18px",
     height: "18px",
-    fontSize: "11px",
+    fontSize: "10px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontWeight: "bold"
   },
   profileCircle: {
-    width: "48px",
-    height: "48px",
+    width: "42px",
+    height: "42px",
     borderRadius: "50%",
     background: "#ffffff",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    border: "2px solid #20cf72"
+    border: "2px solid #22c55e"
   },
   profileImg: {
     width: "100%",
@@ -761,220 +839,224 @@ const styles = {
     objectFit: "cover"
   },
   summaryCard: {
-    background: "linear-gradient(100deg, #1557d6, #08a95b)",
-    borderRadius: "20px",
+    background: "linear-gradient(100deg, #1d4ed8, #16a34a)",
+    borderRadius: "16px",
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
-    padding: "20px",
+    padding: "16px",
     color: "white",
-    boxShadow: "0 12px 30px rgba(0,0,0,0.2)",
-    marginBottom: "20px"
+    boxShadow: "0 10px 25px rgba(0,0,0,0.3)"
   },
   statBox: {
     textAlign: "center",
     borderRight: "1px solid rgba(255,255,255,0.2)",
-    padding: "10px"
+    padding: "6px"
   },
   statIcon: {
-    fontSize: "24px",
-    display: "block",
-    marginBottom: "4px"
+    fontSize: "20px",
+    display: "block"
   },
   statTitle: {
-    fontSize: "13px",
+    fontSize: "11px",
     opacity: 0.9
   },
   statValue: {
     display: "block",
-    fontSize: "22px",
+    fontSize: "18px",
     fontWeight: "800",
-    marginTop: "4px"
+    marginTop: "2px"
   },
   mainCard: {
     background: "white",
-    borderRadius: "20px",
-    padding: "24px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-    marginBottom: "20px"
+    borderRadius: "18px",
+    padding: "20px",
+    boxShadow: "0 8px 25px rgba(0,0,0,0.15)"
   },
   cardTitle: {
-    margin: "0 0 20px 0",
-    fontSize: "20px",
+    margin: "0 0 16px 0",
+    fontSize: "18px",
     fontWeight: "800"
   },
   titleLine: {
-    width: "40px",
+    width: "35px",
     height: "3px",
-    background: "#08a95b",
-    marginTop: "6px",
+    background: "#16a34a",
+    marginTop: "4px",
     borderRadius: "2px"
   },
   formGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "18px",
-    marginBottom: "20px"
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "14px",
+    marginBottom: "16px"
   },
   fieldGroup: {
     display: "flex",
     flexDirection: "column"
   },
   label: {
-    fontSize: "13px",
+    fontSize: "12px",
     fontWeight: "700",
-    marginBottom: "8px",
+    marginBottom: "6px",
     color: "#334155"
   },
   select: {
-    height: "50px",
-    borderRadius: "12px",
+    height: "46px",
+    borderRadius: "10px",
     border: "1px solid #cbd5e1",
-    padding: "0 12px",
-    fontSize: "15px",
-    outline: "none"
+    padding: "0 10px",
+    fontSize: "14px"
   },
   frequencyToggle: {
     display: "flex",
     gap: "8px",
-    height: "50px"
+    height: "46px"
   },
   freqBtn: {
     flex: 1,
-    borderRadius: "12px",
+    borderRadius: "10px",
     border: "1px solid #cbd5e1",
-    background: "white",
-    fontSize: "15px",
+    background: "#f8fafc",
+    fontSize: "14px",
     fontWeight: "bold",
     cursor: "pointer"
   },
   freqBtnActive: {
-    background: "#08a95b",
+    background: "#16a34a",
     color: "white",
-    borderColor: "#08a95b"
+    borderColor: "#16a34a"
   },
   amountInputWrap: {
-    height: "50px",
-    borderRadius: "12px",
+    height: "46px",
+    borderRadius: "10px",
     border: "1px solid #cbd5e1",
-    padding: "0 14px",
+    padding: "0 12px",
     display: "flex",
     alignItems: "center",
-    gap: "8px",
+    justifyContent: "space-between",
     cursor: "pointer",
     background: "#f8fafc"
   },
   amountInput: {
     border: "none",
     background: "transparent",
-    fontSize: "16px",
+    fontSize: "15px",
     fontWeight: "bold",
     outline: "none",
-    width: "100%",
+    width: "60%",
     cursor: "pointer"
+  },
+  changeBadge: {
+    fontSize: "11px",
+    color: "#1d4ed8",
+    fontWeight: "bold",
+    background: "#eff6ff",
+    padding: "4px 8px",
+    borderRadius: "6px"
   },
   helpText: {
     color: "#64748b",
-    fontSize: "11px",
+    fontSize: "10px",
     marginTop: "4px"
   },
   returnGrid: {
-    margin: "15px 0"
+    margin: "12px 0"
   },
   dailyReturnCard: {
-    background: "#eaf9ef",
-    border: "1px solid #d1f1dc",
-    borderRadius: "16px",
-    padding: "20px",
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: "12px",
+    padding: "16px",
     textAlign: "center"
   },
   weeklyReturnCard: {
-    background: "#eef5ff",
-    border: "1px solid #d7e5ff",
-    borderRadius: "16px",
-    padding: "20px",
+    background: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    borderRadius: "12px",
+    padding: "16px",
     textAlign: "center"
   },
   returnCardTitle: {
-    fontSize: "15px",
+    fontSize: "14px",
     fontWeight: "700",
-    color: "#07894b",
-    marginBottom: "6px"
+    color: "#16a34a",
+    marginBottom: "4px"
   },
   returnCardValue: {
-    fontSize: "28px",
+    fontSize: "26px",
     fontWeight: "800",
-    color: "#07894b"
+    color: "#16a34a"
   },
   returnCardNote: {
     display: "block",
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#64748b",
-    marginTop: "4px"
+    marginTop: "2px"
   },
   breakdownGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
     border: "1px solid #e2e8f0",
-    borderRadius: "14px",
+    borderRadius: "12px",
     overflow: "hidden",
-    margin: "20px 0"
+    margin: "16px 0"
   },
   breakBox: {
-    padding: "15px",
+    padding: "12px",
     textAlign: "center",
     borderRight: "1px solid #e2e8f0"
   },
   breakLabel: {
     display: "block",
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#64748b",
-    marginBottom: "4px"
+    marginBottom: "2px"
   },
   breakValue: {
-    fontSize: "15px",
-    color: "#0f172a"
+    fontSize: "14px",
+    fontWeight: "bold"
   },
   actionGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "16px"
+    gap: "12px"
   },
   addInvestBtn: {
-    height: "60px",
-    borderRadius: "14px",
+    height: "50px",
+    borderRadius: "12px",
     border: "none",
-    background: "linear-gradient(135deg, #08a95b, #068044)",
+    background: "linear-gradient(135deg, #16a34a, #15803d)",
     color: "white",
-    fontSize: "16px",
+    fontSize: "15px",
     fontWeight: "bold",
     cursor: "pointer"
   },
   withdrawBtn: {
-    height: "60px",
-    borderRadius: "14px",
+    height: "50px",
+    borderRadius: "12px",
     border: "none",
-    background: "linear-gradient(135deg, #061b3a, #0a2851)",
+    background: "linear-gradient(135deg, #0f172a, #1e293b)",
     color: "white",
-    fontSize: "16px",
+    fontSize: "15px",
     fontWeight: "bold",
     cursor: "pointer"
   },
   historyCard: {
     background: "white",
-    borderRadius: "20px",
-    padding: "20px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-    marginBottom: "20px"
+    borderRadius: "18px",
+    padding: "18px",
+    boxShadow: "0 8px 25px rgba(0,0,0,0.15)"
   },
   historyHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "16px"
+    marginBottom: "12px"
   },
   viewAllBtn: {
-    color: "#08a95b",
+    color: "#16a34a",
     fontWeight: "bold",
+    fontSize: "13px",
     cursor: "pointer"
   },
   tableWrapper: {
@@ -984,49 +1066,49 @@ const styles = {
     width: "100%",
     borderCollapse: "collapse",
     textAlign: "left",
-    fontSize: "13px"
+    fontSize: "12px"
   },
   th: {
     background: "#f8fafc",
-    padding: "12px",
+    padding: "10px",
     borderBottom: "1px solid #e2e8f0",
     color: "#475569"
   },
   td: {
-    padding: "12px",
+    padding: "10px",
     borderBottom: "1px solid #f1f5f9"
   },
   emptyTd: {
     textAlign: "center",
-    padding: "30px",
+    padding: "24px",
     color: "#94a3b8"
   },
   badgeDaily: {
     background: "#dcfce7",
     color: "#15803d",
-    padding: "4px 10px",
-    borderRadius: "12px",
-    fontSize: "11px",
+    padding: "3px 8px",
+    borderRadius: "10px",
+    fontSize: "10px",
     fontWeight: "bold"
   },
   badgeWeekly: {
     background: "#dbeafe",
     color: "#1d4ed8",
-    padding: "4px 10px",
-    borderRadius: "12px",
-    fontSize: "11px",
+    padding: "3px 8px",
+    borderRadius: "10px",
+    fontSize: "10px",
     fontWeight: "bold"
   },
   statusBadge: {
-    padding: "4px 10px",
-    borderRadius: "12px",
-    fontSize: "11px",
+    padding: "3px 8px",
+    borderRadius: "10px",
+    fontSize: "10px",
     fontWeight: "bold"
   },
   trustBanner: {
     background: "#ffffff",
-    borderRadius: "18px",
-    padding: "20px",
+    borderRadius: "16px",
+    padding: "16px",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between"
@@ -1034,7 +1116,7 @@ const styles = {
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(0, 0, 0, 0.6)",
+    background: "rgba(0, 0, 0, 0.7)",
     backdropFilter: "blur(4px)",
     display: "flex",
     alignItems: "center",
@@ -1045,44 +1127,66 @@ const styles = {
   modalCard: {
     background: "white",
     borderRadius: "20px",
-    padding: "24px",
+    padding: "20px",
     width: "100%",
-    maxWidth: "420px",
-    boxShadow: "0 25px 50px rgba(0,0,0,0.25)"
+    maxWidth: "400px",
+    boxShadow: "0 25px 50px rgba(0,0,0,0.3)"
   },
   modalHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "16px"
+    marginBottom: "12px"
   },
   closeBtn: {
     border: "none",
     background: "#f1f5f9",
     borderRadius: "50%",
-    width: "30px",
-    height: "30px",
+    width: "28px",
+    height: "28px",
     cursor: "pointer",
     fontWeight: "bold"
   },
+
+  /* NEW PRESET CARDS DESIGN */
   presetGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "10px"
+    gap: "12px"
   },
-  presetBtn: {
-    padding: "12px",
-    borderRadius: "12px",
-    border: "1px solid #cbd5e1",
-    background: "#f8fafc",
-    fontWeight: "bold",
-    cursor: "pointer"
+  presetCard: {
+    borderRadius: "14px",
+    padding: "14px",
+    color: "white",
+    cursor: "pointer",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 6px 15px rgba(0,0,0,0.15)",
+    transition: "transform 0.2s ease"
   },
+  presetBadge: {
+    fontSize: "10px",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    opacity: 0.9,
+    fontWeight: "bold"
+  },
+  presetVal: {
+    fontSize: "18px",
+    fontWeight: "900",
+    margin: "4px 0"
+  },
+  presetLabel: {
+    fontSize: "11px",
+    opacity: 0.85
+  },
+
   walletBox: {
     background: "#f1f5f9",
     padding: "12px",
-    borderRadius: "12px",
-    marginTop: "12px"
+    borderRadius: "10px"
   },
   walletAddrRow: {
     display: "flex",
@@ -1092,66 +1196,64 @@ const styles = {
     marginTop: "4px"
   },
   walletText: {
-    fontSize: "12px",
+    fontSize: "11px",
     wordBreak: "break-all",
-    fontWeight: "bold",
-    color: "#0f172a"
-  },
-  copyBtn: {
-    background: "#08a95b",
-    color: "white",
-    border: "none",
-    padding: "6px 12px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "12px",
     fontWeight: "bold"
   },
-  telegramBtn: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "14px",
-    background: "#0088cc",
+  copyBtn: {
+    background: "#16a34a",
     color: "white",
-    borderRadius: "12px",
-    textDecoration: "none",
-    fontWeight: "bold",
-    fontSize: "14px",
-    marginTop: "10px"
+    border: "none",
+    padding: "5px 10px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "11px",
+    fontWeight: "bold"
   },
   inputModal: {
-    height: "46px",
+    width: "100%",
+    height: "44px",
     borderRadius: "10px",
     border: "1px solid #cbd5e1",
     padding: "0 12px",
-    fontSize: "14px",
-    outline: "none"
+    fontSize: "13px",
+    boxSizing: "border-box"
+  },
+  fileInput: {
+    width: "100%",
+    fontSize: "12px"
   },
   submitBtn: {
-    height: "48px",
-    borderRadius: "12px",
+    height: "46px",
+    borderRadius: "10px",
     border: "none",
-    background: "#08a95b",
+    background: "#16a34a",
     color: "white",
     fontWeight: "bold",
-    fontSize: "15px",
+    fontSize: "14px",
     cursor: "pointer",
     width: "100%"
   },
   withdrawBalanceInfo: {
-    background: "#e0f2fe",
-    padding: "12px",
-    borderRadius: "12px",
+    padding: "10px",
+    borderRadius: "10px",
     display: "flex",
     justifyContent: "space-between",
-    color: "#0369a1",
-    fontSize: "14px"
+    fontSize: "13px"
+  },
+  balanceAlertBox: {
+    background: "#fee2e2",
+    color: "#991b1b",
+    fontSize: "12px",
+    padding: "8px 10px",
+    borderRadius: "8px",
+    marginTop: "8px",
+    fontWeight: "bold"
   },
   withdrawPresetGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "10px"
+    gap: "8px"
   },
   withdrawPresetBtn: {
     padding: "10px",
@@ -1159,11 +1261,12 @@ const styles = {
     border: "1px solid #cbd5e1",
     background: "white",
     fontWeight: "bold",
-    cursor: "pointer"
+    cursor: "pointer",
+    fontSize: "13px"
   },
   withdrawPresetActive: {
-    background: "#1557d6",
+    background: "#1d4ed8",
     color: "white",
-    borderColor: "#1557d6"
+    borderColor: "#1d4ed8"
   }
 };
