@@ -389,7 +389,7 @@ export default function AdminDashboard() {
           🧩 ADD ON
         </button>
         {/* AOT Button Added Here */}
-        <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-onetime")}>
+        <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-one-time")}>
           ⚡ AOT
         </button>
       </div>
