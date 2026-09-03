@@ -7169,6 +7169,157 @@ app.get("/get-vapid-key", (req, res) => {
   res.status(200).json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
 
+// ==========================================
+// SAVE MONEY - ONE TIME INVESTMENT BACKEND APIS
+// ==========================================
+
+// 1. Dashboard API (Get user profile, stats, one-time notifications, and history)
+app.post("/api/onetime/dashboard", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "User email required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Filter notifications for "one_timer" type only
+    const oneTimerNotifications = await Notification.find({
+      email,
+      type: "one_timer"
+    }).sort({ createdAt: -1 });
+
+    // Fetch Investments & Withdrawals History
+    const investments = await OneTimeInvestment.find({ email }).lean();
+    const withdrawals = await Withdrawal.find({ email, category: "onetime" }).lean();
+
+    // Combine history list sorted by date
+    const history = [
+      ...investments.map((i) => ({ ...i, type: "investment" })),
+      ...withdrawals.map((w) => ({ ...w, type: "withdrawal" }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return res.status(200).json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        photo: user.photo || user.profilePhoto || "",
+        totalInvested: user.oneTimeTotalInvested || 0,
+        totalReturns: user.oneTimeTotalReturns || 0,
+        totalEarnings: user.oneTimeTotalEarnings || 0,
+        availableBalance: user.wallet || 0,
+        bankDetails: user.bankDetails || null
+      },
+      oneTimerNotifications,
+      history
+    });
+  } catch (err) {
+    console.error("OneTime Dashboard API Error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// 2. Add/Save Bank Details API
+app.post("/api/onetime/add-bank-details", async (req, res) => {
+  try {
+    const { email, bankDetails } = req.body;
+
+    if (!email || !bankDetails) {
+      return res.status(400).json({ message: "Invalid parameters" });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { email },
+      { $set: { bankDetails } },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Bank details updated successfully",
+      bankDetails: user.bankDetails
+    });
+  } catch (err) {
+    console.error("Bank details save error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// 3. Withdrawal Request API (With Daily Limit Check & Allowed Pre-filled Amounts)
+app.post("/api/onetime/withdraw", async (req, res) => {
+  try {
+    const { email, amount } = req.body;
+    const allowedAmounts = [100, 300, 500, 1000, 10000];
+
+    // Check if amount is strictly in pre-filled list
+    if (!allowedAmounts.includes(Number(amount))) {
+      return res.status(400).json({ message: "Invalid withdrawal amount selection" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check Bank Details
+    if (!user.bankDetails || !user.bankDetails.accountNumber) {
+      return res.status(400).json({ message: "Bank account details missing" });
+    }
+
+    // Check Balance
+    if ((user.wallet || 0) < amount) {
+      return res.status(400).json({ message: "Insufficient Wallet Balance" });
+    }
+
+    // Check Daily Limit (Allowed once per day, unless rejected)
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const todayWithdrawal = await Withdrawal.findOne({
+      email,
+      category: "onetime",
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+      status: { $ne: "Rejected" } // If status is Pending or Approved, block
+    });
+
+    if (todayWithdrawal) {
+      return res.status(400).json({
+        message: "You can request withdrawal only once per day. (If rejected, you can retry)"
+      });
+    }
+
+    // Process Withdrawal Request
+    user.wallet -= Number(amount);
+    await user.save();
+
+    const newWithdrawal = new Withdrawal({
+      email,
+      userId: user._id,
+      amount,
+      category: "onetime",
+      bankDetails: user.bankDetails,
+      status: "Pending",
+      createdAt: new Date()
+    });
+
+    await newWithdrawal.save();
+
+    return res.status(200).json({
+      message: "Withdrawal request submitted successfully",
+      withdrawal: newWithdrawal
+    });
+  } catch (err) {
+    console.error("Withdrawal API Error:", err);
+    res.status(500).json({ message: "Server error during withdrawal" });
+  }
+});
+    
 
 
 
