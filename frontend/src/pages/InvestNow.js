@@ -56,7 +56,7 @@ export default function InvestNow() {
       }
     } catch (err) {
       console.log("INVESTMENT SUMMARY ERROR:", err);
-    } finally {
+    } fontally {
       setLoading(false);
     }
   };
@@ -98,10 +98,10 @@ export default function InvestNow() {
           "Make a smart move and unlock upgraded growth opportunities.",
         icon: "rocket",
         button: "Upgrade Now",
-        onClick: () => navigate("/one-time")
+        onClick: () => navigate("/one-time") // এখানে এখন /one-time পেজে নেভিগেট করবে
       }
     ];
-  }, []);
+  }, [navigate]);
 
   const comingCards = [
     {
@@ -493,7 +493,7 @@ function MiniStat({ stat }) {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(180deg, #0f172a, #020617)", // Premium Dark Gradient
+    background: "linear-gradient(180deg, #0f172a, #020617)",
     padding: "18px",
     fontFamily: "Arial, sans-serif",
     color: "#f8fafc"
@@ -530,7 +530,7 @@ const styles = {
   heroCard: {
     height: "230px",
     borderRadius: "32px",
-    background: "linear-gradient(135deg,#31108f,#5b21b6,#db2777)", // Richer Dark Gradient for Hero
+    background: "linear-gradient(135deg,#31108f,#5b21b6,#db2777)",
     position: "relative",
     overflow: "hidden",
     padding: "36px 44px",
@@ -918,7 +918,7 @@ const styles = {
 
   quickPanel: {
     height: "92px",
-    background: "#1e293b", // Dark Panel Background
+    background: "#1e293b",
     borderRadius: "28px",
     margin: "18px 4px 0",
     display: "grid",
@@ -971,13 +971,12 @@ const styles = {
   },
 
   sectionTitle: {
-  margin: "34px 0 22px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center", //  ঠিক করা হয়েছে
-  gap: "18px"
-},
-
+    margin: "34px 0 22px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "18px"
+  },
 
   sectionLineLeft: {
     width: "82px",
@@ -1000,7 +999,7 @@ const styles = {
   },
 
   savePlanCard: {
-    background: "linear-gradient(135deg,#065f46,#047857)", // Darker Emerald
+    background: "linear-gradient(135deg,#065f46,#047857)",
     borderRadius: "28px",
     minHeight: "260px",
     padding: "22px",
@@ -1010,7 +1009,7 @@ const styles = {
   },
 
   onePlanCard: {
-    background: "linear-gradient(135deg,#1e3a8a,#1d4ed8)", // Darker Blue
+    background: "linear-gradient(135deg,#1e3a8a,#1d4ed8)",
     borderRadius: "28px",
     minHeight: "260px",
     padding: "22px",
@@ -1051,7 +1050,7 @@ const styles = {
     width: "118px",
     height: "118px",
     borderRadius: "50%",
-    background: "#1f2937", // Dark circle for icon background
+    background: "#1f2937",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1247,15 +1246,15 @@ const styles = {
   },
 
   comingGold: {
-    background: "linear-gradient(135deg,#2e2509,#1e1805)" // Dark Gold Theme
+    background: "linear-gradient(135deg,#2e2509,#1e1805)"
   },
 
   comingSilver: {
-    background: "linear-gradient(135deg,#1e293b,#0f172a)" // Dark Silver Theme
+    background: "linear-gradient(135deg,#1e293b,#0f172a)"
   },
 
   comingRd: {
-    background: "linear-gradient(135deg,#2d1510,#1c0d0a)" // Dark RD Theme
+    background: "linear-gradient(135deg,#2d1510,#1c0d0a)"
   },
 
   comingRibbon: {
@@ -1337,7 +1336,7 @@ const styles = {
 
   miniPigNose: {
     position: "absolute",
-    right: "-5px",
+    right: "-8px",
     top: "12px",
     width: "18px",
     height: "14px",
@@ -1366,7 +1365,7 @@ const styles = {
     marginTop: "24px",
     minHeight: "130px",
     borderRadius: "28px",
-    background: "linear-gradient(135deg,#1e1b4b,#311042,#0f172a)", // Premium Cyberpunk Dark
+    background: "linear-gradient(135deg,#1e1b4b,#311042,#0f172a)",
     color: "white",
     display: "flex",
     alignItems: "center",
@@ -1390,7 +1389,7 @@ const styles = {
 
   statsPanel: {
     minHeight: "86px",
-    background: "#1e293b", // Dark Stats Panel
+    background: "#1e293b",
     marginTop: "20px",
     borderRadius: "26px",
     display: "grid",
@@ -1444,7 +1443,5 @@ const styles = {
     fontWeight: "900",
     fontSize: "14px",
     boxShadow: "0 6px 12px rgba(0,0,0,.2)"
-  },
-
-  "@media": {}
+  }
 };
