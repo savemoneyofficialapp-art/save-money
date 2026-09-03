@@ -42,6 +42,8 @@ const AutoWithdraw = require("./models/AutoWithdraw");
 const { P2PUser, P2PReview } = require("./models/p2p");
 const sendPushNotification = require("./utils/sendPush");
 const News = mongoose.model("News", new mongoose.Schema({ message: String }));
+const OneTimeInvestment = require("./models/OneTimeInvestment");
+
 
 
 
