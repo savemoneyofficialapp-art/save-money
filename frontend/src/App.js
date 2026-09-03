@@ -43,6 +43,7 @@ import ReferralTree from "./pages/ReferralTree";
 import LegalPages from "./pages/LegalPages";
 import AdvancedAdminAnalytics from "./pages/AdvancedAdminAnalytics";
 import AdminUserControl from "./pages/AdminUserControl";
+import AdminOneTime from "./pages/AdminOneTime";
 import AboutCompany from "./pages/AboutCompany";
 
 import InvestNow from "./pages/InvestNow";
@@ -357,6 +358,15 @@ function App() {
           element={
             <AdminRoute>
               <AdminUserControl />
+            </AdminRoute>
+          }
+        />
+
+          <Route
+          path="/admin-one-time"
+          element={
+            <AdminRoute>
+              <AdminOneTime />
             </AdminRoute>
           }
         />
