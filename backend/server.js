@@ -7206,30 +7206,51 @@ app.get("/get-vapid-key", (req, res) => {
 app.post("/api/onetime/dashboard", async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
-    }
+    if (!email) return res.status(400).json({ success: false, message: "Email required" });
 
     const cleanEmail = email.trim().toLowerCase();
     const user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } });
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    // আপনার MongoDB ডকুমেন্টের ভেতর থাকা history অ্যারে সরাসরি রেসপন্সে পাঠানো হচ্ছে
-    const userHistory = user.history || [];
+    const history = user.history || [];
+
+    // টোটাল হিসাব (Cards Calculation)
+    let totalInvested = 0;
+    let totalEarnings = Number(user.totalEarning || user.totalEarnings || 0);
+    let totalWithdrawn = 0;
+    let activeInvestment = null;
+
+    history.forEach((item) => {
+      // ইনভেস্টমেন্ট হিসাব
+      if (item.type === "OneTimeInvestment") {
+        totalInvested += Number(item.amount || 0);
+        if (item.status === "Active") {
+          activeInvestment = item; // একটিভ ইনভেস্টমেন্ট ট্র্যাক করা
+        }
+      }
+      // উইথড্রয়াল হিসাব (শুধুমাত্র এপ্রুভ হওয়া উইথড্র)
+      if (item.type === "Withdrawal" && (item.status === "Approved" || item.status === "Accepted")) {
+        totalWithdrawn += Number(item.amount || 0);
+      }
+    });
 
     return res.status(200).json({
       success: true,
       user: user,
-      history: userHistory,
-      investments: userHistory,
-      oneTimerNotifications: []
+      history: history,
+      stats: {
+        totalInvested: totalInvested,
+        totalEarnings: totalEarnings,
+        totalWithdrawn: totalWithdrawn, // টোটাল রিটার্ন বাদ দিয়ে টোটাল উইথড্র
+        availableBalance: Number(user.otbalance || 0)
+      },
+      hasActiveInvestment: !!activeInvestment,
+      activeInvestment: activeInvestment
     });
   } catch (error) {
     console.error("Dashboard Fetch Error:", error);
-    return res.status(500).json({ success: false, message: "Server error fetching dashboard" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 });
 
@@ -7363,78 +7384,77 @@ app.get("/api/onetime/admin/withdrawals", async (req, res) => {
 
 app.post("/admin/onetime-withdraw-action", async (req, res) => {
   try {
-    const { id, status, rejectReason } = req.body;
+    const targetId = req.body.id || req.body.requestId;
+    const { status, rejectReason } = req.body; // status: "Approved" or "Rejected"
 
-    // ১. Withdrawal কালেকশনে আপডেট করা (যদি থাকে)
-    let withdrawDoc = null;
-    try {
-      if (typeof Withdrawal !== "undefined") {
-        withdrawDoc = await Withdrawal.findById(id);
-        if (withdrawDoc) {
-          withdrawDoc.status = status;
-          if (rejectReason) withdrawDoc.rejectReason = rejectReason;
-          await withdrawDoc.save();
-        }
-      }
-    } catch (e) {}
+    if (!targetId) return res.status(400).json({ success: false, message: "ID parameter missing" });
+    const targetIdStr = String(targetId).trim();
 
-    // ২. User ডকুমেন্টের ভেতর history অ্যারেতে থাকা অবজেক্টের status আপডেট করা
-    const user = await User.findOne({ "history._id": id });
+    // ১. Standalone Withdrawal Collection আপডেট
+    if (typeof Withdrawal !== "undefined") {
+      await Withdrawal.findByIdAndUpdate(targetIdStr, { status, rejectReason });
+    }
+
+    // ২. User history Array আপডেট
+    const user = await User.findOne({ "history._id": targetIdStr });
     if (user) {
-      const item = user.history.find(h => h._id.toString() === id.toString());
+      const item = user.history.find((h) => h && h._id && String(h._id) === targetIdStr);
       if (item) {
         item.status = status;
         if (rejectReason) item.rejectReason = rejectReason;
       }
 
-      // রিকোয়েস্ট রিজেক্ট হলে ইউজারকে otbalance ফেরত দেওয়া
+      // রিজেক্ট হলে টাকা ওয়ালেটে ফেরত দেওয়া
       if (status === "Rejected") {
-        const refundAmount = withdrawDoc ? withdrawDoc.amount : (item ? item.amount : 0);
-        user.otbalance = Number(user.otbalance || 0) + Number(refundAmount || 0);
+        const refundAmount = Number(item?.amount || 0);
+        user.otbalance = Number(user.otbalance || 0) + refundAmount;
       }
 
+      user.markModified("history");
       await user.save();
     }
 
-    return res.status(200).json({
-      success: true,
-      message: `Withdrawal request status updated to ${status}`
-    });
+    return res.status(200).json({ success: true, message: `Withdrawal ${status}` });
   } catch (error) {
     console.error("Admin Withdraw Action Error:", error);
-    return res.status(500).json({ success: false, message: "Error updating withdraw status" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 });
 
-// 5. Admin - Approve Cash Request (Add fund to otbalance)
-app.post("/admin/onetime-approve-cash", async (req, res) => {
+app.post("/admin/approve-deposit", async (req, res) => {
   try {
-    const { requestId } = req.body;
-    const reqItem = await Txn.findById(requestId);
-    if (!reqItem) return res.status(404).json({ msg: "Request not found" });
+    const { depositId, userId, email, amount } = req.body;
 
-    if (reqItem.status?.toLowerCase() === "approved") {
-      return res.status(400).json({ msg: "Request already approved" });
-    }
+    const user = await User.findOne({
+      $or: [{ _id: userId }, { email: email }]
+    });
 
-    reqItem.status = "approved";
-    await reqItem.save();
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    // Directly increment otbalance using atomic $inc (case-insensitive email match)
-    const updatedUser = await User.findOneAndUpdate(
-      { email: { $regex: new RegExp(`^${reqItem.email.trim()}$`, "i") } },
-      { $inc: { otbalance: Number(reqItem.amount) } },
-      { new: true }
-    );
+    const depositAmount = Number(amount);
 
-    if (!updatedUser) {
-      return res.status(404).json({ msg: "Approved, but user account email not found!" });
-    }
+    // ওয়ালেটে টাকা যোগ করা
+    user.otbalance = Number(user.otbalance || 0) + depositAmount;
 
-    return res.json({ msg: "Fund approved & added to otbalance successfully!", newBalance: updatedUser.otbalance });
-  } catch (err) {
-    console.error("Approve error:", err);
-    return res.status(500).json({ msg: "Error approving fund request" });
+    // ডিপোজিট হিস্ট্রি তৈরি করে history অ্যারেতে পুশ করা
+    const depositHistory = {
+      _id: new mongoose.Types.ObjectId(),
+      type: "Deposit",
+      amount: depositAmount,
+      status: "Approved",
+      createdAt: new Date()
+    };
+
+    if (!user.history) user.history = [];
+    user.history.unshift(depositHistory);
+
+    user.markModified("history");
+    await user.save();
+
+    return res.status(200).json({ success: true, message: "Deposit approved & history created!" });
+  } catch (error) {
+    console.error("Approve Deposit Error:", error);
+    return res.status(500).json({ success: false, message: "Server error approving deposit" });
   }
 });
 
@@ -7492,19 +7512,28 @@ app.post("/api/onetime/create-investment", async (req, res) => {
     const investAmount = Number(amount);
 
     const user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } });
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // ১টি এক্টিভ ইনভেস্টমেন্ট থাকলে নতুন ইনভেস্টমেন্ট আটকানো
+    const hasActive = (user.history || []).some(
+      (item) => item.type === "OneTimeInvestment" && item.status === "Active"
+    );
+
+    if (hasActive) {
+      return res.status(400).json({
+        success: false,
+        message: "আপনার একটি ইনভেস্টমেন্ট বর্তমানে রানিং আছে। ম্যাচুরিটি শেষ না হওয়া পর্যন্ত নতুন ইনভেস্ট করা যাবে না।"
+      });
     }
 
     const currentBalance = Number(user.otbalance || 0);
     if (currentBalance < investAmount) {
-      return res.status(400).json({ success: false, message: "Insufficient otbalance" });
+      return res.status(400).json({ success: false, message: "পর্যাপ্ত ব্যালেন্স নেই।" });
     }
 
-    // ১. otbalance থেকে টাকা কাটা
+    // ব্যালেন্স কাটা
     user.otbalance = currentBalance - investAmount;
 
-    // ২. নতুন ইনভেস্টমেন্ট অবজেক্ট তৈরি
     const durationDays = parseInt(duration) || 15;
     const maturity = new Date();
     maturity.setDate(maturity.getDate() + durationDays);
@@ -7523,22 +7552,19 @@ app.post("/api/onetime/create-investment", async (req, res) => {
       maturityDate: maturity
     };
 
-    // ৩. user.history অ্যারের শুরুতে ডাটা যুক্ত করা
     if (!user.history) user.history = [];
     user.history.unshift(newInvestment);
-
+    user.markModified("history");
     await user.save();
 
     return res.status(200).json({
       success: true,
-      message: "Investment started successfully!",
-      investment: newInvestment,
-      updatedBalance: user.otbalance,
-      history: user.history
+      message: "ইনভেস্টমেন্ট সফলভাবে শুরু হয়েছে!",
+      investment: newInvestment
     });
   } catch (error) {
     console.error("Create Investment Error:", error);
-    return res.status(500).json({ success: false, message: "Server error creating investment" });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
