@@ -7299,32 +7299,7 @@ app.get("/admin/onetime-cash-requests", async (req, res) => {
   }
 });
 
-// 5. Admin - Approve Cash Request (Add fund to otbalance)
-app.post("/admin/onetime-approve-cash", async (req, res) => {
-  try {
-    const { requestId } = req.body;
-    const reqItem = await Txn.findById(requestId);
-    if (!reqItem) return res.status(404).json({ msg: "Request not found" });
 
-    if (reqItem.status === "approved") {
-      return res.status(400).json({ msg: "Request already approved" });
-    }
-
-    reqItem.status = "approved";
-    await reqItem.save();
-
-    // Credit user's otbalance
-    const user = await User.findOne({ email: reqItem.email });
-    if (user) {
-      user.otbalance = (user.otbalance || 0) + Number(reqItem.amount);
-      await user.save();
-    }
-
-    return res.json({ msg: "Fund approved & added to otbalance successfully!" });
-  } catch (err) {
-    return res.status(500).json({ msg: "Error approving fund request" });
-  }
-});
 
 // 6. Admin - Reject Cash Request
 app.post("/admin/onetime-reject-cash", async (req, res) => {
@@ -7383,25 +7358,62 @@ app.post("/admin/onetime-withdraw-action", async (req, res) => {
   }
 });
 
+// 5. Admin - Approve Cash Request (Add fund to otbalance)
+app.post("/admin/onetime-approve-cash", async (req, res) => {
+  try {
+    const { requestId } = req.body;
+    const reqItem = await Txn.findById(requestId);
+    if (!reqItem) return res.status(404).json({ msg: "Request not found" });
+
+    if (reqItem.status?.toLowerCase() === "approved") {
+      return res.status(400).json({ msg: "Request already approved" });
+    }
+
+    reqItem.status = "approved";
+    await reqItem.save();
+
+    // Directly increment otbalance using atomic $inc (case-insensitive email match)
+    const updatedUser = await User.findOneAndUpdate(
+      { email: { $regex: new RegExp(`^${reqItem.email.trim()}$`, "i") } },
+      { $inc: { otbalance: Number(reqItem.amount) } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ msg: "Approved, but user account email not found!" });
+    }
+
+    return res.json({ msg: "Fund approved & added to otbalance successfully!", newBalance: updatedUser.otbalance });
+  } catch (err) {
+    console.error("Approve error:", err);
+    return res.status(500).json({ msg: "Error approving fund request" });
+  }
+});
+
 // 9. Admin - Direct otbalance Adjust (Add / Subtract)
 app.post("/admin/onetime-adjust-wallet", async (req, res) => {
   try {
-    const { email, amount, type, reason } = req.body;
-    if (!email || !amount || amount <= 0) {
+    const { email, amount, type } = req.body;
+    if (!email || !amount || Number(amount) <= 0) {
       return res.status(400).json({ msg: "Email and valid amount required" });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ msg: "User account not found" });
+    const numAmt = type === "add" ? Number(amount) : -Number(amount);
 
-    const numAmt = Number(amount);
-    if (type === "add") {
-      user.otbalance = (user.otbalance || 0) + numAmt;
-    } else {
-      user.otbalance = Math.max(0, (user.otbalance || 0) - numAmt);
+    // Case-insensitive email search & atomic update
+    const user = await User.findOneAndUpdate(
+      { email: { $regex: new RegExp(`^${email.trim()}$`, "i") } },
+      { $inc: { otbalance: numAmt } },
+      { new: true }
+    );
+
+    if (!user) return res.status(404).json({ msg: "User account not found with this email" });
+
+    // Ensure otbalance doesn't drop below 0
+    if (user.otbalance < 0) {
+      user.otbalance = 0;
+      await user.save();
     }
-
-    await user.save();
 
     return res.json({
       success: true,
@@ -7409,9 +7421,11 @@ app.post("/admin/onetime-adjust-wallet", async (req, res) => {
       newBalance: user.otbalance
     });
   } catch (err) {
+    console.error("Adjust wallet error:", err);
     return res.status(500).json({ msg: "Error adjusting user otbalance" });
   }
 });
+
 
 // 10. Admin - Fetch All OneTime Investments
 app.get("/admin/onetime-investments", async (req, res) => {
