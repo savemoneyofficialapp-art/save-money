@@ -7283,12 +7283,14 @@ app.post("/api/onetime/withdraw", async (req, res) => {
       createdAt: new Date()
     };
 
-    // ২. ইউজারের history অ্যারেতে সেভ করা
-    if (!user.history) user.history = [];
-    user.history.unshift(withdrawData);
+    // 🛑 onetimeHistory-তে ডাটা পুশ করা
+    if (!user.onetimeHistory) user.onetimeHistory = [];
+    user.onetimeHistory.unshift(withdrawData);
+
+    user.markModified("onetimeHistory");
     await user.save();
 
-    // ৩. আলাদা Withdrawal কালেকশন থাকলে সেখানেও ব্যাকআপ রাখা
+    // ২. আলাদা Withdrawal কালেকশনে ব্যাকআপ রাখা (যদি থাকে)
     try {
       if (typeof Withdrawal !== "undefined") {
         await Withdrawal.create({
@@ -7316,6 +7318,8 @@ app.post("/api/onetime/withdraw", async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error processing withdrawal" });
   }
 });
+
+
 
 // 3. Admin Analytics Endpoint
 app.get("/admin/onetime-analytics", async (req, res) => {
@@ -7367,94 +7371,53 @@ app.get("/api/onetime/admin/withdrawals", async (req, res) => {
 app.post("/admin/onetime-withdraw-action", async (req, res) => {
   try {
     const targetId = req.body.id || req.body.requestId || req.body._id;
-    const { status, rejectReason, reason, userEmail, email } = req.body; // status: "Approved" or "Rejected"
+    const { status, rejectReason } = req.body; // status: "Approved" or "Rejected"
 
-    if (!targetId) {
-      return res.status(400).json({ success: false, message: "ID parameter missing" });
-    }
-
+    if (!targetId) return res.status(400).json({ success: false, message: "ID parameter missing" });
     const targetIdStr = String(targetId).trim();
-    const finalReason = rejectReason || reason || "Rejected by Admin";
 
-    // ১. Standalone Withdrawal Collection আপডেট (যদি থাকে)
-    let withdrawDoc = null;
+    // ১. Standalone Collection আপডেট
     if (typeof Withdrawal !== "undefined") {
-      withdrawDoc = await Withdrawal.findByIdAndUpdate(
-        targetIdStr,
-        { status: status, rejectReason: finalReason },
-        { new: true }
-      );
+      await Withdrawal.findByIdAndUpdate(targetIdStr, { status: status, rejectReason: rejectReason });
     }
 
-    // ২. Mongoose ObjectId এবং Email প্রস্তুত করা
-    let queryConditions = [];
-    
-    // Email দিয়ে খোঁজা (যদি ফ্রন্টএন্ড পাঠায় বা Withdrawal মডেলে পাওয়া যায়)
-    const targetEmail = userEmail || email || (withdrawDoc ? withdrawDoc.email : null);
-    if (targetEmail) {
-      queryConditions.push({ email: targetEmail });
-    }
-
-    // String এবং ObjectId দিয়ে history._id খোঁজা
-    queryConditions.push({ "history._id": targetIdStr });
+    // 🛑 onetimeHistory দিয়ে ইউজার খোঁজা
+    let queryConditions = [{ "onetimeHistory._id": targetIdStr }];
     if (mongoose.Types.ObjectId.isValid(targetIdStr)) {
-      queryConditions.push({ "history._id": new mongoose.Types.ObjectId(targetIdStr) });
+      queryConditions.push({ "onetimeHistory._id": new mongoose.Types.ObjectId(targetIdStr) });
     }
 
-    // ৩. ইউজারের ডাটাবেস খোঁজা
     let user = await User.findOne({ $or: queryConditions });
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found for this withdrawal request" });
-    }
-
-    // ৪. User History Array আপডেট করা
-    let itemUpdated = false;
-
-    if (user.history && Array.isArray(user.history)) {
-      user.history = user.history.map((item) => {
-        if (!item) return item;
-
-        const itemIdStr = item._id ? String(item._id) : "";
-        const isSameId = itemIdStr === targetIdStr;
-        const isWithdrawal = (item.type || "").toLowerCase().includes("withdrawal");
-
-        // ID মিললে অথবা প্রথম Pending Withdrawal টি আপডেট করা
-        if ((isSameId || (isWithdrawal && item.status === "Pending")) && !itemUpdated) {
-          itemUpdated = true;
-          item.status = status; // "Approved" or "Rejected"
-          
-          if (status === "Rejected") {
-            item.rejectReason = finalReason;
-          }
-        }
-        return item;
-      });
-    }
-
-    // ৫. রিজেক্ট হলে টাকা ওয়ালেটে ফেরত দেওয়া (Refund)
-    if (status === "Rejected") {
-      const refundAmount = withdrawDoc ? Number(withdrawDoc.amount || 0) : 0;
-      if (refundAmount > 0) {
-        user.otbalance = Number(user.otbalance || 0) + refundAmount;
-        if (user.balance !== undefined) {
-          user.balance = Number(user.balance || 0) + refundAmount;
-        }
+    if (user) {
+      // onetimeHistory অ্যারেতে পেন্ডিং আইটেম খুঁজে আপডেট করা
+      let item = user.onetimeHistory.find((h) => h && h._id && String(h._id) === targetIdStr);
+      if (!item) {
+        item = user.onetimeHistory.find((h) => h && h.type === "Withdrawal" && h.status === "Pending");
       }
+
+      if (item) {
+        item.status = status;
+        if (rejectReason) item.rejectReason = rejectReason;
+      }
+
+      // রিজেক্ট হলে otbalance এ টাকা ফেরত দেওয়া
+      if (status === "Rejected") {
+        const refundAmount = Number((item ? item.amount : 0) || req.body.amount || 0);
+        user.otbalance = Number(user.otbalance || 0) + refundAmount;
+      }
+
+      user.markModified("onetimeHistory");
+      await user.save();
     }
 
-    user.markModified("history");
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: `Withdrawal request ${status} successfully!`
-    });
+    return res.status(200).json({ success: true, message: `Withdrawal ${status}` });
   } catch (error) {
     console.error("Admin Withdraw Action Error:", error);
-    return res.status(500).json({ success: false, message: "Server Error processing withdrawal action" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 });
+
 
 
 // 9. Admin - Direct otbalance Adjust (Add / Subtract)
@@ -7616,21 +7579,19 @@ app.post("/api/onetime/add-bank-details", async (req, res) => {
   try {
     let requests = [];
 
-    // ১. Withdrawal কালেকশনে খোঁজা (যদি আলাদা মডেল থাকে)
-    try {
-      if (typeof Withdrawal !== "undefined") {
-        requests = await Withdrawal.find({}).sort({ createdAt: -1 });
-      }
-    } catch (e) {
-      requests = [];
+    // ১. Withdrawal কালেকশন থেকে খোজা
+    if (typeof Withdrawal !== "undefined") {
+      requests = await Withdrawal.find({}).sort({ createdAt: -1 });
     }
 
-    // ২. আলাদা কালেকশনে ডাটা না থাকলে User মডেলের history অ্যারে থেকে Withdrawal ডাটা ফিল্টার করা
+    // 🛑 ডাটা না থাকলে User-এর onetimeHistory থেকে ফিল্টার করে বের করা
     if (!requests || requests.length === 0) {
-      const users = await User.find({ "history.type": "Withdrawal" });
+      const users = await User.find({ "onetimeHistory.type": "Withdrawal" });
+      requests = [];
+
       users.forEach((u) => {
-        if (Array.isArray(u.history)) {
-          u.history.forEach((h) => {
+        if (Array.isArray(u.onetimeHistory)) {
+          u.onetimeHistory.forEach((h) => {
             if (h.type === "Withdrawal") {
               requests.push({
                 _id: h._id,
@@ -10093,100 +10054,78 @@ cron.schedule('0 12,17 * * *', async () => {
 });
 
 // ===================================================
-// DAILY RETURN AUTOMATION (প্রতিদিন রাত ১২:০০ টা IST এ চলবে)
+// ONETIME DAILY RETURN AUTOMATION (প্রতিদিন রাত ১২:০০ টা IST)
 // ===================================================
 cron.schedule("0 0 * * *", async () => {
-  console.log("⏰ Running Daily Return Cron Job at 12:00 AM IST...");
+  console.log("⏰ Running OneTime Daily Return Cron Job at 12:00 AM IST...");
 
   try {
-    const today = new Date();
+    // যে সকল ইউজারের onetimeHistory তে Active ইনভেস্টমেন্ট আছে তাদের নিয়ে আসা
+    const users = await User.find({ "onetimeHistory.status": "Active" });
 
-    // ১. একটিভ ইনভেস্টমেন্টগুলো ডাটাবেস থেকে খুঁজে বের করা
-    // (যদি Investment মডেল থাকে, তা না হলে User মডেলে চেক করবে)
-    let activeInvestments = [];
-    if (typeof Investment !== "undefined") {
-      activeInvestments = await Investment.find({ status: "Active" });
-    }
+    for (let user of users) {
+      let totalDailyReturnForUser = 0;
+      let newDailyEntries = [];
 
-    if (activeInvestments.length > 0) {
-      for (let inv of activeInvestments) {
-        // মেয়ার্দ (Maturity Date) শেষ হয়ে গেছে কিনা চেক
-        if (inv.maturityDate && new Date(inv.maturityDate) < today) {
-          inv.status = "Completed";
-          await inv.save();
-          continue;
-        }
+      if (user.onetimeHistory && Array.isArray(user.onetimeHistory)) {
+        user.onetimeHistory.forEach((item) => {
+          if (item.status === "Active") {
+            const amount = Number(item.amount || 0);
+            let returnAmt = Number(item.dailyReturn || item.dailyEarning || 0);
 
-        const dailyReturnAmount = Number(inv.dailyReturn || inv.dailyEarning || 0);
+            // যদি dailyReturn আগে থেকে না থাকে, প্ল্যান % অনুযায়ী বের করা
+            if (!returnAmt || returnAmt <= 0) {
+              const duration = String(item.duration || "");
+              if (duration.includes("60")) {
+                returnAmt = amount * 0.015; // 60 Days (1.5%)
+              } else if (duration.includes("15")) {
+                returnAmt = amount * 0.006; // 15 Days (0.6%)
+              } else {
+                returnAmt = amount * 0.01;  // Default 1%
+              }
+            }
 
-        if (dailyReturnAmount > 0) {
-          // ইউজার খুঁজে বের করা
-          const userEmail = inv.userEmail || inv.email;
-          const user = await User.findOne({ email: userEmail });
+            if (returnAmt > 0) {
+              totalDailyReturnForUser += returnAmt;
 
-          if (user) {
-            // otbalance এবং মূল balance আপডেট করা
-            user.otbalance = Number(user.otbalance || 0) + dailyReturnAmount;
-            user.totalEarnings = Number(user.totalEarnings || 0) + dailyReturnAmount;
-
-            // ইউজারের হিস্ট্রিতে Daily Return রেকর্ড সেভ
-            const dailyHistory = {
-              _id: new mongoose.Types.ObjectId(),
-              type: "Daily Return",
-              amount: dailyReturnAmount,
-              status: "Approved",
-              createdAt: new Date()
-            };
-
-            if (!user.history) user.history = [];
-            user.history.unshift(dailyHistory);
-
-            user.markModified("history");
-            await user.save();
-          }
-        }
-      }
-    } else {
-      // যদি আলাদা Investment মডেল না থাকে, তবে User-এর নিজের active investments চেক করবে
-      const users = await User.find({ "history.status": "Active" });
-
-      for (let user of users) {
-        let hasChanges = false;
-
-        user.history.forEach((item) => {
-          if (item.status === "Active" && item.dailyReturn > 0) {
-            const returnAmt = Number(item.dailyReturn);
-
-            user.otbalance = Number(user.otbalance || 0) + returnAmt;
-            user.totalEarnings = Number(user.totalEarnings || 0) + returnAmt;
-
-            // Daily return entry push
-            user.history.unshift({
-              _id: new mongoose.Types.ObjectId(),
-              type: "Daily Return",
-              amount: returnAmt,
-              status: "Approved",
-              createdAt: new Date()
-            });
-
-            hasChanges = true;
+              // Daily Return এর জন্য অবজেক্ট তৈরি
+              newDailyEntries.push({
+                _id: new mongoose.Types.ObjectId(),
+                type: "Daily Return",
+                amount: returnAmt,
+                status: "Approved",
+                createdAt: new Date()
+              });
+            }
           }
         });
+      }
 
-        if (hasChanges) {
-          user.markModified("history");
-          await user.save();
-        }
+      // যদি ডেইলি রিটার্ন জমা হয়
+      if (totalDailyReturnForUser > 0) {
+        // ১. otbalance এবং totalEarnings আপডেট (অন্য কোথাও নয়)
+        user.otbalance = Number(user.otbalance || 0) + totalDailyReturnForUser;
+        user.totalEarnings = Number(user.totalEarnings || user.totalEarning || 0) + totalDailyReturnForUser;
+        user.totalEarning = user.totalEarnings;
+
+        // ২. onetimeHistory অ্যারেতে নতুন রেকর্ডগুলো যোগ করা
+        if (!user.onetimeHistory) user.onetimeHistory = [];
+        user.onetimeHistory.unshift(...newDailyEntries);
+
+        user.markModified("onetimeHistory");
+        await user.save();
+        
+        console.log(`✅ Credited ₹${totalDailyReturnForUser} to ${user.email} in OneTime History`);
       }
     }
 
-    console.log("✅ Daily Returns Credited Successfully to All Active Users!");
+    console.log("🎉 All OneTime daily returns processed successfully!");
   } catch (error) {
-    console.error("❌ Error running Daily Return Cron Job:", error);
+    console.error("❌ OneTime Daily Return Cron Error:", error);
   }
 }, {
   scheduled: true,
-  timezone: "Asia/Kolkata" // ভারতীয় সময় (IST) অনুযায়ী ঠিক রাত ১২:০০ টায় রান হবে
+  timezone: "Asia/Kolkata"
 });
 
 
