@@ -7421,25 +7421,31 @@ app.post("/admin/onetime-withdraw-action", async (req, res) => {
   }
 });
 
-app.post("/admin/approve-deposit", async (req, res) => {
+// 5. Admin - Approve Cash Request (Add Fund Approve)
+app.post("/admin/onetime-approve-cash", async (req, res) => {
   try {
-    const { depositId, userId, email, amount } = req.body;
+    const { requestId, userEmail, email, amount } = req.body;
+    const targetEmail = userEmail || email;
 
-    const user = await User.findOne({
-      $or: [{ _id: userId }, { email: email }]
-    });
+    // ১. Txn কালেকশনে স্টেটাস আপডেট
+    if (typeof Txn !== "undefined" && requestId) {
+      await Txn.findByIdAndUpdate(requestId, { status: "Approved" });
+    }
 
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    // ২. ইউজার খুঁজে বের করা
+    const user = await User.findOne({ email: targetEmail });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
-    const depositAmount = Number(amount);
-
-    // ওয়ালেটে টাকা যোগ করা
+    // ৩. ইউজারের OneTime ওয়ালেটে (otbalance) ব্যালেন্স যোগ করা
+    const depositAmount = Number(amount || 0);
     user.otbalance = Number(user.otbalance || 0) + depositAmount;
 
-    // ডিপোজিট হিস্ট্রি তৈরি করে history অ্যারেতে পুশ করা
+    // ৪. ইউজারের হিস্ট্রিতে রেকর্ড যোগ করা
     const depositHistory = {
       _id: new mongoose.Types.ObjectId(),
-      type: "Deposit",
+      type: "Add Fund",
       amount: depositAmount,
       status: "Approved",
       createdAt: new Date()
@@ -7451,12 +7457,16 @@ app.post("/admin/approve-deposit", async (req, res) => {
     user.markModified("history");
     await user.save();
 
-    return res.status(200).json({ success: true, message: "Deposit approved & history created!" });
+    return res.status(200).json({
+      success: true,
+      message: "Fund request approved & wallet updated successfully!"
+    });
   } catch (error) {
-    console.error("Approve Deposit Error:", error);
-    return res.status(500).json({ success: false, message: "Server error approving deposit" });
+    console.error("Approve Cash Error:", error);
+    return res.status(500).json({ success: false, message: "Error approving fund request" });
   }
 });
+
 
 // 9. Admin - Direct otbalance Adjust (Add / Subtract)
 app.post("/admin/onetime-adjust-wallet", async (req, res) => {
