@@ -522,64 +522,70 @@ export default function AdminOneTime() {
       </div>
 
       {/* SECTION 4: ADD FUND REQUESTS (ACCEPT / REJECT) */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>📥 OneTime Add Fund Requests</h2>
-        {cash.length === 0 ? (
-          <p style={styles.emptyText}>No pending fund requests in queue.</p>
-        ) : (
-          <div style={styles.tableWrap}>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th style={styles.th}>User Email</th>
-                  <th style={styles.th}>Amount</th>
-                  <th style={styles.th}>UTR / Txn ID</th>
-                  <th style={styles.th}>Proof Screenshot</th>
-                  <th style={styles.th}>Status</th>
-                  <th style={styles.th}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cash.map((r) => (
-                  <tr key={r._id} style={styles.tr}>
-                    <td style={styles.td}>{r.email}</td>
-                    <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>{money(r.amount)}</td>
-                    <td style={styles.td}>{r.transactionId || r.txnId || "N/A"}</td>
-                    <td style={styles.td}>
-                      {r.screenshot ? (
-                        <a href={r.screenshot} target="_blank" rel="noreferrer" style={{ color: "#38bdf8" }}>
-                          View Image
-                        </a>
-                      ) : (
-                        "No Screenshot"
-                      )}
-                    </td>
-                    <td style={styles.td}>
-                      <span style={{
-                        padding: "4px 8px", borderRadius: "6px", fontWeight: "bold",
-                        background: r.status === "approved" ? "rgba(34,197,94,0.2)" : r.status === "rejected" ? "rgba(239,68,68,0.2)" : "rgba(234,179,8,0.2)",
-                        color: r.status === "approved" ? "#22c55e" : r.status === "rejected" ? "#f87171" : "#facc15"
-                      }}>
-                        {r.status || "pending"}
-                      </span>
-                    </td>
-                    <td style={styles.td}>
-                      {r.status === "pending" || !r.status ? (
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <button style={styles.smallGreen} onClick={() => approveCash(r._id)}>Accept</button>
-                          <button style={styles.smallRed} onClick={() => rejectCash(r._id)}>Reject</button>
-                        </div>
-                      ) : (
-                        <span style={{ color: "#cbd5e1" }}>Processed</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+<div style={styles.section}>
+  <h2 style={styles.sectionTitle}>📥 OneTime Add Fund Requests</h2>
+  {cash.length === 0 ? (
+    <p style={styles.emptyText}>No pending fund requests in queue.</p>
+  ) : (
+    <div style={styles.tableWrap}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>User Email</th>
+            <th style={styles.th}>Amount</th>
+            <th style={styles.th}>UTR / Txn ID</th>
+            <th style={styles.th}>Proof Screenshot</th>
+            <th style={styles.th}>Status</th>
+            <th style={styles.th}>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {cash.map((r) => {
+            const currentStatus = (r.status || "").toLowerCase();
+            const isPending = currentStatus === "pending" || !r.status;
+
+            return (
+              <tr key={r._id} style={styles.tr}>
+                <td style={styles.td}>{r.email}</td>
+                <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>{money(r.amount)}</td>
+                <td style={styles.td}>{r.transactionId || r.txnId || "N/A"}</td>
+                <td style={styles.td}>
+                  {r.screenshot ? (
+                    <a href={r.screenshot} target="_blank" rel="noreferrer" style={{ color: "#38bdf8" }}>
+                      View Image
+                    </a>
+                  ) : (
+                    "No Screenshot"
+                  )}
+                </td>
+                <td style={styles.td}>
+                  <span style={{
+                    padding: "4px 8px", borderRadius: "6px", fontWeight: "bold",
+                    background: currentStatus === "approved" ? "rgba(34,197,94,0.2)" : currentStatus === "rejected" ? "rgba(239,68,68,0.2)" : "rgba(234,179,8,0.2)",
+                    color: currentStatus === "approved" ? "#22c55e" : currentStatus === "rejected" ? "#f87171" : "#facc15"
+                  }}>
+                    {r.status || "Pending"}
+                  </span>
+                </td>
+                <td style={styles.td}>
+                  {isPending ? (
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button style={styles.smallGreen} onClick={() => approveCash(r._id)}>Accept</button>
+                      <button style={styles.smallRed} onClick={() => rejectCash(r._id)}>Reject</button>
+                    </div>
+                  ) : (
+                    <span style={{ color: "#cbd5e1" }}>Processed</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
+
 
       {/* SECTION 5: WITHDRAW REQUESTS (ACCEPT / REJECT) */}
       <div style={styles.section}>
