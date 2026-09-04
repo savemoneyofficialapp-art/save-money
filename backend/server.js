@@ -7317,8 +7317,6 @@ app.post("/api/onetime/withdraw", async (req, res) => {
   }
 });
 
-
-
 // 3. Admin Analytics Endpoint
 app.get("/admin/onetime-analytics", async (req, res) => {
   try {
@@ -7343,25 +7341,6 @@ app.get("/admin/onetime-cash-requests", async (req, res) => {
     return res.json(requests);
   } catch (err) {
     return res.status(500).json({ msg: "Error fetching cash requests" });
-  }
-});
-
-
-
-// 6. Admin - Reject Cash Request
-app.post("/admin/onetime-reject-cash", async (req, res) => {
-  try {
-    const { requestId, reason } = req.body;
-    const reqItem = await Txn.findById(requestId);
-    if (!reqItem) return res.status(404).json({ msg: "Request not found" });
-
-    reqItem.status = "rejected";
-    reqItem.rejectReason = reason || "Rejected by Admin";
-    await reqItem.save();
-
-    return res.json({ msg: "Fund request rejected" });
-  } catch (err) {
-    return res.status(500).json({ msg: "Error rejecting fund request" });
   }
 });
 
@@ -7418,52 +7397,6 @@ app.post("/admin/onetime-withdraw-action", async (req, res) => {
   } catch (error) {
     console.error("Admin Withdraw Action Error:", error);
     return res.status(500).json({ success: false, message: "Server Error" });
-  }
-});
-
-// 5. Admin - Approve Cash Request (Add Fund Approve)
-app.post("/admin/onetime-approve-cash", async (req, res) => {
-  try {
-    const { requestId, userEmail, email, amount } = req.body;
-    const targetEmail = userEmail || email;
-
-    // ১. Txn কালেকশনে স্টেটাস আপডেট
-    if (typeof Txn !== "undefined" && requestId) {
-      await Txn.findByIdAndUpdate(requestId, { status: "Approved" });
-    }
-
-    // ২. ইউজার খুঁজে বের করা
-    const user = await User.findOne({ email: targetEmail });
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    // ৩. ইউজারের OneTime ওয়ালেটে (otbalance) ব্যালেন্স যোগ করা
-    const depositAmount = Number(amount || 0);
-    user.otbalance = Number(user.otbalance || 0) + depositAmount;
-
-    // ৪. ইউজারের হিস্ট্রিতে রেকর্ড যোগ করা
-    const depositHistory = {
-      _id: new mongoose.Types.ObjectId(),
-      type: "Add Fund",
-      amount: depositAmount,
-      status: "Approved",
-      createdAt: new Date()
-    };
-
-    if (!user.history) user.history = [];
-    user.history.unshift(depositHistory);
-
-    user.markModified("history");
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Fund request approved & wallet updated successfully!"
-    });
-  } catch (error) {
-    console.error("Approve Cash Error:", error);
-    return res.status(500).json({ success: false, message: "Error approving fund request" });
   }
 });
 
@@ -7623,44 +7556,6 @@ app.post("/api/onetime/add-bank-details", async (req, res) => {
 });
 
 
-               // ==================== DEPOSIT SCREENSHOT UPLOAD API ====================
-app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req, res) => {
-  try {
-    const { email, amount, transactionId } = req.body;
-
-    // Cloudinary থেকে ইমেজের ডাইরেক্ট URL পাওয়া যাবে req.file.path এ
-    const screenshotUrl = req.file ? req.file.path : "";
-
-    if (!email || !amount || !transactionId || !screenshotUrl) {
-      return res.status(400).json({ 
-        message: "Please fill all required fields and upload payment screenshot" 
-      });
-    }
-
-    // আপনার স্ক্রিনশটের Txn মডেলে ডাটা সেভ
-    const newTxn = new Txn({
-      email,
-      amount: Number(amount),
-      status: "Pending",
-      type: "Deposit",
-      date: new Date().toISOString().split("T")[0],
-      screenshot: screenshotUrl,
-      transactionId: transactionId
-    });
-
-    await newTxn.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Deposit proof uploaded successfully! Pending admin approval.",
-      data: newTxn
-    });
-  } catch (err) {
-    console.error("Deposit API Error:", err);
-    return res.status(500).json({ message: "Server error processing deposit request" });
-  }
-});
-
       app.get("/admin/onetime-withdraw-requests", async (req, res) => {
   try {
     let requests = [];
@@ -7709,11 +7604,172 @@ app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req
 });
 
 
+// ===================================================
+// ১. DEPOSIT SCREENSHOT UPLOAD API (ক্লিক করার সাথে Pending হিস্ট্রি তৈরি হবে)
+// ===================================================
+app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req, res) => {
+  try {
+    const { email, amount, transactionId } = req.body;
+    const screenshotUrl = req.file ? req.file.path : "";
+
+    if (!email || !amount || !transactionId || !screenshotUrl) {
+      return res.status(400).json({
+        message: "Please fill all required fields and upload payment screenshot"
+      });
+    }
+
+    // ১. Txn কালেকশনে ডাটা সেভ
+    const newTxn = new Txn({
+      email,
+      amount: Number(amount),
+      status: "Pending",
+      type: "Deposit",
+      date: new Date().toISOString().split("T")[0],
+      screenshot: screenshotUrl,
+      transactionId: transactionId
+    });
+    await newTxn.save();
+
+    // ২. User খুঁজে user.history অ্যারেতে সাথে সাথে যোগ করা
+    const user = await User.findOne({ email });
+    if (user) {
+      const depositHistory = {
+        _id: newTxn._id,
+        type: "Add Fund",
+        amount: Number(amount),
+        transactionId: transactionId,
+        screenshot: screenshotUrl,
+        status: "Pending",
+        rejectReason: "",
+        createdAt: new Date()
+      };
+
+      if (!user.history) user.history = [];
+      user.history.unshift(depositHistory);
+
+      user.markModified("history");
+      await user.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Deposit proof uploaded successfully! Pending admin approval.",
+      data: newTxn
+    });
+  } catch (err) {
+    console.error("Deposit API Error:", err);
+    return res.status(500).json({ message: "Server error processing deposit request" });
+  }
+});
 
 
+// ===================================================
+// ২. ADMIN APPROVE API (Pending থেকে Approved আপডেট হবে)
+// ===================================================
+app.post("/admin/onetime-approve-cash", async (req, res) => {
+  try {
+    const { requestId, userEmail, email, amount } = req.body;
+    const targetEmail = userEmail || email;
 
+    // ১. Txn কালেকশনে স্ট্যাটাস আপডেট
+    if (typeof Txn !== "undefined" && requestId) {
+      await Txn.findByIdAndUpdate(requestId, { status: "Approved" });
+    }
 
+    // ২. ইউজার খুঁজে বের করা
+    const user = await User.findOne({ email: targetEmail });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // ৩. ইউজারের ওয়ালেটে ব্যালেন্স যোগ করা
+    const depositAmount = Number(amount || 0);
+    user.otbalance = Number(user.otbalance || 0) + depositAmount;
+
+    // ৪. user.history-তে Pending থেকে Approved-এ আপডেট করা
+    if (!user.history) user.history = [];
     
+    const historyIndex = user.history.findIndex(
+      (h) => h._id && h._id.toString() === requestId.toString()
+    );
+
+    if (historyIndex !== -1) {
+      user.history[historyIndex].status = "Approved";
+    } else {
+      user.history.unshift({
+        _id: requestId,
+        type: "Add Fund",
+        amount: depositAmount,
+        status: "Approved",
+        createdAt: new Date()
+      });
+    }
+
+    user.markModified("history");
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Fund request approved & wallet updated successfully!"
+    });
+  } catch (error) {
+    console.error("Approve Cash Error:", error);
+    return res.status(500).json({ success: false, message: "Error approving fund request" });
+  }
+});
+
+
+// ===================================================
+// ৩. ADMIN REJECT API (Pending থেকে Rejected ও Reason আপডেট হবে)
+// ===================================================
+app.post("/admin/onetime-reject-cash", async (req, res) => {
+  try {
+    const { requestId, userEmail, reason } = req.body;
+
+    const reqItem = await Txn.findById(requestId);
+    if (!reqItem) return res.status(404).json({ msg: "Request not found" });
+
+    const rejectReasonText = reason || "Rejected by Admin";
+
+    // ১. Txn কালেকশনে রিজেক্ট ও কারণ সেভ
+    reqItem.status = "rejected";
+    reqItem.rejectReason = rejectReasonText;
+    await reqItem.save();
+
+    // ২. ইউজার খুঁজে user.history আপডেট করা
+    const targetEmail = userEmail || reqItem.email;
+    const user = await User.findOne({ email: targetEmail });
+
+    if (user && user.history) {
+      const historyIndex = user.history.findIndex(
+        (h) => h._id && h._id.toString() === requestId.toString()
+      );
+
+      if (historyIndex !== -1) {
+        user.history[historyIndex].status = "Rejected";
+        user.history[historyIndex].rejectReason = rejectReasonText;
+      } else {
+        user.history.unshift({
+          _id: reqItem._id,
+          type: "Add Fund",
+          amount: reqItem.amount,
+          transactionId: reqItem.transactionId,
+          status: "Rejected",
+          rejectReason: rejectReasonText,
+          createdAt: new Date()
+        });
+      }
+
+      user.markModified("history");
+      await user.save();
+    }
+
+    return res.json({ msg: "Fund request rejected", success: true });
+  } catch (err) {
+    console.error("Reject Error:", err);
+    return res.status(500).json({ msg: "Error rejecting fund request" });
+  }
+});
 
 
 
