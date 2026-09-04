@@ -156,6 +156,23 @@ const WalletTransaction =
   mongoose.models.WalletTransaction ||
   mongoose.model("WalletTransaction", walletTransactionSchema);
 
+// ==================== ১. WITHDRAWAL SCHEMA & MODELS REGISTRATION ====================
+const withdrawalSchema = new mongoose.Schema(
+  {
+    email: { type: String, required: true },
+    amount: { type: Number, required: true },
+    paymentMethod: { type: String, default: "Bank Transfer" },
+    accountDetails: { type: String },
+    status: { type: String, default: "Pending" },
+  },
+  { timestamps: true }
+);
+
+// Mongoose-এ একসাথে ২ টি কালেকশন নেমই রেজিস্টার করে রাখা হচ্ছে যাতে কোনোটিতে এরর না আসে
+const Withdrawal = mongoose.models.Withdrawal || mongoose.model("Withdrawal", withdrawalSchema);
+const OneTimeWithdrawal = mongoose.models.OneTimeWithdrawal || mongoose.model("OneTimeWithdrawal", withdrawalSchema);
+
+
 // ================= CORS =================
 
 const allowedOrigins = [
@@ -7222,7 +7239,7 @@ app.post("/api/onetime/dashboard", async (req, res) => {
   }
 });
 
-// ==================== ONE-TIME WITHDRAWAL API ====================
+// ==================== ২. ONE-TIME WITHDRAW API ====================
 app.post("/api/onetime/withdraw", async (req, res) => {
   try {
     const { email, amount } = req.body;
@@ -7247,44 +7264,27 @@ app.post("/api/onetime/withdraw", async (req, res) => {
 
     const withdrawalPayload = {
       email: user.email,
-      userEmail: user.email,
       amount: Number(amount),
       paymentMethod: "Bank Transfer",
       accountDetails: formattedAccountDetails,
-      bankDetails: user.bankDetails,
-      status: "Pending",
-      type: "onetime",
-      createdAt: new Date()
+      status: "Pending"
     };
 
-    // ৩. সাধারণ Withdrawal কালেকশনে সেভ
-    try {
-      const Withdrawal = mongoose.models.Withdrawal || require("./models/Withdrawal");
-      await Withdrawal.create(withdrawalPayload);
-    } catch (e) {
-      console.log("Withdrawal model save skipped:", e.message);
-    }
+    // ৩. উভয় কালেকশনেই ডাটা সেভ নিশ্চিত করা
+    await Withdrawal.create(withdrawalPayload);
+    await OneTimeWithdrawal.create(withdrawalPayload);
 
-    // ৪. OneTimeWithdrawal কালেকশনে সেভ (অ্যাডমিন প্যানেল যদি এটি ব্যবহার করে)
-    try {
-      const OneTimeWithdrawal = mongoose.models.OneTimeWithdrawal || mongoose.model("OneTimeWithdrawal");
-      await OneTimeWithdrawal.create(withdrawalPayload);
-    } catch (e) {
-      console.log("OneTimeWithdrawal model save skipped:", e.message);
-    }
-
-    // ৫. ইউজারের ওয়ালেট ব্যালেন্স কমানো
+    // ৪. ব্যালেন্স মাইনাস করা
     user.otbalance = currentBalance - Number(amount);
 
-    // ৬. ইউজারের history এবং onetimeHistory উভয় জায়গায় রেকর্ড সেভ
+    // ৫. യൂজারের হিস্ট্রি অ্যারে আপডেট করা
     const historyItem = {
       date: new Date().toLocaleDateString("en-GB"),
       duration: "Withdrawal",
       amount: Number(amount),
       frequency: "OneTime",
       status: "Pending",
-      maturityDate: "-",
-      type: "Withdrawal"
+      maturityDate: "-"
     };
 
     if (!user.history) user.history = [];
