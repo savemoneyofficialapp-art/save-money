@@ -7662,47 +7662,84 @@ app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req
   }
 });
 
-
 // ===================================================
-// ২. ADMIN APPROVE API (Pending থেকে Approved আপডেট হবে)
+// ADMIN APPROVE API (Fail-proof Balance & History Update)
 // ===================================================
 app.post("/admin/onetime-approve-cash", async (req, res) => {
   try {
     const { requestId, userEmail, email, amount } = req.body;
-    const targetEmail = userEmail || email;
 
-    // ১. Txn কালেকশনে স্ট্যাটাস আপডেট
-    if (typeof Txn !== "undefined" && requestId) {
-      await Txn.findByIdAndUpdate(requestId, { status: "Approved" });
+    // ১. Txn ডাটাবেস থেকে আগে রিকোয়েস্টটি খুঁজে বের করা
+    let txn = null;
+    if (requestId) {
+      txn = await Txn.findById(requestId);
     }
 
-    // ২. ইউজার খুঁজে বের করা
+    // Email এবং Amount নিশ্চিত করা (ফ্রন্টএন্ড থেকে না আসলেও Txn থেকে নেবে)
+    const targetEmail = userEmail || email || (txn ? txn.email : null);
+    const depositAmount = Number(amount || (txn ? txn.amount : 0));
+
+    if (!targetEmail) {
+      return res.status(400).json({ success: false, message: "User email not found for this request" });
+    }
+
+    // ২. Txn কালেকশনে Status 'Approved' করা
+    if (txn) {
+      txn.status = "Approved";
+      await txn.save();
+    }
+
+    // ৩. ইউজার খুঁজে বের করা
     const user = await User.findOne({ email: targetEmail });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found with email: " + targetEmail });
     }
 
-    // ৩. ইউজারের ওয়ালেটে ব্যালেন্স যোগ করা
-    const depositAmount = Number(amount || 0);
+    // ৪. ইউজারের সবকটি ওয়ালেট ফিল্ডে ব্যালেন্স যোগ করা (যাতে Available Balance কার্ডে শো করে)
     user.otbalance = Number(user.otbalance || 0) + depositAmount;
+    user.balance = Number(user.balance || 0) + depositAmount;
+    if (user.wallet !== undefined) {
+      user.wallet = Number(user.wallet || 0) + depositAmount;
+    }
 
-    // ৪. user.history-তে Pending থেকে Approved-এ আপডেট করা
+    // ৫. user.history অ্যারেতে Status 'Approved' আপডেট করা
     if (!user.history) user.history = [];
-    
-    const historyIndex = user.history.findIndex(
-      (h) => h._id && h._id.toString() === requestId.toString()
-    );
 
-    if (historyIndex !== -1) {
-      user.history[historyIndex].status = "Approved";
-    } else {
-      user.history.unshift({
-        _id: requestId,
-        type: "Add Fund",
-        amount: depositAmount,
-        status: "Approved",
-        createdAt: new Date()
-      });
+    let updatedInHistory = false;
+
+    // History অ্যারে লুপ করে স্ট্যাটাস আপডেট
+    user.history = user.history.map((item) => {
+      const isSameId = requestId && item._id && item._id.toString() === requestId.toString();
+      const isSameTxnId = txn && txn.transactionId && item.transactionId === txn.transactionId;
+
+      if ((isSameId || isSameTxnId) && !updatedInHistory) {
+        updatedInHistory = true;
+        return {
+          ...item,
+          status: "Approved"
+        };
+      }
+      return item;
+    });
+
+    // যদি ID দিয়ে না পাওয়া যায়, তবে সর্বশেষ Pending "Add Fund" টি Approved করে দেওয়া
+    if (!updatedInHistory) {
+      const pendingIndex = user.history.findIndex(
+        (h) => (h.type === "Add Fund" || h.type === "Deposit") && (h.status === "Pending" || !h.status)
+      );
+
+      if (pendingIndex !== -1) {
+        user.history[pendingIndex].status = "Approved";
+      } else {
+        user.history.unshift({
+          _id: requestId || new mongoose.Types.ObjectId(),
+          type: "Add Fund",
+          amount: depositAmount,
+          transactionId: txn ? txn.transactionId : "",
+          status: "Approved",
+          createdAt: new Date()
+        });
+      }
     }
 
     user.markModified("history");
@@ -7710,13 +7747,15 @@ app.post("/admin/onetime-approve-cash", async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Fund request approved & wallet updated successfully!"
+      message: "Fund approved, wallet updated & history marked Approved!",
+      updatedBalance: user.balance
     });
   } catch (error) {
     console.error("Approve Cash Error:", error);
-    return res.status(500).json({ success: false, message: "Error approving fund request" });
+    return res.status(500).json({ success: false, message: "Error approving fund request: " + error.message });
   }
 });
+
 
 
 // ===================================================
