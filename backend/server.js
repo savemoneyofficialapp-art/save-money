@@ -7361,42 +7361,98 @@ app.get("/api/onetime/admin/withdrawals", async (req, res) => {
 });
 
 
+// ===================================================
+// ADMIN WITHDRAW ACTION (Approve / Reject) - FIXED
+// ===================================================
 app.post("/admin/onetime-withdraw-action", async (req, res) => {
   try {
-    const targetId = req.body.id || req.body.requestId;
-    const { status, rejectReason } = req.body; // status: "Approved" or "Rejected"
+    const targetId = req.body.id || req.body.requestId || req.body._id;
+    const { status, rejectReason, reason, userEmail, email } = req.body; // status: "Approved" or "Rejected"
 
-    if (!targetId) return res.status(400).json({ success: false, message: "ID parameter missing" });
+    if (!targetId) {
+      return res.status(400).json({ success: false, message: "ID parameter missing" });
+    }
+
     const targetIdStr = String(targetId).trim();
+    const finalReason = rejectReason || reason || "Rejected by Admin";
 
-    // ১. Standalone Withdrawal Collection আপডেট
+    // ১. Standalone Withdrawal Collection আপডেট (যদি থাকে)
+    let withdrawDoc = null;
     if (typeof Withdrawal !== "undefined") {
-      await Withdrawal.findByIdAndUpdate(targetIdStr, { status, rejectReason });
+      withdrawDoc = await Withdrawal.findByIdAndUpdate(
+        targetIdStr,
+        { status: status, rejectReason: finalReason },
+        { new: true }
+      );
     }
 
-    // ২. User history Array আপডেট
-    const user = await User.findOne({ "history._id": targetIdStr });
-    if (user) {
-      const item = user.history.find((h) => h && h._id && String(h._id) === targetIdStr);
-      if (item) {
-        item.status = status;
-        if (rejectReason) item.rejectReason = rejectReason;
-      }
+    // ২. Mongoose ObjectId এবং Email প্রস্তুত করা
+    let queryConditions = [];
+    
+    // Email দিয়ে খোঁজা (যদি ফ্রন্টএন্ড পাঠায় বা Withdrawal মডেলে পাওয়া যায়)
+    const targetEmail = userEmail || email || (withdrawDoc ? withdrawDoc.email : null);
+    if (targetEmail) {
+      queryConditions.push({ email: targetEmail });
+    }
 
-      // রিজেক্ট হলে টাকা ওয়ালেটে ফেরত দেওয়া
-      if (status === "Rejected") {
-        const refundAmount = Number(item?.amount || 0);
+    // String এবং ObjectId দিয়ে history._id খোঁজা
+    queryConditions.push({ "history._id": targetIdStr });
+    if (mongoose.Types.ObjectId.isValid(targetIdStr)) {
+      queryConditions.push({ "history._id": new mongoose.Types.ObjectId(targetIdStr) });
+    }
+
+    // ৩. ইউজারের ডাটাবেস খোঁজা
+    let user = await User.findOne({ $or: queryConditions });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found for this withdrawal request" });
+    }
+
+    // ৪. User History Array আপডেট করা
+    let itemUpdated = false;
+
+    if (user.history && Array.isArray(user.history)) {
+      user.history = user.history.map((item) => {
+        if (!item) return item;
+
+        const itemIdStr = item._id ? String(item._id) : "";
+        const isSameId = itemIdStr === targetIdStr;
+        const isWithdrawal = (item.type || "").toLowerCase().includes("withdrawal");
+
+        // ID মিললে অথবা প্রথম Pending Withdrawal টি আপডেট করা
+        if ((isSameId || (isWithdrawal && item.status === "Pending")) && !itemUpdated) {
+          itemUpdated = true;
+          item.status = status; // "Approved" or "Rejected"
+          
+          if (status === "Rejected") {
+            item.rejectReason = finalReason;
+          }
+        }
+        return item;
+      });
+    }
+
+    // ৫. রিজেক্ট হলে টাকা ওয়ালেটে ফেরত দেওয়া (Refund)
+    if (status === "Rejected") {
+      const refundAmount = withdrawDoc ? Number(withdrawDoc.amount || 0) : 0;
+      if (refundAmount > 0) {
         user.otbalance = Number(user.otbalance || 0) + refundAmount;
+        if (user.balance !== undefined) {
+          user.balance = Number(user.balance || 0) + refundAmount;
+        }
       }
-
-      user.markModified("history");
-      await user.save();
     }
 
-    return res.status(200).json({ success: true, message: `Withdrawal ${status}` });
+    user.markModified("history");
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Withdrawal request ${status} successfully!`
+    });
   } catch (error) {
     console.error("Admin Withdraw Action Error:", error);
-    return res.status(500).json({ success: false, message: "Server Error" });
+    return res.status(500).json({ success: false, message: "Server Error processing withdrawal action" });
   }
 });
 
