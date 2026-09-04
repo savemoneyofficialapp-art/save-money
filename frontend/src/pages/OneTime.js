@@ -13,6 +13,17 @@ export default function OneTime() {
   const [oneTimerNotifications, setOneTimerNotifications] = useState([]);
   const [history, setHistory] = useState([]);
 
+  // Dynamic Dashboard Stats
+  const [stats, setStats] = useState({
+    totalInvested: 0,
+    totalEarnings: 0,
+    totalWithdrawn: 0,
+    availableBalance: 0
+  });
+
+  // Active Investment Tracking
+  const [activeInvestment, setActiveInvestment] = useState(null);
+
   // Investment Form State
   const [tenure, setTenure] = useState(15);
   const [rate, setRate] = useState(0.6);
@@ -55,7 +66,7 @@ export default function OneTime() {
 
   // Wallet balance safely retrieved
   const currentWalletBalance = Number(
-    user?.otbalance ?? user?.otBalance ?? user?.availableBalance ?? 0
+    stats.availableBalance || user?.otbalance ?? user?.otBalance ?? user?.availableBalance ?? 0
   );
 
   const tenurePlans = [
@@ -97,7 +108,36 @@ export default function OneTime() {
       if (res.ok) {
         setUser(data.user || {});
         setOneTimerNotifications(data.oneTimerNotifications || []);
-        setHistory(Array.isArray(data.history) ? data.history : (data.investments || []));
+        
+        const historyList = Array.isArray(data.history) ? data.history : (data.investments || []);
+        setHistory(historyList);
+
+        // Stats Calculation Fallback
+        if (data.stats) {
+          setStats(data.stats);
+        } else {
+          let inv = 0;
+          let wd = 0;
+          historyList.forEach(item => {
+            if (item.type === "OneTimeInvestment" || !item.type) inv += Number(item.amount || 0);
+            if (item.type === "Withdrawal" && (item.status === "Approved" || item.status === "Accepted")) {
+              wd += Number(item.amount || 0);
+            }
+          });
+          setStats({
+            totalInvested: inv,
+            totalEarnings: Number(data.user?.totalEarning || data.user?.totalEarnings || 0),
+            totalWithdrawn: wd,
+            availableBalance: Number(data.user?.otbalance ?? data.user?.otBalance ?? 0)
+          });
+        }
+
+        // Active Investment Detection
+        const active = data.activeInvestment || historyList.find(
+          item => (item.type === "OneTimeInvestment" || !item.type) && item.status === "Active"
+        );
+        setActiveInvestment(active || null);
+
         if (data.user?.bankDetails) {
           setBankForm(data.user.bankDetails);
         }
@@ -128,6 +168,11 @@ export default function OneTime() {
 
   // ----------------- START NEW INVESTMENT FROM BALANCE -----------------
   const handleStartInvestment = async () => {
+    if (activeInvestment) {
+      triggerToast("আপনার একটি ইনভেস্টমেন্ট বর্তমানে চলমান আছে। সেটি শেষ না হওয়া পর্যন্ত নতুন ইনভেস্ট করা যাবে না।", "error");
+      return;
+    }
+
     if (currentWalletBalance < amount) {
       triggerToast(`Insufficient balance! Your wallet balance is ₹${currentWalletBalance}. Please Add Fund first.`, "error");
       return;
@@ -354,21 +399,13 @@ export default function OneTime() {
           </div>
         </header>
 
-        {/* TOP STATS CARD */}
+        {/* TOP STATS CARD (Total Invested, Total Earnings, Total Withdraw, Available Balance) */}
         <section style={styles.summaryCard}>
           <div style={styles.statBox}>
             <span style={styles.statIcon}>👛</span>
             <span style={styles.statTitle}>Total Invested</span>
             <strong style={styles.statValue}>
-              ₹ {Number(user?.oneTimeTotalInvested || user?.totalInvested || 0).toLocaleString("en-IN")}
-            </strong>
-          </div>
-
-          <div style={styles.statBox}>
-            <span style={styles.statIcon}>📈</span>
-            <span style={styles.statTitle}>Total Returns</span>
-            <strong style={styles.statValue}>
-              ₹ {Number(user?.oneTimeTotalReturns || user?.totalReturns || 0).toLocaleString("en-IN")}
+              ₹ {Number(stats.totalInvested || user?.oneTimeTotalInvested || user?.totalInvested || 0).toLocaleString("en-IN")}
             </strong>
           </div>
 
@@ -376,7 +413,15 @@ export default function OneTime() {
             <span style={styles.statIcon}>💵</span>
             <span style={styles.statTitle}>Total Earnings</span>
             <strong style={styles.statValue}>
-              ₹ {Number(user?.oneTimeTotalEarnings || user?.totalEarnings || 0).toLocaleString("en-IN")}
+              ₹ {Number(stats.totalEarnings || user?.oneTimeTotalEarnings || user?.totalEarnings || 0).toLocaleString("en-IN")}
+            </strong>
+          </div>
+
+          <div style={styles.statBox}>
+            <span style={styles.statIcon}>💸</span>
+            <span style={styles.statTitle}>Total Withdraw</span>
+            <strong style={styles.statValue}>
+              ₹ {Number(stats.totalWithdrawn || 0).toLocaleString("en-IN")}
             </strong>
           </div>
 
@@ -396,11 +441,26 @@ export default function OneTime() {
             <div style={styles.titleLine}></div>
           </h2>
 
+          {/* ACTIVE INVESTMENT BANNER */}
+          {activeInvestment && (
+            <div style={styles.activeInvestBanner}>
+              <div style={{ fontWeight: "bold", fontSize: "14px", color: "#166534", marginBottom: "4px" }}>
+                🟢 Active Investment Running
+              </div>
+              <div style={{ fontSize: "12px", color: "#15803d", display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                <span>Amount: <strong>₹{Number(activeInvestment.amount || 0).toLocaleString("en-IN")}</strong></span>
+                <span>Duration: <strong>{activeInvestment.duration || `${activeInvestment.durationDays || 15} Days`}</strong></span>
+                <span>Daily Return: <strong>₹{Number(activeInvestment.dailyReturn || 0).toFixed(2)}</strong></span>
+                <span>Maturity: <strong>{activeInvestment.maturityDate ? new Date(activeInvestment.maturityDate).toLocaleDateString("en-GB") : "-"}</strong></span>
+              </div>
+            </div>
+          )}
+
           <div style={styles.formGrid}>
             {/* Select Investment Duration */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>📅 Select Duration</label>
-              <select style={styles.select} value={tenure} onChange={handleTenureChange}>
+              <select style={styles.select} value={tenure} onChange={handleTenureChange} disabled={!!activeInvestment}>
                 {tenurePlans.map((p) => (
                   <option key={p.days} value={p.days}>
                     {p.label}
@@ -417,6 +477,7 @@ export default function OneTime() {
                   type="button"
                   style={{ ...styles.freqBtn, ...(frequency === "daily" ? styles.freqBtnActive : {}) }}
                   onClick={() => setFrequency("daily")}
+                  disabled={!!activeInvestment}
                 >
                   Daily
                 </button>
@@ -424,6 +485,7 @@ export default function OneTime() {
                   type="button"
                   style={{ ...styles.freqBtn, ...(frequency === "weekly" ? styles.freqBtnActive : {}) }}
                   onClick={() => setFrequency("weekly")}
+                  disabled={!!activeInvestment}
                 >
                   Weekly
                 </button>
@@ -433,7 +495,10 @@ export default function OneTime() {
             {/* Enter Investment Amount */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>💵 Select / Enter Amount</label>
-              <div style={styles.amountInputWrap} onClick={() => setShowAmountModal(true)}>
+              <div 
+                style={{ ...styles.amountInputWrap, ...(activeInvestment ? { cursor: "not-allowed", opacity: 0.7 } : {}) }} 
+                onClick={() => !activeInvestment && setShowAmountModal(true)}
+              >
                 <span style={{ fontSize: "16px", fontWeight: "bold", color: "#16a34a" }}>₹</span>
                 <input style={styles.amountInput} type="text" readOnly value={amount.toLocaleString("en-IN")} />
                 <span style={styles.changeBadge}>Change ⚙️</span>
@@ -481,8 +546,15 @@ export default function OneTime() {
 
           {/* MAIN BUTTONS */}
           <div style={styles.actionGridTriple}>
-            <button style={styles.startInvestBtn} onClick={handleStartInvestment} disabled={investing}>
-              {investing ? "Processing..." : "🚀 Start Investment"}
+            <button 
+              style={{
+                ...styles.startInvestBtn,
+                ...(activeInvestment ? styles.disabledBtn : {})
+              }} 
+              onClick={handleStartInvestment} 
+              disabled={investing || !!activeInvestment}
+            >
+              {investing ? "Processing..." : activeInvestment ? "🔒 Active Running" : "🚀 Start Investment"}
             </button>
 
             <button style={styles.addInvestBtn} onClick={() => setShowAddFundModal(true)}>
@@ -507,7 +579,7 @@ export default function OneTime() {
               <thead>
                 <tr>
                   <th style={styles.th}>Date</th>
-                  <th style={styles.th}>Duration</th>
+                  <th style={styles.th}>Type / Duration</th>
                   <th style={styles.th}>Amount</th>
                   <th style={styles.th}>Frequency</th>
                   <th style={styles.th}>Status</th>
@@ -525,10 +597,12 @@ export default function OneTime() {
                       <td style={styles.td}>
                         {item.startDate ? new Date(item.startDate).toLocaleDateString("en-GB") : (item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : "-")}
                       </td>
-                      <td style={styles.td}>{item.duration || `${item.durationDays || tenure} Days`}</td>
+                      <td style={styles.td}>
+                        {item.type === "Deposit" ? "Deposit" : item.type === "Withdrawal" ? "Withdrawal" : (item.duration || `${item.durationDays || tenure} Days`)}
+                      </td>
                       <td style={styles.td}>₹ {Number(item.amount || 0).toLocaleString("en-IN")}</td>
                       <td style={styles.td}>
-                        <span style={(item.frequency || "").toLowerCase() === "daily" ? styles.badgeDaily : styles.badgeWeekly}>
+                        <span style={(item.frequency || "daily").toLowerCase() === "daily" ? styles.badgeDaily : styles.badgeWeekly}>
                           {item.frequency || "Daily"}
                         </span>
                       </td>
@@ -768,11 +842,14 @@ const getStatusStyle = (status) => {
   switch (status?.toLowerCase()) {
     case "active":
     case "approved":
+    case "accepted":
+    case "success":
       return { background: "#dcfce7", color: "#166534" };
     case "pending":
       return { background: "#fef3c7", color: "#92400e" };
     case "rejected":
     case "cancelled":
+    case "failed":
       return { background: "#fee2e2", color: "#991b1b" };
     default:
       return { background: "#f1f5f9", color: "#475569" };
@@ -928,6 +1005,13 @@ const styles = {
     borderRadius: "18px",
     padding: "20px",
     boxShadow: "0 8px 25px rgba(0,0,0,0.15)"
+  },
+  activeInvestBanner: {
+    background: "#f0fdf4",
+    border: "1px solid #86efac",
+    borderRadius: "12px",
+    padding: "12px 16px",
+    marginBottom: "16px"
   },
   cardTitle: {
     margin: "0 0 16px 0",
@@ -1087,6 +1171,11 @@ const styles = {
     fontSize: "15px",
     fontWeight: "bold",
     cursor: "pointer"
+  },
+  disabledBtn: {
+    background: "#94a3b8",
+    cursor: "not-allowed",
+    opacity: 0.7
   },
   addInvestBtn: {
     height: "50px",
