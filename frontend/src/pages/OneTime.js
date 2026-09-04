@@ -52,6 +52,11 @@ export default function OneTime() {
 
   const COMPANY_WALLET_ADDRESS = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
 
+  // Helper variable to get correct wallet balance safely
+  const currentWalletBalance = Number(
+    user?.otbalance ?? user?.otBalance ?? user?.availableBalance ?? 0
+  );
+
   const tenurePlans = [
     { days: 15, rate: 0.6, label: "15 Days (0.6%)" },
     { days: 30, rate: 0.8, label: "30 Days (0.8%)" },
@@ -206,11 +211,9 @@ export default function OneTime() {
   };
 
   const handleWithdrawSubmit = async () => {
-    const currentBalance = user?.otBalance || 0;
-
-    // Strict Client Balance Check
-    if (currentBalance < selectedWithdrawAmount) {
-      triggerToast(`Insufficient Wallet Balance! Your balance is ₹${currentBalance}`, "error");
+    // Strict Client Balance Check using correct otbalance field
+    if (currentWalletBalance < selectedWithdrawAmount) {
+      triggerToast(`Insufficient Wallet Balance! Your balance is ₹${currentWalletBalance}`, "error");
       return;
     }
 
@@ -315,26 +318,32 @@ export default function OneTime() {
           <div style={styles.statBox}>
             <span style={styles.statIcon}>👛</span>
             <span style={styles.statTitle}>Total Invested</span>
-            <strong style={styles.statValue}>₹ {(user?.totalInvested || 0).toLocaleString("en-IN")}</strong>
+            <strong style={styles.statValue}>
+              ₹ {Number(user?.oneTimeTotalInvested || user?.totalInvested || 0).toLocaleString("en-IN")}
+            </strong>
           </div>
 
           <div style={styles.statBox}>
             <span style={styles.statIcon}>📈</span>
             <span style={styles.statTitle}>Total Returns</span>
-            <strong style={styles.statValue}>₹ {(user?.totalReturns || 0).toLocaleString("en-IN")}</strong>
+            <strong style={styles.statValue}>
+              ₹ {Number(user?.oneTimeTotalReturns || user?.totalReturns || 0).toLocaleString("en-IN")}
+            </strong>
           </div>
 
           <div style={styles.statBox}>
             <span style={styles.statIcon}>💵</span>
             <span style={styles.statTitle}>Total Earnings</span>
-            <strong style={styles.statValue}>₹ {(user?.totalEarnings || 0).toLocaleString("en-IN")}</strong>
+            <strong style={styles.statValue}>
+              ₹ {Number(user?.oneTimeTotalEarnings || user?.totalEarnings || 0).toLocaleString("en-IN")}
+            </strong>
           </div>
 
           <div style={{ ...styles.statBox, borderRight: "none" }}>
             <span style={styles.statIcon}>🪙</span>
             <span style={styles.statTitle}>Available Balance</span>
             <strong style={{ ...styles.statValue, color: "#fef08a" }}>
-              ₹ {(user?.otBalance || 0).toLocaleString("en-IN")}
+              ₹ {currentWalletBalance.toLocaleString("en-IN")}
             </strong>
           </div>
         </section>
@@ -544,7 +553,7 @@ export default function OneTime() {
         </div>
       )}
 
-      {/* 2. ADD FUND WITH SCREENSHOT UPLOAD (TELEGRAM REMOVED) */}
+      {/* 2. ADD FUND WITH SCREENSHOT UPLOAD */}
       {showAddFundModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
@@ -654,16 +663,16 @@ export default function OneTime() {
             <div
               style={{
                 ...styles.withdrawBalanceInfo,
-                background: (user?.otBalance || 0) < selectedWithdrawAmount ? "#fee2e2" : "#e0f2fe",
-                color: (user?.otBalance || 0) < selectedWithdrawAmount ? "#991b1b" : "#0369a1"
+                background: currentWalletBalance < selectedWithdrawAmount ? "#fee2e2" : "#e0f2fe",
+                color: currentWalletBalance < selectedWithdrawAmount ? "#991b1b" : "#0369a1"
               }}
             >
               <span>Available Wallet Balance:</span>
-              <strong>₹ {(user?.otBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
+              <strong>₹ {currentWalletBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
             </div>
 
             {/* In-Modal Alert Message */}
-            {(user?.otBalance || 0) < selectedWithdrawAmount && (
+            {currentWalletBalance < selectedWithdrawAmount && (
               <div style={styles.balanceAlertBox}>
                 ⚠️ You don't have enough balance to withdraw ₹{selectedWithdrawAmount.toLocaleString("en-IN")}.
               </div>
@@ -693,7 +702,7 @@ export default function OneTime() {
               style={{
                 ...styles.submitBtn,
                 marginTop: "18px",
-                background: (user?.otBalance || 0) < selectedWithdrawAmount ? "#94a3b8" : "#16a34a"
+                background: currentWalletBalance < selectedWithdrawAmount ? "#94a3b8" : "#16a34a"
               }}
               onClick={handleWithdrawSubmit}
               disabled={withdrawing}
@@ -721,7 +730,7 @@ const getStatusStyle = (status) => {
   }
 };
 
-// CSS-IN-JS STYLES (Full height display fix & modern design)
+// CSS-IN-JS STYLES
 const styles = {
   page: {
     minHeight: "100vh",
@@ -1147,8 +1156,6 @@ const styles = {
     cursor: "pointer",
     fontWeight: "bold"
   },
-
-  /* NEW PRESET CARDS DESIGN */
   presetGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -1182,7 +1189,6 @@ const styles = {
     fontSize: "11px",
     opacity: 0.85
   },
-
   walletBox: {
     background: "#f1f5f9",
     padding: "12px",
