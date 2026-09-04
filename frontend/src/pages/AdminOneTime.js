@@ -20,7 +20,7 @@ export default function AdminOneTime() {
   // Popups & Detail View
   const [openWithdrawId, setOpenWithdrawId] = useState(null);
 
-  // Wallet Adjust State (using otbalance)
+  // Wallet Adjust State
   const [adjustEmail, setAdjustEmail] = useState("");
   const [adjustAmount, setAdjustAmount] = useState("");
   const [adjustType, setAdjustType] = useState("add");
@@ -63,26 +63,36 @@ export default function AdminOneTime() {
   };
 
   const apiGet = async (path) => {
-    const res = await fetch(`${API}${path}`, {
-      headers: { authorization: token || "" }
-    });
-    const d = await safeJson(res);
-    if (checkAuthError(d)) return null;
-    return d;
+    try {
+      const res = await fetch(`${API}${path}`, {
+        headers: { authorization: token || "" }
+      });
+      const d = await safeJson(res);
+      if (checkAuthError(d)) return null;
+      return d;
+    } catch (err) {
+      console.error(`API GET ERROR (${path}):`, err);
+      return null;
+    }
   };
 
   const apiPost = async (path, body) => {
-    const res = await fetch(`${API}${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: token || ""
-      },
-      body: JSON.stringify(body)
-    });
-    const d = await safeJson(res);
-    if (checkAuthError(d)) return null;
-    return d;
+    try {
+      const res = await fetch(`${API}${path}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token || ""
+        },
+        body: JSON.stringify(body)
+      });
+      const d = await safeJson(res);
+      if (checkAuthError(d)) return null;
+      return d;
+    } catch (err) {
+      console.error(`API POST ERROR (${path}):`, err);
+      return null;
+    }
   };
 
   const load = async () => {
@@ -90,37 +100,41 @@ export default function AdminOneTime() {
       setError("");
 
       const ad = await apiGet("/admin/onetime-analytics");
-      if (!ad) return;
-      setData(ad);
+      if (ad) setData(ad);
 
+      // Safe parse for Cash Requests
       const cData = await apiGet("/admin/onetime-cash-requests");
-      setCash(Array.isArray(cData) ? cData : (cData?.requests || []));
+      const cashList = Array.isArray(cData) 
+        ? cData 
+        : (cData?.requests || cData?.cashRequests || cData?.data || []);
+      setCash(cashList);
 
+      // Safe parse for Withdrawal Requests (FIXED FOR ADMIN VIEW)
       const wData = await apiGet("/admin/onetime-withdraw-requests");
-      setWithdraws(
-        wData?.success && Array.isArray(wData.requests)
-          ? wData.requests
-          : Array.isArray(wData) ? wData : []
-      );
+      const withdrawList = Array.isArray(wData)
+        ? wData
+        : (wData?.requests || wData?.withdrawals || wData?.data || []);
+      setWithdraws(withdrawList);
 
+      // Safe parse for Investments
       const iData = await apiGet("/admin/onetime-investments");
-      setInvestments(
-        iData?.success && Array.isArray(iData.investments)
-          ? iData.investments
-          : Array.isArray(iData) ? iData : []
-      );
+      const investList = Array.isArray(iData)
+        ? iData
+        : (iData?.investments || iData?.data || []);
+      setInvestments(investList);
 
+      // Safe parse for Users
       const uData = await apiGet("/all-users");
-      setUsers(Array.isArray(uData) ? uData : []);
+      setUsers(Array.isArray(uData) ? uData : (uData?.users || []));
 
     } catch (err) {
-      console.log("ADMIN ONETIME LOAD ERROR:", err);
+      console.error("ADMIN ONETIME LOAD ERROR:", err);
       setError("Backend API connection failed.");
       setData({});
     }
   };
 
-  // Quick Action Click Handlers (Auto Fill & Scroll)
+  // Quick Action Click Handlers
   const handleQuickAdjust = (email) => {
     setAdjustEmail(email);
     const element = document.getElementById("wallet-control-box");
@@ -257,15 +271,20 @@ export default function AdminOneTime() {
     (c) => (c.status || "").toLowerCase() !== "pending" && c.status
   );
 
-  const pendingWithdraws = withdraws.filter((w) => w.status === "Pending");
-  const historyWithdraws = withdraws.filter((w) => w.status !== "Pending");
+  // Robust status check for withdraws
+  const pendingWithdraws = withdraws.filter(
+    (w) => (w.status || "").toLowerCase() === "pending"
+  );
+  const historyWithdraws = withdraws.filter(
+    (w) => (w.status || "").toLowerCase() !== "pending"
+  );
 
   const totalInvestedAmt = investments
-    .filter((i) => i.status === "Active" || !i.status)
+    .filter((i) => (i.status || "").toLowerCase() === "active" || !i.status)
     .reduce((sum, i) => sum + Number(i.amount || 0), 0);
 
   const totalDisbursedAmt = withdraws
-    .filter((w) => w.status === "Success")
+    .filter((w) => (w.status || "").toLowerCase() === "success")
     .reduce((sum, w) => sum + Number(w.amount || 0), 0);
 
   return (
@@ -274,7 +293,7 @@ export default function AdminOneTime() {
 
       {error && <div style={styles.error}>⚠️ {error}</div>}
 
-      {/* TOP ANALYTICS GRID (Like Image 2) */}
+      {/* TOP ANALYTICS GRID */}
       <div style={styles.topGrid}>
         <div style={styles.topCard}>
           <p style={styles.topLabel}>NETWORK USERS</p>
@@ -302,7 +321,7 @@ export default function AdminOneTime() {
         </div>
       </div>
 
-      {/* 1. ONETIME USER ACCOUNTS DIRECTORY (With Adjust & Assign Buttons) */}
+      {/* 1. ONETIME USER ACCOUNTS DIRECTORY */}
       <div style={styles.section}>
         <div style={styles.sectionHeaderRow}>
           <h2 style={styles.sectionTitle}>👥 OneTime User Accounts Directory</h2>
@@ -329,16 +348,16 @@ export default function AdminOneTime() {
                 <tr><td colSpan="4" style={styles.emptyText}>No users found</td></tr>
               ) : (
                 filteredUsers.map((u) => (
-                  <tr key={u._id} style={styles.tr}>
+                  <tr key={u._id || u.email} style={styles.tr}>
                     <td style={styles.td}>
                       <div style={{ fontWeight: "600", color: "#f8fafc" }}>{u.name || "N/A"}</div>
                       <div style={{ fontSize: "12px", color: "#94a3b8" }}>{u.email}</div>
                     </td>
                     <td style={{ ...styles.td, color: "#38bdf8", fontWeight: "bold" }}>
-                      {money(u.otbalance)}
+                      {money(u.otbalance ?? u.otBalance ?? 0)}
                     </td>
                     <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>
-                      {money(u.oneTimeTotalInvested)}
+                      {money(u.oneTimeTotalInvested || u.totalInvested || 0)}
                     </td>
                     <td style={{ ...styles.td, textAlign: "center" }}>
                       <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
@@ -364,7 +383,7 @@ export default function AdminOneTime() {
         </div>
       </div>
 
-      {/* 2. ONETIME ADD FUND REQUESTS (LIVE PENDING & VIEW HISTORY) */}
+      {/* 2. ONETIME ADD FUND REQUESTS */}
       <div style={styles.section}>
         <div style={styles.sectionHeaderRow}>
           <h2 style={styles.sectionTitle}>📥 OneTime Add Fund Requests</h2>
@@ -377,7 +396,6 @@ export default function AdminOneTime() {
         </div>
 
         {showDepositHistory ? (
-          /* DEPOSIT HISTORY TABLE */
           <div style={styles.tableWrap}>
             <h4 style={styles.subText}>Historical Approved / Rejected Topups</h4>
             <table style={styles.table}>
@@ -414,7 +432,6 @@ export default function AdminOneTime() {
             </table>
           </div>
         ) : (
-          /* LIVE PENDING DEPOSITS */
           pendingCashRequests.length === 0 ? (
             <p style={styles.emptyText}>No pending deposit requests.</p>
           ) : (
@@ -459,7 +476,7 @@ export default function AdminOneTime() {
         )}
       </div>
 
-      {/* 3. ONETIME WITHDRAWAL REQUESTS (LIVE PENDING & VIEW HISTORY) */}
+      {/* 3. ONETIME WITHDRAWAL REQUESTS */}
       <div style={styles.section}>
         <div style={styles.sectionHeaderRow}>
           <h2 style={styles.sectionTitle}>💰 OneTime Withdrawal Requests</h2>
@@ -472,7 +489,6 @@ export default function AdminOneTime() {
         </div>
 
         {showWithdrawHistory ? (
-          /* WITHDRAW HISTORY TABLE */
           <div style={styles.tableWrap}>
             <h4 style={styles.subText}>Historical Approved / Rejected Withdrawals</h4>
             <table style={styles.table}>
@@ -494,8 +510,8 @@ export default function AdminOneTime() {
                       <td style={styles.td}>
                         <span style={{
                           padding: "4px 8px", borderRadius: "6px", fontWeight: "bold", fontSize: "12px",
-                          background: w.status === "Success" ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)",
-                          color: w.status === "Success" ? "#22c55e" : "#f87171"
+                          background: (w.status || "").toLowerCase() === "success" ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)",
+                          color: (w.status || "").toLowerCase() === "success" ? "#22c55e" : "#f87171"
                         }}>
                           {w.status}
                         </span>
@@ -507,7 +523,6 @@ export default function AdminOneTime() {
             </table>
           </div>
         ) : (
-          /* LIVE PENDING WITHDRAWALS */
           pendingWithdraws.length === 0 ? (
             <p style={styles.emptyText}>No pending payout requests.</p>
           ) : (
@@ -515,7 +530,7 @@ export default function AdminOneTime() {
               <div key={w._id} style={styles.withdrawCard}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <h4 style={{ margin: 0, color: "#fff" }}>{w.name || "User"} ({w.email})</h4>
+                    <h4 style={{ margin: 0, color: "#fff" }}>{w.name || w.email || "User"}</h4>
                     <p style={{ margin: "4px 0 0 0", color: "#22c55e", fontSize: "18px", fontWeight: "bold" }}>
                       {money(w.amount)}
                     </p>
@@ -530,10 +545,10 @@ export default function AdminOneTime() {
 
                 {openWithdrawId === w._id && (
                   <div style={styles.bankBox}>
-                    <p><b>Account Holder:</b> {w.bankDetails?.holderName || "N/A"}</p>
+                    <p><b>Account Holder:</b> {w.bankDetails?.holderName || w.accountDetails || "N/A"}</p>
                     <p><b>Bank Name:</b> {w.bankDetails?.bankName || "N/A"}</p>
                     <p><b>Account Number:</b> {w.bankDetails?.accountNumber || "N/A"}</p>
-                    <p><b>IFSC:</b> {w.bankDetails?.ifsc || "N/A"}</p>
+                    <p><b>IFSC Code:</b> {w.bankDetails?.ifsc || "N/A"}</p>
 
                     <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                       <button style={styles.smallGreen} onClick={() => withdrawAction(w._id, "Success")}>
@@ -551,7 +566,7 @@ export default function AdminOneTime() {
         )}
       </div>
 
-      {/* 4. WALLET CONTROL BOX (TARGET FOR ADJUST WALLET BUTTON) */}
+      {/* 4. WALLET CONTROL BOX */}
       <div id="wallet-control-box" style={styles.section}>
         <h2 style={styles.sectionTitle}>💳 OneTime Wallet Balance Control</h2>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "12px" }}>
@@ -592,7 +607,7 @@ export default function AdminOneTime() {
         </button>
       </div>
 
-      {/* 5. ASSIGN MANUAL PLAN BOX (TARGET FOR ASSIGN PLAN BUTTON) */}
+      {/* 5. ASSIGN MANUAL PLAN BOX */}
       <div id="assign-plan-box" style={styles.section}>
         <h2 style={styles.sectionTitle}>📊 Assign Manual OneTime Investment Plan</h2>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "12px" }}>
@@ -643,19 +658,16 @@ const styles = {
   headerTitle: { textAlign: "center", fontSize: "24px", fontWeight: "bold", color: "#ffffff", margin: "0 0 20px 0" },
   error: { background: "rgba(239,68,68,0.2)", color: "#f87171", padding: "12px", borderRadius: "8px", marginBottom: "20px" },
 
-  // Top Analytics Grid
   topGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "20px" },
   topCard: { background: "#0b0f19", border: "1px solid #1e293b", borderRadius: "10px", padding: "14px", textAlign: "center" },
   topLabel: { margin: "0 0 6px 0", color: "#64748b", fontSize: "11px", fontWeight: "bold", letterSpacing: "0.5px" },
   topVal: { margin: 0, fontSize: "20px", fontWeight: "bold", color: "#f8fafc" },
 
-  // Sections
   section: { background: "#0b0f19", padding: "18px", borderRadius: "12px", border: "1px solid #1e293b", marginBottom: "20px" },
   sectionHeaderRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" },
   sectionTitle: { margin: 0, fontSize: "16px", color: "#ffffff", fontWeight: "bold" },
   searchInput: { background: "#030712", border: "1px solid #1e293b", color: "#fff", padding: "6px 12px", borderRadius: "6px", fontSize: "13px" },
 
-  // Table
   tableWrap: { overflowX: "auto", background: "#030712", borderRadius: "8px", border: "1px solid #1e293b" },
   table: { width: "100%", borderCollapse: "collapse" },
   th: { background: "#0f172a", padding: "10px 12px", color: "#94a3b8", textAlign: "left", fontSize: "12px", borderBottom: "1px solid #1e293b" },
@@ -664,7 +676,6 @@ const styles = {
   emptyText: { color: "#64748b", textAlign: "center", fontSize: "13px", padding: "15px" },
   subText: { color: "#94a3b8", fontSize: "13px", margin: "10px 12px" },
 
-  // Buttons
   adjustBtn: { background: "#22c55e", color: "#030712", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", fontSize: "12px", cursor: "pointer" },
   assignBtn: { background: "#3b82f6", color: "#ffffff", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", fontSize: "12px", cursor: "pointer" },
   historyToggleBtn: { background: "rgba(59,130,246,0.15)", border: "1px solid #3b82f6", color: "#60a5fa", padding: "6px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold", cursor: "pointer" },
@@ -673,7 +684,6 @@ const styles = {
   inspectBtn: { background: "#1e293b", border: "1px solid #334155", color: "#cbd5e1", padding: "6px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" },
   fullGreenBtn: { width: "100%", background: "#22c55e", border: "none", padding: "12px", borderRadius: "8px", color: "#030712", fontWeight: "bold", fontSize: "14px", marginTop: "14px", cursor: "pointer" },
 
-  // Forms & Cards
   input: { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #1e293b", background: "#030712", color: "white", fontSize: "13px", boxSizing: "border-box" },
   withdrawCard: { background: "#030712", border: "1px solid #1e293b", borderRadius: "8px", padding: "12px", marginTop: "10px" },
   bankBox: { marginTop: "10px", padding: "10px", background: "#0f172a", borderRadius: "6px", fontSize: "13px" }
