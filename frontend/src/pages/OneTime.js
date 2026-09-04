@@ -66,8 +66,9 @@ export default function OneTime() {
 
   // Wallet balance safely retrieved
   const currentWalletBalance = Number(
-    stats.availableBalance || user?.otbalance ?? user?.otBalance ?? user?.availableBalance ?? 0
-  );
+  stats.availableBalance || user?.otbalance || user?.otBalance || user?.availableBalance || 0
+);
+
 
   const tenurePlans = [
     { days: 15, rate: 0.6, label: "15 Days (0.6%)" },
