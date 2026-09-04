@@ -64,11 +64,10 @@ export default function OneTime() {
 
   const COMPANY_WALLET_ADDRESS = "0x53D944eDA838748A92F2c361d2F71cD7EcFc8643";
 
-  // Wallet balance safely retrieved
+  // Safe wallet balance without syntax collision
   const currentWalletBalance = Number(
-  stats.availableBalance || user?.otbalance || user?.otBalance || user?.availableBalance || 0
-);
-
+    stats.availableBalance || user?.otbalance || user?.otBalance || user?.availableBalance || 0
+  );
 
   const tenurePlans = [
     { days: 15, rate: 0.6, label: "15 Days (0.6%)" },
@@ -113,29 +112,35 @@ export default function OneTime() {
         const historyList = Array.isArray(data.history) ? data.history : (data.investments || []);
         setHistory(historyList);
 
-        // Stats Calculation Fallback
-        if (data.stats) {
-          setStats(data.stats);
-        } else {
-          let inv = 0;
-          let wd = 0;
-          historyList.forEach(item => {
-            if (item.type === "OneTimeInvestment" || !item.type) inv += Number(item.amount || 0);
-            if (item.type === "Withdrawal" && (item.status === "Approved" || item.status === "Accepted")) {
-              wd += Number(item.amount || 0);
+        // Strict OneTime Earnings Calculation
+        let calculatedInv = 0;
+        let calculatedWd = 0;
+        let calculatedOneTimeEarnings = Number(
+          data.user?.oneTimeTotalEarnings || data.user?.oneTimeEarnings || data.stats?.totalEarnings || 0
+        );
+
+        historyList.forEach(item => {
+          const type = (item.type || "").toLowerCase();
+          if (type.includes("investment") || type === "onetimeinvestment" || !type) {
+            if (item.status === "Active" || item.status === "Completed") {
+              calculatedInv += Number(item.amount || 0);
             }
-          });
-          setStats({
-            totalInvested: inv,
-            totalEarnings: Number(data.user?.totalEarning || data.user?.totalEarnings || 0),
-            totalWithdrawn: wd,
-            availableBalance: Number(data.user?.otbalance ?? data.user?.otBalance ?? 0)
-          });
-        }
+          }
+          if (type === "withdrawal" && (item.status === "Approved" || item.status === "Accepted" || item.status === "Success")) {
+            calculatedWd += Number(item.amount || 0);
+          }
+        });
+
+        setStats({
+          totalInvested: data.stats?.totalInvested ?? calculatedInv,
+          totalEarnings: calculatedOneTimeEarnings,
+          totalWithdrawn: data.stats?.totalWithdrawn ?? calculatedWd,
+          availableBalance: Number(data.user?.otbalance || data.user?.otBalance || 0)
+        });
 
         // Active Investment Detection
         const active = data.activeInvestment || historyList.find(
-          item => (item.type === "OneTimeInvestment" || !item.type) && item.status === "Active"
+          item => (item.type === "OneTimeInvestment" || item.type === "Investment" || !item.type) && item.status === "Active"
         );
         setActiveInvestment(active || null);
 
@@ -237,12 +242,12 @@ export default function OneTime() {
       });
 
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok || data.success) {
         triggerToast("Deposit proof submitted! Pending review.", "success");
         setShowAddFundModal(false);
         setTxnId("");
         setScreenshot(null);
-        loadDashboardData();
+        await loadDashboardData();
       } else {
         triggerToast(data.message || "Failed to submit deposit", "error");
       }
@@ -319,7 +324,7 @@ export default function OneTime() {
       if (res.ok || data.success) {
         triggerToast("Withdrawal Request Submitted!", "success");
         setShowWithdrawModal(false);
-        loadDashboardData();
+        await loadDashboardData();
       } else {
         triggerToast(data.message || "Withdrawal Failed", "error");
       }
@@ -400,21 +405,21 @@ export default function OneTime() {
           </div>
         </header>
 
-        {/* TOP STATS CARD (Total Invested, Total Earnings, Total Withdraw, Available Balance) */}
+        {/* TOP STATS CARD */}
         <section style={styles.summaryCard}>
           <div style={styles.statBox}>
             <span style={styles.statIcon}>👛</span>
             <span style={styles.statTitle}>Total Invested</span>
             <strong style={styles.statValue}>
-              ₹ {Number(stats.totalInvested || user?.oneTimeTotalInvested || user?.totalInvested || 0).toLocaleString("en-IN")}
+              ₹ {Number(stats.totalInvested || 0).toLocaleString("en-IN")}
             </strong>
           </div>
 
           <div style={styles.statBox}>
             <span style={styles.statIcon}>💵</span>
             <span style={styles.statTitle}>Total Earnings</span>
-            <strong style={styles.statValue}>
-              ₹ {Number(stats.totalEarnings || user?.oneTimeTotalEarnings || user?.totalEarnings || 0).toLocaleString("en-IN")}
+            <strong style={{ ...styles.statValue, color: "#86efac" }}>
+              ₹ {Number(stats.totalEarnings || 0).toLocaleString("en-IN")}
             </strong>
           </div>
 
@@ -442,17 +447,36 @@ export default function OneTime() {
             <div style={styles.titleLine}></div>
           </h2>
 
-          {/* ACTIVE INVESTMENT BANNER */}
+          {/* REDESIGNED RUNNING ACTIVE INVESTMENT CARD */}
           {activeInvestment && (
-            <div style={styles.activeInvestBanner}>
-              <div style={{ fontWeight: "bold", fontSize: "14px", color: "#166534", marginBottom: "4px" }}>
-                🟢 Active Investment Running
+            <div style={styles.activeInvestCard}>
+              <div style={styles.activeHeader}>
+                <div style={styles.activeBadgeGroup}>
+                  <span style={styles.activePulse}></span>
+                  <strong style={styles.activeTitle}>ACTIVE INVESTMENT RUNNING</strong>
+                </div>
+                <span style={styles.activeStatusTag}>🟢 Live & Earning</span>
               </div>
-              <div style={{ fontSize: "12px", color: "#15803d", display: "flex", gap: "16px", flexWrap: "wrap" }}>
-                <span>Amount: <strong>₹{Number(activeInvestment.amount || 0).toLocaleString("en-IN")}</strong></span>
-                <span>Duration: <strong>{activeInvestment.duration || `${activeInvestment.durationDays || 15} Days`}</strong></span>
-                <span>Daily Return: <strong>₹{Number(activeInvestment.dailyReturn || 0).toFixed(2)}</strong></span>
-                <span>Maturity: <strong>{activeInvestment.maturityDate ? new Date(activeInvestment.maturityDate).toLocaleDateString("en-GB") : "-"}</strong></span>
+
+              <div style={styles.activeStatsGrid}>
+                <div style={styles.activeStatItem}>
+                  <span style={styles.activeLabel}>Invested Amount</span>
+                  <strong style={styles.activeValue}>₹{Number(activeInvestment.amount || 0).toLocaleString("en-IN")}</strong>
+                </div>
+                <div style={styles.activeStatItem}>
+                  <span style={styles.activeLabel}>Plan Duration</span>
+                  <strong style={styles.activeValue}>{activeInvestment.duration || `${activeInvestment.durationDays || 15} Days`}</strong>
+                </div>
+                <div style={styles.activeStatItem}>
+                  <span style={styles.activeLabel}>Daily Earnings</span>
+                  <strong style={{ ...styles.activeValue, color: "#22c55e" }}>+₹{Number(activeInvestment.dailyReturn || 0).toFixed(2)} / day</strong>
+                </div>
+                <div style={styles.activeStatItem}>
+                  <span style={styles.activeLabel}>Maturity Date</span>
+                  <strong style={{ ...styles.activeValue, color: "#38bdf8" }}>
+                    {activeInvestment.maturityDate ? new Date(activeInvestment.maturityDate).toLocaleDateString("en-GB") : "In Progress"}
+                  </strong>
+                </div>
               </div>
             </div>
           )}
@@ -568,11 +592,11 @@ export default function OneTime() {
           </div>
         </section>
 
-        {/* INVESTMENT HISTORY */}
+        {/* TRANSACTION & INVESTMENT HISTORY */}
         <section style={styles.historyCard}>
           <div style={styles.historyHeader}>
-            <h2 style={{ margin: 0, fontSize: "18px" }}>Investment History</h2>
-            <span style={styles.viewAllBtn}>View All</span>
+            <h2 style={{ margin: 0, fontSize: "18px" }}>Investment & Transaction History</h2>
+            <span style={styles.viewAllBtn} onClick={loadDashboardData}>🔄 Refresh</span>
           </div>
 
           <div style={styles.tableWrapper}>
@@ -580,9 +604,9 @@ export default function OneTime() {
               <thead>
                 <tr>
                   <th style={styles.th}>Date</th>
-                  <th style={styles.th}>Type / Duration</th>
+                  <th style={styles.th}>Type / Description</th>
                   <th style={styles.th}>Amount</th>
-                  <th style={styles.th}>Frequency</th>
+                  <th style={styles.th}>Frequency / Txn</th>
                   <th style={styles.th}>Status</th>
                   <th style={styles.th}>Maturity</th>
                 </tr>
@@ -590,33 +614,45 @@ export default function OneTime() {
               <tbody>
                 {history.length === 0 ? (
                   <tr>
-                    <td colSpan="6" style={styles.emptyTd}>No investment history found</td>
+                    <td colSpan="6" style={styles.emptyTd}>No history found</td>
                   </tr>
                 ) : (
-                  history.map((item, idx) => (
-                    <tr key={item._id || idx}>
-                      <td style={styles.td}>
-                        {item.startDate ? new Date(item.startDate).toLocaleDateString("en-GB") : (item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : "-")}
-                      </td>
-                      <td style={styles.td}>
-                        {item.type === "Deposit" ? "Deposit" : item.type === "Withdrawal" ? "Withdrawal" : (item.duration || `${item.durationDays || tenure} Days`)}
-                      </td>
-                      <td style={styles.td}>₹ {Number(item.amount || 0).toLocaleString("en-IN")}</td>
-                      <td style={styles.td}>
-                        <span style={(item.frequency || "daily").toLowerCase() === "daily" ? styles.badgeDaily : styles.badgeWeekly}>
-                          {item.frequency || "Daily"}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        <span style={{ ...styles.statusBadge, ...getStatusStyle(item.status) }}>
-                          {item.status || "Active"}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        {item.maturityDate ? new Date(item.maturityDate).toLocaleDateString("en-GB") : "-"}
-                      </td>
-                    </tr>
-                  ))
+                  history.map((item, idx) => {
+                    const itemType = (item.type || "").toLowerCase();
+                    const isDeposit = itemType.includes("deposit") || !!item.transactionId;
+                    const isWithdraw = itemType.includes("withdraw");
+
+                    return (
+                      <tr key={item._id || idx}>
+                        <td style={styles.td}>
+                          {item.startDate ? new Date(item.startDate).toLocaleDateString("en-GB") : (item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : "-")}
+                        </td>
+                        <td style={styles.td}>
+                          {isDeposit ? "💳 Add Fund Deposit" : isWithdraw ? "💸 Withdrawal" : `🚀 ${item.duration || `${item.durationDays || tenure} Days Plan`}`}
+                        </td>
+                        <td style={styles.td}>₹ {Number(item.amount || 0).toLocaleString("en-IN")}</td>
+                        <td style={styles.td}>
+                          {isDeposit ? (
+                            <span style={{ fontSize: "11px", color: "#64748b" }}>UTR: {item.transactionId || "N/A"}</span>
+                          ) : isWithdraw ? (
+                            <span style={{ fontSize: "11px", color: "#64748b" }}>Bank Request</span>
+                          ) : (
+                            <span style={(item.frequency || "daily").toLowerCase() === "daily" ? styles.badgeDaily : styles.badgeWeekly}>
+                              {item.frequency || "Daily"}
+                            </span>
+                          )}
+                        </td>
+                        <td style={styles.td}>
+                          <span style={{ ...styles.statusBadge, ...getStatusStyle(item.status) }}>
+                            {item.status || "Pending"}
+                          </span>
+                        </td>
+                        <td style={styles.td}>
+                          {item.maturityDate ? new Date(item.maturityDate).toLocaleDateString("en-GB") : "-"}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -840,21 +876,17 @@ export default function OneTime() {
 }
 
 const getStatusStyle = (status) => {
-  switch (status?.toLowerCase()) {
-    case "active":
-    case "approved":
-    case "accepted":
-    case "success":
-      return { background: "#dcfce7", color: "#166534" };
-    case "pending":
-      return { background: "#fef3c7", color: "#92400e" };
-    case "rejected":
-    case "cancelled":
-    case "failed":
-      return { background: "#fee2e2", color: "#991b1b" };
-    default:
-      return { background: "#f1f5f9", color: "#475569" };
+  const s = (status || "").toLowerCase();
+  if (s === "active" || s === "approved" || s === "accepted" || s === "success") {
+    return { background: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" };
   }
+  if (s === "pending") {
+    return { background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" };
+  }
+  if (s === "rejected" || s === "cancelled" || s === "failed") {
+    return { background: "#fee2e2", color: "#991b1b", border: "1px solid #fca5a5" };
+  }
+  return { background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1" };
 };
 
 const styles = {
@@ -1007,12 +1039,67 @@ const styles = {
     padding: "20px",
     boxShadow: "0 8px 25px rgba(0,0,0,0.15)"
   },
-  activeInvestBanner: {
-    background: "#f0fdf4",
-    border: "1px solid #86efac",
-    borderRadius: "12px",
-    padding: "12px 16px",
-    marginBottom: "16px"
+  activeInvestCard: {
+    background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+    borderRadius: "14px",
+    padding: "18px",
+    marginBottom: "20px",
+    border: "1px solid #22c55e",
+    boxShadow: "0 0 15px rgba(34, 197, 94, 0.2)",
+    color: "white"
+  },
+  activeHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "14px",
+    borderBottom: "1px solid rgba(255,255,255,0.1)",
+    paddingBottom: "10px"
+  },
+  activeBadgeGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px"
+  },
+  activePulse: {
+    width: "10px",
+    height: "10px",
+    borderRadius: "50%",
+    background: "#22c55e",
+    boxShadow: "0 0 8px #22c55e"
+  },
+  activeTitle: {
+    fontSize: "13px",
+    letterSpacing: "0.5px",
+    color: "#22c55e"
+  },
+  activeStatusTag: {
+    fontSize: "11px",
+    background: "rgba(34, 197, 94, 0.15)",
+    color: "#4ade80",
+    padding: "4px 10px",
+    borderRadius: "20px",
+    fontWeight: "bold",
+    border: "1px solid rgba(34, 197, 94, 0.3)"
+  },
+  activeStatsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+    gap: "12px"
+  },
+  activeStatItem: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px"
+  },
+  activeLabel: {
+    fontSize: "11px",
+    color: "#94a3b8"
+  },
+  activeValue: {
+    fontSize: "15px",
+    fontWeight: "bold",
+    color: "#f8fafc"
   },
   cardTitle: {
     margin: "0 0 16px 0",
@@ -1318,8 +1405,7 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 6px 15px rgba(0,0,0,0.15)",
-    transition: "transform 0.2s ease"
+    boxShadow: "0 6px 15px rgba(0,0,0,0.15)"
   },
   presetBadge: {
     fontSize: "10px",
