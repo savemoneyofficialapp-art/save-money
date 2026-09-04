@@ -206,7 +206,7 @@ export default function OneTime() {
   };
 
   const handleWithdrawSubmit = async () => {
-    const currentBalance = user?.availableBalance || 0;
+    const currentBalance = user?.otBalance || 0;
 
     // Strict Client Balance Check
     if (currentBalance < selectedWithdrawAmount) {
@@ -334,7 +334,7 @@ export default function OneTime() {
             <span style={styles.statIcon}>🪙</span>
             <span style={styles.statTitle}>Available Balance</span>
             <strong style={{ ...styles.statValue, color: "#fef08a" }}>
-              ₹ {(user?.availableBalance || 0).toLocaleString("en-IN")}
+              ₹ {(user?.otBalance || 0).toLocaleString("en-IN")}
             </strong>
           </div>
         </section>
@@ -654,16 +654,16 @@ export default function OneTime() {
             <div
               style={{
                 ...styles.withdrawBalanceInfo,
-                background: (user?.availableBalance || 0) < selectedWithdrawAmount ? "#fee2e2" : "#e0f2fe",
-                color: (user?.availableBalance || 0) < selectedWithdrawAmount ? "#991b1b" : "#0369a1"
+                background: (user?.otBalance || 0) < selectedWithdrawAmount ? "#fee2e2" : "#e0f2fe",
+                color: (user?.otBalance || 0) < selectedWithdrawAmount ? "#991b1b" : "#0369a1"
               }}
             >
               <span>Available Wallet Balance:</span>
-              <strong>₹ {(user?.availableBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
+              <strong>₹ {(user?.otBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
             </div>
 
             {/* In-Modal Alert Message */}
-            {(user?.availableBalance || 0) < selectedWithdrawAmount && (
+            {(user?.otBalance || 0) < selectedWithdrawAmount && (
               <div style={styles.balanceAlertBox}>
                 ⚠️ You don't have enough balance to withdraw ₹{selectedWithdrawAmount.toLocaleString("en-IN")}.
               </div>
@@ -693,7 +693,7 @@ export default function OneTime() {
               style={{
                 ...styles.submitBtn,
                 marginTop: "18px",
-                background: (user?.availableBalance || 0) < selectedWithdrawAmount ? "#94a3b8" : "#16a34a"
+                background: (user?.otBalance || 0) < selectedWithdrawAmount ? "#94a3b8" : "#16a34a"
               }}
               onClick={handleWithdrawSubmit}
               disabled={withdrawing}
