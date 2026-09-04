@@ -1,47 +1,60 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer
+} from "recharts";
 import { API } from "../config";
 
 export default function AdminOneTime() {
   const token = localStorage.getItem("token");
 
-  // Core Data States
+  // Analytics & Stats
+  const [data, setData] = useState(null);
   const [users, setUsers] = useState([]);
   const [cash, setCash] = useState([]);
   const [withdraws, setWithdraws] = useState([]);
   const [investments, setInvestments] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // UI Popups & Filters
+  // Popups & Filter States
   const [openWithdrawId, setOpenWithdrawId] = useState(null);
-  const [screenshotModal, setScreenshotModal] = useState(null);
-  const [userSearch, setUserSearch] = useState("");
+  const [transactionPopup, setTransactionPopup] = useState(false);
+  const [transactionFilter, setTransactionFilter] = useState("all");
+  const [transactionFrom, setTransactionFrom] = useState("");
+  const [transactionTo, setTransactionTo] = useState("");
 
-  // OneTime Wallet Adjust State
+  // Wallet Adjust State (using otbalance)
   const [adjustEmail, setAdjustEmail] = useState("");
   const [adjustAmount, setAdjustAmount] = useState("");
-  const [adjustType, setAdjustType] = useState("add");
+  const [adjustType, setAdjustType] = useState("add"); // "add" or "subtract"
   const [adjustReason, setAdjustReason] = useState("");
 
-  // Assign OneTime Investment State
+  // Manual User Investment Control State
   const [investEmail, setInvestEmail] = useState("");
   const [investAmount, setInvestAmount] = useState("");
-  const [investDuration, setInvestDuration] = useState("15 Days");
+  const [investDuration, setInvestDuration] = useState("15 Days (0.6%)");
   const [investDailyReturn, setInvestDailyReturn] = useState("");
 
+  // Broadcast & News
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [latestUpdateText, setLatestUpdateText] = useState("");
+  const [error, setError] = useState("");
+
   useEffect(() => {
-    loadData();
+    load();
   }, []);
 
   const safeJson = async (res) => {
     const text = await res.text();
-    if (text.trim().startsWith("<")) {
-      return { success: false, msg: "Invalid API Endpoint" };
-    }
     try {
       return JSON.parse(text);
     } catch {
-      return { success: false, msg: "JSON Parse Error" };
+      return { msg: text || "Invalid server response" };
     }
   };
 
@@ -50,10 +63,11 @@ export default function AdminOneTime() {
       d?.msg === "Token expired or invalid" ||
       d?.msg === "No token" ||
       d?.msg === "Invalid token" ||
-      d?.msg === "Admin access only"
+      d?.msg === "Admin access only" ||
+      d?.msg === "Admin only"
     ) {
       localStorage.clear();
-      toast.error(d.msg);
+      alert(d.msg + ". Please login again.");
       window.location.href = "/login";
       return true;
     }
@@ -61,98 +75,86 @@ export default function AdminOneTime() {
   };
 
   const apiGet = async (path) => {
-    try {
-      const res = await fetch(`${API}${path}`, {
-        headers: { authorization: token || "" }
-      });
-      const d = await safeJson(res);
-      if (checkAuthError(d)) return null;
-      return d;
-    } catch {
-      return null;
-    }
+    const res = await fetch(`${API}${path}`, {
+      headers: { authorization: token || "" }
+    });
+    const d = await safeJson(res);
+    if (checkAuthError(d)) return null;
+    return d;
   };
 
   const apiPost = async (path, body) => {
+    const res = await fetch(`${API}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: token || ""
+      },
+      body: JSON.stringify(body)
+    });
+    const d = await safeJson(res);
+    if (checkAuthError(d)) return null;
+    return d;
+  };
+
+  const load = async () => {
     try {
-      const res = await fetch(`${API}${path}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token || ""
-        },
-        body: JSON.stringify(body)
-      });
-      const d = await safeJson(res);
-      if (checkAuthError(d)) return null;
-      return d;
-    } catch {
-      return { success: false, msg: "Network connection failed" };
+      setError("");
+
+      const ad = await apiGet("/admin/onetime-analytics");
+      if (!ad) return;
+      setData(ad);
+
+      const cData = await apiGet("/admin/onetime-cash-requests");
+      setCash(Array.isArray(cData) ? cData : (cData?.requests || []));
+
+      const wData = await apiGet("/admin/onetime-withdraw-requests");
+      setWithdraws(
+        wData?.success && Array.isArray(wData.requests)
+          ? wData.requests
+          : Array.isArray(wData) ? wData : []
+      );
+
+      const iData = await apiGet("/admin/onetime-investments");
+      setInvestments(
+        iData?.success && Array.isArray(iData.investments)
+          ? iData.investments
+          : Array.isArray(iData) ? iData : []
+      );
+
+      const uData = await apiGet("/all-users");
+      setUsers(Array.isArray(uData) ? uData : []);
+
+    } catch (err) {
+      console.log("ADMIN ONETIME LOAD ERROR:", err);
+      setError("Backend API connection failed.");
+      setData({});
     }
   };
 
-  const loadData = async () => {
-    setLoading(true);
-
-    // 1. Fetch Users
-    const uData = await apiGet("/all-users");
-    setUsers(Array.isArray(uData) ? uData : uData?.users || []);
-
-    // 2. Fetch OneTime Deposit / Add Fund Requests
-    const cData = await apiGet("/admin/onetime-cash-requests");
-    setCash(Array.isArray(cData) ? cData : cData?.requests || []);
-
-    // 3. Fetch OneTime Withdraw Requests
-    const wData = await apiGet("/admin/onetime-withdraw-requests");
-    setWithdraws(
-      wData?.success && Array.isArray(wData.requests)
-        ? wData.requests
-        : Array.isArray(wData)
-        ? wData
-        : []
-    );
-
-    // 4. Fetch OneTime Investments
-    const iData = await apiGet("/admin/onetime-investments");
-    setInvestments(
-      iData?.success && Array.isArray(iData.investments)
-        ? iData.investments
-        : Array.isArray(iData)
-        ? iData
-        : []
-    );
-
-    setLoading(false);
-  };
-
-  // ACTIONS
-
-  // Approve / Reject Cash Requests
+  // 1. Add Fund Requests (Accept / Reject)
   const approveCash = async (id) => {
     const d = await apiPost("/admin/onetime-approve-cash", { requestId: id });
-    if (d?.success || d?.msg) {
-      toast.success(d.msg || "OneTime Fund Approved!");
-      loadData();
-    } else {
-      toast.error(d?.msg || "Failed to approve");
-    }
+    if (!d) return;
+    toast.success(d?.msg || "Fund Request Approved and added to otbalance!");
+    load();
   };
 
   const rejectCash = async (id) => {
-    const reason = prompt("Enter rejection reason:");
-    if (!reason) return;
+    const reason = prompt("Enter rejection reason for this fund request:");
+    if (!reason) return alert("Rejection reason is required");
+
     const d = await apiPost("/admin/onetime-reject-cash", { requestId: id, reason });
-    if (d?.success || d?.msg) {
-      toast.info(d.msg || "Fund Request Rejected");
-      loadData();
-    }
+    if (!d) return;
+    toast.info(d?.msg || "Fund request rejected");
+    load();
   };
 
-  // Approve / Reject Withdraw Requests
+  // 2. Withdraw Requests (Accept / Reject)
   const withdrawAction = async (id, status) => {
     let rejectReason = "";
     if (status === "Rejected") {
-      rejectReason = prompt("Enter rejection reason:") || "Rejected by admin";
+      rejectReason = prompt("Enter rejection reason") || "Rejected by admin";
     }
 
     const d = await apiPost("/admin/onetime-withdraw-action", {
@@ -162,14 +164,14 @@ export default function AdminOneTime() {
     });
 
     if (d?.success || d?.msg) {
-      toast.success(d.msg || `Withdrawal ${status}`);
-      loadData();
+      toast.success(d.msg || `OneTime Withdraw ${status}`);
+      await load();
     } else {
-      toast.error(d?.msg || "Action failed");
+      toast.error(d?.msg || "Withdraw action failed");
     }
   };
 
-  // OneTime Wallet Adjustment Action
+  // 3. Wallet Adjustment Action (otbalance)
   const handleWalletAdjust = async () => {
     if (!adjustEmail || !adjustAmount) {
       toast.info("User Email and Amount are required");
@@ -180,24 +182,26 @@ export default function AdminOneTime() {
       email: adjustEmail,
       amount: Number(adjustAmount),
       type: adjustType,
-      reason: adjustReason || "OneTime Manual Adjustment"
+      reason: adjustReason || "Administrative Adjustment"
     });
 
-    if (d?.success || d?.msg) {
-      toast.success(d.msg || "OneTime Wallet Updated!");
+    if (!d) return;
+
+    if (d.success || d.msg) {
+      toast.success(d.msg || `otbalance ${adjustType === "add" ? "credited" : "debited"} successfully!`);
       setAdjustEmail("");
       setAdjustAmount("");
       setAdjustReason("");
-      loadData();
+      load();
     } else {
-      toast.error(d?.msg || "Wallet adjustment failed");
+      toast.error(d.msg || "Wallet adjustment failed");
     }
   };
 
-  // Assign OneTime Investment Action
+  // 4. User Investment Control Actions
   const handleAssignInvestment = async () => {
     if (!investEmail || !investAmount) {
-      toast.info("User Email and Amount are required");
+      toast.info("User Email and Investment Amount are required");
       return;
     }
 
@@ -208,15 +212,51 @@ export default function AdminOneTime() {
       dailyReturn: Number(investDailyReturn || 0)
     });
 
-    if (d?.success || d?.msg) {
-      toast.success(d.msg || "OneTime Plan Assigned!");
+    if (!d) return;
+
+    if (d.success || d.msg) {
+      toast.success(d.msg || "OneTime Investment plan assigned to user!");
       setInvestEmail("");
       setInvestAmount("");
       setInvestDailyReturn("");
-      loadData();
+      load();
     } else {
-      toast.error(d?.msg || "Assignment failed");
+      toast.error(d.msg || "Failed to create investment plan");
     }
+  };
+
+  const cancelInvestment = async (investId) => {
+    if (!window.confirm("Are you sure you want to cancel this user investment?")) return;
+
+    const d = await apiPost("/admin/onetime-cancel-investment", { id: investId });
+    if (!d) return;
+
+    toast.info(d.msg || "Investment cancelled");
+    load();
+  };
+
+  // Broadcast & Updates
+  const broadcast = async () => {
+    if (!title || !message) {
+      toast.info("Title and message required");
+      return;
+    }
+    const d = await apiPost("/broadcast", { title: `[OneTime] ${title}`, message });
+    if (!d) return;
+    toast.success(d.msg || "Broadcast Sent");
+    setTitle("");
+    setMessage("");
+  };
+
+  const handleSendLatestUpdate = async () => {
+    if (!latestUpdateText.trim()) {
+      toast.info("Please enter latest update text");
+      return;
+    }
+    const d = await apiPost("/update-latest-news", { message: latestUpdateText });
+    if (!d) return;
+    toast.success("Latest update saved successfully!");
+    setLatestUpdateText("");
   };
 
   const money = (n) =>
@@ -225,49 +265,61 @@ export default function AdminOneTime() {
       maximumFractionDigits: 2
     })}`;
 
-  const formatImage = (path) => {
-    if (!path) return "";
-    return path.startsWith("http") ? path : `${API}/uploads/${path}`;
-  };
-
-  // Filter Computations
-  const pendingWithdraws = withdraws.filter((w) => w.status === "Pending");
-  const pendingCashRequests = cash.filter((c) => c.status === "pending" || c.status === "Pending" || !c.status);
-  const activeInvestments = investments.filter((i) => i.status === "Active" || !i.status);
-
-  const totalInvestedAmount = investments
-    .filter((i) => i.status !== "Cancelled")
-    .reduce((sum, i) => sum + Number(i.amount || 0), 0);
-
-  const totalDisbursedWithdraw = withdraws
-    .filter((w) => w.status === "Success" || w.status === "Approved")
-    .reduce((sum, w) => sum + Number(w.amount || 0), 0);
-
-  const filteredUsers = users.filter((u) =>
-    (u.email || "").toLowerCase().includes(userSearch.toLowerCase()) ||
-    (u.name || "").toLowerCase().includes(userSearch.toLowerCase())
-  );
-
-  if (loading) {
+  if (!data) {
     return (
       <div style={styles.loadingPage}>
         <div style={styles.loaderCard}>
+          <h1 style={styles.loaderLogo}>Save Money</h1>
           <div style={styles.spinner}></div>
-          <h2>Loading OneTime Admin Data...</h2>
+          <h2>Loading Admin OneTime Dashboard</h2>
         </div>
       </div>
     );
   }
 
+  const pendingWithdraws = withdraws.filter((w) => w.status === "Pending");
+  const pendingCashRequests = cash.filter((c) => c.status === "pending" || c.status === "Pending" || !c.status);
+  const activeInvestments = investments.filter((i) => i.status === "Active" || !i.status);
+
+  const pendingWithdrawAmount = pendingWithdraws.reduce(
+    (sum, w) => sum + Number(w.amount || 0),
+    0
+  );
+
+  const totalWithdrawAmount = withdraws
+    .filter((w) => w.status === "Success")
+    .reduce((sum, w) => sum + Number(w.amount || 0), 0);
+
+  const chartData = [
+    { name: "Total Users", value: users.length || data.totalUsers || 0 },
+    { name: "Active Plans", value: activeInvestments.length },
+    { name: "Pending Topups", value: pendingCashRequests.length },
+    { name: "Pending Withdraws", value: pendingWithdraws.length }
+  ];
+
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>⚡ OneTime Management Admin</h1>
+      <h1 style={styles.title}>⚡ Admin OneTime Command Center</h1>
 
-      {/* STATS METRICS GRID */}
+      {error && <div style={styles.error}>⚠️ {error}</div>}
+
+      <div style={styles.quick}>
+        <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-dashboard")}>
+          ⚙️ Main Dashboard
+        </button>
+        <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-analytics")}>
+          📊 Advanced Analytics
+        </button>
+        <button style={styles.navBtn} onClick={() => (window.location.href = "/admin-user-control")}>
+          👥 User Control
+        </button>
+      </div>
+
+      {/* METRICS STATS */}
       <div style={styles.grid}>
         <div style={styles.card}>
-          <p style={styles.cardLabel}>Network Users</p>
-          <h2 style={{ ...styles.cardVal, color: "#38bdf8" }}>{users.length}</h2>
+          <p style={styles.cardLabel}>Total OneTime Users</p>
+          <h2 style={{ ...styles.cardVal, color: "#38bdf8" }}>{users.length || data.totalUsers || 0}</h2>
         </div>
 
         <div style={styles.card}>
@@ -276,8 +328,8 @@ export default function AdminOneTime() {
         </div>
 
         <div style={styles.card}>
-          <p style={styles.cardLabel}>Total OneTime Invested</p>
-          <h2 style={{ ...styles.cardVal, color: "#22c55e" }}>{money(totalInvestedAmount)}</h2>
+          <p style={styles.cardLabel}>Total Invested Volume</p>
+          <h2 style={{ ...styles.cardVal, color: "#22c55e" }}>{money(data.totalInvested || 0)}</h2>
         </div>
 
         <div style={styles.card}>
@@ -291,183 +343,37 @@ export default function AdminOneTime() {
         </div>
 
         <div style={styles.card}>
-          <p style={styles.cardLabel}>Total OneTime Disbursed</p>
-          <h2 style={{ ...styles.cardVal, color: "#38bdf8" }}>{money(totalDisbursedWithdraw)}</h2>
+          <p style={styles.cardLabel}>Disbursed Withdrawals</p>
+          <h2 style={{ ...styles.cardVal, color: "#38bdf8" }}>{money(totalWithdrawAmount)}</h2>
         </div>
       </div>
 
-      {/* SECTION 1: ONETIME USER DIRECTORY & WALLET STATUS */}
-      <div style={styles.section}>
-        <div style={styles.sectionTop}>
-          <h2 style={styles.sectionTitle}>👥 OneTime User Accounts Directory</h2>
-          <input
-            style={{ ...styles.input, marginTop: 0, width: "260px" }}
-            placeholder="🔍 Search Email..."
-            value={userSearch}
-            onChange={(e) => setUserSearch(e.target.value)}
-          />
-        </div>
-
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>User Email</th>
-                <th style={styles.th}>OneTime Wallet</th>
-                <th style={styles.th}>OneTime Invested</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan="4" style={{ ...styles.td, textAlign: "center" }}>No users found</td>
-                </tr>
-              ) : (
-                filteredUsers.map((u) => {
-                  // STRIKT ONETIME WALLET BALANCE SELECTION
-                  const oneTimeBal = u.onetimeWallet ?? u.oneTimeBalance ?? u.onetimeBalance ?? 0;
-                  const oneTimeInv = u.onetimeTotalInvested ?? u.oneTimeTotalInvested ?? 0;
-
-                  return (
-                    <tr key={u._id} style={styles.tr}>
-                      <td style={styles.td}>
-                        <strong>{u.name || "User"}</strong>
-                        <div style={{ color: "#94a3b8", fontSize: "12px" }}>{u.email}</div>
-                      </td>
-                      <td style={{ ...styles.td, color: "#38bdf8", fontWeight: "bold" }}>
-                        {money(oneTimeBal)}
-                      </td>
-                      <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>
-                        {money(oneTimeInv)}
-                      </td>
-                      <td style={styles.td}>
-                        <button
-                          style={{ ...styles.smallGreen, marginRight: "6px" }}
-                          onClick={() => setAdjustEmail(u.email)}
-                        >
-                          Adjust Wallet
-                        </button>
-                        <button
-                          style={styles.smallBlue}
-                          onClick={() => setInvestEmail(u.email)}
-                        >
-                          Assign Plan
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* CHART */}
+      <div style={styles.chartBox}>
+        <h3 style={{ margin: "0 0 15px 0", color: "#f1f5f9", fontSize: "16px" }}>
+          📈 ONETIME STATISTICAL OVERVIEW
+        </h3>
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={chartData}>
+            <XAxis dataKey="name" stroke="#cbd5e1" />
+            <YAxis stroke="#cbd5e1" />
+            <Tooltip contentStyle={{ backgroundColor: '#1e293b', color: '#fff' }} />
+            <Bar dataKey="value" fill="#38bdf8" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
-      {/* SECTION 2: ONETIME CASH DEPOSIT REQUESTS */}
+      {/* SECTION 1: WALLET ADJUSTMENT (otbalance) */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>📥 OneTime Add Fund Requests</h2>
-        {pendingCashRequests.length === 0 ? (
-          <p style={styles.emptyText}>No pending deposit requests.</p>
-        ) : (
-          <div style={styles.tableWrap}>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th style={styles.th}>User Email</th>
-                  <th style={styles.th}>Amount</th>
-                  <th style={styles.th}>Txn / UTR ID</th>
-                  <th style={styles.th}>Proof</th>
-                  <th style={styles.th}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingCashRequests.map((r) => (
-                  <tr key={r._id} style={styles.tr}>
-                    <td style={styles.td}>{r.email}</td>
-                    <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>{money(r.amount)}</td>
-                    <td style={styles.td}>
-                      <span style={styles.utrBadge}>{r.transactionId || r.txnId || "N/A"}</span>
-                    </td>
-                    <td style={styles.td}>
-                      {r.screenshot ? (
-                        <button
-                          style={styles.smallBlue}
-                          onClick={() => setScreenshotModal(formatImage(r.screenshot))}
-                        >
-                          🖼 Screenshot
-                        </button>
-                      ) : (
-                        <span style={{ color: "#94a3b8", fontSize: "12px" }}>None</span>
-                      )}
-                    </td>
-                    <td style={styles.td}>
-                      <button style={{ ...styles.smallGreen, marginRight: "6px" }} onClick={() => approveCash(r._id)}>
-                        Approve
-                      </button>
-                      <button style={styles.smallRed} onClick={() => rejectCash(r._id)}>
-                        Reject
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        <h2 style={styles.sectionTitle}>💳 OneTime Wallet (otbalance) Adjustment</h2>
+        <p style={{ color: "#cbd5e1", fontSize: "14px", margin: "-10px 0 15px 0" }}>
+          Directly credit or debit a user's <b>otbalance</b>.
+        </p>
 
-      {/* SECTION 3: ONETIME WITHDRAW REQUESTS */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>💰 OneTime Withdrawal Requests</h2>
-        {pendingWithdraws.length === 0 ? (
-          <p style={styles.emptyText}>No pending payout requests.</p>
-        ) : (
-          pendingWithdraws.map((w) => (
-            <div key={w._id} style={styles.withdrawMiniCard}>
-              <div style={styles.withdrawMiniTop}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: "16px", color: "#fff" }}>{w.email}</h3>
-                  <p style={styles.amountText}>{money(w.amount)}</p>
-                </div>
-                <button
-                  style={styles.viewDetailsBtn}
-                  onClick={() => setOpenWithdrawId(openWithdrawId === w._id ? null : w._id)}
-                >
-                  {openWithdrawId === w._id ? "Hide Details" : "Inspect Bank Details"}
-                </button>
-              </div>
-
-              {openWithdrawId === w._id && (
-                <div style={styles.withdrawDetailsBox}>
-                  <p style={styles.bankP}><b>Holder Name:</b> {w.bankDetails?.holderName || w.bankDetails?.accountHolderName || "N/A"}</p>
-                  <p style={styles.bankP}><b>Bank Name:</b> {w.bankDetails?.bankName || "N/A"}</p>
-                  <p style={styles.bankP}><b>Account No:</b> <span style={{ color: "#fbbf24", fontFamily: "monospace" }}>{w.bankDetails?.accountNumber || "N/A"}</span></p>
-                  <p style={styles.bankP}><b>IFSC:</b> {w.bankDetails?.ifsc || w.bankDetails?.ifscCode || "N/A"}</p>
-                  <p style={styles.bankP}><b>UPI ID:</b> {w.bankDetails?.upiId || "N/A"}</p>
-
-                  <div style={styles.actionRow}>
-                    <button style={styles.approveBtn} onClick={() => withdrawAction(w._id, "Success")}>
-                      ✅ Approve Settlement
-                    </button>
-                    <button style={styles.rejectBtn} onClick={() => withdrawAction(w._id, "Rejected")}>
-                      ❌ Reject & Refund
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* SECTION 4: ADJUST ONETIME WALLET */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>💳 OneTime Wallet Balance Control</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           <input
             style={styles.input}
-            placeholder="User Email..."
+            placeholder="User Email Address..."
             value={adjustEmail}
             onChange={(e) => setAdjustEmail(e.target.value)}
           />
@@ -480,362 +386,282 @@ export default function AdminOneTime() {
           />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "10px", marginTop: "10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "12px", marginTop: "12px" }}>
           <select
             style={{ ...styles.input, marginTop: 0 }}
             value={adjustType}
             onChange={(e) => setAdjustType(e.target.value)}
           >
-            <option value="add">➕ Add to OneTime Wallet</option>
-            <option value="subtract">➖ Subtract from OneTime Wallet</option>
+            <option value="add">➕ Add Balance (Credit otbalance)</option>
+            <option value="subtract">➖ Deduct Balance (Debit otbalance)</option>
           </select>
           <input
             style={{ ...styles.input, marginTop: 0 }}
-            placeholder="Adjustment Reason..."
+            placeholder="Reason (e.g. Bonus, Adjustment)..."
             value={adjustReason}
             onChange={(e) => setAdjustReason(e.target.value)}
           />
         </div>
 
         <button style={styles.greenFull} onClick={handleWalletAdjust}>
-          Update OneTime Wallet
+          ⚡ Execute otbalance Adjustment
         </button>
       </div>
 
-      {/* SECTION 5: ASSIGN ONETIME INVESTMENT */}
+      {/* SECTION 2: USER STATUS OVERVIEW */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>📊 Assign Manual OneTime Investment Plan</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-          <input
-            style={styles.input}
-            placeholder="Target User Email..."
-            value={investEmail}
-            onChange={(e) => setInvestEmail(e.target.value)}
-          />
-          <input
-            style={styles.input}
-            type="number"
-            placeholder="Investment Amount (₹)..."
-            value={investAmount}
-            onChange={(e) => setInvestAmount(e.target.value)}
-          />
+        <h2 style={styles.sectionTitle}>👥 User All Status & Live otbalance</h2>
+        <div style={styles.tableWrap}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Name</th>
+                <th style={styles.th}>Email</th>
+                <th style={styles.th}>Live otbalance</th>
+                <th style={styles.th}>Total Invested</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.length === 0 ? (
+                <tr><td colSpan="4" style={styles.emptyText}>No user records found</td></tr>
+              ) : (
+                users.map((u) => (
+                  <tr key={u._id} style={styles.tr}>
+                    <td style={styles.td}>{u.name || "N/A"}</td>
+                    <td style={styles.td}>{u.email}</td>
+                    <td style={{ ...styles.td, color: "#fbbf24", fontWeight: "bold" }}>{money(u.otbalance)}</td>
+                    <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>{money(u.oneTimeTotalInvested)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "10px" }}>
-          <input
-            style={{ ...styles.input, marginTop: 0 }}
-            placeholder="Duration (e.g. 15 Days)"
-            value={investDuration}
-            onChange={(e) => setInvestDuration(e.target.value)}
-          />
-          <input
-            style={{ ...styles.input, marginTop: 0 }}
-            type="number"
-            placeholder="Daily Return (₹)..."
-            value={investDailyReturn}
-            onChange={(e) => setInvestDailyReturn(e.target.value)}
-          />
-        </div>
-        <button style={styles.greenFull} onClick={handleAssignInvestment}>
-          Create OneTime Plan
-        </button>
       </div>
 
-      {/* SCREENSHOT PROOF MODAL */}
-      {screenshotModal && (
-        <div style={styles.popupOverlay} onClick={() => setScreenshotModal(null)}>
-          <div style={styles.popupBox} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.popupTop}>
-              <h3 style={{ margin: 0 }}>Payment Proof</h3>
-              <button style={styles.closePopup} onClick={() => setScreenshotModal(null)}>✕ Close</button>
-            </div>
-            <img
-              src={screenshotModal}
-              alt="Deposit Screenshot"
-              style={{ width: "100%", maxHeight: "70vh", objectFit: "contain", marginTop: "15px", borderRadius: "10px" }}
+      {/* SECTION 3: USER INVEST CONTROL */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>📊 OneTime Investment Control</h2>
+
+        {/* Manual Plan Assignment Box */}
+        <div style={{ background: "#020617", padding: "18px", borderRadius: "16px", border: "1px solid #334155", marginBottom: "20px" }}>
+          <h3 style={{ margin: "0 0 12px 0", color: "#38bdf8" }}>➕ Assign Manual OneTime Investment</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <input
+              style={styles.input}
+              placeholder="Target User Email..."
+              value={investEmail}
+              onChange={(e) => setInvestEmail(e.target.value)}
+            />
+            <input
+              style={styles.input}
+              type="number"
+              placeholder="Investment Amount (₹)..."
+              value={investAmount}
+              onChange={(e) => setInvestAmount(e.target.value)}
             />
           </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "12px" }}>
+            <input
+              style={{ ...styles.input, marginTop: 0 }}
+              placeholder="Duration (e.g., 15 Days)"
+              value={investDuration}
+              onChange={(e) => setInvestDuration(e.target.value)}
+            />
+            <input
+              style={{ ...styles.input, marginTop: 0 }}
+              type="number"
+              placeholder="Daily Return Amount (₹)..."
+              value={investDailyReturn}
+              onChange={(e) => setInvestDailyReturn(e.target.value)}
+            />
+          </div>
+          <button style={styles.greenFull} onClick={handleAssignInvestment}>
+            🚀 Force Assign Investment Plan
+          </button>
         </div>
-      )}
+
+        {/* Active Investments List */}
+        <h3 style={{ color: "#ffffff", fontSize: "18px", margin: "15px 0 10px 0" }}>📜 Live Investments Registry</h3>
+        {investments.length === 0 ? (
+          <p style={styles.emptyText}>No active investments found.</p>
+        ) : (
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>User Email</th>
+                  <th style={styles.th}>Amount</th>
+                  <th style={styles.th}>Duration</th>
+                  <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {investments.map((inv) => (
+                  <tr key={inv._id} style={styles.tr}>
+                    <td style={styles.td}>{inv.email}</td>
+                    <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>{money(inv.amount)}</td>
+                    <td style={styles.td}>{inv.duration || "15 Days"}</td>
+                    <td style={styles.td}>{inv.status || "Active"}</td>
+                    <td style={styles.td}>
+                      {inv.status !== "Cancelled" ? (
+                        <button style={styles.smallRed} onClick={() => cancelInvestment(inv._id)}>
+                          Cancel Plan
+                        </button>
+                      ) : (
+                        <span style={{ color: "#94a3b8" }}>Cancelled</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* SECTION 4: ADD FUND REQUESTS (ACCEPT / REJECT) */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>📥 OneTime Add Fund Requests</h2>
+        {cash.length === 0 ? (
+          <p style={styles.emptyText}>No pending fund requests in queue.</p>
+        ) : (
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>User Email</th>
+                  <th style={styles.th}>Amount</th>
+                  <th style={styles.th}>UTR / Txn ID</th>
+                  <th style={styles.th}>Proof Screenshot</th>
+                  <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cash.map((r) => (
+                  <tr key={r._id} style={styles.tr}>
+                    <td style={styles.td}>{r.email}</td>
+                    <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>{money(r.amount)}</td>
+                    <td style={styles.td}>{r.transactionId || r.txnId || "N/A"}</td>
+                    <td style={styles.td}>
+                      {r.screenshot ? (
+                        <a href={r.screenshot} target="_blank" rel="noreferrer" style={{ color: "#38bdf8" }}>
+                          View Image
+                        </a>
+                      ) : (
+                        "No Screenshot"
+                      )}
+                    </td>
+                    <td style={styles.td}>
+                      <span style={{
+                        padding: "4px 8px", borderRadius: "6px", fontWeight: "bold",
+                        background: r.status === "approved" ? "rgba(34,197,94,0.2)" : r.status === "rejected" ? "rgba(239,68,68,0.2)" : "rgba(234,179,8,0.2)",
+                        color: r.status === "approved" ? "#22c55e" : r.status === "rejected" ? "#f87171" : "#facc15"
+                      }}>
+                        {r.status || "pending"}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      {r.status === "pending" || !r.status ? (
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button style={styles.smallGreen} onClick={() => approveCash(r._id)}>Accept</button>
+                          <button style={styles.smallRed} onClick={() => rejectCash(r._id)}>Reject</button>
+                        </div>
+                      ) : (
+                        <span style={{ color: "#cbd5e1" }}>Processed</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* SECTION 5: WITHDRAW REQUESTS (ACCEPT / REJECT) */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>💰 OneTime Pending Withdrawals</h2>
+        {pendingWithdraws.length === 0 ? (
+          <p style={styles.emptyText}>No pending withdrawal requests.</p>
+        ) : (
+          pendingWithdraws.map((w) => (
+            <div key={w._id} style={styles.withdrawMiniCard}>
+              <div style={styles.withdrawMiniTop}>
+                <div>
+                  <h3 style={{ margin: 0, color: "#ffffff" }}>{w.name || "User"}</h3>
+                  <p style={{ margin: "4px 0", color: "#cbd5e1" }}>{w.email}</p>
+                  <p style={styles.amountText}>{money(w.amount)}</p>
+                </div>
+                <div>
+                  <button
+                    style={styles.viewDetailsBtn}
+                    onClick={() => setOpenWithdrawId(openWithdrawId === w._id ? null : w._id)}
+                  >
+                    {openWithdrawId === w._id ? "Hide Info" : "Inspect Bank Details"}
+                  </button>
+                </div>
+              </div>
+
+              {openWithdrawId === w._id && (
+                <div style={styles.withdrawDetailsBox}>
+                  <p><b>Holder:</b> {w.bankDetails?.holderName || w.bankDetails?.accountHolderName || "N/A"}</p>
+                  <p><b>Bank:</b> {w.bankDetails?.bankName || "N/A"}</p>
+                  <p><b>Account No:</b> {w.bankDetails?.accountNumber || "N/A"}</p>
+                  <p><b>IFSC:</b> {w.bankDetails?.ifsc || w.bankDetails?.ifscCode || "N/A"}</p>
+
+                  <div style={styles.actionRow}>
+                    <button style={styles.approveBtn} onClick={() => withdrawAction(w._id, "Success")}>
+                      ✅ Accept & Approve
+                    </button>
+                    <button style={styles.rejectBtn} onClick={() => withdrawAction(w._id, "Rejected")}>
+                      ❌ Reject & Refund otbalance
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
 
-// COMPACT STYLING
 const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "#020617",
-    padding: "20px 14px",
-    color: "#f8fafc",
-    fontFamily: "system-ui, -apple-system, sans-serif"
-  },
-  loadingPage: {
-    minHeight: "100vh",
-    background: "#020617",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "white"
-  },
-  loaderCard: {
-    background: "#0f172a",
-    padding: "30px",
-    borderRadius: "16px",
-    textAlign: "center",
-    border: "1px solid #334155"
-  },
-  spinner: {
-    width: "36px",
-    height: "36px",
-    border: "3px solid #1e293b",
-    borderTop: "3px solid #22c55e",
-    borderRadius: "50%",
-    margin: "0 auto 14px"
-  },
-  title: {
-    textAlign: "center",
-    fontSize: "22px",
-    fontWeight: "800",
-    color: "#ffffff",
-    margin: "0 0 20px 0"
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "10px",
-    marginBottom: "20px"
-  },
-  card: {
-    background: "#0f172a",
-    padding: "14px 12px",
-    borderRadius: "14px",
-    textAlign: "center",
-    border: "1px solid #334155"
-  },
-  cardLabel: {
-    margin: "0 0 6px 0",
-    color: "#94a3b8",
-    fontSize: "11px",
-    fontWeight: "700",
-    textTransform: "uppercase"
-  },
-  cardVal: {
-    margin: 0,
-    fontSize: "18px",
-    fontWeight: "800"
-  },
-  section: {
-    background: "#0f172a",
-    padding: "16px",
-    borderRadius: "16px",
-    border: "1px solid #334155",
-    marginBottom: "20px"
-  },
-  sectionTitle: {
-    margin: "0 0 14px 0",
-    fontSize: "16px",
-    fontWeight: "700",
-    color: "#ffffff"
-  },
-  sectionTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "12px"
-  },
-  input: {
-    width: "100%",
-    padding: "10px 12px",
-    borderRadius: "10px",
-    border: "1px solid #334155",
-    background: "#020617",
-    color: "white",
-    boxSizing: "border-box",
-    fontSize: "13px"
-  },
-  greenFull: {
-    width: "100%",
-    background: "#22c55e",
-    border: "none",
-    padding: "12px",
-    borderRadius: "10px",
-    color: "#020617",
-    fontWeight: "800",
-    marginTop: "12px",
-    cursor: "pointer",
-    fontSize: "14px"
-  },
-  withdrawMiniCard: {
-    background: "#020617",
-    border: "1px solid #334155",
-    borderRadius: "12px",
-    padding: "12px",
-    marginTop: "10px"
-  },
-  withdrawMiniTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  amountText: {
-    fontSize: "18px",
-    fontWeight: "800",
-    color: "#22c55e",
-    margin: "4px 0 0 0"
-  },
-  viewDetailsBtn: {
-    background: "#1e293b",
-    border: "1px solid #475569",
-    color: "#38bdf8",
-    padding: "6px 10px",
-    borderRadius: "8px",
-    fontWeight: "600",
-    fontSize: "12px",
-    cursor: "pointer"
-  },
-  withdrawDetailsBox: {
-    marginTop: "12px",
-    padding: "12px",
-    borderRadius: "10px",
-    background: "#0f172a",
-    border: "1px solid #334155"
-  },
-  bankP: {
-    margin: "4px 0",
-    fontSize: "13px",
-    color: "#cbd5e1"
-  },
-  actionRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "8px",
-    marginTop: "12px"
-  },
-  approveBtn: {
-    background: "#22c55e",
-    border: "none",
-    borderRadius: "8px",
-    padding: "10px",
-    color: "#020617",
-    fontWeight: "700",
-    cursor: "pointer",
-    fontSize: "12px"
-  },
-  rejectBtn: {
-    background: "#ef4444",
-    border: "none",
-    borderRadius: "8px",
-    padding: "10px",
-    color: "white",
-    fontWeight: "700",
-    cursor: "pointer",
-    fontSize: "12px"
-  },
-  tableWrap: {
-    overflowX: "auto",
-    background: "#020617",
-    borderRadius: "10px",
-    border: "1px solid #334155"
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    minWidth: "500px"
-  },
-  th: {
-    background: "#0f172a",
-    padding: "10px",
-    color: "#94a3b8",
-    textAlign: "left",
-    fontSize: "12px",
-    fontWeight: "700",
-    borderBottom: "1px solid #334155"
-  },
-  tr: {
-    borderBottom: "1px solid #1e293b"
-  },
-  td: {
-    padding: "10px",
-    fontSize: "13px",
-    color: "#f1f5f9"
-  },
-  utrBadge: {
-    background: "#0f172a",
-    padding: "4px 8px",
-    borderRadius: "6px",
-    border: "1px solid #334155",
-    color: "#fbbf24",
-    fontFamily: "monospace",
-    fontSize: "12px"
-  },
-  smallGreen: {
-    background: "#22c55e",
-    border: "none",
-    color: "#020617",
-    padding: "5px 10px",
-    borderRadius: "6px",
-    fontWeight: "700",
-    cursor: "pointer",
-    fontSize: "12px"
-  },
-  smallBlue: {
-    background: "#3b82f6",
-    border: "none",
-    color: "white",
-    padding: "5px 10px",
-    borderRadius: "6px",
-    fontWeight: "700",
-    cursor: "pointer",
-    fontSize: "12px"
-  },
-  smallRed: {
-    background: "#ef4444",
-    border: "none",
-    color: "white",
-    padding: "5px 10px",
-    borderRadius: "6px",
-    fontWeight: "700",
-    cursor: "pointer",
-    fontSize: "12px"
-  },
-  emptyText: {
-    color: "#94a3b8",
-    textAlign: "center",
-    fontSize: "13px",
-    margin: "10px 0"
-  },
-  popupOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(2,6,23,0.85)",
-    backdropFilter: "blur(4px)",
-    zIndex: 9999,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "16px"
-  },
-  popupBox: {
-    width: "min(500px, 100%)",
-    background: "#0f172a",
-    color: "white",
-    borderRadius: "16px",
-    padding: "20px",
-    border: "1px solid #334155"
-  },
-  popupTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  closePopup: {
-    background: "#ef4444",
-    border: "none",
-    color: "white",
-    borderRadius: "8px",
-    padding: "6px 12px",
-    fontWeight: "700",
-    cursor: "pointer",
-    fontSize: "12px"
-  }
+  container: { minHeight: "100vh", background: "#020617", padding: "20px", color: "#f8fafc", fontFamily: "sans-serif" },
+  loadingPage: { minHeight: "100vh", background: "#020617", display: "flex", alignItems: "center", justifyContent: "center", color: "white" },
+  loaderCard: { background: "#0f172a", padding: "40px", borderRadius: "20px", textAlign: "center", border: "1px solid #334155" },
+  loaderLogo: { color: "#22c55e", fontSize: "32px", margin: "0 0 15px 0" },
+  title: { textAlign: "center", fontSize: "28px", fontWeight: "bold", color: "#ffffff", margin: "0 0 25px 0" },
+  error: { background: "rgba(239,68,68,0.2)", border: "1px solid #ef4444", color: "#fee2e2", padding: "12px", borderRadius: "12px", marginBottom: "20px" },
+  quick: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "25px" },
+  navBtn: { background: "#0f172a", border: "1px solid #334155", padding: "14px", borderRadius: "12px", color: "#fff", fontWeight: "bold", cursor: "pointer" },
+  grid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginBottom: "25px" },
+  card: { background: "#0f172a", padding: "18px", borderRadius: "16px", textAlign: "center", border: "1px solid #334155" },
+  cardLabel: { margin: "0 0 8px 0", color: "#cbd5e1", fontSize: "13px" },
+  cardVal: { margin: 0, fontSize: "24px", fontWeight: "bold" },
+  chartBox: { background: "#0f172a", padding: "20px", borderRadius: "16px", border: "1px solid #334155", marginBottom: "25px" },
+  section: { background: "#0f172a", padding: "22px", borderRadius: "18px", border: "1px solid #334155", marginBottom: "25px" },
+  sectionTitle: { margin: "0 0 15px 0", fontSize: "20px", color: "#ffffff", borderBottom: "1px solid #1e293b", paddingBottom: "8px" },
+  input: { width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #334155", background: "#020617", color: "white", boxSizing: "border-box" },
+  greenFull: { width: "100%", background: "#22c55e", border: "none", padding: "14px", borderRadius: "12px", color: "#020617", fontWeight: "bold", marginTop: "15px", cursor: "pointer" },
+  withdrawMiniCard: { background: "#020617", border: "1px solid #334155", borderRadius: "14px", padding: "15px", marginTop: "12px" },
+  withdrawMiniTop: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  amountText: { fontSize: "20px", fontWeight: "bold", color: "#22c55e", margin: "4px 0 0 0" },
+  viewDetailsBtn: { background: "rgba(59,130,246,0.15)", border: "1px solid #3b82f6", color: "#60a5fa", padding: "8px 12px", borderRadius: "8px", cursor: "pointer" },
+  withdrawDetailsBox: { marginTop: "12px", padding: "12px", borderRadius: "10px", background: "#0f172a", border: "1px solid #1e3a8a" },
+  actionRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" },
+  approveBtn: { background: "#22c55e", border: "none", borderRadius: "8px", padding: "10px", color: "#020617", fontWeight: "bold", cursor: "pointer" },
+  rejectBtn: { background: "#ef4444", border: "none", borderRadius: "8px", padding: "10px", color: "white", fontWeight: "bold", cursor: "pointer" },
+  tableWrap: { overflowX: "auto", marginTop: "10px", background: "#020617", borderRadius: "12px", border: "1px solid #334155" },
+  table: { width: "100%", borderCollapse: "collapse" },
+  th: { background: "#0f172a", padding: "12px", color: "#ffffff", textAlign: "left", fontSize: "13px" },
+  tr: { borderBottom: "1px solid #1e293b" },
+  td: { padding: "12px", fontSize: "14px", color: "#f1f5f9" },
+  smallGreen: { background: "#22c55e", border: "none", color: "#020617", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" },
+  smallRed: { background: "#ef4444", border: "none", color: "white", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" },
+  emptyText: { color: "#cbd5e1", textAlign: "center", fontSize: "14px", padding: "15px" }
 };
