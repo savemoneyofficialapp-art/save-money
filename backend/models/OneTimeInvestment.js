@@ -15,11 +15,19 @@ const oneTimeInvestmentSchema = new mongoose.Schema(
     },
     duration: {
       type: String,
-      required: true, // উদাহরণ: "15 Days (0.6%)"
+      required: true, // উদাহরণ: "15 Days"
+    },
+    durationDays: {
+      type: Number,
+      default: 15
+    },
+    rate: {
+      type: Number,
+      default: 0.6
     },
     frequency: {
       type: String,
-      enum: ["Daily", "Weekly", "Monthly"],
+      enum: ["Daily", "Weekly", "Monthly", "daily", "weekly"],
       default: "Daily",
     },
     dailyReturn: {
@@ -48,7 +56,7 @@ const oneTimeInvestmentSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // এতে অটোমেটিক createdAt এবং updatedAt যুক্ত হবে
+    timestamps: true,
   }
 );
 
