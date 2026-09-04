@@ -193,6 +193,8 @@ balance: {
   default: 0 
 },
 
+  otbalance: { type: Number, default: 0 },
+
   history: {
     type: Array,
     default: []
