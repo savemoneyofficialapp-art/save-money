@@ -311,6 +311,13 @@ royaltyBonusEnabled: {
   default: false
 },
 
+  bankDetails: {
+    accountNumber: String,
+    ifsc: String,
+    bankName: String,
+    holderName: String
+  },
+
     // 📌 নতুন যোগ করা হলো পুশ সাবস্ক্রিপশনের জন্য
   pushSubscription: {
     type: Object,
