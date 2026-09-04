@@ -7222,52 +7222,66 @@ app.post("/api/onetime/dashboard", async (req, res) => {
   }
 });
 
-// 2. User Withdraw Request API (Using otbalance)
+// ==================== উইথড্র রিকোয়েস্ট ও হিস্ট্রি সেভ করার API ====================
 app.post("/api/onetime/withdraw", async (req, res) => {
   try {
     const { email, amount } = req.body;
-    const withdrawAmt = Number(amount);
-
-    if (!email || !withdrawAmt || withdrawAmt <= 0) {
-      return res.status(400).json({ message: "Invalid withdraw parameters" });
-    }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
+    // ১. ব্যাংক ডিটেইলস চেক
     if (!user.bankDetails || !user.bankDetails.accountNumber) {
       return res.status(400).json({ message: "Bank account details missing" });
     }
 
-    // Strict otbalance check
-    if ((user.otbalance || 0) < withdrawAmt) {
-      return res.status(400).json({ message: "Insufficient OneTime wallet balance (otbalance)" });
+    // ২. ব্যালেন্স চেক (otbalance)
+    const currentBalance = Number(user.otbalance || 0);
+    if (currentBalance < Number(amount)) {
+      return res.status(400).json({ message: "Insufficient balance" });
     }
 
-    // Deduct from otbalance immediately
-    user.otbalance = (user.otbalance || 0) - withdrawAmt;
+    // ৩. ইউজারের ওয়ালেট ব্যালেন্স থেকে টাকা কাটা
+    user.otbalance = currentBalance - Number(amount);
+
+    // ৪. ইউজারের ড্যাশবোর্ড হিস্ট্রিতে রেকর্ড যোগ করা
+    if (!user.history) {
+      user.history = [];
+    }
+    user.history.unshift({
+      date: new Date().toLocaleDateString("en-GB"),
+      duration: "Withdrawal",
+      amount: Number(amount),
+      frequency: "OneTime",
+      status: "Pending",
+      maturityDate: "-"
+    });
+
     await user.save();
 
-    const newWithdrawal = new Withdrawal({
-      email,
-      name: user.name,
-      amount: withdrawAmt,
-      category: "onetime",
-      bankDetails: user.bankDetails,
-      status: "Pending",
-      otbalance: user.otbalance
+    // ৫. ব্যাংক ডিটেইলস স্ট্রিং ফরম্যাটে সাজানো (স্কিমার accountDetails এর জন্য)
+    const formattedAccountDetails = `Holder: ${user.bankDetails.holderName || '-'}, Bank: ${user.bankDetails.bankName || '-'}, A/C: ${user.bankDetails.accountNumber || '-'}, IFSC: ${user.bankDetails.ifsc || '-'}`;
+
+    // ৬. আপনার Withdrawal Schema অনুযায়ী ডাটাবেসে সেভ করা
+    const Withdrawal = mongoose.models.Withdrawal || mongoose.model("Withdrawal");
+
+    await Withdrawal.create({
+      email: user.email,
+      amount: Number(amount),
+      paymentMethod: "Bank Transfer",
+      accountDetails: formattedAccountDetails,
+      status: "Pending"
     });
 
-    await newWithdrawal.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Withdrawal request submitted successfully!",
-      withdrawal: newWithdrawal,
-      newOtbalance: user.otbalance
+    return res.status(200).json({ 
+      message: "Withdrawal request submitted successfully",
+      newBalance: user.otbalance 
     });
-  } catch (err) {
-    console.error("Withdrawal API Error:", err);
+
+  } catch (error) {
+    console.error("Withdraw error:", error);
     return res.status(500).json({ message: "Server error during withdrawal" });
   }
 });
