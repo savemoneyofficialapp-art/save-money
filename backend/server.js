@@ -7222,7 +7222,7 @@ app.post("/api/onetime/dashboard", async (req, res) => {
   }
 });
 
-// ==================== উইথড্র রিকোয়েস্ট ও হিস্ট্রি সেভ করার API ====================
+// ==================== ONE-TIME WITHDRAWAL API ====================
 app.post("/api/onetime/withdraw", async (req, res) => {
   try {
     const { email, amount } = req.body;
@@ -7245,30 +7245,53 @@ app.post("/api/onetime/withdraw", async (req, res) => {
 
     const formattedAccountDetails = `Holder: ${user.bankDetails.holderName || '-'}, Bank: ${user.bankDetails.bankName || '-'}, A/C: ${user.bankDetails.accountNumber || '-'}, IFSC: ${user.bankDetails.ifsc || '-'}`;
 
-    // ৩. আগে Withdrawal কালেকশনে ডাটা সেভ করবো
-    const newWithdrawal = new Withdrawal({
+    const withdrawalPayload = {
       email: user.email,
+      userEmail: user.email,
       amount: Number(amount),
       paymentMethod: "Bank Transfer",
       accountDetails: formattedAccountDetails,
-      status: "Pending"
-    });
-    await newWithdrawal.save();
+      bankDetails: user.bankDetails,
+      status: "Pending",
+      type: "onetime",
+      createdAt: new Date()
+    };
 
-    // ৪. উইথড্র সফলভাবে সেভ হলে তবেই ব্যালেন্স কাটবো ও ইউজারের হিস্ট্রিতে সেভ করবো
+    // ৩. সাধারণ Withdrawal কালেকশনে সেভ
+    try {
+      const Withdrawal = mongoose.models.Withdrawal || require("./models/Withdrawal");
+      await Withdrawal.create(withdrawalPayload);
+    } catch (e) {
+      console.log("Withdrawal model save skipped:", e.message);
+    }
+
+    // ৪. OneTimeWithdrawal কালেকশনে সেভ (অ্যাডমিন প্যানেল যদি এটি ব্যবহার করে)
+    try {
+      const OneTimeWithdrawal = mongoose.models.OneTimeWithdrawal || mongoose.model("OneTimeWithdrawal");
+      await OneTimeWithdrawal.create(withdrawalPayload);
+    } catch (e) {
+      console.log("OneTimeWithdrawal model save skipped:", e.message);
+    }
+
+    // ৫. ইউজারের ওয়ালেট ব্যালেন্স কমানো
     user.otbalance = currentBalance - Number(amount);
 
-    if (!user.history) {
-      user.history = [];
-    }
-    user.history.unshift({
+    // ৬. ইউজারের history এবং onetimeHistory উভয় জায়গায় রেকর্ড সেভ
+    const historyItem = {
       date: new Date().toLocaleDateString("en-GB"),
       duration: "Withdrawal",
       amount: Number(amount),
       frequency: "OneTime",
       status: "Pending",
-      maturityDate: "-"
-    });
+      maturityDate: "-",
+      type: "Withdrawal"
+    };
+
+    if (!user.history) user.history = [];
+    user.history.unshift(historyItem);
+
+    if (!user.onetimeHistory) user.onetimeHistory = [];
+    user.onetimeHistory.unshift(historyItem);
 
     await user.save();
 
@@ -7278,8 +7301,8 @@ app.post("/api/onetime/withdraw", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Withdraw Error Detail:", error);
-    return res.status(500).json({ message: error.message });
+    console.error("Withdraw Error:", error);
+    return res.status(500).json({ message: "Server error: " + error.message });
   }
 });
 
@@ -7330,11 +7353,17 @@ app.post("/admin/onetime-reject-cash", async (req, res) => {
   }
 });
 
-// অ্যাডমিন প্যানেলে Pending Withdrawal আনার API
+// অ্যাডমিন প্যানেলের প্যান্ডিং উইথড্র লিস্ট পাওয়ার API
 app.get("/api/onetime/admin/withdrawals", async (req, res) => {
   try {
-    const pendingWithdrawals = await Withdrawal.find({ status: "Pending" }).sort({ createdAt: -1 });
-    return res.status(200).json(pendingWithdrawals);
+    let list = [];
+    if (mongoose.models.OneTimeWithdrawal) {
+      list = await mongoose.models.OneTimeWithdrawal.find({ status: "Pending" }).sort({ createdAt: -1 });
+    }
+    if (list.length === 0 && mongoose.models.Withdrawal) {
+      list = await mongoose.models.Withdrawal.find({ status: "Pending" }).sort({ createdAt: -1 });
+    }
+    return res.status(200).json(list);
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
