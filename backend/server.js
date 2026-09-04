@@ -10092,6 +10092,104 @@ cron.schedule('0 12,17 * * *', async () => {
     timezone: "Asia/Kolkata"
 });
 
+// ===================================================
+// DAILY RETURN AUTOMATION (প্রতিদিন রাত ১২:০০ টা IST এ চলবে)
+// ===================================================
+cron.schedule("0 0 * * *", async () => {
+  console.log("⏰ Running Daily Return Cron Job at 12:00 AM IST...");
+
+  try {
+    const today = new Date();
+
+    // ১. একটিভ ইনভেস্টমেন্টগুলো ডাটাবেস থেকে খুঁজে বের করা
+    // (যদি Investment মডেল থাকে, তা না হলে User মডেলে চেক করবে)
+    let activeInvestments = [];
+    if (typeof Investment !== "undefined") {
+      activeInvestments = await Investment.find({ status: "Active" });
+    }
+
+    if (activeInvestments.length > 0) {
+      for (let inv of activeInvestments) {
+        // মেয়ার্দ (Maturity Date) শেষ হয়ে গেছে কিনা চেক
+        if (inv.maturityDate && new Date(inv.maturityDate) < today) {
+          inv.status = "Completed";
+          await inv.save();
+          continue;
+        }
+
+        const dailyReturnAmount = Number(inv.dailyReturn || inv.dailyEarning || 0);
+
+        if (dailyReturnAmount > 0) {
+          // ইউজার খুঁজে বের করা
+          const userEmail = inv.userEmail || inv.email;
+          const user = await User.findOne({ email: userEmail });
+
+          if (user) {
+            // otbalance এবং মূল balance আপডেট করা
+            user.otbalance = Number(user.otbalance || 0) + dailyReturnAmount;
+            user.totalEarnings = Number(user.totalEarnings || 0) + dailyReturnAmount;
+
+            // ইউজারের হিস্ট্রিতে Daily Return রেকর্ড সেভ
+            const dailyHistory = {
+              _id: new mongoose.Types.ObjectId(),
+              type: "Daily Return",
+              amount: dailyReturnAmount,
+              status: "Approved",
+              createdAt: new Date()
+            };
+
+            if (!user.history) user.history = [];
+            user.history.unshift(dailyHistory);
+
+            user.markModified("history");
+            await user.save();
+          }
+        }
+      }
+    } else {
+      // যদি আলাদা Investment মডেল না থাকে, তবে User-এর নিজের active investments চেক করবে
+      const users = await User.find({ "history.status": "Active" });
+
+      for (let user of users) {
+        let hasChanges = false;
+
+        user.history.forEach((item) => {
+          if (item.status === "Active" && item.dailyReturn > 0) {
+            const returnAmt = Number(item.dailyReturn);
+
+            user.otbalance = Number(user.otbalance || 0) + returnAmt;
+            user.totalEarnings = Number(user.totalEarnings || 0) + returnAmt;
+
+            // Daily return entry push
+            user.history.unshift({
+              _id: new mongoose.Types.ObjectId(),
+              type: "Daily Return",
+              amount: returnAmt,
+              status: "Approved",
+              createdAt: new Date()
+            });
+
+            hasChanges = true;
+          }
+        });
+
+        if (hasChanges) {
+          user.markModified("history");
+          await user.save();
+        }
+      }
+    }
+
+    console.log("✅ Daily Returns Credited Successfully to All Active Users!");
+  } catch (error) {
+    console.error("❌ Error running Daily Return Cron Job:", error);
+  }
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata" // ভারতীয় সময় (IST) অনুযায়ী ঠিক রাত ১২:০০ টায় রান হবে
+});
+
+
 
 
 
