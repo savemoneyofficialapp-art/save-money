@@ -18,6 +18,7 @@ export default function OneTime() {
   const [rate, setRate] = useState(0.6);
   const [frequency, setFrequency] = useState("daily");
   const [amount, setAmount] = useState(5000);
+  const [investing, setInvesting] = useState(false);
 
   // Modals State
   const [showAmountModal, setShowAmountModal] = useState(false);
@@ -25,7 +26,7 @@ export default function OneTime() {
   const [showBankModal, setShowBankModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
-  // Deposit Form State (Screenshot Upload)
+  // Deposit Form State
   const [txnId, setTxnId] = useState("");
   const [screenshot, setScreenshot] = useState(null);
   const [depositing, setDepositing] = useState(false);
@@ -52,7 +53,7 @@ export default function OneTime() {
 
   const COMPANY_WALLET_ADDRESS = "0x53D944eDA838748A92F2c361d2F71cD7EcFc8643";
 
-  // Helper variable to get correct wallet balance safely
+  // Wallet balance safely retrieved
   const currentWalletBalance = Number(
     user?.otbalance ?? user?.otBalance ?? user?.availableBalance ?? 0
   );
@@ -65,7 +66,6 @@ export default function OneTime() {
     { days: 100, rate: 2.0, label: "100 Days (2.0%)" }
   ];
 
-  // Styled Quick Investment Amount Presets
   const presetAmounts = [
     { label: "5k", value: 5000, desc: "Starter", color: "linear-gradient(135deg, #22c55e, #16a34a)" },
     { label: "7.5k", value: 7500, desc: "Basic", color: "linear-gradient(135deg, #0ea5e9, #0284c7)" },
@@ -97,7 +97,7 @@ export default function OneTime() {
       if (res.ok) {
         setUser(data.user || {});
         setOneTimerNotifications(data.oneTimerNotifications || []);
-        setHistory(data.history || []);
+        setHistory(Array.isArray(data.history) ? data.history : (data.investments || []));
         if (data.user?.bankDetails) {
           setBankForm(data.user.bankDetails);
         }
@@ -123,6 +123,44 @@ export default function OneTime() {
     if (plan) {
       setTenure(plan.days);
       setRate(plan.rate);
+    }
+  };
+
+  // ----------------- START NEW INVESTMENT FROM BALANCE -----------------
+  const handleStartInvestment = async () => {
+    if (currentWalletBalance < amount) {
+      triggerToast(`Insufficient balance! Your wallet balance is ₹${currentWalletBalance}. Please Add Fund first.`, "error");
+      return;
+    }
+
+    try {
+      setInvesting(true);
+      const res = await fetch(`${API}/api/onetime/create-investment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: token
+        },
+        body: JSON.stringify({
+          email,
+          amount: Number(amount),
+          duration: `${tenure} Days`,
+          frequency,
+          dailyReturn
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok || data.success) {
+        triggerToast("🚀 Investment Started Successfully!", "success");
+        await loadDashboardData();
+      } else {
+        triggerToast(data.message || data.msg || "Failed to create investment", "error");
+      }
+    } catch (err) {
+      triggerToast("Network error creating investment", "error");
+    } finally {
+      setInvesting(false);
     }
   };
 
@@ -201,7 +239,7 @@ export default function OneTime() {
     }
   };
 
-  // ----------------- WITHDRAWAL SUBMIT (WITH STRICT VALIDATION) -----------------
+  // ----------------- WITHDRAWAL SUBMIT -----------------
   const handleWithdrawClick = () => {
     if (!user.bankDetails || !user.bankDetails.accountNumber) {
       setShowBankModal(true);
@@ -211,7 +249,6 @@ export default function OneTime() {
   };
 
   const handleWithdrawSubmit = async () => {
-    // Strict Client Balance Check using correct otbalance field
     if (currentWalletBalance < selectedWithdrawAmount) {
       triggerToast(`Insufficient Wallet Balance! Your balance is ₹${currentWalletBalance}`, "error");
       return;
@@ -225,11 +262,15 @@ export default function OneTime() {
           "Content-Type": "application/json",
           authorization: token
         },
-        body: JSON.stringify({ email, amount: selectedWithdrawAmount })
+        body: JSON.stringify({ 
+          email, 
+          amount: selectedWithdrawAmount,
+          bankDetails: user.bankDetails 
+        })
       });
 
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok || data.success) {
         triggerToast("Withdrawal Request Submitted!", "success");
         setShowWithdrawModal(false);
         loadDashboardData();
@@ -439,9 +480,13 @@ export default function OneTime() {
           </div>
 
           {/* MAIN BUTTONS */}
-          <div style={styles.actionGrid}>
+          <div style={styles.actionGridTriple}>
+            <button style={styles.startInvestBtn} onClick={handleStartInvestment} disabled={investing}>
+              {investing ? "Processing..." : "🚀 Start Investment"}
+            </button>
+
             <button style={styles.addInvestBtn} onClick={() => setShowAddFundModal(true)}>
-              ➕ Add Invest
+              ➕ Add Fund
             </button>
 
             <button style={styles.withdrawBtn} onClick={handleWithdrawClick}>
@@ -472,16 +517,18 @@ export default function OneTime() {
               <tbody>
                 {history.length === 0 ? (
                   <tr>
-                    <td colSpan="6" style={styles.emptyTd}>No transaction history found</td>
+                    <td colSpan="6" style={styles.emptyTd}>No investment history found</td>
                   </tr>
                 ) : (
                   history.map((item, idx) => (
-                    <tr key={idx}>
-                      <td style={styles.td}>{item.date || new Date(item.createdAt).toLocaleDateString("en-GB")}</td>
-                      <td style={styles.td}>{item.duration || `${item.durationDays || tenure} Days`}</td>
-                      <td style={styles.td}>₹ {Number(item.amount).toLocaleString("en-IN")}</td>
+                    <tr key={item._id || idx}>
                       <td style={styles.td}>
-                        <span style={item.frequency === "daily" ? styles.badgeDaily : styles.badgeWeekly}>
+                        {item.startDate ? new Date(item.startDate).toLocaleDateString("en-GB") : (item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : "-")}
+                      </td>
+                      <td style={styles.td}>{item.duration || `${item.durationDays || tenure} Days`}</td>
+                      <td style={styles.td}>₹ {Number(item.amount || 0).toLocaleString("en-IN")}</td>
+                      <td style={styles.td}>
+                        <span style={(item.frequency || "").toLowerCase() === "daily" ? styles.badgeDaily : styles.badgeWeekly}>
                           {item.frequency || "Daily"}
                         </span>
                       </td>
@@ -490,7 +537,9 @@ export default function OneTime() {
                           {item.status || "Active"}
                         </span>
                       </td>
-                      <td style={styles.td}>{item.maturityDate || "-"}</td>
+                      <td style={styles.td}>
+                        {item.maturityDate ? new Date(item.maturityDate).toLocaleDateString("en-GB") : "-"}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -517,7 +566,7 @@ export default function OneTime() {
 
       {/* ----------------- MODALS ----------------- */}
 
-      {/* 1. REDESIGNED INVESTMENT AMOUNT MODAL */}
+      {/* 1. INVESTMENT AMOUNT PRESETS MODAL */}
       {showAmountModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
@@ -651,7 +700,7 @@ export default function OneTime() {
         </div>
       )}
 
-      {/* 4. WITHDRAWAL MODAL WITH BALANCE ALERT */}
+      {/* 4. WITHDRAWAL MODAL */}
       {showWithdrawModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
@@ -671,7 +720,6 @@ export default function OneTime() {
               <strong>₹ {currentWalletBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
             </div>
 
-            {/* In-Modal Alert Message */}
             {currentWalletBalance < selectedWithdrawAmount && (
               <div style={styles.balanceAlertBox}>
                 ⚠️ You don't have enough balance to withdraw ₹{selectedWithdrawAmount.toLocaleString("en-IN")}.
@@ -705,7 +753,7 @@ export default function OneTime() {
                 background: currentWalletBalance < selectedWithdrawAmount ? "#94a3b8" : "#16a34a"
               }}
               onClick={handleWithdrawSubmit}
-              disabled={withdrawing}
+              disabled={withdrawing || currentWalletBalance < selectedWithdrawAmount}
             >
               {withdrawing ? "Processing..." : "Confirm Withdrawal"}
             </button>
@@ -724,13 +772,13 @@ const getStatusStyle = (status) => {
     case "pending":
       return { background: "#fef3c7", color: "#92400e" };
     case "rejected":
+    case "cancelled":
       return { background: "#fee2e2", color: "#991b1b" };
     default:
       return { background: "#f1f5f9", color: "#475569" };
   }
 };
 
-// CSS-IN-JS STYLES
 const styles = {
   page: {
     minHeight: "100vh",
@@ -1025,16 +1073,26 @@ const styles = {
     fontSize: "14px",
     fontWeight: "bold"
   },
-  actionGrid: {
+  actionGridTriple: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "2fr 1fr 1fr",
     gap: "12px"
+  },
+  startInvestBtn: {
+    height: "50px",
+    borderRadius: "12px",
+    border: "none",
+    background: "linear-gradient(135deg, #16a34a, #15803d)",
+    color: "white",
+    fontSize: "15px",
+    fontWeight: "bold",
+    cursor: "pointer"
   },
   addInvestBtn: {
     height: "50px",
     borderRadius: "12px",
     border: "none",
-    background: "linear-gradient(135deg, #16a34a, #15803d)",
+    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
     color: "white",
     fontSize: "15px",
     fontWeight: "bold",
