@@ -50,7 +50,7 @@ export default function OneTime() {
     setTimeout(() => setToast({ show: false, msg: "", type: "info" }), 3500);
   };
 
-  const COMPANY_WALLET_ADDRESS = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+  const COMPANY_WALLET_ADDRESS = "0x53D944eDA838748A92F2c361d2F71cD7EcFc8643";
 
   // Helper variable to get correct wallet balance safely
   const currentWalletBalance = Number(
