@@ -154,7 +154,15 @@ export default function OneTime() {
         setOneTimerNotifications(data.oneTimerNotifications || []);
 
         // Combine all transaction sources into one single history array
-        const rawHistory = Array.isArray(data.history) ? data.history : [];
+        // 🛑 UPDATED: onetimeHistory সাপোর্ট সহ সেফ ডাটা রিডিং
+const rawHistory = Array.isArray(data.history)
+  ? data.history
+  : Array.isArray(data.onetimeHistory)
+  ? data.onetimeHistory
+  : Array.isArray(data.user?.onetimeHistory)
+  ? data.user.onetimeHistory
+  : [];
+
         const rawDeposits = Array.isArray(data.deposits)
           ? data.deposits.map((d) => ({ ...d, type: "Add Fund" }))
           : [];
