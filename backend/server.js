@@ -7178,36 +7178,25 @@ app.get("/get-vapid-key", (req, res) => {
 });
 
 // ==========================================
-// SAVE MONEY - ONE TIME INVESTMENT BACKEND APIS
+// ⚡ ONETIME ADMIN & USER BACKEND CONTROLLERS
 // ==========================================
 
-// 1. Dashboard API (Get user profile, stats, one-time notifications, and history)
+// 1. OneTime Dashboard (User Profile & otbalance)
 app.post("/api/onetime/dashboard", async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "User email required" });
-    }
+    if (!email) return res.status(400).json({ message: "User email required" });
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Filter notifications for "one_timer" type only
-    const oneTimerNotifications = await Notification.find({
-      email,
-      type: "one_timer"
-    }).sort({ createdAt: -1 });
+    const oneTimerNotifications = await Notification.find({ email, type: "one_time" }).sort({ createdAt: -1 });
+    const userInvestments = await OneTimeInvestment.find({ email }).sort({ createdAt: -1 });
+    const userWithdrawals = await Withdrawal.find({ email, category: "onetime" }).sort({ createdAt: -1 });
 
-    // Fetch Investments & Withdrawals History
-    const investments = await OneTimeInvestment.find({ email }).lean();
-    const withdrawals = await Withdrawal.find({ email, category: "onetime" }).lean();
-
-    // Combine history list sorted by date
     const history = [
-      ...investments.map((i) => ({ ...i, type: "investment" })),
-      ...withdrawals.map((w) => ({ ...w, type: "withdrawal" }))
+      ...userInvestments.map(i => ({ ...i._doc, type: "Investment" })),
+      ...userWithdrawals.map(w => ({ ...w._doc, type: "Withdrawal" }))
     ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return res.status(200).json({
@@ -7215,11 +7204,13 @@ app.post("/api/onetime/dashboard", async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        photo: user.photo || user.profilePhoto || "",
+        phone: user.phone,
+        profilePhoto: user.profilePhoto,
         totalInvested: user.oneTimeTotalInvested || 0,
         totalReturns: user.oneTimeTotalReturns || 0,
         totalEarnings: user.oneTimeTotalEarnings || 0,
-        availableBalance: user.wallet || 0,
+        availableBalance: user.otbalance || 0, // otbalance mapped to available balance
+        otbalance: user.otbalance || 0,
         bankDetails: user.bankDetails || null
       },
       oneTimerNotifications,
@@ -7227,9 +7218,259 @@ app.post("/api/onetime/dashboard", async (req, res) => {
     });
   } catch (err) {
     console.error("OneTime Dashboard API Error:", err);
-    res.status(500).json({ message: "Server Error" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
+
+// 2. User Withdraw Request API (Using otbalance)
+app.post("/api/onetime/withdraw", async (req, res) => {
+  try {
+    const { email, amount } = req.body;
+    const withdrawAmt = Number(amount);
+
+    if (!email || !withdrawAmt || withdrawAmt <= 0) {
+      return res.status(400).json({ message: "Invalid withdraw parameters" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.bankDetails || !user.bankDetails.accountNumber) {
+      return res.status(400).json({ message: "Bank account details missing" });
+    }
+
+    // Strict otbalance check
+    if ((user.otbalance || 0) < withdrawAmt) {
+      return res.status(400).json({ message: "Insufficient OneTime wallet balance (otbalance)" });
+    }
+
+    // Deduct from otbalance immediately
+    user.otbalance = (user.otbalance || 0) - withdrawAmt;
+    await user.save();
+
+    const newWithdrawal = new Withdrawal({
+      email,
+      name: user.name,
+      amount: withdrawAmt,
+      category: "onetime",
+      bankDetails: user.bankDetails,
+      status: "Pending",
+      otbalance: user.otbalance
+    });
+
+    await newWithdrawal.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Withdrawal request submitted successfully!",
+      withdrawal: newWithdrawal,
+      newOtbalance: user.otbalance
+    });
+  } catch (err) {
+    console.error("Withdrawal API Error:", err);
+    return res.status(500).json({ message: "Server error during withdrawal" });
+  }
+});
+
+// 3. Admin Analytics Endpoint
+app.get("/admin/onetime-analytics", async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const investments = await OneTimeInvestment.find({ status: "Active" });
+    const totalInvested = investments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+    return res.json({
+      totalUsers,
+      totalInvested,
+      activePlansCount: investments.length
+    });
+  } catch (err) {
+    return res.status(500).json({ msg: "Failed to fetch OneTime analytics" });
+  }
+});
+
+// 4. Admin - Fetch All Cash / Deposit Requests
+app.get("/admin/onetime-cash-requests", async (req, res) => {
+  try {
+    const requests = await Txn.find({ type: "Deposit" }).sort({ createdAt: -1 });
+    return res.json(requests);
+  } catch (err) {
+    return res.status(500).json({ msg: "Error fetching cash requests" });
+  }
+});
+
+// 5. Admin - Approve Cash Request (Add fund to otbalance)
+app.post("/admin/onetime-approve-cash", async (req, res) => {
+  try {
+    const { requestId } = req.body;
+    const reqItem = await Txn.findById(requestId);
+    if (!reqItem) return res.status(404).json({ msg: "Request not found" });
+
+    if (reqItem.status === "approved") {
+      return res.status(400).json({ msg: "Request already approved" });
+    }
+
+    reqItem.status = "approved";
+    await reqItem.save();
+
+    // Credit user's otbalance
+    const user = await User.findOne({ email: reqItem.email });
+    if (user) {
+      user.otbalance = (user.otbalance || 0) + Number(reqItem.amount);
+      await user.save();
+    }
+
+    return res.json({ msg: "Fund approved & added to otbalance successfully!" });
+  } catch (err) {
+    return res.status(500).json({ msg: "Error approving fund request" });
+  }
+});
+
+// 6. Admin - Reject Cash Request
+app.post("/admin/onetime-reject-cash", async (req, res) => {
+  try {
+    const { requestId, reason } = req.body;
+    const reqItem = await Txn.findById(requestId);
+    if (!reqItem) return res.status(404).json({ msg: "Request not found" });
+
+    reqItem.status = "rejected";
+    reqItem.rejectReason = reason || "Rejected by Admin";
+    await reqItem.save();
+
+    return res.json({ msg: "Fund request rejected" });
+  } catch (err) {
+    return res.status(500).json({ msg: "Error rejecting fund request" });
+  }
+});
+
+// 7. Admin - Fetch Withdraw Requests
+app.get("/admin/onetime-withdraw-requests", async (req, res) => {
+  try {
+    const requests = await Withdrawal.find({ category: "onetime" }).sort({ createdAt: -1 });
+    return res.json({ success: true, requests });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: "Error fetching withdraw requests" });
+  }
+});
+
+// 8. Admin - Action on Withdraw (Approve/Reject with otbalance refund on Reject)
+app.post("/admin/onetime-withdraw-action", async (req, res) => {
+  try {
+    const { id, status, rejectReason } = req.body; // status: "Success" or "Rejected"
+    const withdraw = await Withdrawal.findById(id);
+    if (!withdraw) return res.status(404).json({ msg: "Withdraw request not found" });
+
+    if (withdraw.status !== "Pending") {
+      return res.status(400).json({ msg: "Withdrawal request already processed" });
+    }
+
+    withdraw.status = status;
+    if (rejectReason) withdraw.rejectReason = rejectReason;
+    await withdraw.save();
+
+    // If Rejected, refund amount back to user's otbalance
+    if (status === "Rejected") {
+      const user = await User.findOne({ email: withdraw.email });
+      if (user) {
+        user.otbalance = (user.otbalance || 0) + Number(withdraw.amount);
+        await user.save();
+      }
+    }
+
+    return res.json({ success: true, msg: `Withdraw request marked as ${status}` });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: "Error updating withdrawal action" });
+  }
+});
+
+// 9. Admin - Direct otbalance Adjust (Add / Subtract)
+app.post("/admin/onetime-adjust-wallet", async (req, res) => {
+  try {
+    const { email, amount, type, reason } = req.body;
+    if (!email || !amount || amount <= 0) {
+      return res.status(400).json({ msg: "Email and valid amount required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ msg: "User account not found" });
+
+    const numAmt = Number(amount);
+    if (type === "add") {
+      user.otbalance = (user.otbalance || 0) + numAmt;
+    } else {
+      user.otbalance = Math.max(0, (user.otbalance || 0) - numAmt);
+    }
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      msg: `Updated otbalance for ${email}. New Balance: ₹${user.otbalance}`,
+      newBalance: user.otbalance
+    });
+  } catch (err) {
+    return res.status(500).json({ msg: "Error adjusting user otbalance" });
+  }
+});
+
+// 10. Admin - Fetch All OneTime Investments
+app.get("/admin/onetime-investments", async (req, res) => {
+  try {
+    const investments = await OneTimeInvestment.find().sort({ createdAt: -1 });
+    return res.json({ success: true, investments });
+  } catch (err) {
+    return res.status(500).json({ success: false, msg: "Error loading investments" });
+  }
+});
+
+// 11. Admin - Assign Investment Manually
+app.post("/admin/onetime-create-investment", async (req, res) => {
+  try {
+    const { email, amount, duration, dailyReturn } = req.body;
+    if (!email || !amount) {
+      return res.status(400).json({ msg: "Email and amount are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    const newInvest = new OneTimeInvestment({
+      email,
+      amount: Number(amount),
+      duration: duration || "15 Days (0.6%)",
+      dailyReturn: Number(dailyReturn || 0),
+      status: "Active"
+    });
+
+    await newInvest.save();
+
+    user.oneTimeTotalInvested = (user.oneTimeTotalInvested || 0) + Number(amount);
+    await user.save();
+
+    return res.json({ success: true, msg: "OneTime Investment assigned successfully!" });
+  } catch (err) {
+    return res.status(500).json({ msg: "Failed to assign investment" });
+  }
+});
+
+// 12. Admin - Cancel OneTime Investment
+app.post("/admin/onetime-cancel-investment", async (req, res) => {
+  try {
+    const { id } = req.body;
+    const invest = await OneTimeInvestment.findById(id);
+    if (!invest) return res.status(404).json({ msg: "Investment record not found" });
+
+    invest.status = "Cancelled";
+    await invest.save();
+
+    return res.json({ success: true, msg: "Investment plan cancelled successfully" });
+  } catch (err) {
+    return res.status(500).json({ msg: "Error cancelling investment" });
+  }
+});
+
+
+
 
 // 2. Add/Save Bank Details API
 app.post("/api/onetime/add-bank-details", async (req, res) => {
@@ -7256,77 +7497,6 @@ app.post("/api/onetime/add-bank-details", async (req, res) => {
   }
 });
 
-// 3. Withdrawal Request API (With Daily Limit Check & Allowed Pre-filled Amounts)
-app.post("/api/onetime/withdraw", async (req, res) => {
-  try {
-    const { email, amount } = req.body;
-    const allowedAmounts = [100, 300, 500, 1000, 10000];
-
-    // Check if amount is strictly in pre-filled list
-    if (!allowedAmounts.includes(Number(amount))) {
-      return res.status(400).json({ message: "Invalid withdrawal amount selection" });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check Bank Details
-    if (!user.bankDetails || !user.bankDetails.accountNumber) {
-      return res.status(400).json({ message: "Bank account details missing" });
-    }
-
-    // Check Balance
-    if ((user.wallet || 0) < amount) {
-      return res.status(400).json({ message: "Insufficient Wallet Balance" });
-    }
-
-    // Check Daily Limit (Allowed once per day, unless rejected)
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const todayWithdrawal = await Withdrawal.findOne({
-      email,
-      category: "onetime",
-      createdAt: { $gte: startOfDay, $lte: endOfDay },
-      status: { $ne: "Rejected" } // If status is Pending or Approved, block
-    });
-
-    if (todayWithdrawal) {
-      return res.status(400).json({
-        message: "You can request withdrawal only once per day. (If rejected, you can retry)"
-      });
-    }
-
-    // Process Withdrawal Request
-    user.wallet -= Number(amount);
-    await user.save();
-
-    const newWithdrawal = new Withdrawal({
-      email,
-      userId: user._id,
-      amount,
-      category: "onetime",
-      bankDetails: user.bankDetails,
-      status: "Pending",
-      createdAt: new Date()
-    });
-
-    await newWithdrawal.save();
-
-    return res.status(200).json({
-      message: "Withdrawal request submitted successfully",
-      withdrawal: newWithdrawal
-    });
-  } catch (err) {
-    console.error("Withdrawal API Error:", err);
-    res.status(500).json({ message: "Server error during withdrawal" });
-  }
-});
 
                // ==================== DEPOSIT SCREENSHOT UPLOAD API ====================
 app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req, res) => {
@@ -7366,58 +7536,9 @@ app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req
   }
 });
 
-app.get("/admin/onetime-cash-requests", async (req, res) => {
-  try {
-    const requests = await OneTimeCashModel.find({ status: "pending" }); // আপনার মডেল অনুযায়ী পরিবর্তন করুন
-    res.json({ success: true, requests });
-  } catch (err) {
-    res.json({ success: true, requests: [] });
-  }
-});
 
-// 2. Fetch OneTime Withdraw Requests
-app.get("/admin/onetime-withdraw-requests", async (req, res) => {
-  try {
-    const requests = await OneTimeWithdrawModel.find({ status: "Pending" });
-    res.json({ success: true, requests });
-  } catch (err) {
-    res.json({ success: true, requests: [] });
-  }
-});
 
-// 3. Fetch OneTime Investments
-app.get("/admin/onetime-investments", async (req, res) => {
-  try {
-    const investments = await OneTimeInvestmentModel.find();
-    res.json({ success: true, investments });
-  } catch (err) {
-    res.json({ success: true, investments: [] });
-  }
-});
 
-// 4. Adjust OneTime Wallet Balance
-app.post("/admin/onetime-adjust-wallet", async (req, res) => {
-  try {
-    const { email, amount, type, reason } = req.body;
-    const user = await User.findOne({ email });
-
-    if (!user) return res.json({ success: false, msg: "User not found" });
-
-    const currentBal = Number(user.onetimeWallet || 0);
-    const adjustAmt = Number(amount);
-
-    if (type === "add") {
-      user.onetimeWallet = currentBal + adjustAmt;
-    } else {
-      user.onetimeWallet = Math.max(0, currentBal - adjustAmt);
-    }
-
-    await user.save();
-    res.json({ success: true, msg: `Wallet updated! New Balance: ₹${user.onetimeWallet}` });
-  } catch (err) {
-    res.json({ success: false, msg: "Server Error updating wallet" });
-  }
-});
 
 
     
