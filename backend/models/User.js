@@ -195,10 +195,29 @@ balance: {
 
   otbalance: { type: Number, default: 0 },
 
+    // 🔹 MAIN WALLET HISTORY (মেইন ওয়ালেটের জন্য)
   history: {
     type: Array,
     default: []
   },
+
+  // 🔹 ONETIME PAGE HISTORY (নতুন যোগ করা হলো)
+  onetimeHistory: [
+    {
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        default: () => new mongoose.Types.ObjectId()
+      },
+      type: { type: String },          // "Daily Return", "Withdrawal", "Investment"
+      amount: { type: Number, default: 0 },
+      dailyReturn: { type: Number, default: 0 },
+      duration: { type: String, default: "" },
+      status: { type: String, default: "Pending" }, // "Active", "Approved", "Rejected"
+      rejectReason: { type: String, default: "" },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
+
 
 // এই দুটি ফিল্ড নতুন যোগ করুন 
 todayBalance: {
