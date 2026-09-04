@@ -64,7 +64,7 @@ export default function OneTime() {
 
   const COMPANY_WALLET_ADDRESS = "0x53D944eDA838748A92F2c361d2F71cD7EcFc8643";
 
-  // Safe wallet balance without syntax collision
+  // Safe wallet balance calculation
   const currentWalletBalance = Number(
     stats.availableBalance || user?.otbalance || user?.otBalance || user?.availableBalance || 0
   );
@@ -108,39 +108,68 @@ export default function OneTime() {
       if (res.ok) {
         setUser(data.user || {});
         setOneTimerNotifications(data.oneTimerNotifications || []);
-        
-        const historyList = Array.isArray(data.history) ? data.history : (data.investments || []);
-        setHistory(historyList);
 
-        // Strict OneTime Earnings Calculation
-        let calculatedInv = 0;
-        let calculatedWd = 0;
-        let calculatedOneTimeEarnings = Number(
-          data.user?.oneTimeTotalEarnings || data.user?.oneTimeEarnings || data.stats?.totalEarnings || 0
+        // Combine all transaction sources into one single history array
+        const rawHistory = Array.isArray(data.history) ? data.history : [];
+        const rawDeposits = Array.isArray(data.deposits)
+          ? data.deposits.map((d) => ({ ...d, type: "Add Fund" }))
+          : [];
+        const rawWithdrawals = Array.isArray(data.withdrawals)
+          ? data.withdrawals.map((w) => ({ ...w, type: "Withdrawal" }))
+          : [];
+        const rawInvestments = Array.isArray(data.investments)
+          ? data.investments.map((i) => ({ ...i, type: "OneTimeInvestment" }))
+          : [];
+
+        const combined = [...rawHistory, ...rawDeposits, ...rawWithdrawals, ...rawInvestments];
+
+        // Deduplicate items by ID
+        const uniqueMap = new Map();
+        combined.forEach((item) => {
+          const key = item._id || `${item.type}-${item.createdAt || item.startDate}`;
+          if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, item);
+          }
+        });
+
+        const sortedHistory = Array.from(uniqueMap.values()).sort((a, b) => {
+          const dateA = new Date(a.createdAt || a.startDate || 0);
+          const dateB = new Date(b.createdAt || b.startDate || 0);
+          return dateB - dateA;
+        });
+
+        setHistory(sortedHistory);
+
+        // Strict OneTime Earnings calculation (removes global 9890 fallback)
+        const exactOneTimeEarnings = Number(
+          data.user?.oneTimeTotalEarnings || data.user?.oneTimeEarnings || 0
         );
 
-        historyList.forEach(item => {
-          const type = (item.type || "").toLowerCase();
-          if (type.includes("investment") || type === "onetimeinvestment" || !type) {
+        let calculatedInv = 0;
+        let calculatedWd = 0;
+
+        sortedHistory.forEach((item) => {
+          const t = (item.type || "").toLowerCase();
+          if (t.includes("investment") || t === "onetimeinvestment") {
             if (item.status === "Active" || item.status === "Completed") {
               calculatedInv += Number(item.amount || 0);
             }
           }
-          if (type === "withdrawal" && (item.status === "Approved" || item.status === "Accepted" || item.status === "Success")) {
+          if (t === "withdrawal" && (item.status === "Approved" || item.status === "Accepted" || item.status === "Success")) {
             calculatedWd += Number(item.amount || 0);
           }
         });
 
         setStats({
           totalInvested: data.stats?.totalInvested ?? calculatedInv,
-          totalEarnings: calculatedOneTimeEarnings,
+          totalEarnings: exactOneTimeEarnings,
           totalWithdrawn: data.stats?.totalWithdrawn ?? calculatedWd,
           availableBalance: Number(data.user?.otbalance || data.user?.otBalance || 0)
         });
 
         // Active Investment Detection
-        const active = data.activeInvestment || historyList.find(
-          item => (item.type === "OneTimeInvestment" || item.type === "Investment" || !item.type) && item.status === "Active"
+        const active = data.activeInvestment || sortedHistory.find(
+          (item) => (item.type === "OneTimeInvestment" || item.type === "Investment" || !item.type) && item.status === "Active"
         );
         setActiveInvestment(active || null);
 
@@ -172,7 +201,7 @@ export default function OneTime() {
     }
   };
 
-  // ----------------- START NEW INVESTMENT FROM BALANCE -----------------
+  // ----------------- START NEW INVESTMENT -----------------
   const handleStartInvestment = async () => {
     if (activeInvestment) {
       triggerToast("আপনার একটি ইনভেস্টমেন্ট বর্তমানে চলমান আছে। সেটি শেষ না হওয়া পর্যন্ত নতুন ইনভেস্ট করা যাবে না।", "error");
@@ -215,7 +244,7 @@ export default function OneTime() {
     }
   };
 
-  // ----------------- SUBMIT DEPOSIT (SCREENSHOT) -----------------
+  // ----------------- SUBMIT ADD FUND DEPOSIT -----------------
   const handleDepositSubmit = async (e) => {
     e.preventDefault();
     if (!txnId) {
@@ -243,8 +272,20 @@ export default function OneTime() {
 
       const data = await res.json();
       if (res.ok || data.success) {
-        triggerToast("Deposit proof submitted! Pending review.", "success");
+        triggerToast("Deposit request submitted! Status: Pending", "success");
         setShowAddFundModal(false);
+
+        // Instantly add pending item to local history table
+        const newPendingDeposit = {
+          _id: data.deposit?._id || Date.now().toString(),
+          type: "Add Fund",
+          amount: Number(amount),
+          transactionId: txnId,
+          status: "Pending",
+          createdAt: new Date().toISOString()
+        };
+
+        setHistory((prev) => [newPendingDeposit, ...prev]);
         setTxnId("");
         setScreenshot(null);
         await loadDashboardData();
@@ -290,7 +331,7 @@ export default function OneTime() {
     }
   };
 
-  // ----------------- WITHDRAWAL SUBMIT -----------------
+  // ----------------- WITHDRAWAL -----------------
   const handleWithdrawClick = () => {
     if (!user.bankDetails || !user.bankDetails.accountNumber) {
       setShowBankModal(true);
@@ -447,7 +488,7 @@ export default function OneTime() {
             <div style={styles.titleLine}></div>
           </h2>
 
-          {/* REDESIGNED RUNNING ACTIVE INVESTMENT CARD */}
+          {/* RUNNING ACTIVE INVESTMENT CARD */}
           {activeInvestment && (
             <div style={styles.activeInvestCard}>
               <div style={styles.activeHeader}>
@@ -482,7 +523,6 @@ export default function OneTime() {
           )}
 
           <div style={styles.formGrid}>
-            {/* Select Investment Duration */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>📅 Select Duration</label>
               <select style={styles.select} value={tenure} onChange={handleTenureChange} disabled={!!activeInvestment}>
@@ -494,7 +534,6 @@ export default function OneTime() {
               </select>
             </div>
 
-            {/* Choose Return Frequency */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>🔄 Return Frequency</label>
               <div style={styles.frequencyToggle}>
@@ -517,7 +556,6 @@ export default function OneTime() {
               </div>
             </div>
 
-            {/* Enter Investment Amount */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>💵 Select / Enter Amount</label>
               <div 
@@ -532,7 +570,6 @@ export default function OneTime() {
             </div>
           </div>
 
-          {/* RETURN FREQUENCY CARDS */}
           <div style={styles.returnGrid}>
             {frequency === "daily" ? (
               <div style={styles.dailyReturnCard}>
@@ -549,7 +586,6 @@ export default function OneTime() {
             )}
           </div>
 
-          {/* BREAKDOWN STRIP */}
           <div style={styles.breakdownGrid}>
             <div style={styles.breakBox}>
               <span style={styles.breakLabel}>Investment Amount</span>
@@ -569,7 +605,6 @@ export default function OneTime() {
             </div>
           </div>
 
-          {/* MAIN BUTTONS */}
           <div style={styles.actionGridTriple}>
             <button 
               style={{
@@ -592,7 +627,7 @@ export default function OneTime() {
           </div>
         </section>
 
-        {/* TRANSACTION & INVESTMENT HISTORY */}
+        {/* HISTORY TABLE WITH PENDING, SUCCESS, REJECTED + REASON */}
         <section style={styles.historyCard}>
           <div style={styles.historyHeader}>
             <h2 style={{ margin: 0, fontSize: "18px" }}>Investment & Transaction History</h2>
@@ -619,13 +654,18 @@ export default function OneTime() {
                 ) : (
                   history.map((item, idx) => {
                     const itemType = (item.type || "").toLowerCase();
-                    const isDeposit = itemType.includes("deposit") || !!item.transactionId;
+                    const isDeposit = itemType.includes("add fund") || itemType.includes("deposit") || !!item.transactionId;
                     const isWithdraw = itemType.includes("withdraw");
+
+                    const rawStatus = item.status || "Pending";
+                    const isSuccess = ["approved", "accepted", "success"].includes(rawStatus.toLowerCase());
+                    const isRejected = ["rejected", "cancelled", "failed"].includes(rawStatus.toLowerCase());
+                    const displayStatus = isSuccess ? "Success" : isRejected ? "Rejected" : "Pending";
 
                     return (
                       <tr key={item._id || idx}>
                         <td style={styles.td}>
-                          {item.startDate ? new Date(item.startDate).toLocaleDateString("en-GB") : (item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : "-")}
+                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : (item.startDate ? new Date(item.startDate).toLocaleDateString("en-GB") : "-")}
                         </td>
                         <td style={styles.td}>
                           {isDeposit ? "💳 Add Fund Deposit" : isWithdraw ? "💸 Withdrawal" : `🚀 ${item.duration || `${item.durationDays || tenure} Days Plan`}`}
@@ -643,9 +683,14 @@ export default function OneTime() {
                           )}
                         </td>
                         <td style={styles.td}>
-                          <span style={{ ...styles.statusBadge, ...getStatusStyle(item.status) }}>
-                            {item.status || "Pending"}
+                          <span style={{ ...styles.statusBadge, ...getStatusStyle(displayStatus) }}>
+                            {displayStatus}
                           </span>
+                          {isRejected && (item.rejectReason || item.reason) && (
+                            <div style={{ fontSize: "10px", color: "#ef4444", marginTop: "3px", fontWeight: "bold" }}>
+                              Reason: {item.rejectReason || item.reason}
+                            </div>
+                          )}
                         </td>
                         <td style={styles.td}>
                           {item.maturityDate ? new Date(item.maturityDate).toLocaleDateString("en-GB") : "-"}
@@ -659,7 +704,7 @@ export default function OneTime() {
           </div>
         </section>
 
-        {/* TRUST BANNER FOOTER */}
+        {/* TRUST BANNER */}
         <section style={styles.trustBanner}>
           <div>
             <h3 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>Invest Small, Earn Big Returns Together</h3>
@@ -677,7 +722,7 @@ export default function OneTime() {
 
       {/* ----------------- MODALS ----------------- */}
 
-      {/* 1. INVESTMENT AMOUNT PRESETS MODAL */}
+      {/* 1. AMOUNT PRESETS MODAL */}
       {showAmountModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
@@ -713,7 +758,7 @@ export default function OneTime() {
         </div>
       )}
 
-      {/* 2. ADD FUND WITH SCREENSHOT UPLOAD */}
+      {/* 2. ADD FUND MODAL */}
       {showAddFundModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
@@ -877,7 +922,7 @@ export default function OneTime() {
 
 const getStatusStyle = (status) => {
   const s = (status || "").toLowerCase();
-  if (s === "active" || s === "approved" || s === "accepted" || s === "success") {
+  if (s === "success" || s === "active" || s === "approved" || s === "accepted") {
     return { background: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" };
   }
   if (s === "pending") {
@@ -1347,7 +1392,8 @@ const styles = {
     padding: "3px 8px",
     borderRadius: "10px",
     fontSize: "10px",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    display: "inline-block"
   },
   trustBanner: {
     background: "#ffffff",
