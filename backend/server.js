@@ -7245,8 +7245,8 @@ app.post("/api/onetime/dashboard", async (req, res) => {
   }
 });
 
-// ==================== ২. ONE-TIME WITHDRAW API ====================
-app.post("/api/onetime/withdraw", async (req, res) => {
+// ==================== ALL-IN-ONE WITHDRAWAL API ====================
+const handleWithdrawalLogic = async (req, res) => {
   try {
     const { email, amount } = req.body;
 
@@ -7255,62 +7255,84 @@ app.post("/api/onetime/withdraw", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // ১. ব্যাংক ডিটেইলস চেক
-    if (!user.bankDetails || !user.bankDetails.accountNumber) {
-      return res.status(400).json({ message: "Bank account details missing" });
-    }
-
-    // ২. ব্যালেন্স চেক
-    const currentBalance = Number(user.otbalance || 0);
+    // ১. ব্যালেন্স চেক (otbalance অথবা balance)
+    const currentBalance = Number(user.otbalance || user.balance || 0);
     if (currentBalance < Number(amount)) {
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
-    const formattedAccountDetails = `Holder: ${user.bankDetails.holderName || '-'}, Bank: ${user.bankDetails.bankName || '-'}, A/C: ${user.bankDetails.accountNumber || '-'}, IFSC: ${user.bankDetails.ifsc || '-'}`;
+    // ২. ব্যাংক ডিটেইলস ফরম্যাট
+    const bankInfo = user.bankDetails || {};
+    const formattedAccountDetails = `Holder: ${bankInfo.holderName || '-'}, Bank: ${bankInfo.bankName || '-'}, A/C: ${bankInfo.accountNumber || '-'}, IFSC: ${bankInfo.ifsc || '-'}`;
 
+    // ৩. উইথড্রয়াল পেলোড (সব সম্ভাব্য ফিল্ড নেম দেওয়া হলো)
     const withdrawalPayload = {
       email: user.email,
+      userEmail: user.email,
+      userName: user.name || user.username || user.email,
       amount: Number(amount),
       paymentMethod: "Bank Transfer",
       accountDetails: formattedAccountDetails,
-      status: "Pending"
+      bankDetails: bankInfo,
+      status: "Pending",
+      type: "onetime",
+      createdAt: new Date()
     };
 
-    // ৩. উভয় কালেকশনেই ডাটা সেভ নিশ্চিত করা
-    await Withdrawal.create(withdrawalPayload);
-    await OneTimeWithdrawal.create(withdrawalPayload);
+    // ৪. Mongoose Models - উভয় কালেকশনেই সেভ করা
+    if (mongoose.models.Withdrawal) {
+      await mongoose.models.Withdrawal.create(withdrawalPayload);
+    }
+    if (mongoose.models.OneTimeWithdrawal) {
+      await mongoose.models.OneTimeWithdrawal.create(withdrawalPayload);
+    }
 
-    // ৪. ব্যালেন্স মাইনাস করা
+    // ৫. ইউজারের ব্যালেন্স আপডেট
     user.otbalance = currentBalance - Number(amount);
 
-    // ৫. യൂজারের হিস্ট্রি অ্যারে আপডেট করা
-    const historyItem = {
+    // ৬. ইউজারের সব ধরনের History/Investment অ্যারেতে ডাটা পুশ (যাতে Investment History টেবিলে শো করে)
+    const historyEntry = {
       date: new Date().toLocaleDateString("en-GB"),
       duration: "Withdrawal",
       amount: Number(amount),
       frequency: "OneTime",
       status: "Pending",
-      maturityDate: "-"
+      maturity: "-",
+      type: "Withdrawal",
+      createdAt: new Date()
     };
 
+    if (!user.investments) user.investments = [];
+    user.investments.unshift(historyEntry);
+
     if (!user.history) user.history = [];
-    user.history.unshift(historyItem);
+    user.history.unshift(historyEntry);
 
     if (!user.onetimeHistory) user.onetimeHistory = [];
-    user.onetimeHistory.unshift(historyItem);
+    user.onetimeHistory.unshift(historyEntry);
+
+    if (!user.transactions) user.transactions = [];
+    user.transactions.unshift(historyEntry);
 
     await user.save();
 
     return res.status(200).json({ 
+      success: true,
       message: "Withdrawal request submitted successfully",
-      newBalance: user.otbalance 
+      newBalance: user.otbalance,
+      user
     });
 
   } catch (error) {
     console.error("Withdraw Error:", error);
     return res.status(500).json({ message: "Server error: " + error.message });
   }
-});
+};
+
+// ফ্রন্টএন্ড যে রাউটেই হিট করুক না কেন, দুটোতেই এই লজিক কাজ করবে
+app.post("/api/onetime/withdraw", handleWithdrawalLogic);
+app.post("/api/withdraw", handleWithdrawalLogic);
+
 
 
 // 3. Admin Analytics Endpoint
