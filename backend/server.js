@@ -168,9 +168,15 @@ const withdrawalSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Mongoose-এ একসাথে ২ টি কালেকশন নেমই রেজিস্টার করে রাখা হচ্ছে যাতে কোনোটিতে এরর না আসে
-const Withdrawal = mongoose.models.Withdrawal || mongoose.model("Withdrawal", withdrawalSchema);
-const OneTimeWithdrawal = mongoose.models.OneTimeWithdrawal || mongoose.model("OneTimeWithdrawal", withdrawalSchema);
+// Withdrawal আগেই ডিক্লেয়ার থাকায় নতুন করে const না লিখে Mongoose-এ Schema রেজিস্টার করা হলো
+if (!mongoose.models.Withdrawal) {
+  mongoose.model("Withdrawal", withdrawalSchema);
+}
+
+const OneTimeWithdrawal =
+  mongoose.models.OneTimeWithdrawal ||
+  mongoose.model("OneTimeWithdrawal", withdrawalSchema);
+
 
 
 // ================= CORS =================
