@@ -92,6 +92,50 @@ export default function OneTime() {
     loadDashboardData();
   }, []);
 
+  // ----------------- AUTO-SYNC ACTIVE INVESTMENT TO FORM FIELDS -----------------
+  useEffect(() => {
+    if (activeInvestment) {
+      // 1. Sync Amount
+      if (activeInvestment.amount) {
+        setAmount(Number(activeInvestment.amount));
+      }
+
+      // 2. Sync Duration & Rate
+      let days = 15;
+      if (typeof activeInvestment.duration === "number") {
+        days = activeInvestment.duration;
+      } else if (typeof activeInvestment.duration === "string") {
+        const match = activeInvestment.duration.match(/\d+/);
+        if (match) days = parseInt(match[0], 10);
+      } else if (activeInvestment.durationDays) {
+        days = Number(activeInvestment.durationDays);
+      }
+
+      const matchedPlan = tenurePlans.find((p) => p.days === days);
+      if (matchedPlan) {
+        setTenure(matchedPlan.days);
+        setRate(matchedPlan.rate);
+      } else {
+        setTenure(days);
+        if (activeInvestment.dailyReturn && activeInvestment.amount) {
+          const calcRate = (Number(activeInvestment.dailyReturn) / Number(activeInvestment.amount)) * 100;
+          setRate(calcRate);
+        }
+      }
+
+      // 3. Sync Frequency
+      if (activeInvestment.frequency) {
+        setFrequency(activeInvestment.frequency.toLowerCase());
+      }
+    } else {
+      // Reset form to defaults when no active investment exists
+      setTenure(15);
+      setRate(0.6);
+      setFrequency("daily");
+      setAmount(5000);
+    }
+  }, [activeInvestment]);
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -140,7 +184,7 @@ export default function OneTime() {
 
         setHistory(sortedHistory);
 
-        // Strict OneTime Earnings calculation (removes global 9890 fallback)
+        // Strict OneTime Earnings calculation
         const exactOneTimeEarnings = Number(
           data.user?.oneTimeTotalEarnings || data.user?.oneTimeEarnings || 0
         );
@@ -186,13 +230,20 @@ export default function OneTime() {
     }
   };
 
-  // Calculations
-  const dailyReturn = useMemo(() => (Number(amount) * Number(rate)) / 100, [amount, rate]);
+  // Dynamic Return Calculations
+  const dailyReturn = useMemo(() => {
+    if (activeInvestment && activeInvestment.dailyReturn) {
+      return Number(activeInvestment.dailyReturn);
+    }
+    return (Number(amount) * Number(rate)) / 100;
+  }, [amount, rate, activeInvestment]);
+
   const weeklyReturn = useMemo(() => dailyReturn * 7, [dailyReturn]);
   const totalReturn = useMemo(() => dailyReturn * tenure, [dailyReturn, tenure]);
   const totalPayout = useMemo(() => Number(amount) + totalReturn, [amount, totalReturn]);
 
   const handleTenureChange = (e) => {
+    if (activeInvestment) return;
     const selectedDays = Number(e.target.value);
     const plan = tenurePlans.find((p) => p.days === selectedDays);
     if (plan) {
@@ -275,7 +326,6 @@ export default function OneTime() {
         triggerToast("Deposit request submitted! Status: Pending", "success");
         setShowAddFundModal(false);
 
-        // Instantly add pending item to local history table
         const newPendingDeposit = {
           _id: data.deposit?._id || Date.now().toString(),
           type: "Add Fund",
@@ -506,11 +556,11 @@ export default function OneTime() {
                 </div>
                 <div style={styles.activeStatItem}>
                   <span style={styles.activeLabel}>Plan Duration</span>
-                  <strong style={styles.activeValue}>{activeInvestment.duration || `${activeInvestment.durationDays || 15} Days`}</strong>
+                  <strong style={styles.activeValue}>{activeInvestment.duration || `${activeInvestment.durationDays || tenure} Days`}</strong>
                 </div>
                 <div style={styles.activeStatItem}>
                   <span style={styles.activeLabel}>Daily Earnings</span>
-                  <strong style={{ ...styles.activeValue, color: "#22c55e" }}>+₹{Number(activeInvestment.dailyReturn || 0).toFixed(2)} / day</strong>
+                  <strong style={{ ...styles.activeValue, color: "#22c55e" }}>+₹{Number(dailyReturn).toFixed(2)} / day</strong>
                 </div>
                 <div style={styles.activeStatItem}>
                   <span style={styles.activeLabel}>Maturity Date</span>
@@ -522,10 +572,21 @@ export default function OneTime() {
             </div>
           )}
 
+          {/* FORM FIELDS - AUTO LOCKED WHEN INVESTMENT IS ACTIVE */}
           <div style={styles.formGrid}>
             <div style={styles.fieldGroup}>
-              <label style={styles.label}>📅 Select Duration</label>
-              <select style={styles.select} value={tenure} onChange={handleTenureChange} disabled={!!activeInvestment}>
+              <label style={styles.label}>
+                📅 Select Duration {activeInvestment && <span style={{ color: "#ef4444" }}>(🔒 Active)</span>}
+              </label>
+              <select
+                style={{
+                  ...styles.select,
+                  ...(activeInvestment ? styles.lockedInput : {})
+                }}
+                value={tenure}
+                onChange={handleTenureChange}
+                disabled={!!activeInvestment}
+              >
                 {tenurePlans.map((p) => (
                   <option key={p.days} value={p.days}>
                     {p.label}
@@ -535,20 +596,30 @@ export default function OneTime() {
             </div>
 
             <div style={styles.fieldGroup}>
-              <label style={styles.label}>🔄 Return Frequency</label>
+              <label style={styles.label}>
+                🔄 Return Frequency {activeInvestment && <span style={{ color: "#ef4444" }}>(🔒 Active)</span>}
+              </label>
               <div style={styles.frequencyToggle}>
                 <button
                   type="button"
-                  style={{ ...styles.freqBtn, ...(frequency === "daily" ? styles.freqBtnActive : {}) }}
-                  onClick={() => setFrequency("daily")}
+                  style={{
+                    ...styles.freqBtn,
+                    ...(frequency === "daily" ? styles.freqBtnActive : {}),
+                    ...(activeInvestment ? styles.lockedBtn : {})
+                  }}
+                  onClick={() => !activeInvestment && setFrequency("daily")}
                   disabled={!!activeInvestment}
                 >
                   Daily
                 </button>
                 <button
                   type="button"
-                  style={{ ...styles.freqBtn, ...(frequency === "weekly" ? styles.freqBtnActive : {}) }}
-                  onClick={() => setFrequency("weekly")}
+                  style={{
+                    ...styles.freqBtn,
+                    ...(frequency === "weekly" ? styles.freqBtnActive : {}),
+                    ...(activeInvestment ? styles.lockedBtn : {})
+                  }}
+                  onClick={() => !activeInvestment && setFrequency("weekly")}
                   disabled={!!activeInvestment}
                 >
                   Weekly
@@ -557,16 +628,25 @@ export default function OneTime() {
             </div>
 
             <div style={styles.fieldGroup}>
-              <label style={styles.label}>💵 Select / Enter Amount</label>
+              <label style={styles.label}>
+                💵 Select / Enter Amount {activeInvestment && <span style={{ color: "#ef4444" }}>(🔒 Active)</span>}
+              </label>
               <div 
-                style={{ ...styles.amountInputWrap, ...(activeInvestment ? { cursor: "not-allowed", opacity: 0.7 } : {}) }} 
+                style={{
+                  ...styles.amountInputWrap,
+                  ...(activeInvestment ? styles.lockedInputWrap : {})
+                }} 
                 onClick={() => !activeInvestment && setShowAmountModal(true)}
               >
                 <span style={{ fontSize: "16px", fontWeight: "bold", color: "#16a34a" }}>₹</span>
                 <input style={styles.amountInput} type="text" readOnly value={amount.toLocaleString("en-IN")} />
-                <span style={styles.changeBadge}>Change ⚙️</span>
+                <span style={activeInvestment ? styles.lockedBadge : styles.changeBadge}>
+                  {activeInvestment ? "🔒 Locked" : "Change ⚙️"}
+                </span>
               </div>
-              <small style={styles.helpText}>Click to choose quick amount presets</small>
+              <small style={styles.helpText}>
+                {activeInvestment ? "Investment running - fields locked until maturity" : "Click to choose quick amount presets"}
+              </small>
             </div>
           </div>
 
@@ -1181,6 +1261,11 @@ const styles = {
     padding: "0 10px",
     fontSize: "14px"
   },
+  lockedInput: {
+    background: "#f1f5f9",
+    color: "#64748b",
+    cursor: "not-allowed"
+  },
   frequencyToggle: {
     display: "flex",
     gap: "8px",
@@ -1200,6 +1285,10 @@ const styles = {
     color: "white",
     borderColor: "#16a34a"
   },
+  lockedBtn: {
+    opacity: 0.65,
+    cursor: "not-allowed"
+  },
   amountInputWrap: {
     height: "46px",
     borderRadius: "10px",
@@ -1211,6 +1300,11 @@ const styles = {
     cursor: "pointer",
     background: "#f8fafc"
   },
+  lockedInputWrap: {
+    background: "#f1f5f9",
+    cursor: "not-allowed",
+    borderColor: "#cbd5e1"
+  },
   amountInput: {
     border: "none",
     background: "transparent",
@@ -1218,13 +1312,21 @@ const styles = {
     fontWeight: "bold",
     outline: "none",
     width: "60%",
-    cursor: "pointer"
+    cursor: "inherit"
   },
   changeBadge: {
     fontSize: "11px",
     color: "#1d4ed8",
     fontWeight: "bold",
     background: "#eff6ff",
+    padding: "4px 8px",
+    borderRadius: "6px"
+  },
+  lockedBadge: {
+    fontSize: "11px",
+    color: "#ef4444",
+    fontWeight: "bold",
+    background: "#fee2e2",
     padding: "4px 8px",
     borderRadius: "6px"
   },
