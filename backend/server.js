@@ -7237,16 +7237,27 @@ app.post("/api/onetime/withdraw", async (req, res) => {
       return res.status(400).json({ message: "Bank account details missing" });
     }
 
-    // ২. ব্যালেন্স চেক (otbalance)
+    // ২. ব্যালেন্স চেক
     const currentBalance = Number(user.otbalance || 0);
     if (currentBalance < Number(amount)) {
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
-    // ৩. ইউজারের ওয়ালেট ব্যালেন্স থেকে টাকা কাটা
+    const formattedAccountDetails = `Holder: ${user.bankDetails.holderName || '-'}, Bank: ${user.bankDetails.bankName || '-'}, A/C: ${user.bankDetails.accountNumber || '-'}, IFSC: ${user.bankDetails.ifsc || '-'}`;
+
+    // ৩. আগে Withdrawal কালেকশনে ডাটা সেভ করবো
+    const newWithdrawal = new Withdrawal({
+      email: user.email,
+      amount: Number(amount),
+      paymentMethod: "Bank Transfer",
+      accountDetails: formattedAccountDetails,
+      status: "Pending"
+    });
+    await newWithdrawal.save();
+
+    // ৪. উইথড্র সফলভাবে সেভ হলে তবেই ব্যালেন্স কাটবো ও ইউজারের হিস্ট্রিতে সেভ করবো
     user.otbalance = currentBalance - Number(amount);
 
-    // ৪. ইউজারের ড্যাশবোর্ড হিস্ট্রিতে রেকর্ড যোগ করা
     if (!user.history) {
       user.history = [];
     }
@@ -7261,30 +7272,17 @@ app.post("/api/onetime/withdraw", async (req, res) => {
 
     await user.save();
 
-    // ৫. ব্যাংক ডিটেইলস স্ট্রিং ফরম্যাটে সাজানো (স্কিমার accountDetails এর জন্য)
-    const formattedAccountDetails = `Holder: ${user.bankDetails.holderName || '-'}, Bank: ${user.bankDetails.bankName || '-'}, A/C: ${user.bankDetails.accountNumber || '-'}, IFSC: ${user.bankDetails.ifsc || '-'}`;
-
-    // ৬. আপনার Withdrawal Schema অনুযায়ী ডাটাবেসে সেভ করা
-    const Withdrawal = mongoose.models.Withdrawal || mongoose.model("Withdrawal");
-
-    await Withdrawal.create({
-      email: user.email,
-      amount: Number(amount),
-      paymentMethod: "Bank Transfer",
-      accountDetails: formattedAccountDetails,
-      status: "Pending"
-    });
-
     return res.status(200).json({ 
       message: "Withdrawal request submitted successfully",
       newBalance: user.otbalance 
     });
 
   } catch (error) {
-    console.error("Withdraw error:", error);
-    return res.status(500).json({ message: "Server error during withdrawal" });
+    console.error("Withdraw Error Detail:", error);
+    return res.status(500).json({ message: error.message });
   }
 });
+
 
 // 3. Admin Analytics Endpoint
 app.get("/admin/onetime-analytics", async (req, res) => {
@@ -7332,15 +7330,16 @@ app.post("/admin/onetime-reject-cash", async (req, res) => {
   }
 });
 
-// 7. Admin - Fetch Withdraw Requests
-app.get("/admin/onetime-withdraw-requests", async (req, res) => {
+// অ্যাডমিন প্যানেলে Pending Withdrawal আনার API
+app.get("/api/onetime/admin/withdrawals", async (req, res) => {
   try {
-    const requests = await Withdrawal.find({ category: "onetime" }).sort({ createdAt: -1 });
-    return res.json({ success: true, requests });
-  } catch (err) {
-    return res.status(500).json({ success: false, msg: "Error fetching withdraw requests" });
+    const pendingWithdrawals = await Withdrawal.find({ status: "Pending" }).sort({ createdAt: -1 });
+    return res.status(200).json(pendingWithdrawals);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 });
+
 
 // 8. Admin - Action on Withdraw (Approve/Reject with otbalance refund on Reject)
 app.post("/admin/onetime-withdraw-action", async (req, res) => {
