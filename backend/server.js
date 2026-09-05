@@ -7213,43 +7213,62 @@ app.post("/api/onetime/dashboard", async (req, res) => {
 
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    // ১. user.history এর বদলে strictly user.onetimeHistory ব্যবহার
-    const onetimeHistory = user.onetimeHistory || [];
+    const rawHistory = user.onetimeHistory || [];
 
-    // টোটাল হিসাব (Cards Calculation)
     let totalInvested = 0;
     let totalEarnings = Number(user.totalEarnings || user.totalEarning || 0);
     let totalWithdrawn = 0;
     let activeInvestment = null;
 
-    onetimeHistory.forEach((item) => {
-      if (!item) return;
-
+    // হিস্ট্রির ডাটা প্রসেস ও Maturity Date হিসাব করা
+    const formattedHistory = rawHistory.map((rawItem) => {
+      const item = rawItem.toObject ? rawItem.toObject() : { ...rawItem };
       const statusLower = item.status ? item.status.toLowerCase() : "";
 
-      // ইনভেস্টমেন্ট হিসাব
       if (item.type === "OneTimeInvestment") {
         totalInvested += Number(item.amount || 0);
+
+        // Maturity Date ক্যালকুলেশন (যদি ডাটাবেজে না থাকে)
+        let durationDays = parseInt(item.durationDays || item.duration || 15);
+        if (isNaN(durationDays)) durationDays = 15;
+
+        let matDate = item.maturityDate || item.maturity;
+
+        if (!matDate) {
+          let startDate = item.createdAt ? new Date(item.createdAt) : new Date();
+          let mDate = new Date(startDate);
+          mDate.setDate(mDate.getDate() + durationDays);
+
+          const day = String(mDate.getDate()).padStart(2, "0");
+          const month = String(mDate.getMonth() + 1).padStart(2, "0");
+          const year = mDate.getFullYear();
+          matDate = `${day}/${month}/${year}`;
+        }
+
+        item.maturity = matDate;
+        item.maturityDate = matDate;
+
         if (statusLower === "active") {
-          activeInvestment = item; // একটিভ ইনভেস্টমেন্ট ট্র্যাক করা
+          activeInvestment = item;
         }
       }
 
-      // উইথড্রয়াল হিসাব (শুধুমাত্র এপ্রুভ হওয়া উইথড্র)
       if (item.type === "Withdrawal" && (statusLower === "approved" || statusLower === "accepted")) {
         totalWithdrawn += Number(item.amount || 0);
       }
+
+      return item;
     });
 
     return res.status(200).json({
       success: true,
       user: user,
-      history: onetimeHistory, // ফ্রন্টএন্ডে onetimeHistory পাঠানো হচ্ছে
+      history: formattedHistory,
       stats: {
         totalInvested: totalInvested,
         totalEarnings: totalEarnings,
         totalWithdrawn: totalWithdrawn,
-        availableBalance: Number(user.otbalance || 0) // শুধু otbalance
+        availableBalance: Number(user.otbalance || 0)
       },
       hasActiveInvestment: !!activeInvestment,
       activeInvestment: activeInvestment
@@ -7505,22 +7524,31 @@ app.post("/api/onetime/create-investment", async (req, res) => {
     user.otbalance = currentBalance - investAmount;
 
     const durationDays = parseInt(duration) || 15;
-    const maturity = new Date();
-    maturity.setDate(maturity.getDate() + durationDays);
+const startDate = new Date();
+const maturityObj = new Date(startDate);
+maturityObj.setDate(maturityObj.getDate() + durationDays);
 
-    const newInvestment = {
-      _id: new mongoose.Types.ObjectId(),
-      type: "OneTimeInvestment",
-      amount: investAmount,
-      duration: duration || `${durationDays} Days`,
-      durationDays: durationDays,
-      frequency: frequency || "Daily",
-      dailyReturn: Number(dailyReturn || 0),
-      status: "Active",
-      startDate: new Date(),
-      createdAt: new Date(),
-      maturityDate: maturity
-    };
+// DD/MM/YYYY ফরম্যাটে Maturity Date তৈরি
+const day = String(maturityObj.getDate()).padStart(2, "0");
+const month = String(maturityObj.getMonth() + 1).padStart(2, "0");
+const year = maturityObj.getFullYear();
+const formattedMaturity = `${day}/${month}/${year}`;
+
+const newInvestment = {
+  _id: new mongoose.Types.ObjectId(),
+  type: "OneTimeInvestment",
+  amount: investAmount,
+  duration: duration || `${durationDays} Days`,
+  durationDays: durationDays,
+  frequency: frequency || "Daily",
+  dailyReturn: Number(dailyReturn || 0),
+  status: "Active",
+  startDate: startDate,
+  createdAt: startDate,
+  maturity: formattedMaturity,
+  maturityDate: formattedMaturity
+};
+
 
     // ২. শুধুমাত্র onetimeHistory তে সেভ করা
     if (!Array.isArray(user.onetimeHistory)) user.onetimeHistory = [];
