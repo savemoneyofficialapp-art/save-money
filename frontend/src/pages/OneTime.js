@@ -192,10 +192,11 @@ const rawHistory = Array.isArray(data.history)
 
         setHistory(sortedHistory);
 
-        // Strict OneTime Earnings calculation
-        const exactOneTimeEarnings = Number(
-          data.user?.oneTimeTotalEarnings || data.user?.oneTimeEarnings || 0
-        );
+        // Exact OneTime Earnings calculation from backend stats or user data
+const exactOneTimeEarnings = Number(
+  data.stats?.totalEarnings ?? data.user?.oneTimeTotalEarnings ?? data.user?.totalEarnings ?? 0
+);
+
 
         let calculatedInv = 0;
         let calculatedWd = 0;
