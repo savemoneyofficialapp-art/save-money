@@ -7827,6 +7827,79 @@ app.post("/admin/onetime-reject-cash", async (req, res) => {
   }
 });
 
+// ==========================================
+// 1. UPDATE / MODIFY INVESTMENT PLAN
+// ==========================================
+app.post("/admin/onetime-update-investment", async (req, res) => {
+  try {
+    const { investmentId, email, amount, duration, dailyReturn, status } = req.body;
+
+    if (!investmentId) {
+      return res.status(400).json({ success: false, msg: "Investment ID is required" });
+    }
+
+    // আপনার Mongoose Model (যেমন: Investment) দিয়ে আপডেট
+    const updatedInvest = await Investment.findByIdAndUpdate(
+      investmentId,
+      {
+        amount: Number(amount),
+        duration: duration,
+        dailyReturn: Number(dailyReturn),
+        dailyEarning: Number(dailyReturn), // মডেলে যে নামে ফিল্ড আছে
+        status: status
+      },
+      { new: true }
+    );
+
+    if (!updatedInvest) {
+      return res.status(404).json({ success: false, msg: "Investment not found" });
+    }
+
+    return res.json({
+      success: true,
+      msg: "Investment plan updated successfully!",
+      data: updatedInvest
+    });
+  } catch (err) {
+    console.error("Update Investment Error:", err);
+    return res.status(500).json({ success: false, msg: "Server error updating investment" });
+  }
+});
+
+// ==========================================
+// 2. CANCEL INVESTMENT PLAN
+// ==========================================
+app.post("/admin/onetime-cancel-investment", async (req, res) => {
+  try {
+    const { investmentId, email } = req.body;
+
+    if (!investmentId) {
+      return res.status(400).json({ success: false, msg: "Investment ID is required" });
+    }
+
+    // ইনভেস্টমেন্টের স্ট্যাটাস Cancelled করা
+    const cancelledInvest = await Investment.findByIdAndUpdate(
+      investmentId,
+      { status: "Cancelled" },
+      { new: true }
+    );
+
+    if (!cancelledInvest) {
+      return res.status(404).json({ success: false, msg: "Investment plan not found" });
+    }
+
+    return res.json({
+      success: true,
+      msg: "Investment plan cancelled successfully!",
+      data: cancelledInvest
+    });
+  } catch (err) {
+    console.error("Cancel Investment Error:", err);
+    return res.status(500).json({ success: false, msg: "Server error cancelling investment" });
+  }
+});
+
+
 
 
 // ================= DOWNLOAD SLIP =================
