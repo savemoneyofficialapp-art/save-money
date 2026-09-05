@@ -10173,65 +10173,85 @@ cron.schedule('0 12,17 * * *', async () => {
     timezone: "Asia/Kolkata"
 });
 
- 
 // ONETIME DAILY RETURN AUTOMATION (প্রতিদিন রাত ১২:০০ টায় IST)
-cron.schedule("27 16 * * *", async () => {
-  console.log("⏰ Running OneTime Daily Return Cron Job at 12:00 AM IST...");
+cron.schedule("45 16 * * *", async () => {
+  console.log("⏰ Running OneTime Daily Return Cron Job...");
 
   try {
-    // ১. OneTimeInvestment কালেকশন থেকে সব Active ইনভেস্টমেন্ট খুঁজুন
-    const activeInvestments = await OneTimeInvestment.find({ status: "Active" });
+    // ১. সব ইউজারদের সরাসরি ডাটাবেস থেকে নিয়ে আসা (Mongoose filter bypass)
+    const users = await User.find({});
+    let processedUsersCount = 0;
 
-    if (activeInvestments.length === 0) {
-      console.log("ℹ️ No active investments found.");
-      return;
-    }
+    console.log(`🔍 Total Users fetched: ${users.length}`);
 
-    for (let inv of activeInvestments) {
-      // ২. ইনভেস্টমেন্টের ইমেইল দিয়ে ইউজার খুঁজুন
-      const user = await User.findOne({ email: inv.email });
-      if (!user) continue;
-
-      let returnAmt = Number(inv.dailyReturn || 0);
-
-      // যদি dailyReturn না থাকে তবে হিসাব বের করা
-      if (!returnAmt || returnAmt <= 0) {
-        const amount = Number(inv.amount || 0);
-        const duration = String(inv.duration || "");
-
-        if (duration.includes("60")) returnAmt = amount * 0.015;
-        else if (duration.includes("15")) returnAmt = amount * 0.006;
-        else returnAmt = amount * 0.01;
+    for (let user of users) {
+      // ইউজারের onetimeHistory অ্যারে আছে কিনা চেক
+      if (!user.onetimeHistory || !Array.isArray(user.onetimeHistory) || user.onetimeHistory.length === 0) {
+        continue;
       }
 
-      if (returnAmt > 0) {
-        // ৩. ওয়ালেট ব্যালেন্স ও টোটাল আর্নিং আপডেট
-        user.otbalance = Number(user.otbalance || user.otBalance || 0) + returnAmt;
-        user.totalEarnings = Number(user.totalEarnings || user.totalEarning || 0) + returnAmt;
-        user.totalEarning = user.totalEarnings;
+      let totalDailyReturnForUser = 0;
+      let newDailyEntries = [];
 
-        // ৪. হিস্ট্রিতে ডেলি রিটার্ন এন্ট্রি করা
-        const newEntry = {
-          _id: new mongoose.Types.ObjectId(),
-          type: "Daily Return",
-          amount: returnAmt,
-          status: "Approved",
-          createdAt: new Date()
-        };
+      // ২. ইউজারের প্রতিটি onetimeHistory আইটেম লুপ করা
+      user.onetimeHistory.forEach((item) => {
+        if (!item || !item.status) return;
 
-        if (!Array.isArray(user.onetimeHistory)) {
-          user.onetimeHistory = [];
+        const isOneTime = item.type === "OneTimeInvestment";
+        const isActive = item.status.toString().trim().toLowerCase() === "active";
+
+        if (isOneTime && isActive) {
+          let returnAmt = Number(item.dailyReturn || 0);
+          const amount = Number(item.amount || 0);
+
+          // যদি dailyReturn ব্যাকএন্ডে হিসাব করা না থাকে
+          if (!returnAmt || returnAmt <= 0) {
+            const duration = String(item.duration || item.durationDays || "");
+            if (duration.includes("60")) returnAmt = amount * 0.015; // 1.5%
+            else if (duration.includes("15")) returnAmt = amount * 0.006; // 0.6%
+            else returnAmt = amount * 0.01; // Default 1%
+          }
+
+          if (returnAmt > 0) {
+            totalDailyReturnForUser += returnAmt;
+
+            // ডেইলি রিটার্নের জন্য নতুন হিস্ট্রি এন্ট্রি
+            newDailyEntries.push({
+              _id: new mongoose.Types.ObjectId(),
+              type: "Daily Return",
+              amount: returnAmt,
+              status: "Approved",
+              createdAt: new Date()
+            });
+          }
         }
-        user.onetimeHistory.unshift(newEntry);
+      });
 
+      // ৩. যদি এক্টিভ রিটার্ন থাকে তবে otbalance এবং totalEarnings আপডেট করা
+      if (totalDailyReturnForUser > 0) {
+        user.otbalance = Number(user.otbalance || 0) + totalDailyReturnForUser;
+        user.totalEarnings = Number(user.totalEarnings || user.totalEarning || 0) + totalDailyReturnForUser;
+        user.totalEarning = user.totalEarnings; // Safety fallback
+
+        // হিস্ট্রির শুরুতে পুশ করা
+        user.onetimeHistory.unshift(...newDailyEntries);
+
+        user.markModified("otbalance");
+        user.markModified("totalEarnings");
         user.markModified("onetimeHistory");
-        await user.save();
 
-        console.log(`✅ Credited ₹${returnAmt} to ${user.email}`);
+        await user.save();
+        processedUsersCount++;
+        console.log(`✅ Success: Credited ₹${totalDailyReturnForUser} to ${user.email}`);
       }
     }
 
-    console.log("🎉 All OneTime daily returns processed successfully!");
+    if (processedUsersCount === 0) {
+      console.log("ℹ️ No active OneTime investments found in any user record.");
+    } else {
+      console.log(`🎉 Daily returns processed for ${processedUsersCount} user(s)!`);
+    }
+
   } catch (error) {
     console.error("❌ OneTime Daily Return Cron Error:", error);
   }
