@@ -14,11 +14,15 @@ export default function AdminOneTime() {
 
   // Search & Filter States
   const [userSearch, setUserSearch] = useState("");
+  const [investSearch, setInvestSearch] = useState("");
   const [showDepositHistory, setShowDepositHistory] = useState(false);
   const [showWithdrawHistory, setShowWithdrawHistory] = useState(false);
 
   // Popups & Detail View
   const [openWithdrawId, setOpenWithdrawId] = useState(null);
+
+  // Edit / Modify Investment Modal State
+  const [editingInvest, setEditingInvest] = useState(null);
 
   // Wallet Adjust State
   const [adjustEmail, setAdjustEmail] = useState("");
@@ -109,7 +113,7 @@ export default function AdminOneTime() {
         : (cData?.requests || cData?.cashRequests || cData?.data || []);
       setCash(cashList);
 
-      // Safe parse for Withdrawal Requests (FIXED FOR ADMIN VIEW)
+      // Safe parse for Withdrawal Requests
       const wData = await apiGet("/admin/onetime-withdraw-requests");
       const withdrawList = Array.isArray(wData)
         ? wData
@@ -241,6 +245,48 @@ export default function AdminOneTime() {
     }
   };
 
+  // NEW: Modify / Update Investment Handler
+  const handleUpdateInvestment = async () => {
+    if (!editingInvest) return;
+
+    const d = await apiPost("/admin/onetime-update-investment", {
+      investmentId: editingInvest._id || editingInvest.id,
+      email: editingInvest.email || editingInvest.userEmail,
+      amount: Number(editingInvest.amount),
+      duration: editingInvest.duration,
+      dailyReturn: Number(editingInvest.dailyReturn),
+      status: editingInvest.status
+    });
+
+    if (d?.success || d?.msg) {
+      toast.success(d?.msg || "Investment plan updated successfully!");
+      setEditingInvest(null);
+      load();
+    } else {
+      toast.error(d?.msg || "Failed to update investment");
+    }
+  };
+
+  // NEW: Cancel Investment Handler
+  const handleCancelInvestment = async (inv) => {
+    const confirmCancel = window.confirm(
+      `Are you sure you want to CANCEL this investment for ${inv.email || inv.userEmail || "user"}?`
+    );
+    if (!confirmCancel) return;
+
+    const d = await apiPost("/admin/onetime-cancel-investment", {
+      investmentId: inv._id || inv.id,
+      email: inv.email || inv.userEmail
+    });
+
+    if (d?.success || d?.msg) {
+      toast.info(d?.msg || "Investment plan cancelled!");
+      load();
+    } else {
+      toast.error(d?.msg || "Failed to cancel investment");
+    }
+  };
+
   const money = (n) =>
     `₹${Number(n || 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
@@ -264,6 +310,12 @@ export default function AdminOneTime() {
     (u.name || "").toLowerCase().includes(userSearch.toLowerCase())
   );
 
+  const filteredInvestments = investments.filter((i) =>
+    (i.email || i.userEmail || "").toLowerCase().includes(investSearch.toLowerCase()) ||
+    (i.status || "").toLowerCase().includes(investSearch.toLowerCase()) ||
+    (i.duration || "").toLowerCase().includes(investSearch.toLowerCase())
+  );
+
   const pendingCashRequests = cash.filter(
     (c) => (c.status || "").toLowerCase() === "pending" || !c.status
   );
@@ -271,7 +323,6 @@ export default function AdminOneTime() {
     (c) => (c.status || "").toLowerCase() !== "pending" && c.status
   );
 
-  // Robust status check for withdraws
   const pendingWithdraws = withdraws.filter(
     (w) => (w.status || "").toLowerCase() === "pending"
   );
@@ -280,11 +331,11 @@ export default function AdminOneTime() {
   );
 
   const totalInvestedAmt = investments
-    .filter((i) => (i.status || "").toLowerCase() === "active" || !i.status)
+    .filter((i) => (i.status || "").toLowerCase() === "active" || (i.status || "").toLowerCase() === "approved" || !i.status)
     .reduce((sum, i) => sum + Number(i.amount || 0), 0);
 
   const totalDisbursedAmt = withdraws
-    .filter((w) => (w.status || "").toLowerCase() === "success")
+    .filter((w) => (w.status || "").toLowerCase() === "success" || (w.status || "").toLowerCase() === "approved")
     .reduce((sum, w) => sum + Number(w.amount || 0), 0);
 
   return (
@@ -382,6 +433,160 @@ export default function AdminOneTime() {
           </table>
         </div>
       </div>
+
+      {/* 🚀 NEW SECTION: INVESTED USERS & INVESTMENT CONTROL CENTER */}
+      <div style={styles.section}>
+        <div style={styles.sectionHeaderRow}>
+          <h2 style={styles.sectionTitle}>💼 Invested Users & Active Plans Directory</h2>
+          <input
+            style={styles.searchInput}
+            placeholder="🔍 Search Email / Status..."
+            value={investSearch}
+            onChange={(e) => setInvestSearch(e.target.value)}
+          />
+        </div>
+
+        <div style={styles.tableWrap}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>User Email</th>
+                <th style={styles.th}>Amount</th>
+                <th style={styles.th}>Duration</th>
+                <th style={styles.th}>Daily Return</th>
+                <th style={styles.th}>Status</th>
+                <th style={{ ...styles.th, textAlign: "center" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredInvestments.length === 0 ? (
+                <tr><td colSpan="6" style={styles.emptyText}>No investments found</td></tr>
+              ) : (
+                filteredInvestments.map((inv, idx) => {
+                  const status = (inv.status || "Active").toLowerCase();
+                  const isActive = status === "active" || status === "approved";
+
+                  return (
+                    <tr key={inv._id || idx} style={styles.tr}>
+                      <td style={styles.td}>
+                        <div style={{ fontWeight: "600", color: "#f8fafc" }}>{inv.email || inv.userEmail || "User"}</div>
+                        <div style={{ fontSize: "11px", color: "#64748b" }}>ID: {inv._id || "N/A"}</div>
+                      </td>
+                      <td style={{ ...styles.td, color: "#22c55e", fontWeight: "bold" }}>
+                        {money(inv.amount)}
+                      </td>
+                      <td style={styles.td}>
+                        <span style={styles.badgeBlue}>{inv.duration || "N/A"}</span>
+                      </td>
+                      <td style={{ ...styles.td, color: "#38bdf8", fontWeight: "bold" }}>
+                        {money(inv.dailyReturn || inv.dailyEarning || 0)}/day
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{
+                          padding: "4px 8px", borderRadius: "6px", fontWeight: "bold", fontSize: "11px",
+                          background: isActive ? "rgba(34,197,94,0.2)" : status === "cancelled" ? "rgba(239,68,68,0.2)" : "rgba(234,179,8,0.2)",
+                          color: isActive ? "#22c55e" : status === "cancelled" ? "#f87171" : "#eab308"
+                        }}>
+                          {inv.status || "Active"}
+                        </span>
+                      </td>
+                      <td style={{ ...styles.td, textAlign: "center" }}>
+                        <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                          <button
+                            style={styles.editBtn}
+                            onClick={() => setEditingInvest({ ...inv })}
+                          >
+                            ✏️ Modify
+                          </button>
+                          {isActive && (
+                            <button
+                              style={styles.cancelBtn}
+                              onClick={() => handleCancelInvestment(inv)}
+                            >
+                              ❌ Cancel Plan
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 🛠️ MODAL FOR MODIFYING INVESTMENT */}
+      {editingInvest && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <div style={styles.modalHeader}>
+              <h3 style={{ margin: 0, color: "#fff" }}>⚙️ Modify Investment Plan</h3>
+              <button style={styles.closeBtn} onClick={() => setEditingInvest(null)}>✕</button>
+            </div>
+
+            <p style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "15px" }}>
+              Target User: <b style={{ color: "#38bdf8" }}>{editingInvest.email || editingInvest.userEmail}</b>
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div>
+                <label style={styles.label}>Investment Amount (₹)</label>
+                <input
+                  style={styles.input}
+                  type="number"
+                  value={editingInvest.amount || 0}
+                  onChange={(e) => setEditingInvest({ ...editingInvest, amount: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={styles.label}>Duration / Tenure (e.g. 15 Days, 60 Days)</label>
+                <input
+                  style={styles.input}
+                  value={editingInvest.duration || ""}
+                  onChange={(e) => setEditingInvest({ ...editingInvest, duration: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={styles.label}>Daily Return Amount (₹)</label>
+                <input
+                  style={styles.input}
+                  type="number"
+                  value={editingInvest.dailyReturn || editingInvest.dailyEarning || 0}
+                  onChange={(e) => setEditingInvest({ ...editingInvest, dailyReturn: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={styles.label}>Plan Status</label>
+                <select
+                  style={styles.input}
+                  value={editingInvest.status || "Active"}
+                  onChange={(e) => setEditingInvest({ ...editingInvest, status: e.target.value })}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <button style={styles.fullGreenBtn} onClick={handleUpdateInvestment}>
+                  💾 Save Changes
+                </button>
+                <button style={styles.cancelModalBtn} onClick={() => setEditingInvest(null)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 2. ONETIME ADD FUND REQUESTS */}
       <div style={styles.section}>
@@ -676,15 +881,28 @@ const styles = {
   emptyText: { color: "#64748b", textAlign: "center", fontSize: "13px", padding: "15px" },
   subText: { color: "#94a3b8", fontSize: "13px", margin: "10px 12px" },
 
+  badgeBlue: { background: "rgba(56,189,248,0.15)", color: "#38bdf8", padding: "4px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "600" },
+
   adjustBtn: { background: "#22c55e", color: "#030712", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", fontSize: "12px", cursor: "pointer" },
   assignBtn: { background: "#3b82f6", color: "#ffffff", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", fontSize: "12px", cursor: "pointer" },
+  editBtn: { background: "#eab308", color: "#030712", border: "none", padding: "6px 10px", borderRadius: "6px", fontWeight: "bold", fontSize: "12px", cursor: "pointer" },
+  cancelBtn: { background: "#ef4444", color: "#ffffff", border: "none", padding: "6px 10px", borderRadius: "6px", fontWeight: "bold", fontSize: "12px", cursor: "pointer" },
+  
   historyToggleBtn: { background: "rgba(59,130,246,0.15)", border: "1px solid #3b82f6", color: "#60a5fa", padding: "6px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold", cursor: "pointer" },
   smallGreen: { background: "#22c55e", border: "none", color: "#030712", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "12px" },
   smallRed: { background: "#ef4444", border: "none", color: "white", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "12px" },
   inspectBtn: { background: "#1e293b", border: "1px solid #334155", color: "#cbd5e1", padding: "6px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" },
-  fullGreenBtn: { width: "100%", background: "#22c55e", border: "none", padding: "12px", borderRadius: "8px", color: "#030712", fontWeight: "bold", fontSize: "14px", marginTop: "14px", cursor: "pointer" },
+  fullGreenBtn: { width: "100%", background: "#22c55e", border: "none", padding: "12px", borderRadius: "8px", color: "#030712", fontWeight: "bold", fontSize: "14px", cursor: "pointer" },
+  cancelModalBtn: { width: "100%", background: "#334155", border: "none", padding: "12px", borderRadius: "8px", color: "#ffffff", fontWeight: "bold", fontSize: "14px", cursor: "pointer" },
 
   input: { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #1e293b", background: "#030712", color: "white", fontSize: "13px", boxSizing: "border-box" },
+  label: { fontSize: "12px", color: "#94a3b8", display: "block", marginBottom: "4px" },
   withdrawCard: { background: "#030712", border: "1px solid #1e293b", borderRadius: "8px", padding: "12px", marginTop: "10px" },
-  bankBox: { marginTop: "10px", padding: "10px", background: "#0f172a", borderRadius: "6px", fontSize: "13px" }
+  bankBox: { marginTop: "10px", padding: "10px", background: "#0f172a", borderRadius: "6px", fontSize: "13px" },
+
+  // Modal Styles
+  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
+  modalContent: { background: "#0b0f19", border: "1px solid #1e293b", borderRadius: "12px", padding: "20px", width: "90%", maxWidth: "450px" },
+  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" },
+  closeBtn: { background: "none", border: "none", color: "#94a3b8", fontSize: "18px", cursor: "pointer" }
 };
