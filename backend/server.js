@@ -7225,8 +7225,11 @@ app.post("/api/onetime/dashboard", async (req, res) => {
       const statusLower = item.status ? item.status.toLowerCase() : "";
       const typeLower = item.type ? item.type.toLowerCase() : "";
 
+      const isInvestment = typeLower.includes("onetimeinvestment") || typeLower.includes("deposit") || typeLower.includes("add fund");
+      const isWithdrawal = typeLower.includes("withdrawal") || typeLower.includes("withdraw");
+
       // ১. ইনভেস্টমেন্ট হিসাব
-      if (typeLower === "onetimeinvestment") {
+      if (isInvestment) {
         totalInvested += Number(item.amount || 0);
 
         let durationDays = parseInt(item.durationDays || item.duration || 15);
@@ -7252,36 +7255,32 @@ app.post("/api/onetime/dashboard", async (req, res) => {
         }
       }
 
-      // ২. ডেলি রিটার্ন / আর্নিং হিসাব (Total Earnings)
-      if (
-        (typeLower.includes("return") || typeLower.includes("daily") || typeLower.includes("plan")) &&
-        (statusLower === "approved" || statusLower === "success") &&
-        typeLower !== "onetimeinvestment"
-      ) {
+      // ২. ডেলি রিটার্ন / আর্নিং হিসাব (ইনভেস্টমেন্ট ও উইথড্র ছাড়া সকল সফল এন্ট্রি)
+      if (!isInvestment && !isWithdrawal && (statusLower === "approved" || statusLower === "success")) {
         totalEarnings += Number(item.amount || 0);
       }
 
       // ৩. উইথড্রয়াল হিসাব
-      if (typeLower === "withdrawal" && (statusLower === "approved" || statusLower === "accepted")) {
+      if (isWithdrawal && (statusLower === "approved" || statusLower === "accepted")) {
         totalWithdrawn += Number(item.amount || 0);
       }
 
       return item;
     });
 
-    // ডাটাবেজের ফিল্ডের সাথে ব্যাকআপ ফোলব্যাক
-    const savedEarnings = Number(user.otTotalEarnings || user.oneTimeTotalEarnings || user.totalEarnings || user.totalEarning || 0);
-    if (savedEarnings > totalEarnings) {
-      totalEarnings = savedEarnings;
-    }
+    // ইউজারের অবজেক্টটি ক্লোন করে আর্নিং ফিল্ড জোরপূর্বক সেট করা
+    const userObj = user.toObject ? user.toObject() : { ...user };
+    userObj.totalEarnings = totalEarnings;
+    userObj.totalEarning = totalEarnings;
 
     return res.status(200).json({
       success: true,
-      user: user,
+      user: userObj, // এখানে আর্নিং আপডেট করে পাঠানো হচ্ছে
       history: formattedHistory,
       stats: {
         totalInvested: totalInvested,
-        totalEarnings: totalEarnings, // এখন সঠিকভাবে যোগফল দেখাবে
+        totalEarnings: totalEarnings,
+        totalEarning: totalEarnings, // উভয় বানান রাখা হলো
         totalWithdrawn: totalWithdrawn,
         availableBalance: Number(user.otbalance || 0)
       },
@@ -7293,6 +7292,7 @@ app.post("/api/onetime/dashboard", async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 });
+
 
 
 
