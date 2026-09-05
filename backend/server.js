@@ -7524,7 +7524,7 @@ app.post("/api/onetime/create-investment", async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "ইনভেস্টমেন্ট সফলভাবে শুরু হয়েছে!",
+      message: "INVESTMENT IS SUCCESSFULLY START!",
       investment: newInvestment
     });
   } catch (error) {
@@ -7639,9 +7639,11 @@ app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req
       });
     }
 
+    const cleanEmail = email.trim().toLowerCase();
+
     // ১. Txn কালেকশনে ডাটা সেভ
     const newTxn = new Txn({
-      email,
+      email: cleanEmail,
       amount: Number(amount),
       status: "Pending",
       type: "Deposit",
@@ -7651,8 +7653,8 @@ app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req
     });
     await newTxn.save();
 
-    // ২. User খুঁজে user.history অ্যারেতে সাথে সাথে যোগ করা
-    const user = await User.findOne({ email });
+    // ২. User খুঁজে user.onetimeHistory অ্যারেতে ডাটা যোগ করা
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } });
     if (user) {
       const depositHistory = {
         _id: newTxn._id,
@@ -7665,10 +7667,10 @@ app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req
         createdAt: new Date()
       };
 
-      if (!user.history) user.history = [];
-      user.history.unshift(depositHistory);
+      if (!Array.isArray(user.onetimeHistory)) user.onetimeHistory = [];
+      user.onetimeHistory.unshift(depositHistory);
 
-      user.markModified("history");
+      user.markModified("onetimeHistory");
       await user.save();
     }
 
@@ -7683,20 +7685,19 @@ app.post("/api/onetime/deposit-request", upload.single("screenshot"), async (req
   }
 });
 
-// ===================================================
-// ADMIN APPROVE API (Fail-proof Balance & History Update)
-// ===================================================
+
+// ADMIN APPROVE API (Only otbalance & onetimeHistory)
 app.post("/admin/onetime-approve-cash", async (req, res) => {
   try {
     const { requestId, userEmail, email, amount } = req.body;
 
-    // ১. Txn ডাটাবেস থেকে আগে রিকোয়েস্টটি খুঁজে বের করা
+    // ১. Txn কালেকশন থেকে ডাটা খুঁজে বের করা
     let txn = null;
     if (requestId) {
       txn = await Txn.findById(requestId);
     }
 
-    // Email এবং Amount নিশ্চিত করা (ফ্রন্টএন্ড থেকে না আসলেও Txn থেকে নেবে)
+    // Email এবং Amount নিশ্চিত করা
     const targetEmail = userEmail || email || (txn ? txn.email : null);
     const depositAmount = Number(amount || (txn ? txn.amount : 0));
 
@@ -7704,32 +7705,30 @@ app.post("/admin/onetime-approve-cash", async (req, res) => {
       return res.status(400).json({ success: false, message: "User email not found for this request" });
     }
 
-    // ২. Txn কালেকশনে Status 'Approved' করা
+    // ২. Txn কালেকশনের Status 'Approved' করা
     if (txn) {
       txn.status = "Approved";
       await txn.save();
     }
 
-    // ৩. ইউজার খুঁজে বের করা
-    const user = await User.findOne({ email: targetEmail });
+    // ৩. ইউজার খুঁজে বের করা (Case-insensitive check)
+    const cleanEmail = targetEmail.trim().toLowerCase();
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } });
+
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found with email: " + targetEmail });
     }
 
-    // ৪. ইউজারের সবকটি ওয়ালেট ফিল্ডে ব্যালেন্স যোগ করা (যাতে Available Balance কার্ডে শো করে)
+    // ৪. শুধুমাত্র otbalance-এ টাকা যোগ করা (অন্য কোনো wallet বা balance নয়)
     user.otbalance = Number(user.otbalance || 0) + depositAmount;
-    user.balance = Number(user.balance || 0) + depositAmount;
-    if (user.wallet !== undefined) {
-      user.wallet = Number(user.wallet || 0) + depositAmount;
-    }
 
-    // ৫. user.history অ্যারেতে Status 'Approved' আপডেট করা
-    if (!user.history) user.history = [];
+    // ৫. user.onetimeHistory আপডেট করা
+    if (!Array.isArray(user.onetimeHistory)) user.onetimeHistory = [];
 
     let updatedInHistory = false;
 
-    // History অ্যারে লুপ করে স্ট্যাটাস আপডেট
-    user.history = user.history.map((item) => {
+    // onetimeHistory-র ভেতরের আইটেম আপডেট
+    user.onetimeHistory = user.onetimeHistory.map((item) => {
       const isSameId = requestId && item._id && item._id.toString() === requestId.toString();
       const isSameTxnId = txn && txn.transactionId && item.transactionId === txn.transactionId;
 
@@ -7743,16 +7742,16 @@ app.post("/admin/onetime-approve-cash", async (req, res) => {
       return item;
     });
 
-    // যদি ID দিয়ে না পাওয়া যায়, তবে সর্বশেষ Pending "Add Fund" টি Approved করে দেওয়া
+    // যদি ID ম্যাচ না করে, তবে পেন্ডিং Add Fund খুঁজে Approved করা অথবা নতুন ঢোকানো
     if (!updatedInHistory) {
-      const pendingIndex = user.history.findIndex(
-        (h) => (h.type === "Add Fund" || h.type === "Deposit") && (h.status === "Pending" || !h.status)
+      const pendingIndex = user.onetimeHistory.findIndex(
+        (h) => (h.type === "Add Fund" || h.type === "Deposit") && h.status === "Pending"
       );
 
       if (pendingIndex !== -1) {
-        user.history[pendingIndex].status = "Approved";
+        user.onetimeHistory[pendingIndex].status = "Approved";
       } else {
-        user.history.unshift({
+        user.onetimeHistory.unshift({
           _id: requestId || new mongoose.Types.ObjectId(),
           type: "Add Fund",
           amount: depositAmount,
@@ -7763,19 +7762,22 @@ app.post("/admin/onetime-approve-cash", async (req, res) => {
       }
     }
 
-    user.markModified("history");
+    // Mongoose-এ onetimeHistory ট্র্যাকিং ও সেভ করা
+    user.markModified("onetimeHistory");
     await user.save();
 
     return res.status(200).json({
       success: true,
-      message: "Fund approved, wallet updated & history marked Approved!",
-      updatedBalance: user.balance
+      message: "Fund approved, otbalance updated & onetimeHistory marked Approved!",
+      updatedBalance: user.otbalance
     });
+
   } catch (error) {
     console.error("Approve Cash Error:", error);
     return res.status(500).json({ success: false, message: "Error approving fund request: " + error.message });
   }
 });
+
 
 
 
@@ -7791,25 +7793,30 @@ app.post("/admin/onetime-reject-cash", async (req, res) => {
 
     const rejectReasonText = reason || "Rejected by Admin";
 
-    // ১. Txn কালেকশনে রিজেক্ট ও কারণ সেভ
-    reqItem.status = "rejected";
+    // ১. Txn কালেকশনে রিজেক্ট ও কারণ সেভ করা
+    reqItem.status = "Rejected";
     reqItem.rejectReason = rejectReasonText;
     await reqItem.save();
 
-    // ২. ইউজার খুঁজে user.history আপডেট করা
+    // ২. ইউজার খুঁজে user.onetimeHistory আপডেট করা
     const targetEmail = userEmail || reqItem.email;
-    const user = await User.findOne({ email: targetEmail });
+    const cleanEmail = targetEmail ? targetEmail.trim().toLowerCase() : "";
+    
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } });
 
-    if (user && user.history) {
-      const historyIndex = user.history.findIndex(
-        (h) => h._id && h._id.toString() === requestId.toString()
+    if (user) {
+      if (!Array.isArray(user.onetimeHistory)) user.onetimeHistory = [];
+
+      const historyIndex = user.onetimeHistory.findIndex(
+        (h) => (h._id && h._id.toString() === requestId.toString()) || 
+               (reqItem.transactionId && h.transactionId === reqItem.transactionId)
       );
 
       if (historyIndex !== -1) {
-        user.history[historyIndex].status = "Rejected";
-        user.history[historyIndex].rejectReason = rejectReasonText;
+        user.onetimeHistory[historyIndex].status = "Rejected";
+        user.onetimeHistory[historyIndex].rejectReason = rejectReasonText;
       } else {
-        user.history.unshift({
+        user.onetimeHistory.unshift({
           _id: reqItem._id,
           type: "Add Fund",
           amount: reqItem.amount,
@@ -7820,7 +7827,7 @@ app.post("/admin/onetime-reject-cash", async (req, res) => {
         });
       }
 
-      user.markModified("history");
+      user.markModified("onetimeHistory");
       await user.save();
     }
 
@@ -7830,6 +7837,7 @@ app.post("/admin/onetime-reject-cash", async (req, res) => {
     return res.status(500).json({ msg: "Error rejecting fund request" });
   }
 });
+
 
 // ==========================================
 // 1. UPDATE / MODIFY INVESTMENT PLAN
