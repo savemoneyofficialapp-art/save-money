@@ -10214,7 +10214,7 @@ cron.schedule('0 12,17 * * *', async () => {
 });
 
 // ONETIME DAILY RETURN AUTOMATION (প্রতিদিন রাত ১২:০০ টায় IST)
-cron.schedule("35 0 * * *", async () => {
+cron.schedule("0 0 * * *", async () => {
   console.log("⏰ Running OneTime Daily Return Cron Job...");
 
   try {
