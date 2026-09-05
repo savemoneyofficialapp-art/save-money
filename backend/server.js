@@ -7261,9 +7261,10 @@ app.post("/api/onetime/dashboard", async (req, res) => {
       }
 
       // ৩. উইথড্রয়াল হিসাব
-      if (isWithdrawal && (statusLower === "approved" || statusLower === "accepted")) {
-        totalWithdrawn += Number(item.amount || 0);
-      }
+if (isWithdrawal && (statusLower === "approved" || statusLower === "accepted" || statusLower === "success" || statusLower === "completed")) {
+  totalWithdrawn += Number(item.amount || 0);
+}
+
 
       return item;
     });
