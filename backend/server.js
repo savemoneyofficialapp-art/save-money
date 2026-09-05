@@ -7222,8 +7222,8 @@ app.post("/api/onetime/dashboard", async (req, res) => {
 
     const formattedHistory = rawHistory.map((rawItem) => {
       const item = rawItem.toObject ? rawItem.toObject() : { ...rawItem };
-      const statusLower = item.status ? item.status.toLowerCase() : "";
-      const typeLower = item.type ? item.type.toLowerCase() : "";
+      const statusLower = (item.status || "").toLowerCase();
+      const typeLower = (item.type || "").toLowerCase();
 
       const isInvestment = typeLower.includes("onetimeinvestment") || typeLower.includes("deposit") || typeLower.includes("add fund");
       const isWithdrawal = typeLower.includes("withdrawal") || typeLower.includes("withdraw");
@@ -7255,7 +7255,7 @@ app.post("/api/onetime/dashboard", async (req, res) => {
         }
       }
 
-      // ২. ডেলি রিটার্ন / আর্নিং হিসাব (ইনভেস্টমেন্ট ও উইথড্র ছাড়া সকল সফল এন্ট্রি)
+      // ২. ডেইলি রিটার্ন / আর্নিং হিসাব
       if (!isInvestment && !isWithdrawal && (statusLower === "approved" || statusLower === "success")) {
         totalEarnings += Number(item.amount || 0);
       }
@@ -7268,19 +7268,42 @@ app.post("/api/onetime/dashboard", async (req, res) => {
       return item;
     });
 
-    // ইউজারের অবজেক্টটি ক্লোন করে আর্নিং ফিল্ড জোরপূর্বক সেট করা
+    // ⚡ MongoDB ডাটাবেজে স্থায়ীভাবে সেভ করার লজিক (Auto DB Update)
+    let isDbModified = false;
+
+    if (Number(user.totalEarnings) !== totalEarnings) {
+      user.totalEarnings = totalEarnings;
+      user.markModified("totalEarnings");
+      isDbModified = true;
+    }
+    if (Number(user.totalEarning) !== totalEarnings) {
+      user.totalEarning = totalEarnings;
+      user.markModified("totalEarning");
+      isDbModified = true;
+    }
+    if (Number(user.oneTimeTotalEarnings) !== totalEarnings) {
+      user.oneTimeTotalEarnings = totalEarnings;
+      user.markModified("oneTimeTotalEarnings");
+      isDbModified = true;
+    }
+
+    if (isDbModified) {
+      await user.save();
+    }
+
     const userObj = user.toObject ? user.toObject() : { ...user };
     userObj.totalEarnings = totalEarnings;
     userObj.totalEarning = totalEarnings;
 
     return res.status(200).json({
       success: true,
-      user: userObj, // এখানে আর্নিং আপডেট করে পাঠানো হচ্ছে
+      user: userObj,
       history: formattedHistory,
       stats: {
         totalInvested: totalInvested,
         totalEarnings: totalEarnings,
-        totalEarning: totalEarnings, // উভয় বানান রাখা হলো
+        totalEarning: totalEarnings,
+        oneTimeTotalEarnings: totalEarnings,
         totalWithdrawn: totalWithdrawn,
         availableBalance: Number(user.otbalance || 0)
       },
