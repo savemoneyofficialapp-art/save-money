@@ -216,7 +216,7 @@ const exactOneTimeEarnings = Number(
         setStats({
           totalInvested: data.stats?.totalInvested ?? calculatedInv,
           totalEarnings: exactOneTimeEarnings,
-          totalWithdrawn: data.stats?.totalWithdrawn ?? calculatedWd,
+          totalWithdrawn: data.stats?.totalWithdrawn || calculatedWd,
           availableBalance: Number(data.user?.otbalance || data.user?.otBalance || 0)
         });
 
