@@ -7467,6 +7467,7 @@ app.get("/admin/onetime-investments", async (req, res) => {
   }
 });
 
+// 11. Create OneTime Investment
 app.post("/api/onetime/create-investment", async (req, res) => {
   try {
     const { email, amount, duration, frequency, dailyReturn } = req.body;
@@ -7476,15 +7477,15 @@ app.post("/api/onetime/create-investment", async (req, res) => {
     const user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } });
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    // ১টি এক্টিভ ইনভেস্টমেন্ট থাকলে নতুন ইনভেস্টমেন্ট আটকানো
-    const hasActive = (user.history || []).some(
-      (item) => item.type === "OneTimeInvestment" && item.status === "Active"
+    // ১. onetimeHistory তে এক্টিভ ইনভেস্টমেন্ট চেক (history এর বদলে onetimeHistory)
+    const hasActive = (user.onetimeHistory || []).some(
+      (item) => item.status && item.status.toLowerCase() === "active"
     );
 
     if (hasActive) {
       return res.status(400).json({
         success: false,
-        message: "আপনার একটি ইনভেস্টমেন্ট বর্তমানে রানিং আছে। ম্যাচুরিটি শেষ না হওয়া পর্যন্ত নতুন ইনভেস্ট করা যাবে না।"
+        message: "আপনার একটি ইনভেস্টমেন্ট বর্তমানে রানিং আছে। সেটি শেষ না হওয়া পর্যন্ত নতুন ইনভেস্ট করা যাবে না।"
       });
     }
 
@@ -7514,9 +7515,11 @@ app.post("/api/onetime/create-investment", async (req, res) => {
       maturityDate: maturity
     };
 
-    if (!user.history) user.history = [];
-    user.history.unshift(newInvestment);
-    user.markModified("history");
+    // ২. শুধুমাত্র onetimeHistory তে সেভ করা
+    if (!Array.isArray(user.onetimeHistory)) user.onetimeHistory = [];
+    user.onetimeHistory.unshift(newInvestment);
+    
+    user.markModified("onetimeHistory");
     await user.save();
 
     return res.status(200).json({
@@ -7529,6 +7532,7 @@ app.post("/api/onetime/create-investment", async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 // 12. Admin - Cancel OneTime Investment
 app.post("/admin/onetime-cancel-investment", async (req, res) => {
