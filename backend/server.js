@@ -7213,24 +7213,30 @@ app.post("/api/onetime/dashboard", async (req, res) => {
 
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    const history = user.history || [];
+    // ১. user.history এর বদলে strictly user.onetimeHistory ব্যবহার
+    const onetimeHistory = user.onetimeHistory || [];
 
     // টোটাল হিসাব (Cards Calculation)
     let totalInvested = 0;
-    let totalEarnings = Number(user.totalEarning || user.totalEarnings || 0);
+    let totalEarnings = Number(user.totalEarnings || user.totalEarning || 0);
     let totalWithdrawn = 0;
     let activeInvestment = null;
 
-    history.forEach((item) => {
+    onetimeHistory.forEach((item) => {
+      if (!item) return;
+
+      const statusLower = item.status ? item.status.toLowerCase() : "";
+
       // ইনভেস্টমেন্ট হিসাব
       if (item.type === "OneTimeInvestment") {
         totalInvested += Number(item.amount || 0);
-        if (item.status === "Active") {
+        if (statusLower === "active") {
           activeInvestment = item; // একটিভ ইনভেস্টমেন্ট ট্র্যাক করা
         }
       }
+
       // উইথড্রয়াল হিসাব (শুধুমাত্র এপ্রুভ হওয়া উইথড্র)
-      if (item.type === "Withdrawal" && (item.status === "Approved" || item.status === "Accepted")) {
+      if (item.type === "Withdrawal" && (statusLower === "approved" || statusLower === "accepted")) {
         totalWithdrawn += Number(item.amount || 0);
       }
     });
@@ -7238,12 +7244,12 @@ app.post("/api/onetime/dashboard", async (req, res) => {
     return res.status(200).json({
       success: true,
       user: user,
-      history: history,
+      history: onetimeHistory, // ফ্রন্টএন্ডে onetimeHistory পাঠানো হচ্ছে
       stats: {
         totalInvested: totalInvested,
         totalEarnings: totalEarnings,
-        totalWithdrawn: totalWithdrawn, // টোটাল রিটার্ন বাদ দিয়ে টোটাল উইথড্র
-        availableBalance: Number(user.otbalance || 0)
+        totalWithdrawn: totalWithdrawn,
+        availableBalance: Number(user.otbalance || 0) // শুধু otbalance
       },
       hasActiveInvestment: !!activeInvestment,
       activeInvestment: activeInvestment
@@ -7253,6 +7259,7 @@ app.post("/api/onetime/dashboard", async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 });
+
 
 app.post("/api/onetime/withdraw", async (req, res) => {
   try {
