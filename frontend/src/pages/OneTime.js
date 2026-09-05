@@ -747,9 +747,9 @@ const rawHistory = Array.isArray(data.history)
                     const isWithdraw = itemType.includes("withdraw");
 
                     const rawStatus = item.status || "Pending";
-                    const isSuccess = ["approved", "accepted", "success"].includes(rawStatus.toLowerCase());
+                    const isSuccess = ["approved", "accepted", "success", "active", "completed"].includes(rawStatus.toLowerCase());
                     const isRejected = ["rejected", "cancelled", "failed"].includes(rawStatus.toLowerCase());
-                    const displayStatus = isSuccess ? "Success" : isRejected ? "Rejected" : "Pending";
+                    const displayStatus = rawStatus.toLowerCase() === "active" ? "Active" : (isSuccess ? "Success" : isRejected ? "Rejected" : "Pending");
 
                     return (
                       <tr key={item._id || idx}>
