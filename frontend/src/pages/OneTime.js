@@ -285,7 +285,8 @@ const rawHistory = Array.isArray(data.history)
           amount: Number(amount),
           duration: `${tenure} Days`,
           frequency,
-          dailyReturn
+          dailyReturn,
+          status: "Active"
         })
       });
 
