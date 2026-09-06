@@ -230,32 +230,31 @@ export default function Home() {
 
   // 👇 লেটেস্ট আপডেট লোড করার সম্পূর্ণ আপগ্রেডেড ফাংশন
   const loadLatestUpdate = async () => {
-  try {
-    const res = await fetch(`${API}/latest-news`, {
-      method: "GET",
-      headers: {
-        "Cache-Control": "no-cache" // যাতে ব্রাউজার পুরাতন নোটিশ ক্যাশ করে না রাখে
+    try {
+      const res = await fetch(`${API}/latest-news`, {
+        method: "GET",
+        headers: {
+          "Cache-Control": "no-cache" // যাতে ব্রাউজার পুরাতন নোটিশ ক্যাশ করে না রাখে
+        }
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      
+      if (data) {
+        // ব্যাকএন্ডের যে কোনো ফিল্ড থেকে টেক্সট তুলে আনা
+        const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
+
+        if (msg && msg.trim() !== "") {
+          setLatestUpdateText(msg);
+          setLatestUpdate(msg);
+        }
       }
-    });
-
-    if (!res.ok) return;
-
-    const data = await res.json();
-    
-    if (data) {
-      // ব্যাকএন্ডের যে কোনো ফিল্ড থেকে টেক্সট তুলে আনা
-      const msg = data.message || data.latestUpdate || data.announcement || (typeof data === 'string' ? data : "");
-
-      if (msg && msg.trim() !== "") {
-        setLatestUpdateText(msg);
-        setLatestUpdate(msg);
-      }
+    } catch (err) {
+      console.error("Failed to fetch latest news:", err);
     }
-  } catch (err) {
-    console.error("Failed to fetch latest news:", err);
-  }
-};
-
+  };
 
   const handleLogout = async () => {
     try {
@@ -419,6 +418,7 @@ export default function Home() {
           transform: isDrawerOpen ? "translateX(0)" : "translateX(-100%)"
         }} onClick={(e) => e.stopPropagation()}>
           
+          {/* HEADER WITH LOGO */}
           <div style={styles.drawerHeader}>
             <div style={styles.drawerBrand}>
               <img 
@@ -429,7 +429,10 @@ export default function Home() {
                   e.target.style.display = 'none';
                 }}
               />
-              <h3 style={styles.drawerLogoText}>Save Money</h3>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
+                <span style={styles.drawerLogoSubtext}>Invest Small, Earn Big</span>
+              </div>
             </div>
             <button style={styles.drawerCloseBtn} onClick={() => setIsDrawerOpen(false)}>✕</button>
           </div>
@@ -448,6 +451,88 @@ export default function Home() {
               <span style={styles.drawerPlanText}>PLAN</span>
               {isDownloadingPlan && <div style={styles.progressShutter}></div>}
             </button>
+
+            {/* 👇 SIDEBAR NAVIGATION BUTTONS */}
+            <div style={styles.drawerNavList}>
+              <button 
+                style={{
+                  ...styles.drawerNavItem,
+                  ...(location.pathname === "/home" ? styles.drawerNavItemActive : {})
+                }} 
+                onClick={() => { go("/home"); setIsDrawerOpen(false); }}
+              >
+                <span style={styles.drawerNavIcon}>🏠</span>
+                <span style={styles.drawerNavText}>Dashboard</span>
+              </button>
+
+              <button 
+                style={styles.drawerNavItem} 
+                onClick={() => { go("/my-investment"); setIsDrawerOpen(false); }}
+              >
+                <span style={styles.drawerNavIcon}>📈</span>
+                <span style={styles.drawerNavText}>My Investment</span>
+              </button>
+
+              <button 
+                style={styles.drawerNavItem} 
+                onClick={() => { go("/save-money"); setIsDrawerOpen(false); }}
+              >
+                <span style={styles.drawerNavIcon}>💰</span>
+                <span style={styles.drawerNavText}>Save Money</span>
+              </button>
+
+              <button 
+                style={styles.drawerNavItem} 
+                onClick={() => { go("/onetime"); setIsDrawerOpen(false); }}
+              >
+                <span style={styles.drawerNavIcon}>⚡</span>
+                <span style={styles.drawerNavText}>One Time</span>
+              </button>
+
+              <button 
+                style={styles.drawerNavItem} 
+                onClick={() => { go("/support"); setIsDrawerOpen(false); }}
+              >
+                <span style={styles.drawerNavIcon}>🎧</span>
+                <span style={styles.drawerNavText}>Support</span>
+              </button>
+
+              <button 
+                style={styles.drawerNavItem} 
+                onClick={() => { go("/kyc"); setIsDrawerOpen(false); }}
+              >
+                <span style={styles.drawerNavIcon}>✅</span>
+                <span style={styles.drawerNavText}>KYC</span>
+              </button>
+
+              <button 
+                style={{ ...styles.drawerNavItem, color: "#ef4444" }} 
+                onClick={() => { setIsDrawerOpen(false); handleLogout(); }}
+              >
+                <span style={styles.drawerNavIcon}>🚪</span>
+                <span style={styles.drawerNavText}>Logout</span>
+              </button>
+            </div>
+
+            {/* 👇 TREE PLANT PROMO CARD */}
+            <div style={styles.treePlantCard}>
+              <h4 style={styles.treeCardTitle}>Build Your Financial Future</h4>
+              <p style={styles.treeCardSub}>Step by Step</p>
+              <p style={styles.treeCardTag}>Secure Your Future with <br/><strong style={{ color: "#22c55e" }}>SAVE MONEY</strong></p>
+              <img 
+                src="/tree plant.png" 
+                alt="Tree Plant" 
+                style={styles.treeCardImg}
+                onError={(e) => {
+                  if (e.target.src.includes('.png')) {
+                    e.target.src = '/tree plant.jpg';
+                  } else if (e.target.src.includes('.jpg')) {
+                    e.target.src = '/tree plant';
+                  }
+                }}
+              />
+            </div>
+
           </div>
 
         </div>
@@ -596,9 +681,8 @@ export default function Home() {
             
             <div style={styles.marqueeWrapper}>
               <p style={styles.marqueeText}>
-  {latestUpdateText ? latestUpdateText : "No new announcement"}
-</p>
-
+                {latestUpdateText ? latestUpdateText : "No new announcement"}
+              </p>
             </div>
           </div>
         </div>
@@ -1040,32 +1124,39 @@ const styles = {
     boxShadow: "5px 0 30px rgba(0,0,0,0.6)",
     borderRight: "1px solid #1e293b",
     transform: "translateX(-100%)",
-    transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)"
+    transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+    overflowY: "auto"
   },
   drawerHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "25px",
+    marginBottom: "20px",
     borderBottom: "1px solid #1e293b",
     paddingBottom: "15px"
   },
   drawerBrand: {
     display: "flex",
     alignItems: "center",
-    gap: "10px"
+    gap: "12px"
   },
   drawerLogoImg: {
-    width: "36px",
-    height: "36px",
+    width: "42px",
+    height: "42px",
     objectFit: "contain",
-    borderRadius: "8px"
+    borderRadius: "10px"
   },
   drawerLogoText: {
     margin: 0,
     fontSize: "17px",
     fontWeight: "900",
-    color: "#38bdf8"
+    color: "#38bdf8",
+    letterSpacing: "0.5px"
+  },
+  drawerLogoSubtext: {
+    fontSize: "11px",
+    color: "#94a3b8",
+    fontWeight: "600"
   },
   drawerCloseBtn: {
     background: "#1e293b",
@@ -1084,7 +1175,7 @@ const styles = {
   drawerBody: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px"
+    gap: "16px"
   },
   drawerPlanBtn: {
     position: "relative",
@@ -1093,7 +1184,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     gap: "10px",
-    padding: "14px 20px",
+    padding: "12px 20px",
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
     color: "#ffffff",
     borderRadius: "14px",
@@ -1124,6 +1215,78 @@ const styles = {
   drawerPlanText: {
     zIndex: 2,
     letterSpacing: "1px"
+  },
+  drawerNavList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px"
+  },
+  drawerNavItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: "12px 16px",
+    background: "rgba(30, 41, 59, 0.5)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    borderRadius: "14px",
+    color: "#e2e8f0",
+    fontSize: "14px",
+    fontWeight: "700",
+    cursor: "pointer",
+    textAlign: "left",
+    transition: "all 0.2s ease"
+  },
+  drawerNavItemActive: {
+    background: "linear-gradient(135deg, #059669, #10b981)",
+    color: "#ffffff",
+    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+    borderColor: "transparent"
+  },
+  drawerNavIcon: {
+    fontSize: "18px",
+    width: "24px",
+    display: "inline-block",
+    textAlign: "center"
+  },
+  drawerNavText: {
+    flex: 1
+  },
+  treePlantCard: {
+    marginTop: "10px",
+    background: "linear-gradient(180deg, #064e3b 0%, #022c22 100%)",
+    border: "1px solid #10b981",
+    borderRadius: "18px",
+    padding: "16px 12px",
+    textAlign: "center",
+    boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center"
+  },
+  treeCardTitle: {
+    margin: "0 0 4px 0",
+    color: "#ffffff",
+    fontSize: "14px",
+    fontWeight: "800",
+    lineHeight: "1.3"
+  },
+  treeCardSub: {
+    margin: "0 0 8px 0",
+    color: "#a7f3d0",
+    fontSize: "12px",
+    fontWeight: "600"
+  },
+  treeCardTag: {
+    margin: "0 0 12px 0",
+    color: "#cbd5e1",
+    fontSize: "11px",
+    lineHeight: "1.4"
+  },
+  treeCardImg: {
+    width: "100%",
+    maxHeight: "160px",
+    objectFit: "contain",
+    borderRadius: "12px"
   },
 
   popupOverlay: {
