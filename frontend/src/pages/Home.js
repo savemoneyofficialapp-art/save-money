@@ -16,8 +16,9 @@ export default function Home() {
   const [latestUpdateText, setLatestUpdateText] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // 👇 ড্রয়ার ওপেন/ক্লোজ স্টেট
+  // 👇 ড্রয়ার ওপেন/ক্লোজ স্টেট ও ডাউনলোডিং অ্যানিমেশন স্টেট
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDownloadingPlan, setIsDownloadingPlan] = useState(false);
 
   // 👇 পপআপ মোডালের স্টেট
   const [showOfferPopup, setShowOfferPopup] = useState(false);
@@ -38,6 +39,7 @@ export default function Home() {
   // 👇 ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন
   const registerPushNotification = async () => {
     if (!("serviceWorker" in navigator) && !("PushManager" in window)) {
+      console.log("Push notifications not supported by this browser.");
       return;
     }
     
@@ -45,13 +47,19 @@ export default function Home() {
       const registration = await navigator.serviceWorker.ready;
       
       const permissionResult = await Notification.requestPermission();
-      if (permissionResult !== "granted") return;
+      if (permissionResult !== "granted") {
+        console.log("Notification permission not granted.");
+        return;
+      }
 
       const keyRes = await fetch(`${API}/get-vapid-key`);
       const keyData = await keyRes.json();
       const publicVapidKey = keyData.publicKey;
 
-      if (!publicVapidKey) return;
+      if (!publicVapidKey) {
+        console.log("VAPID public key not found from server.");
+        return;
+      }
 
       const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
 
@@ -68,7 +76,7 @@ export default function Home() {
 
       const subscriptionData = JSON.parse(JSON.stringify(subscription));
 
-      await fetch(`${API}/save-push-subscription`, {
+      const subRes = await fetch(`${API}/save-push-subscription`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,6 +84,13 @@ export default function Home() {
         },
         body: JSON.stringify({ email: currentEmail, subscription: subscriptionData })
       });
+
+      const subData = await subRes.json();
+      if (subRes.ok) {
+        console.log("Push Notification Subscribed Successfully!", subData);
+      } else {
+        console.error("Failed to save push subscription on server:", subData);
+      }
     } catch (error) {
       console.error("Push subscription error:", error);
     }
@@ -91,6 +106,23 @@ export default function Home() {
     }
     return outputArray;
   }
+
+  // 👇 PLAN PDF ডাউনলোডের জন্য হ্যান্ডলার (SAVE_MONEY_PRIVATE_LIMITED.pdf)
+  const handleDownloadPlan = () => {
+    if (isDownloadingPlan) return;
+    setIsDownloadingPlan(true);
+
+    setTimeout(() => {
+      const link = document.createElement("a");
+      link.href = "/SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      link.download = "SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setIsDownloadingPlan(false);
+    }, 1200);
+  };
 
   const handleDownloadImage = async (imageUrl) => {
     try {
@@ -369,7 +401,7 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
-      {/* 👇 100% MATCHING SIDEBAR DRAWER BASED ON SCREENSHOT */}
+      {/* 👇 ACCURATE SLIDE BAR (2ND SCREENSHOT MATCHING) */}
       <div style={{
         ...styles.drawerOverlay,
         opacity: isDrawerOpen ? 1 : 0,
@@ -380,27 +412,33 @@ export default function Home() {
           transform: isDrawerOpen ? "translateX(0)" : "translateX(-100%)"
         }} onClick={(e) => e.stopPropagation()}>
           
-          {/* HEADER: LOGO & APP TITLE */}
+          {/* LOGO & BRANDING */}
           <div style={styles.drawerHeader}>
-            <img 
-              src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
-              alt="Logo" 
-              style={styles.drawerLogoImg} 
-              onError={(e) => {
-                e.target.src = "/logo512.png";
-              }}
-            />
-            <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
-            <p style={styles.drawerLogoSubtext}>Invest Small, Earn Big</p>
+            <div style={styles.drawerBrand}>
+              <div style={styles.drawerLogoWrapper}>
+                <img 
+                  src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
+                  alt="SM Logo" 
+                  style={styles.drawerLogoImg} 
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
+                <span style={styles.drawerLogoSubtext}>Invest Small, Earn Big</span>
+              </div>
+            </div>
           </div>
 
-          {/* MENU ITEMS IN EXACT ORDER AS SCREENSHOT */}
+          {/* SIDEBAR MENU ITEMS */}
           <div style={styles.drawerNavList}>
-            {/* 1. Dashboard (Active Pill Style) */}
+            {/* 1. Dashboard */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...(location.pathname === "/home" || location.pathname === "/" ? styles.drawerNavItemActive : {})
+                ...(location.pathname === "/home" ? styles.drawerNavItemActive : {})
               }} 
               onClick={() => { go("/home"); setIsDrawerOpen(false); }}
             >
@@ -410,23 +448,60 @@ export default function Home() {
 
             {/* 2. My Investment */}
             <button 
-              style={styles.drawerNavItem} 
+              style={{
+                ...styles.drawerNavItem,
+                ...(location.pathname === "/my-investment" ? styles.drawerNavItemActive : {})
+              }} 
               onClick={() => { go("/my-investment"); setIsDrawerOpen(false); }}
             >
               <span style={styles.drawerNavIcon}>📈</span>
               <span style={styles.drawerNavText}>My Investment</span>
             </button>
 
-            {/* 3. Add Fund */}
+            {/* 3. Save Money (savemoney.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...(location.pathname === "/save-money" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/save-money"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>💰</span>
+              <span style={styles.drawerNavText}>Save Money</span>
+            </button>
+
+            {/* 4. One Time (onetime.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...(location.pathname === "/onetime" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/onetime"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>⚡</span>
+              <span style={styles.drawerNavText}>One Time</span>
+            </button>
+
+            {/* 5. PLAN (PDF Download) */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { handleDownloadPlan(); setIsDrawerOpen(false); }}
+              disabled={isDownloadingPlan}
+            >
+              <span style={styles.drawerNavIcon}>{isDownloadingPlan ? "⏳" : "📋"}</span>
+              <span style={styles.drawerNavText}>{isDownloadingPlan ? "Downloading..." : "Plan PDF"}</span>
+            </button>
+
+            {/* Add Fund */}
             <button 
               style={styles.drawerNavItem} 
               onClick={() => { go("/wallet"); setIsDrawerOpen(false); }}
             >
-              <span style={styles.drawerNavIcon}>⊕</span>
+              <span style={styles.drawerNavIcon}>🌐</span>
               <span style={styles.drawerNavText}>Add Fund</span>
             </button>
 
-            {/* 4. Withdraw */}
+            {/* Withdraw */}
             <button 
               style={styles.drawerNavItem} 
               onClick={() => { go("/withdraw"); setIsDrawerOpen(false); }}
@@ -435,43 +510,7 @@ export default function Home() {
               <span style={styles.drawerNavText}>Withdraw</span>
             </button>
 
-            {/* 5. Transactions */}
-            <button 
-              style={styles.drawerNavItem} 
-              onClick={() => { go("/wallet"); setIsDrawerOpen(false); }}
-            >
-              <span style={styles.drawerNavIcon}>≡</span>
-              <span style={styles.drawerNavText}>Transactions</span>
-            </button>
-
-            {/* 6. Team */}
-            <button 
-              style={styles.drawerNavItem} 
-              onClick={() => { go("/referral-tree"); setIsDrawerOpen(false); }}
-            >
-              <span style={styles.drawerNavIcon}>👥</span>
-              <span style={styles.drawerNavText}>Team</span>
-            </button>
-
-            {/* 7. Reports */}
-            <button 
-              style={styles.drawerNavItem} 
-              onClick={() => { go("/analytics"); setIsDrawerOpen(false); }}
-            >
-              <span style={styles.drawerNavIcon}>📊</span>
-              <span style={styles.drawerNavText}>Reports</span>
-            </button>
-
-            {/* 8. Profile */}
-            <button 
-              style={styles.drawerNavItem} 
-              onClick={() => { go("/kyc"); setIsDrawerOpen(false); }}
-            >
-              <span style={styles.drawerNavIcon}>👤</span>
-              <span style={styles.drawerNavText}>Profile</span>
-            </button>
-
-            {/* 9. Support */}
+            {/* Support */}
             <button 
               style={styles.drawerNavItem} 
               onClick={() => { go("/support"); setIsDrawerOpen(false); }}
@@ -480,9 +519,18 @@ export default function Home() {
               <span style={styles.drawerNavText}>Support</span>
             </button>
 
-            {/* 10. Logout */}
+            {/* Profile */}
             <button 
               style={styles.drawerNavItem} 
+              onClick={() => { go("/kyc"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👤</span>
+              <span style={styles.drawerNavText}>Profile</span>
+            </button>
+
+            {/* Logout */}
+            <button 
+              style={{ ...styles.drawerNavItem, color: "#ef4444" }} 
               onClick={() => { setIsDrawerOpen(false); handleLogout(); }}
             >
               <span style={styles.drawerNavIcon}>🚪</span>
@@ -490,19 +538,15 @@ export default function Home() {
             </button>
           </div>
 
-          {/* 👇 BOTTOM PROMO CARD (EXACT AS SCREENSHOT) */}
-          <div style={styles.treeCard}>
-            <h4 style={styles.treeTitle}>Build Your<br/>Financial<br/>Future</h4>
-            <p style={styles.treeSub}>Step by Step</p>
-            <p style={styles.treeTag}>
-              Secure Your Future<br/>with
-            </p>
-            <h4 style={styles.treeBrandName}>SAVE MONEY</h4>
-
+          {/* TREE PLANT PROMO CARD AT BOTTOM */}
+          <div style={styles.treePlantCard}>
+            <h4 style={styles.treeCardTitle}>Build Your<br/>Financial Future</h4>
+            <p style={styles.treeCardSub}>Step by Step</p>
+            <p style={styles.treeCardTag}>Secure Your Future with <br/><strong style={{ color: "#22c55e" }}>SAVE MONEY</strong></p>
             <img 
               src="/tree plant.png" 
               alt="Tree Plant" 
-              style={styles.treeImg}
+              style={styles.treeCardImg}
               onError={(e) => {
                 if (e.target.src.includes('.png')) {
                   e.target.src = '/tree plant.jpg';
@@ -514,7 +558,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 👇 PHOTO POPUP MODAL */}
+      {/* PHOTO POPUP MODAL */}
       {showOfferPopup && (
         <div style={styles.popupOverlay}>
           <div style={styles.popupCard}>
@@ -1076,45 +1120,63 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // 👇 Exact Screenshot Matching Sidebar Styling
+  // 👇 ACCURATE SLIDE BAR / DRAWER STYLES (Matching Screenshot 2)
   drawerOverlay: {
     position: "fixed",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    background: "rgba(2, 6, 23, 0.75)",
-    backdropFilter: "blur(6px)",
+    background: "rgba(0, 0, 0, 0.75)",
+    backdropFilter: "blur(5px)",
     zIndex: 100002,
     display: "flex",
     justifyContent: "flex-start",
     transition: "opacity 0.3s ease, visibility 0.3s ease"
   },
   drawerContainer: {
-    background: "#020c19",
-    width: "220px",
-    height: "100vh",
-    padding: "24px 16px 20px",
+    position: "fixed",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    background: "#08101e",
+    width: "245px",
+    height: "100%",
+    padding: "16px 12px 20px 12px",
     display: "flex",
     flexDirection: "column",
-    boxShadow: "5px 0 30px rgba(0,0,0,0.7)",
+    boxShadow: "10px 0 30px rgba(0,0,0,0.8)",
+    borderRight: "1px solid #162438",
     transform: "translateX(-100%)",
-    transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+    transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     overflowY: "auto",
-    boxSizing: "border-box"
+    zIndex: 100003
   },
   drawerHeader: {
     display: "flex",
-    flexDirection: "column",
     alignItems: "center",
-    textAlign: "center",
-    marginBottom: "20px"
+    marginBottom: "20px",
+    paddingBottom: "10px"
+  },
+  drawerBrand: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  },
+  drawerLogoWrapper: {
+    width: "38px",
+    height: "38px",
+    borderRadius: "50%",
+    background: "#03251a",
+    border: "2px solid #22c55e",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
   },
   drawerLogoImg: {
-    width: "58px",
-    height: "58px",
-    objectFit: "contain",
-    marginBottom: "8px"
+    width: "28px",
+    height: "28px",
+    objectFit: "contain"
   },
   drawerLogoText: {
     margin: 0,
@@ -1124,10 +1186,9 @@ const styles = {
     letterSpacing: "0.5px"
   },
   drawerLogoSubtext: {
-    margin: "2px 0 0",
-    fontSize: "11px",
+    fontSize: "10px",
     color: "#94a3b8",
-    fontWeight: "500"
+    fontWeight: "600"
   },
   drawerNavList: {
     display: "flex",
@@ -1137,78 +1198,70 @@ const styles = {
   drawerNavItem: {
     display: "flex",
     alignItems: "center",
-    gap: "14px",
-    padding: "10px 14px",
+    gap: "12px",
+    padding: "11px 14px",
     background: "transparent",
     border: "none",
-    borderRadius: "12px",
-    color: "#e2e8f0",
-    fontSize: "14px",
-    fontWeight: "600",
+    borderRadius: "10px",
+    color: "#cbd5e1",
+    fontSize: "15px",
+    fontWeight: "700",
     cursor: "pointer",
     textAlign: "left",
     transition: "all 0.2s ease"
   },
   drawerNavItemActive: {
-    background: "#00874e",
+    background: "linear-gradient(90deg, #10b981 0%, #059669 100%)",
     color: "#ffffff",
-    borderRadius: "12px",
-    fontWeight: "700"
+    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.35)",
+    fontWeight: "800"
   },
   drawerNavIcon: {
     fontSize: "18px",
-    width: "20px",
-    display: "inline-flex",
-    justifyContent: "center",
-    alignItems: "center"
+    width: "22px",
+    display: "inline-block",
+    textAlign: "center"
   },
   drawerNavText: {
     flex: 1
   },
-  
-  // 👇 Screenshot exact dark-green bottom promo box
-  treeCard: {
-    marginTop: "24px",
-    padding: "16px 12px 10px",
-    background: "linear-gradient(180deg, #03211b 0%, #021a15 100%)",
-    border: "1px solid #0d5c3a",
-    borderRadius: "18px",
+  treePlantCard: {
+    marginTop: "auto",
+    paddingTop: "15px",
+    background: "#03251a",
+    border: "1px solid #10b981",
+    borderRadius: "14px",
+    padding: "12px 10px",
     textAlign: "center",
+    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.5)",
     display: "flex",
     flexDirection: "column",
     alignItems: "center"
   },
-  treeTitle: {
-    margin: 0,
+  treeCardTitle: {
+    margin: "0 0 2px 0",
     color: "#ffffff",
-    fontSize: "15px",
+    fontSize: "13px",
     fontWeight: "800",
-    lineHeight: "1.25"
+    lineHeight: "1.2"
   },
-  treeSub: {
-    margin: "4px 0 10px 0",
-    color: "#94a3b8",
-    fontSize: "12px",
-    fontWeight: "500"
-  },
-  treeTag: {
-    margin: 0,
-    color: "#e2e8f0",
+  treeCardSub: {
+    margin: "0 0 6px 0",
+    color: "#6ee7b7",
     fontSize: "11px",
+    fontWeight: "600"
+  },
+  treeCardTag: {
+    margin: "0 0 8px 0",
+    color: "#94a3b8",
+    fontSize: "10px",
     lineHeight: "1.3"
   },
-  treeBrandName: {
-    margin: "2px 0 8px 0",
-    color: "#22c55e",
-    fontSize: "14px",
-    fontWeight: "900",
-    letterSpacing: "0.5px"
-  },
-  treeImg: {
+  treeCardImg: {
     width: "100%",
-    maxHeight: "150px",
+    maxHeight: "130px",
     objectFit: "contain",
-    marginTop: "4px"
+    borderRadius: "8px"
   },
 
   popupOverlay: {
