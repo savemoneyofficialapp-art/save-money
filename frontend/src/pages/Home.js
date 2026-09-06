@@ -401,7 +401,7 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
-      {/* 👇 ACCURATE SLIDE BAR (2ND SCREENSHOT MATCHING) */}
+      {/* 👇 ACCURATE SLIDE BAR / DRAWER */}
       <div style={{
         ...styles.drawerOverlay,
         opacity: isDrawerOpen ? 1 : 0,
@@ -412,7 +412,7 @@ export default function Home() {
           transform: isDrawerOpen ? "translateX(0)" : "translateX(-100%)"
         }} onClick={(e) => e.stopPropagation()}>
           
-          {/* LOGO & BRANDING */}
+          {/* LOGO & BRANDING (LOGO ON TOP, TEXT BELOW) */}
           <div style={styles.drawerHeader}>
             <div style={styles.drawerBrand}>
               <div style={styles.drawerLogoWrapper}>
@@ -425,14 +425,14 @@ export default function Home() {
                   }}
                 />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
                 <span style={styles.drawerLogoSubtext}>Invest Small, Earn Big</span>
               </div>
             </div>
           </div>
 
-          {/* SIDEBAR MENU ITEMS */}
+          {/* SIDEBAR MENU BUTTONS (ENHANCED DESIGN & LARGER) */}
           <div style={styles.drawerNavList}>
             {/* 1. Dashboard */}
             <button 
@@ -458,7 +458,7 @@ export default function Home() {
               <span style={styles.drawerNavText}>My Investment</span>
             </button>
 
-            {/* 3. Save Money (savemoney.js) */}
+            {/* 3. Save Money */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -470,7 +470,7 @@ export default function Home() {
               <span style={styles.drawerNavText}>Save Money</span>
             </button>
 
-            {/* 4. One Time (onetime.js) */}
+            {/* 4. One Time */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -530,7 +530,7 @@ export default function Home() {
 
             {/* Logout */}
             <button 
-              style={{ ...styles.drawerNavItem, color: "#ef4444" }} 
+              style={{ ...styles.drawerNavItem, color: "#f87171", borderColor: "rgba(239, 68, 68, 0.2)" }} 
               onClick={() => { setIsDrawerOpen(false); handleLogout(); }}
             >
               <span style={styles.drawerNavIcon}>🚪</span>
@@ -538,21 +538,23 @@ export default function Home() {
             </button>
           </div>
 
-          {/* TREE PLANT PROMO CARD AT BOTTOM */}
+          {/* TREE PLANT PROMO CARD AT BOTTOM (FIXED POSITION & NO BORDER) */}
           <div style={styles.treePlantCard}>
             <h4 style={styles.treeCardTitle}>Build Your<br/>Financial Future</h4>
             <p style={styles.treeCardSub}>Step by Step</p>
-            <p style={styles.treeCardTag}>Secure Your Future with <br/><strong style={{ color: "#22c55e" }}>SAVE MONEY</strong></p>
-            <img 
-              src="/tree plant.png" 
-              alt="Tree Plant" 
-              style={styles.treeCardImg}
-              onError={(e) => {
-                if (e.target.src.includes('.png')) {
-                  e.target.src = '/tree plant.jpg';
-                }
-              }}
-            />
+            <p style={styles.treeCardTag}>Secure Your Future with <br/><strong style={{ color: "#4ade80" }}>SAVE MONEY</strong></p>
+            <div style={styles.treeCardImgWrapper}>
+              <img 
+                src="/tree plant.png" 
+                alt="Tree Plant" 
+                style={styles.treeCardImg}
+                onError={(e) => {
+                  if (e.target.src.includes('.png')) {
+                    e.target.src = '/tree plant.jpg';
+                  }
+                }}
+              />
+            </div>
           </div>
 
         </div>
@@ -1120,7 +1122,7 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // 👇 ACCURATE SLIDE BAR / DRAWER STYLES (Matching Screenshot 2)
+  // 👇 SLIDE BAR / DRAWER STYLES (UPDATED & ENHANCED DESIGN)
   drawerOverlay: {
     position: "fixed",
     top: 0,
@@ -1128,7 +1130,7 @@ const styles = {
     right: 0,
     bottom: 0,
     background: "rgba(0, 0, 0, 0.75)",
-    backdropFilter: "blur(5px)",
+    backdropFilter: "blur(6px)",
     zIndex: 100002,
     display: "flex",
     justifyContent: "flex-start",
@@ -1140,13 +1142,13 @@ const styles = {
     bottom: 0,
     left: 0,
     background: "#08101e",
-    width: "245px",
+    width: "260px",
     height: "100%",
-    padding: "16px 12px 20px 12px",
+    padding: "20px 14px 40px 14px",
     display: "flex",
     flexDirection: "column",
-    boxShadow: "10px 0 30px rgba(0,0,0,0.8)",
-    borderRight: "1px solid #162438",
+    boxShadow: "10px 0 30px rgba(0,0,0,0.85)",
+    borderRight: "1px solid #1e293b",
     transform: "translateX(-100%)",
     transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     overflowY: "auto",
@@ -1154,114 +1156,136 @@ const styles = {
   },
   drawerHeader: {
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: "20px",
-    paddingBottom: "10px"
+    paddingBottom: "16px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
   },
   drawerBrand: {
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     gap: "10px"
   },
   drawerLogoWrapper: {
-    width: "38px",
-    height: "38px",
+    width: "54px",
+    height: "54px",
     borderRadius: "50%",
-    background: "#03251a",
+    background: "radial-gradient(circle, #03251a 0%, #064e3b 100%)",
     border: "2px solid #22c55e",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    boxShadow: "0 0 16px rgba(34, 197, 94, 0.35)"
   },
   drawerLogoImg: {
-    width: "28px",
-    height: "28px",
+    width: "36px",
+    height: "36px",
     objectFit: "contain"
   },
   drawerLogoText: {
     margin: 0,
-    fontSize: "16px",
+    fontSize: "18px",
     fontWeight: "900",
     color: "#ffffff",
-    letterSpacing: "0.5px"
+    letterSpacing: "0.8px",
+    textAlign: "center"
   },
   drawerLogoSubtext: {
-    fontSize: "10px",
-    color: "#94a3b8",
-    fontWeight: "600"
+    fontSize: "11px",
+    color: "#a7f3d0",
+    fontWeight: "600",
+    marginTop: "2px",
+    textAlign: "center"
   },
   drawerNavList: {
     display: "flex",
     flexDirection: "column",
-    gap: "6px"
+    gap: "10px"
   },
   drawerNavItem: {
     display: "flex",
     alignItems: "center",
-    gap: "12px",
-    padding: "11px 14px",
-    background: "transparent",
-    border: "none",
-    borderRadius: "10px",
-    color: "#cbd5e1",
+    gap: "14px",
+    padding: "13px 16px",
+    background: "rgba(255, 255, 255, 0.04)",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    borderRadius: "14px",
+    color: "#e2e8f0",
     fontSize: "15px",
     fontWeight: "700",
     cursor: "pointer",
     textAlign: "left",
-    transition: "all 0.2s ease"
+    transition: "all 0.25s ease",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)"
   },
   drawerNavItemActive: {
-    background: "linear-gradient(90deg, #10b981 0%, #059669 100%)",
+    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
     color: "#ffffff",
-    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.35)",
+    border: "1px solid #34d399",
+    boxShadow: "0 6px 18px rgba(16, 185, 129, 0.45)",
     fontWeight: "800"
   },
   drawerNavIcon: {
-    fontSize: "18px",
-    width: "22px",
+    fontSize: "20px",
+    width: "24px",
     display: "inline-block",
     textAlign: "center"
   },
   drawerNavText: {
-    flex: 1
+    flex: 1,
+    fontSize: "15px",
+    letterSpacing: "0.3px"
   },
   treePlantCard: {
-    marginTop: "auto",
-    paddingTop: "15px",
-    background: "#03251a",
-    border: "1px solid #10b981",
-    borderRadius: "14px",
-    padding: "12px 10px",
+    marginTop: "24px",
+    marginBottom: "24px",
+    padding: "16px 12px",
+    background: "linear-gradient(180deg, rgba(6, 78, 59, 0.6) 0%, rgba(2, 44, 34, 0.85) 100%)",
+    border: "none",
+    borderRadius: "18px",
     textAlign: "center",
-    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.5)",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.45)",
     display: "flex",
     flexDirection: "column",
     alignItems: "center"
   },
   treeCardTitle: {
-    margin: "0 0 2px 0",
+    margin: "0 0 4px 0",
     color: "#ffffff",
-    fontSize: "13px",
+    fontSize: "14px",
     fontWeight: "800",
-    lineHeight: "1.2"
+    lineHeight: "1.3"
   },
   treeCardSub: {
     margin: "0 0 6px 0",
     color: "#6ee7b7",
-    fontSize: "11px",
+    fontSize: "12px",
     fontWeight: "600"
   },
   treeCardTag: {
-    margin: "0 0 8px 0",
+    margin: "0 0 10px 0",
     color: "#94a3b8",
-    fontSize: "10px",
-    lineHeight: "1.3"
+    fontSize: "11px",
+    lineHeight: "1.4"
+  },
+  treeCardImgWrapper: {
+    width: "100%",
+    height: "140px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderRadius: "12px"
   },
   treeCardImg: {
     width: "100%",
-    maxHeight: "130px",
+    height: "100%",
     objectFit: "contain",
-    borderRadius: "8px"
+    transform: "scale(1.25)",
+    transition: "transform 0.3s ease"
   },
 
   popupOverlay: {
