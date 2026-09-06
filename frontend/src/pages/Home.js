@@ -16,9 +16,8 @@ export default function Home() {
   const [latestUpdateText, setLatestUpdateText] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // 👇 ড্রয়ার ওপেন/ক্লোজ স্টেট ও ডাউনলোডিং অ্যানিমেশন স্টেট
+  // 👇 ড্রয়ার ওপেন/ক্লোজ স্টেট
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isDownloadingPlan, setIsDownloadingPlan] = useState(false);
 
   // 👇 পপআপ মোডালের স্টেট
   const [showOfferPopup, setShowOfferPopup] = useState(false);
@@ -39,7 +38,6 @@ export default function Home() {
   // 👇 ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন
   const registerPushNotification = async () => {
     if (!("serviceWorker" in navigator) && !("PushManager" in window)) {
-      console.log("Push notifications not supported by this browser.");
       return;
     }
     
@@ -47,19 +45,13 @@ export default function Home() {
       const registration = await navigator.serviceWorker.ready;
       
       const permissionResult = await Notification.requestPermission();
-      if (permissionResult !== "granted") {
-        console.log("Notification permission not granted.");
-        return;
-      }
+      if (permissionResult !== "granted") return;
 
       const keyRes = await fetch(`${API}/get-vapid-key`);
       const keyData = await keyRes.json();
       const publicVapidKey = keyData.publicKey;
 
-      if (!publicVapidKey) {
-        console.log("VAPID public key not found from server.");
-        return;
-      }
+      if (!publicVapidKey) return;
 
       const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
 
@@ -76,7 +68,7 @@ export default function Home() {
 
       const subscriptionData = JSON.parse(JSON.stringify(subscription));
 
-      const subRes = await fetch(`${API}/save-push-subscription`, {
+      await fetch(`${API}/save-push-subscription`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,13 +76,6 @@ export default function Home() {
         },
         body: JSON.stringify({ email: currentEmail, subscription: subscriptionData })
       });
-
-      const subData = await subRes.json();
-      if (subRes.ok) {
-        console.log("Push Notification Subscribed Successfully!", subData);
-      } else {
-        console.error("Failed to save push subscription on server:", subData);
-      }
     } catch (error) {
       console.error("Push subscription error:", error);
     }
@@ -106,23 +91,6 @@ export default function Home() {
     }
     return outputArray;
   }
-
-  // 👇 PLAN PDF ডাউনলোডের হ্যান্ডলার
-  const handleDownloadPlan = () => {
-    if (isDownloadingPlan) return;
-    setIsDownloadingPlan(true);
-
-    setTimeout(() => {
-      const link = document.createElement("a");
-      link.href = "/SAVE_MONEY_PRIVATE_LIMITED.pdf";
-      link.download = "SAVE_MONEY_PRIVATE_LIMITED.pdf";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      setIsDownloadingPlan(false);
-    }, 1500);
-  };
 
   const handleDownloadImage = async (imageUrl) => {
     try {
@@ -389,10 +357,8 @@ export default function Home() {
             style={styles.loadingLogoImg} 
             onError={(e) => {
               e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'block';
             }}
           />
-          <h2 style={{ display: 'none', margin: '10px 0' }}>Save Money</h2>
           <h2 style={{ marginTop: "15px", fontSize: "20px", fontWeight: "800" }}>Save Money</h2>
           <p style={{ color: "#94a3b8", fontSize: "14px" }}>Loading your dashboard...</p>
         </div>
@@ -403,7 +369,7 @@ export default function Home() {
   return (
     <div style={styles.page}>
 
-      {/* 👇 ANIMATED SIDEBAR / DRAWER (২য় স্ক্রিনশটের মতো ফুল হাইট) */}
+      {/* 👇 100% MATCHING SIDEBAR DRAWER BASED ON SCREENSHOT */}
       <div style={{
         ...styles.drawerOverlay,
         opacity: isDrawerOpen ? 1 : 0,
@@ -414,122 +380,135 @@ export default function Home() {
           transform: isDrawerOpen ? "translateX(0)" : "translateX(-100%)"
         }} onClick={(e) => e.stopPropagation()}>
           
-          {/* HEADER WITH LOGO */}
+          {/* HEADER: LOGO & APP TITLE */}
           <div style={styles.drawerHeader}>
-            <div style={styles.drawerBrand}>
-              <img 
-                src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
-                alt="Logo" 
-                style={styles.drawerLogoImg} 
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
-                <span style={styles.drawerLogoSubtext}>Invest Small, Earn Big</span>
-              </div>
-            </div>
-            <button style={styles.drawerCloseBtn} onClick={() => setIsDrawerOpen(false)}>✕</button>
+            <img 
+              src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
+              alt="Logo" 
+              style={styles.drawerLogoImg} 
+              onError={(e) => {
+                e.target.src = "/logo512.png";
+              }}
+            />
+            <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
+            <p style={styles.drawerLogoSubtext}>Invest Small, Earn Big</p>
           </div>
 
-          <div style={styles.drawerBody}>
-            {/* navigation & buttons */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {/* PLAN BUTTON */}
-              <button 
-                style={{
-                  ...styles.drawerPlanBtn,
-                  ...(isDownloadingPlan ? styles.drawerPlanBtnLoading : {})
-                }}
-                onClick={handleDownloadPlan}
-                disabled={isDownloadingPlan}
-              >
-                <span style={styles.drawerPlanIcon}>{isDownloadingPlan ? "⏳" : "💳"}</span>
-                <span style={styles.drawerPlanText}>PLAN</span>
-                {isDownloadingPlan && <div style={styles.progressShutter}></div>}
-              </button>
+          {/* MENU ITEMS IN EXACT ORDER AS SCREENSHOT */}
+          <div style={styles.drawerNavList}>
+            {/* 1. Dashboard (Active Pill Style) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...(location.pathname === "/home" || location.pathname === "/" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/home"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🏠</span>
+              <span style={styles.drawerNavText}>Dashboard</span>
+            </button>
 
-              {/* SIDEBAR NAV ITEMS */}
-              <button 
-                style={{
-                  ...styles.drawerNavItem,
-                  ...(location.pathname === "/home" ? styles.drawerNavItemActive : {})
-                }} 
-                onClick={() => { go("/home"); setIsDrawerOpen(false); }}
-              >
-                <span style={styles.drawerNavIcon}>🏠</span>
-                <span style={styles.drawerNavText}>Dashboard</span>
-              </button>
+            {/* 2. My Investment */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { go("/my-investment"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>📈</span>
+              <span style={styles.drawerNavText}>My Investment</span>
+            </button>
 
-              <button 
-                style={styles.drawerNavItem} 
-                onClick={() => { go("/my-investment"); setIsDrawerOpen(false); }}
-              >
-                <span style={styles.drawerNavIcon}>📈</span>
-                <span style={styles.drawerNavText}>My Investment</span>
-              </button>
+            {/* 3. Add Fund */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { go("/wallet"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>⊕</span>
+              <span style={styles.drawerNavText}>Add Fund</span>
+            </button>
 
-              <button 
-                style={styles.drawerNavItem} 
-                onClick={() => { go("/save-money"); setIsDrawerOpen(false); }}
-              >
-                <span style={styles.drawerNavIcon}>💰</span>
-                <span style={styles.drawerNavText}>Save Money</span>
-              </button>
+            {/* 4. Withdraw */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { go("/withdraw"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>➔</span>
+              <span style={styles.drawerNavText}>Withdraw</span>
+            </button>
 
-              <button 
-                style={styles.drawerNavItem} 
-                onClick={() => { go("/onetime"); setIsDrawerOpen(false); }}
-              >
-                <span style={styles.drawerNavIcon}>⚡</span>
-                <span style={styles.drawerNavText}>One Time</span>
-              </button>
+            {/* 5. Transactions */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { go("/wallet"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>≡</span>
+              <span style={styles.drawerNavText}>Transactions</span>
+            </button>
 
-              <button 
-                style={styles.drawerNavItem} 
-                onClick={() => { go("/support"); setIsDrawerOpen(false); }}
-              >
-                <span style={styles.drawerNavIcon}>🎧</span>
-                <span style={styles.drawerNavText}>Support</span>
-              </button>
+            {/* 6. Team */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { go("/referral-tree"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👥</span>
+              <span style={styles.drawerNavText}>Team</span>
+            </button>
 
-              <button 
-                style={styles.drawerNavItem} 
-                onClick={() => { go("/kyc"); setIsDrawerOpen(false); }}
-              >
-                <span style={styles.drawerNavIcon}>✅</span>
-                <span style={styles.drawerNavText}>KYC</span>
-              </button>
+            {/* 7. Reports */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { go("/analytics"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>📊</span>
+              <span style={styles.drawerNavText}>Reports</span>
+            </button>
 
-              <button 
-                style={{ ...styles.drawerNavItem, color: "#ef4444" }} 
-                onClick={() => { setIsDrawerOpen(false); handleLogout(); }}
-              >
-                <span style={styles.drawerNavIcon}>🚪</span>
-                <span style={styles.drawerNavText}>Logout</span>
-              </button>
-            </div>
+            {/* 8. Profile */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { go("/kyc"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👤</span>
+              <span style={styles.drawerNavText}>Profile</span>
+            </button>
 
-            {/* 👇 TREE PLANT SECTION (আলাদা কার্ড/ব্যাকগ্রাউন্ড ছাড়া) */}
-            <div style={styles.treePlantContainer}>
-              <h4 style={styles.treeTitle}>Build Your Financial Future</h4>
-              <p style={styles.treeSub}>Step by Step</p>
-              <p style={styles.treeTag}>Secure Your Future with <br/><strong style={{ color: "#22c55e" }}>SAVE MONEY</strong></p>
-              <img 
-                src="/tree plant.png" 
-                alt="Tree Plant" 
-                style={styles.treeImg}
-                onError={(e) => {
-                  if (e.target.src.includes('.png')) {
-                    e.target.src = '/tree plant.jpg';
-                  } else if (e.target.src.includes('.jpg')) {
-                    e.target.src = '/tree plant';
-                  }
-                }}
-              />
-            </div>
+            {/* 9. Support */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { go("/support"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🎧</span>
+              <span style={styles.drawerNavText}>Support</span>
+            </button>
 
+            {/* 10. Logout */}
+            <button 
+              style={styles.drawerNavItem} 
+              onClick={() => { setIsDrawerOpen(false); handleLogout(); }}
+            >
+              <span style={styles.drawerNavIcon}>🚪</span>
+              <span style={styles.drawerNavText}>Logout</span>
+            </button>
+          </div>
+
+          {/* 👇 BOTTOM PROMO CARD (EXACT AS SCREENSHOT) */}
+          <div style={styles.treeCard}>
+            <h4 style={styles.treeTitle}>Build Your<br/>Financial<br/>Future</h4>
+            <p style={styles.treeSub}>Step by Step</p>
+            <p style={styles.treeTag}>
+              Secure Your Future<br/>with
+            </p>
+            <h4 style={styles.treeBrandName}>SAVE MONEY</h4>
+
+            <img 
+              src="/tree plant.png" 
+              alt="Tree Plant" 
+              style={styles.treeImg}
+              onError={(e) => {
+                if (e.target.src.includes('.png')) {
+                  e.target.src = '/tree plant.jpg';
+                }
+              }}
+            />
           </div>
 
         </div>
@@ -1097,7 +1076,7 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // 👇 Full Height Sidebar Overlay & Container
+  // 👇 Exact Screenshot Matching Sidebar Styling
   drawerOverlay: {
     position: "fixed",
     top: 0,
@@ -1112,172 +1091,124 @@ const styles = {
     transition: "opacity 0.3s ease, visibility 0.3s ease"
   },
   drawerContainer: {
-    background: "#030c1a",
-    width: "270px",
+    background: "#020c19",
+    width: "220px",
     height: "100vh",
-    padding: "20px 16px",
+    padding: "24px 16px 20px",
     display: "flex",
     flexDirection: "column",
-    boxShadow: "5px 0 30px rgba(0,0,0,0.6)",
-    borderRight: "1px solid rgba(255, 255, 255, 0.08)",
+    boxShadow: "5px 0 30px rgba(0,0,0,0.7)",
     transform: "translateX(-100%)",
     transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-    overflowY: "auto"
+    overflowY: "auto",
+    boxSizing: "border-box"
   },
   drawerHeader: {
     display: "flex",
-    justifyContent: "space-between",
+    flexDirection: "column",
     alignItems: "center",
-    marginBottom: "18px",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-    paddingBottom: "14px"
-  },
-  drawerBrand: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px"
+    textAlign: "center",
+    marginBottom: "20px"
   },
   drawerLogoImg: {
-    width: "40px",
-    height: "40px",
+    width: "58px",
+    height: "58px",
     objectFit: "contain",
-    borderRadius: "10px"
+    marginBottom: "8px"
   },
   drawerLogoText: {
     margin: 0,
-    fontSize: "17px",
+    fontSize: "16px",
     fontWeight: "900",
-    color: "#38bdf8",
+    color: "#ffffff",
     letterSpacing: "0.5px"
   },
   drawerLogoSubtext: {
+    margin: "2px 0 0",
     fontSize: "11px",
     color: "#94a3b8",
-    fontWeight: "600"
+    fontWeight: "500"
   },
-  drawerCloseBtn: {
-    background: "#1e293b",
-    border: "none",
-    color: "#ffffff",
-    width: "28px",
-    height: "28px",
-    borderRadius: "50%",
-    fontSize: "13px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  drawerBody: {
+  drawerNavList: {
     display: "flex",
     flexDirection: "column",
-    justifyContent: "space-between",
-    flex: 1,
-    gap: "20px"
-  },
-  drawerPlanBtn: {
-    position: "relative",
-    overflow: "hidden",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    padding: "12px 20px",
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "#ffffff",
-    borderRadius: "14px",
-    border: "none",
-    fontSize: "15px",
-    fontWeight: "900",
-    cursor: "pointer",
-    boxShadow: "0 4px 15px rgba(37, 99, 235, 0.4)",
-    transition: "transform 0.2s ease"
-  },
-  drawerPlanBtnLoading: {
-    background: "linear-gradient(135deg, #16a34a, #15803d)",
-    cursor: "wait"
-  },
-  progressShutter: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    height: "100%",
-    background: "rgba(255, 255, 255, 0.25)",
-    animation: "shutterProgress 1.5s linear infinite",
-    pointerEvents: "none"
-  },
-  drawerPlanIcon: {
-    fontSize: "18px",
-    zIndex: 2
-  },
-  drawerPlanText: {
-    zIndex: 2,
-    letterSpacing: "1px"
+    gap: "6px"
   },
   drawerNavItem: {
     display: "flex",
     alignItems: "center",
-    gap: "12px",
-    padding: "11px 16px",
+    gap: "14px",
+    padding: "10px 14px",
     background: "transparent",
     border: "none",
-    borderRadius: "14px",
-    color: "#cbd5e1",
+    borderRadius: "12px",
+    color: "#e2e8f0",
     fontSize: "14px",
-    fontWeight: "700",
+    fontWeight: "600",
     cursor: "pointer",
     textAlign: "left",
     transition: "all 0.2s ease"
   },
   drawerNavItemActive: {
-    background: "linear-gradient(135deg, #00a86b, #059669)",
+    background: "#00874e",
     color: "#ffffff",
-    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)"
+    borderRadius: "12px",
+    fontWeight: "700"
   },
   drawerNavIcon: {
     fontSize: "18px",
-    width: "24px",
-    display: "inline-block",
-    textAlign: "center"
+    width: "20px",
+    display: "inline-flex",
+    justifyContent: "center",
+    alignItems: "center"
   },
   drawerNavText: {
     flex: 1
   },
   
-  // 👇 Tree Plant Section without Box Background
-  treePlantContainer: {
-    marginTop: "auto",
-    paddingTop: "10px",
+  // 👇 Screenshot exact dark-green bottom promo box
+  treeCard: {
+    marginTop: "24px",
+    padding: "16px 12px 10px",
+    background: "linear-gradient(180deg, #03211b 0%, #021a15 100%)",
+    border: "1px solid #0d5c3a",
+    borderRadius: "18px",
     textAlign: "center",
     display: "flex",
     flexDirection: "column",
     alignItems: "center"
   },
   treeTitle: {
-    margin: "0 0 4px 0",
+    margin: 0,
     color: "#ffffff",
-    fontSize: "14px",
+    fontSize: "15px",
     fontWeight: "800",
-    lineHeight: "1.3"
+    lineHeight: "1.25"
   },
   treeSub: {
-    margin: "0 0 6px 0",
+    margin: "4px 0 10px 0",
     color: "#94a3b8",
     fontSize: "12px",
-    fontWeight: "600"
+    fontWeight: "500"
   },
   treeTag: {
-    margin: "0 0 10px 0",
-    color: "#cbd5e1",
+    margin: 0,
+    color: "#e2e8f0",
     fontSize: "11px",
-    lineHeight: "1.4"
+    lineHeight: "1.3"
+  },
+  treeBrandName: {
+    margin: "2px 0 8px 0",
+    color: "#22c55e",
+    fontSize: "14px",
+    fontWeight: "900",
+    letterSpacing: "0.5px"
   },
   treeImg: {
     width: "100%",
-    maxHeight: "160px",
+    maxHeight: "150px",
     objectFit: "contain",
-    filter: "drop-shadow(0 10px 10px rgba(0,0,0,0.5))"
+    marginTop: "4px"
   },
 
   popupOverlay: {
