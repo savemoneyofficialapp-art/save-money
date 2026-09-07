@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import html2canvas from "html2canvas"; 
 import { API } from "../config";
 
 export default function Refer() {
   const navigate = useNavigate();
+  const location = useLocation();
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
 
@@ -23,6 +24,10 @@ export default function Refer() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [referBonus, setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
+  
+  // ড্রয়ার ওপেন/ক্লোজ স্টেট ও ডাউনলোডিং অ্যানিমেশন স্টেট
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDownloadingPlan, setIsDownloadingPlan] = useState(false);
   
   // ট্রানসাকশান ডিটেইলস পপআপের জন্য স্টেট
   const [selectedTx, setSelectedTx] = useState(null);
@@ -79,6 +84,23 @@ export default function Refer() {
     setTimeout(() => {
       setStatusOverlay({ show: false, type: "info", message: "" });
     }, 2200);
+  };
+
+  // PLAN PDF ডাউনলোডের জন্য হ্যান্ডলার
+  const handleDownloadPlan = () => {
+    if (isDownloadingPlan) return;
+    setIsDownloadingPlan(true);
+
+    setTimeout(() => {
+      const link = document.createElement("a");
+      link.href = "/SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      link.download = "SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setIsDownloadingPlan(false);
+    }, 1200);
   };
 
   // অ্যামাউন্টকে কথায় রূপান্তর করার হেল্পার ফাংশন (Dynamic Number to Words)
@@ -414,8 +436,221 @@ export default function Refer() {
         </div>
       )}
 
+      {/* 👇 SIDEBAR MENU TOGGLE BUTTON (DRAWER OPEN BUTTON) */}
+      <button style={styles.drawerMenuBtn} onClick={() => setIsDrawerOpen(true)}>☰</button>
+
       <button style={styles.backBtn} onClick={() => navigate(-1)}>←</button>
       <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>🔔</button>
+
+      {/* 👇 SIDEBAR DRAWER */}
+      <div style={{
+        ...styles.drawerOverlay,
+        opacity: isDrawerOpen ? 1 : 0,
+        visibility: isDrawerOpen ? "visible" : "hidden"
+      }} onClick={() => setIsDrawerOpen(false)}>
+        <div style={{
+          ...styles.drawerContainer,
+          transform: isDrawerOpen ? "translateX(0)" : "translateX(-100%)"
+        }} onClick={(e) => e.stopPropagation()}>
+          
+          {/* LOGO & BRANDING */}
+          <div style={styles.drawerHeader}>
+            <div style={styles.drawerBrand}>
+              <div style={styles.drawerLogoWrapper}>
+                <img 
+                  src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
+                  alt="SM Logo" 
+                  style={styles.drawerLogoImg} 
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
+                <span style={styles.drawerLogoSubtext}>Invest Small, Earn Big</span>
+              </div>
+            </div>
+          </div>
+
+          {/* SIDEBAR NAV BUTTONS - DIAMOND CUT & WATER TRANSPARENT */}
+          <div style={styles.drawerNavList}>
+            {/* 1. Dashboard */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavDashboard,
+                ...(location.pathname === "/home" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/home"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🏠</span>
+              <span style={styles.drawerNavText}>Dashboard</span>
+            </button>
+
+            {/* 2. My Investment */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavMyInvestment,
+                ...(location.pathname === "/my-investment" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/my-investment"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>📈</span>
+              <span style={styles.drawerNavText}>My Investment</span>
+            </button>
+
+            {/* 3. Save Money */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavSaveMoney,
+                ...(location.pathname === "/save-money" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/save-money"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>💰</span>
+              <span style={styles.drawerNavText}>Save Money</span>
+            </button>
+
+            {/* 4. One Time */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavOneTime,
+                ...(location.pathname === "/one-time" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/one-time"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>⚡</span>
+              <span style={styles.drawerNavText}>One Time</span>
+            </button>
+
+            {/* 5. PLAN (PDF Download) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavPlan
+              }} 
+              onClick={() => { handleDownloadPlan(); setIsDrawerOpen(false); }}
+              disabled={isDownloadingPlan}
+            >
+              <span style={styles.drawerNavIcon}>{isDownloadingPlan ? "⏳" : "📋"}</span>
+              <span style={styles.drawerNavText}>{isDownloadingPlan ? "Downloading..." : "Plan PDF"}</span>
+            </button>
+
+            {/* Add Fund */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavAddFund,
+                ...(location.pathname === "/wallet" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/wallet"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🌐</span>
+              <span style={styles.drawerNavText}>Add Fund</span>
+            </button>
+
+            {/* Refer (refer.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavRefer,
+                ...(location.pathname === "/refer" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/refer"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👥</span>
+              <span style={styles.drawerNavText}>Refer & Earn</span>
+            </button>
+
+            {/* Withdraw (withdraw.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavWithdraw,
+                ...(location.pathname === "/withdraw" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/withdraw"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>➔</span>
+              <span style={styles.drawerNavText}>Withdraw</span>
+            </button>
+
+            {/* Daily Reward (dailyreward.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavDailyReward,
+                ...(location.pathname === "/daily-reward" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/daily-reward"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🎁</span>
+              <span style={styles.drawerNavText}>Daily Reward</span>
+            </button>
+
+            {/* Investment Assistance */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavInvestmentAssistant,
+                ...(location.pathname === "/investment-assistant" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/investment-assistant"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>📊</span>
+              <span style={styles.drawerNavText}>Investment Assistance</span>
+            </button>
+
+            {/* Support */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavSupport,
+                ...(location.pathname === "/support" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/support"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🎧</span>
+              <span style={styles.drawerNavText}>Support</span>
+            </button>
+
+            {/* Profile */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavProfile,
+                ...(location.pathname === "/kyc" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/kyc"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👤</span>
+              <span style={styles.drawerNavText}>Profile</span>
+            </button>
+
+            {/* Logout */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavLogout
+              }} 
+              onClick={() => { 
+                setIsDrawerOpen(false); 
+                localStorage.clear();
+                navigate("/login");
+                window.location.reload();
+              }}
+            >
+              <span style={styles.drawerNavIcon}>🚪</span>
+              <span style={styles.drawerNavText}>Logout</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
 
       <header style={styles.header}>
         <p style={styles.welcome}>Welcome to</p>
@@ -715,12 +950,11 @@ export default function Refer() {
                       <h2 style={{ margin: "4px 0 0", color: "#ea580c", fontSize: "22px" }}>{performance?.directActiveCount || 0} / 3</h2>
                     </div>
                     <div style={{ borderLeft: "1px solid #fed7aa" }}>
-  <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>Remaining Needed</small>
-  <h2 style={{ margin: "4px 0 0", color: "#dc2626", fontSize: "22px" }}>
-    {Math.max(0, 3 - Number(performance?.directActiveCount || 0))}
-  </h2>
-</div>
-
+                      <small style={{ color: "#9a3412", fontSize: "11px", display: "block" }}>Remaining Needed</small>
+                      <h2 style={{ margin: "4px 0 0", color: "#dc2626", fontSize: "22px" }}>
+                        {Math.max(0, 3 - Number(performance?.directActiveCount || 0))}
+                      </h2>
+                    </div>
                   </div>
 
                   <div>
@@ -1241,6 +1475,140 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
+  /* 👇 SIDEBAR & DRAWER STYLES (MATCHED 100% WITH HOME PAGE) */
+  drawerMenuBtn: {
+    position: "absolute",
+    top: 24,
+    left: 90,
+    width: 54,
+    height: 54,
+    border: "none",
+    borderRadius: 16,
+    background: "white",
+    boxShadow: "0 12px 30px rgba(137,84,255,.22)",
+    fontSize: 26,
+    cursor: "pointer",
+    zIndex: 10
+  },
+  drawerOverlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(10, 15, 30, 0.6)",
+    backdropFilter: "blur(10px)",
+    zIndex: 999999,
+    transition: "opacity 0.3s ease, visibility 0.3s ease"
+  },
+  drawerContainer: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: "290px",
+    background: "linear-gradient(135deg, #1a0b36 0%, #0d061d 100%)",
+    boxShadow: "10px 0 30px rgba(0,0,0,0.5)",
+    padding: "24px 18px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+    overflowY: "auto",
+    transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)"
+  },
+  drawerHeader: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    paddingBottom: "15px",
+    borderBottom: "1px solid rgba(255,255,255,0.1)"
+  },
+  drawerBrand: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "10px"
+  },
+  drawerLogoWrapper: {
+    width: "60px",
+    height: "60px",
+    borderRadius: "18px",
+    background: "rgba(255,255,255,0.08)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 8px 20px rgba(137,84,255,0.3)"
+  },
+  drawerLogoImg: {
+    width: "38px",
+    height: "38px",
+    objectFit: "contain"
+  },
+  drawerLogoText: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "900",
+    background: "linear-gradient(90deg, #1463ff, #8b20ff, #ff1685)",
+    WebkitBackgroundClip: "text",
+    color: "transparent",
+    letterSpacing: "0.5px"
+  },
+  drawerLogoSubtext: {
+    fontSize: "11px",
+    color: "#a78bfa",
+    marginTop: "2px"
+  },
+  drawerNavList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px"
+  },
+  drawerNavItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    width: "100%",
+    padding: "12px 16px",
+    borderRadius: "14px",
+    border: "1px solid rgba(255,255,255,0.06)",
+    background: "rgba(255,255,255,0.03)",
+    color: "#e2e8f0",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+    textAlign: "left",
+    transition: "all 0.25s ease"
+  },
+  drawerNavItemActive: {
+    background: "linear-gradient(135deg, rgba(139,32,255,0.25), rgba(20,99,255,0.25))",
+    border: "1px solid rgba(139,32,255,0.5)",
+    color: "#ffffff",
+    boxShadow: "0 6px 20px rgba(139,32,255,0.25)"
+  },
+  drawerNavDashboard: { borderLeft: "4px solid #1463ff" },
+  drawerNavMyInvestment: { borderLeft: "4px solid #38bdf8" },
+  drawerNavSaveMoney: { borderLeft: "4px solid #22c55e" },
+  drawerNavOneTime: { borderLeft: "4px solid #eab308" },
+  drawerNavPlan: { borderLeft: "4px solid #ec4899" },
+  drawerNavAddFund: { borderLeft: "4px solid #a855f7" },
+  drawerNavRefer: { borderLeft: "4px solid #f97316" },
+  drawerNavWithdraw: { borderLeft: "4px solid #06b6d4" },
+  drawerNavDailyReward: { borderLeft: "4px solid #84cc16" },
+  drawerNavInvestmentAssistant: { borderLeft: "4px solid #6366f1" },
+  drawerNavSupport: { borderLeft: "4px solid #14b8a6" },
+  drawerNavProfile: { borderLeft: "4px solid #d946ef" },
+  drawerNavLogout: { borderLeft: "4px solid #ef4444", background: "rgba(239, 68, 68, 0.08)" },
+  drawerNavIcon: {
+    fontSize: "18px",
+    width: "24px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  drawerNavText: {
+    flex: 1
+  },
+
+  /* OTHER EXISTING STYLES */
   newModalOverlayOverlay: {
     position: "fixed",
     inset: 0,
