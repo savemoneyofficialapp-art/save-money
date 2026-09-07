@@ -1306,7 +1306,7 @@ const styles = {
   treePlantOnlyImg: {
     width: "85%",
     height: "75%",
-    objectFit: "cover",
+    objectFit: "95%",
     borderRadius: "16px"
   },
 
