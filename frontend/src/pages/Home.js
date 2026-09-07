@@ -1304,8 +1304,8 @@ const styles = {
     boxShadow: "0 6px 18px rgba(0, 0, 0, 0.4)"
   },
   treePlantOnlyImg: {
-    width: "100%",
-    height: "100%",
+    width: "85%",
+    height: "75%",
     objectFit: "cover",
     borderRadius: "16px"
   },
