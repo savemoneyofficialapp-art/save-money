@@ -483,7 +483,10 @@ export default function OneTime() {
   if (loading) {
     return (
       <div style={styles.loadingPage}>
-        <h3>Loading OneTime Investment...</h3>
+        <div style={{ textAlign: "center" }}>
+          <div style={styles.spinner}></div>
+          <h3 style={{ color: "#22c55e", marginTop: "12px" }}>Loading Dashboard...</h3>
+        </div>
       </div>
     );
   }
@@ -720,115 +723,136 @@ export default function OneTime() {
           </div>
         )}
 
-        {/* HEADER */}
+        {/* HEADER (MATCHING SCREENSHOT 1) */}
         <header style={styles.header}>
-          <div style={styles.brand}>
-            {/* Hamburger Menu Button */}
+          <div style={styles.headerLeft}>
             <button 
               style={styles.menuButton}
               onClick={() => setIsDrawerOpen(true)}
             >
               ☰
             </button>
-
-            <img
-              src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"}
-              alt="Logo"
-              style={styles.logoImg}
-              onError={(e) => (e.target.style.display = "none")}
-            />
             <div>
-              <h1 style={styles.brandTitle}>
-                SAVE <span style={{ color: "#22c55e" }}>MONEY</span>
+              <h1 style={styles.welcomeTitle}>
+                Welcome Back! 👏
               </h1>
-              <p style={styles.brandSubtitle}>Invest Small, Earn Big</p>
+              <p style={styles.welcomeSub}>Invest smartly & secure your future</p>
             </div>
           </div>
 
-          <div style={styles.welcomeBox}>
-            <strong style={styles.welcomeTitle}>Welcome Back! 👋</strong>
-            <span style={styles.welcomeSub}>Invest smartly & secure your future</span>
-          </div>
-
-          <div style={styles.headerRight}>
-            <div style={styles.notifIconContainer} title="Notifications">
-              <span style={{ fontSize: "22px" }}>🔔</span>
-              {oneTimerNotifications.length > 0 && (
-                <span style={styles.notifBadge}>{oneTimerNotifications.length}</span>
-              )}
-            </div>
-
-            <div style={styles.profileCircle}>
-              {profilePhoto ? (
-                <img src={profilePhoto} alt="User Profile" style={styles.profileImg} />
-              ) : (
-                <span style={{ fontSize: "22px", color: "#16a34a" }}>👤</span>
-              )}
-            </div>
+          <div style={styles.profileCircle}>
+            {profilePhoto ? (
+              <img src={profilePhoto} alt="User Profile" style={styles.profileImg} />
+            ) : (
+              <div style={styles.profileAvatarPlaceholder}></div>
+            )}
           </div>
         </header>
 
-        {/* TOP IMAGE BANNER (chhote nivesh.png) */}
-        <div style={styles.bannerWrapper}>
-          <img 
-            src="/chhote nivesh.png" 
-            alt="Chhote Nivesh" 
-            style={styles.bannerImage}
-            onError={(e) => (e.target.style.display = "none")}
-          />
+        {/* TOP HERO BANNER (MATCHING SCREENSHOT 1 DARK GREEN CAROUSEL) */}
+        <div style={styles.topHeroBanner}>
+          <div style={styles.heroTextContent}>
+            <h2 style={styles.heroTitle}>
+              Chhote nivesh se <br />
+              <span style={{ color: "#facc15" }}>badi kamai ka safar,</span> <br />
+              <span style={{ fontSize: "14px", fontWeight: "600", color: "#e2e8f0" }}>har mahine ka plan, hamesha</span>
+            </h2>
+            <p style={styles.heroDesc}>
+              Invest small amounts monthly to get big returns together
+            </p>
+          </div>
+          <div style={styles.heroImgWrapper}>
+            <img 
+              src="/chhote nivesh.png" 
+              alt="Chhote Nivesh" 
+              style={styles.heroBannerImage}
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
         </div>
 
-        {/* TOP STATS CARD */}
-        <section style={styles.summaryCard}>
-          <div style={styles.statBox}>
-            <span style={styles.statIcon}>👛</span>
-            <span style={styles.statTitle}>Total Invested</span>
-            <strong style={styles.statValue}>
+        {/* 4 STAT CARDS GRID (SCREENSHOT 1 STYLE WITH SPARKLINE GRAPHS) */}
+        <section style={styles.statsGridContainer}>
+          {/* 1. Total Invested */}
+          <div style={styles.darkStatCard}>
+            <div style={styles.statCardHeader}>
+              <div style={{ ...styles.iconBox, background: "rgba(34, 197, 94, 0.15)" }}>
+                <span style={{ color: "#22c55e", fontSize: "14px" }}>💼</span>
+              </div>
+              <span style={styles.statCardTitle}>Total Invested</span>
+            </div>
+            <strong style={styles.statCardValue}>
               ₹ {Number(stats.totalInvested || 0).toLocaleString("en-IN")}
             </strong>
+            <svg style={styles.sparkline} viewBox="0 0 100 25">
+              <path d="M0,20 Q25,5 50,15 T100,5" fill="none" stroke="#22c55e" strokeWidth="2" />
+            </svg>
           </div>
 
-          <div style={styles.statBox}>
-            <span style={styles.statIcon}>💵</span>
-            <span style={styles.statTitle}>Total Earnings</span>
-            <strong style={{ ...styles.statValue, color: "#86efac" }}>
+          {/* 2. Total Earnings */}
+          <div style={styles.darkStatCard}>
+            <div style={styles.statCardHeader}>
+              <div style={{ ...styles.iconBox, background: "rgba(56, 189, 248, 0.15)" }}>
+                <span style={{ color: "#38bdf8", fontSize: "14px" }}>💵</span>
+              </div>
+              <span style={styles.statCardTitle}>Total Earnings</span>
+            </div>
+            <strong style={styles.statCardValue}>
               ₹ {Number(stats.totalEarnings || 0).toLocaleString("en-IN")}
             </strong>
+            <svg style={styles.sparkline} viewBox="0 0 100 25">
+              <path d="M0,18 Q30,22 60,8 T100,12" fill="none" stroke="#38bdf8" strokeWidth="2" />
+            </svg>
           </div>
 
-          <div style={styles.statBox}>
-            <span style={styles.statIcon}>💸</span>
-            <span style={styles.statTitle}>Total Withdraw</span>
-            <strong style={styles.statValue}>
+          {/* 3. Total Withdraw */}
+          <div style={styles.darkStatCard}>
+            <div style={styles.statCardHeader}>
+              <div style={{ ...styles.iconBox, background: "rgba(168, 85, 247, 0.15)" }}>
+                <span style={{ color: "#a855f7", fontSize: "14px" }}>💸</span>
+              </div>
+              <span style={styles.statCardTitle}>Total Withdraw</span>
+            </div>
+            <strong style={styles.statCardValue}>
               ₹ {Number(stats.totalWithdrawn || 0).toLocaleString("en-IN")}
             </strong>
+            <svg style={styles.sparkline} viewBox="0 0 100 25">
+              <path d="M0,10 Q20,20 50,12 T100,18" fill="none" stroke="#a855f7" strokeWidth="2" />
+            </svg>
           </div>
 
-          <div style={{ ...styles.statBox, borderRight: "none" }}>
-            <span style={styles.statIcon}>🪙</span>
-            <span style={styles.statTitle}>Available Balance</span>
-            <strong style={{ ...styles.statValue, color: "#fef08a" }}>
+          {/* 4. Available Balance */}
+          <div style={styles.darkStatCard}>
+            <div style={styles.statCardHeader}>
+              <div style={{ ...styles.iconBox, background: "rgba(234, 179, 8, 0.15)" }}>
+                <span style={{ color: "#eab308", fontSize: "14px" }}>🪙</span>
+              </div>
+              <span style={styles.statCardTitle}>Available Balance</span>
+            </div>
+            <strong style={styles.statCardValue}>
               ₹ {currentWalletBalance.toLocaleString("en-IN")}
             </strong>
+            <svg style={styles.sparkline} viewBox="0 0 100 25">
+              <path d="M0,22 Q35,8 65,18 T100,2" fill="none" stroke="#eab308" strokeWidth="2" />
+            </svg>
           </div>
         </section>
 
-        {/* MAKE NEW INVESTMENT PANEL */}
-        <section style={styles.mainCard}>
-          <h2 style={styles.cardTitle}>
-            Make a New Investment
-            <div style={styles.titleLine}></div>
-          </h2>
+        {/* MAKE NEW INVESTMENT PANEL (DARK THEME - SCREENSHOT 1) */}
+        <section style={styles.darkMainCard}>
+          <h2 style={styles.darkCardTitle}>Make a New Investment</h2>
 
           {/* RUNNING ACTIVE INVESTMENT CARD */}
           {activeInvestment && (
-            <div style={styles.activeInvestCard}>
+            <div style={styles.activeInvestCardDark}>
               <div style={styles.activeHeader}>
                 <div style={styles.activeBadgeGroup}>
                   <span style={styles.activePulse}></span>
                   <strong style={styles.activeTitle}>ACTIVE INVESTMENT RUNNING</strong>
                 </div>
-                <span style={styles.activeStatusTag}>🟢 Live & Earning</span>
+                <span style={styles.activeStatusTagDark}>🟢 Live Earning</span>
               </div>
 
               <div style={styles.activeStatsGrid}>
@@ -842,7 +866,7 @@ export default function OneTime() {
                 </div>
                 <div style={styles.activeStatItem}>
                   <span style={styles.activeLabel}>Daily Earnings</span>
-                  <strong style={{ ...styles.activeValue, color: "#22c55e" }}>+₹{Number(dailyReturn).toFixed(2)} / day</strong>
+                  <strong style={{ ...styles.activeValue, color: "#22c55e" }}>₹{Number(dailyReturn).toFixed(2)} / day</strong>
                 </div>
                 <div style={styles.activeStatItem}>
                   <span style={styles.activeLabel}>Maturity Date</span>
@@ -854,23 +878,23 @@ export default function OneTime() {
             </div>
           )}
 
-          {/* FORM FIELDS - AUTO LOCKED WHEN INVESTMENT IS ACTIVE */}
+          {/* FORM FIELDS - DARK STYLED */}
           <div style={styles.formGrid}>
             <div style={styles.fieldGroup}>
-              <label style={styles.label}>
-                📅 Select Duration {activeInvestment && <span style={{ color: "#ef4444" }}>(🔒 Active)</span>}
+              <label style={styles.labelDark}>
+                📌 Select Duration {activeInvestment && <span style={{ color: "#ef4444" }}>(🔒Active)</span>}
               </label>
               <select
                 style={{
-                  ...styles.select,
-                  ...(activeInvestment ? styles.lockedInput : {})
+                  ...styles.selectDark,
+                  ...(activeInvestment ? styles.lockedInputDark : {})
                 }}
                 value={tenure}
                 onChange={handleTenureChange}
                 disabled={!!activeInvestment}
               >
                 {tenurePlans.map((p) => (
-                  <option key={p.days} value={p.days}>
+                  <option key={p.days} value={p.days} style={{ background: "#0c1829", color: "#fff" }}>
                     {p.label}
                   </option>
                 ))}
@@ -878,16 +902,15 @@ export default function OneTime() {
             </div>
 
             <div style={styles.fieldGroup}>
-              <label style={styles.label}>
-                🔄 Return Frequency {activeInvestment && <span style={{ color: "#ef4444" }}>(🔒 Active)</span>}
+              <label style={styles.labelDark}>
+                🔄 Return Frequency {activeInvestment && <span style={{ color: "#ef4444" }}>(🔒Active)</span>}
               </label>
-              <div style={styles.frequencyToggle}>
+              <div style={styles.frequencyToggleDark}>
                 <button
                   type="button"
                   style={{
-                    ...styles.freqBtn,
-                    ...(frequency === "daily" ? styles.freqBtnActive : {}),
-                    ...(activeInvestment ? styles.lockedBtn : {})
+                    ...styles.freqBtnDark,
+                    ...(frequency === "daily" ? styles.freqBtnActiveDark : {})
                   }}
                   onClick={() => !activeInvestment && setFrequency("daily")}
                   disabled={!!activeInvestment}
@@ -897,9 +920,8 @@ export default function OneTime() {
                 <button
                   type="button"
                   style={{
-                    ...styles.freqBtn,
-                    ...(frequency === "weekly" ? styles.freqBtnActive : {}),
-                    ...(activeInvestment ? styles.lockedBtn : {})
+                    ...styles.freqBtnDark,
+                    ...(frequency === "weekly" ? styles.freqBtnActiveDark : {})
                   }}
                   onClick={() => !activeInvestment && setFrequency("weekly")}
                   disabled={!!activeInvestment}
@@ -910,108 +932,109 @@ export default function OneTime() {
             </div>
 
             <div style={styles.fieldGroup}>
-              <label style={styles.label}>
-                💵 Select / Enter Amount {activeInvestment && <span style={{ color: "#ef4444" }}>(🔒 Active)</span>}
+              <label style={styles.labelDark}>
+                💵 Select / Enter Amount {activeInvestment && <span style={{ color: "#ef4444" }}>(🔒Active)</span>}
               </label>
               <div 
-                style={{
-                  ...styles.amountInputWrap,
-                  ...(activeInvestment ? styles.lockedInputWrap : {})
-                }} 
+                style={styles.amountInputWrapDark} 
                 onClick={() => !activeInvestment && setShowAmountModal(true)}
               >
-                <span style={{ fontSize: "16px", fontWeight: "bold", color: "#16a34a" }}>₹</span>
-                <input style={styles.amountInput} type="text" readOnly value={amount.toLocaleString("en-IN")} />
-                <span style={activeInvestment ? styles.lockedBadge : styles.changeBadge}>
+                <span style={{ fontSize: "14px", fontWeight: "bold", color: "#22c55e" }}>₹</span>
+                <input style={styles.amountInputDark} type="text" readOnly value={amount.toLocaleString("en-IN")} />
+                <span style={activeInvestment ? styles.lockedBadgeDark : styles.changeBadgeDark}>
                   {activeInvestment ? "🔒 Locked" : "Change ⚙️"}
                 </span>
               </div>
-              <small style={styles.helpText}>
+              <small style={styles.helpTextDark}>
                 {activeInvestment ? "Investment running - fields locked until maturity" : "Click to choose quick amount presets"}
               </small>
             </div>
           </div>
 
-          <div style={styles.returnGrid}>
-            {frequency === "daily" ? (
-              <div style={styles.dailyReturnCard}>
-                <div style={styles.returnCardTitle}>You Will Get Daily Return</div>
-                <strong style={styles.returnCardValue}>₹ {dailyReturn.toFixed(2)}</strong>
-                <span style={styles.returnCardNote}>(Approx. Return Per Day)</span>
+          {/* RETURN HIGHLIGHT BOX (SCREENSHOT 1 MINT/GREEN CONTAINER) */}
+          <div style={styles.returnContainerDark}>
+            <div style={styles.returnCardContent}>
+              <span style={styles.returnBoxBagIcon}>💰</span>
+              <div>
+                <div style={styles.returnCardTitleDark}>
+                  You Will Get {frequency === "daily" ? "Daily" : "Weekly"} Return
+                </div>
+                <strong style={styles.returnCardValueDark}>
+                  ₹ {frequency === "daily" ? dailyReturn.toFixed(2) : weeklyReturn.toFixed(2)}
+                </strong>
+                <span style={styles.returnCardNoteDark}>
+                  (Approx. Return Per {frequency === "daily" ? "Day" : "Week"})
+                </span>
               </div>
-            ) : (
-              <div style={styles.weeklyReturnCard}>
-                <div style={{ ...styles.returnCardTitle, color: "#1557d6" }}>You Will Get Weekly Return</div>
-                <strong style={{ ...styles.returnCardValue, color: "#1557d6" }}>₹ {weeklyReturn.toFixed(2)}</strong>
-                <span style={styles.returnCardNote}>(Approx. Return Per Week)</span>
-              </div>
-            )}
-          </div>
-
-          <div style={styles.breakdownGrid}>
-            <div style={styles.breakBox}>
-              <span style={styles.breakLabel}>Investment Amount</span>
-              <strong style={styles.breakValue}>₹ {Number(amount).toLocaleString("en-IN")}</strong>
-            </div>
-            <div style={styles.breakBox}>
-              <span style={styles.breakLabel}>Duration</span>
-              <strong style={styles.breakValue}>{tenure} Days ({rate}%)</strong>
-            </div>
-            <div style={styles.breakBox}>
-              <span style={styles.breakLabel}>Total Return</span>
-              <strong style={{ ...styles.breakValue, color: "#16a34a" }}>₹ {totalReturn.toLocaleString("en-IN")}</strong>
-            </div>
-            <div style={{ ...styles.breakBox, borderRight: "none" }}>
-              <span style={styles.breakLabel}>Total Payout</span>
-              <strong style={{ ...styles.breakValue, color: "#1d4ed8" }}>₹ {totalPayout.toLocaleString("en-IN")}</strong>
             </div>
           </div>
 
+          {/* BREAKDOWN ROW */}
+          <div style={styles.breakdownGridDark}>
+            <div style={styles.breakBoxDark}>
+              <span style={styles.breakLabelDark}>Investment Amount</span>
+              <strong style={styles.breakValueDark}>₹ {Number(amount).toLocaleString("en-IN")}</strong>
+            </div>
+            <div style={styles.breakBoxDark}>
+              <span style={styles.breakLabelDark}>Duration</span>
+              <strong style={styles.breakValueDark}>{tenure} Days ({rate}%)</strong>
+            </div>
+            <div style={styles.breakBoxDark}>
+              <span style={styles.breakLabelDark}>Total Return</span>
+              <strong style={{ ...styles.breakValueDark, color: "#22c55e" }}>₹ {totalReturn.toLocaleString("en-IN")}</strong>
+            </div>
+            <div style={{ ...styles.breakBoxDark, borderRight: "none" }}>
+              <span style={styles.breakLabelDark}>Total Payout</span>
+              <strong style={{ ...styles.breakValueDark, color: "#38bdf8" }}>₹ {totalPayout.toLocaleString("en-IN")}</strong>
+            </div>
+          </div>
+
+          {/* ACTION BUTTONS (SCREENSHOT 1) */}
           <div style={styles.actionGridTriple}>
             <button 
               style={{
-                ...styles.startInvestBtn,
-                ...(activeInvestment ? styles.disabledBtn : {})
+                ...styles.startInvestBtnDark,
+                ...(activeInvestment ? styles.disabledBtnDark : {})
               }} 
               onClick={handleStartInvestment} 
               disabled={investing || !!activeInvestment}
             >
-              {investing ? "Processing..." : activeInvestment ? "🔒 Active Running" : "🚀 Start Investment"}
+              {investing ? "Processing..." : activeInvestment ? "🚀 Active Running" : "🚀 Start Investment"}
             </button>
 
-            <button style={styles.addInvestBtn} onClick={() => setShowAddFundModal(true)}>
-              ➕ Add Fund
+            <button style={styles.addInvestBtnDark} onClick={() => setShowAddFundModal(true)}>
+              + Add Fund
             </button>
 
-            <button style={styles.withdrawBtn} onClick={handleWithdrawClick}>
+            <button style={styles.withdrawBtnDark} onClick={handleWithdrawClick}>
               ➔ Withdraw
             </button>
           </div>
         </section>
 
-        {/* HISTORY TABLE WITH PENDING, SUCCESS, REJECTED + REASON */}
-        <section style={styles.historyCard}>
+        {/* HISTORY TABLE (SCREENSHOT 1 DARK TABLE WITH STATUSES) */}
+        <section style={styles.darkHistoryCard}>
           <div style={styles.historyHeader}>
-            <h2 style={{ margin: 0, fontSize: "18px" }}>Investment & Transaction History</h2>
-            <span style={styles.viewAllBtn} onClick={loadDashboardData}>🔄 Refresh</span>
+            <h2 style={{ margin: 0, fontSize: "15px", color: "#f8fafc" }}>Investment & Transaction History</h2>
+            <span style={styles.refreshBtnDark} onClick={loadDashboardData}>🔄 Refresh</span>
           </div>
 
           <div style={styles.tableWrapper}>
-            <table style={styles.table}>
+            <table style={styles.tableDark}>
               <thead>
                 <tr>
-                  <th style={styles.th}>Date</th>
-                  <th style={styles.th}>Type / Description</th>
-                  <th style={styles.th}>Amount</th>
-                  <th style={styles.th}>Frequency / Txn</th>
-                  <th style={styles.th}>Status</th>
-                  <th style={styles.th}>Maturity</th>
+                  <th style={styles.thDark}>Date</th>
+                  <th style={styles.thDark}>Type / Description</th>
+                  <th style={styles.thDark}>Amount</th>
+                  <th style={styles.thDark}>Frequency / Txn</th>
+                  <th style={styles.thDark}>Status</th>
+                  <th style={styles.thDark}>Maturity</th>
                 </tr>
               </thead>
               <tbody>
                 {history.length === 0 ? (
                   <tr>
-                    <td colSpan="6" style={styles.emptyTd}>No history found</td>
+                    <td colSpan="6" style={styles.emptyTdDark}>No history found</td>
                   </tr>
                 ) : (
                   history.map((item, idx) => {
@@ -1025,36 +1048,36 @@ export default function OneTime() {
                     const displayStatus = rawStatus.toLowerCase() === "active" ? "Active" : (isSuccess ? "Success" : isRejected ? "Rejected" : "Pending");
 
                     return (
-                      <tr key={item._id || idx}>
-                        <td style={styles.td}>
+                      <tr key={item._id || idx} style={styles.trDark}>
+                        <td style={styles.tdDark}>
                           {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : (item.startDate ? new Date(item.startDate).toLocaleDateString("en-GB") : "-")}
                         </td>
-                        <td style={styles.td}>
-                          {isDeposit ? "💳 Add Fund Deposit" : isWithdraw ? "💸 Withdrawal" : `🚀 ${item.duration || `${item.durationDays || tenure} Days Plan`}`}
+                        <td style={styles.tdDark}>
+                          {isDeposit ? "💳 Add Fund" : isWithdraw ? "💸 Withdrawal" : `🚀 ${item.duration || `${item.durationDays || tenure} Days`}`}
                         </td>
-                        <td style={styles.td}>₹ {Number(item.amount || 0).toLocaleString("en-IN")}</td>
-                        <td style={styles.td}>
+                        <td style={styles.tdDark}>₹ {Number(item.amount || 0).toLocaleString("en-IN")}</td>
+                        <td style={styles.tdDark}>
                           {isDeposit ? (
-                            <span style={{ fontSize: "11px", color: "#64748b" }}>UTR: {item.transactionId || "N/A"}</span>
+                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>UTR: {item.transactionId || "N/A"}</span>
                           ) : isWithdraw ? (
-                            <span style={{ fontSize: "11px", color: "#64748b" }}>Bank Request</span>
+                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>Bank Request</span>
                           ) : (
-                            <span style={(item.frequency || "daily").toLowerCase() === "daily" ? styles.badgeDaily : styles.badgeWeekly}>
+                            <span style={styles.badgeDailyDark}>
                               {item.frequency || "Daily"}
                             </span>
                           )}
                         </td>
-                        <td style={styles.td}>
-                          <span style={{ ...styles.statusBadge, ...getStatusStyle(displayStatus) }}>
+                        <td style={styles.tdDark}>
+                          <span style={{ ...styles.statusBadgeDark, ...getStatusStyleDark(displayStatus) }}>
                             {displayStatus}
                           </span>
                           {isRejected && (item.rejectReason || item.reason) && (
-                            <div style={{ fontSize: "10px", color: "#ef4444", marginTop: "3px", fontWeight: "bold" }}>
+                            <div style={{ fontSize: "10px", color: "#f87171", marginTop: "3px" }}>
                               Reason: {item.rejectReason || item.reason}
                             </div>
                           )}
                         </td>
-                        <td style={styles.td}>
+                        <td style={styles.tdDark}>
                           {item.maturityDate ? new Date(item.maturityDate).toLocaleDateString("en-GB") : "-"}
                         </td>
                       </tr>
@@ -1064,45 +1087,109 @@ export default function OneTime() {
               </tbody>
             </table>
           </div>
+
+          <div style={styles.viewAllFooter}>
+            <span style={styles.viewAllLink}>View All Transactions ➔</span>
+          </div>
         </section>
 
-        {/* BOTTOM IMAGE BANNER (small invest.png) */}
-        <div style={styles.bannerWrapper}>
-          <img 
-            src="/small invest.png" 
-            alt="Small Invest" 
-            style={styles.bannerImage}
-            onError={(e) => (e.target.style.display = "none")}
-          />
-        </div>
-
-        {/* TRUST BANNER */}
-        <section style={styles.trustBanner}>
-          <div>
-            <h3 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>Invest Small, Earn Big Returns Together</h3>
-            <p style={{ margin: 0, opacity: 0.8, fontSize: "12px", color: "#64748b" }}>
+        {/* TRUST BANNER (MATCHING SCREENSHOT 1) */}
+        <section style={styles.trustBannerDark}>
+          <div style={styles.trustLeftContent}>
+            <h3 style={{ margin: "0 0 6px 0", fontSize: "16px", color: "#ffffff" }}>
+              Invest Small, <br />
+              <span style={{ color: "#4ade80" }}>Earn Big Returns Together</span>
+            </h3>
+            <p style={{ margin: "0 0 14px 0", opacity: 0.8, fontSize: "12px", color: "#94a3b8" }}>
               Start investing today and secure your future.
             </p>
+            <div style={styles.trustIllustrations}>
+              <img 
+                src="/small invest.png" 
+                alt="Small Invest" 
+                style={styles.trustImg}
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            </div>
           </div>
-          <div style={{ textAlign: "right", color: "#16a34a", fontWeight: "bold", fontSize: "13px" }}>
-            🛡 100% Secure
-            <br />
-            <small style={{ color: "#64748b" }}>Safe & Trusted Platform</small>
+
+          <div style={styles.trustRightList}>
+            <div style={styles.trustItem}>
+              <span style={styles.trustIcon}>🛡</span>
+              <div>
+                <strong style={styles.trustTitle}>100% Secure</strong>
+                <span style={styles.trustSub}>Safe & Trusted Platform</span>
+              </div>
+            </div>
+
+            <div style={styles.trustItem}>
+              <span style={styles.trustIcon}>📈</span>
+              <div>
+                <strong style={styles.trustTitle}>High Returns</strong>
+                <span style={styles.trustSub}>Better returns on your investments</span>
+              </div>
+            </div>
+
+            <div style={styles.trustItem}>
+              <span style={styles.trustIcon}>🕒</span>
+              <div>
+                <strong style={styles.trustTitle}>Smart & Simple</strong>
+                <span style={styles.trustSub}>Easy invest, easy grow</span>
+              </div>
+            </div>
           </div>
         </section>
+
+        {/* FOOTER FEATURES GRID (SCREENSHOT 1 BOTTOM CARDS) */}
+        <div style={styles.footerFeaturesGrid}>
+          <div style={styles.featureBoxDark}>
+            <span style={{ fontSize: "20px" }}>📈</span>
+            <div>
+              <strong style={{ fontSize: "12px", color: "#fff", display: "block" }}>High Returns</strong>
+              <span style={{ fontSize: "10px", color: "#94a3b8" }}>Better returns on your investments</span>
+            </div>
+          </div>
+
+          <div style={styles.featureBoxDark}>
+            <span style={{ fontSize: "20px" }}>🎧</span>
+            <div>
+              <strong style={{ fontSize: "12px", color: "#fff", display: "block" }}>24/7 Support</strong>
+              <span style={{ fontSize: "10px", color: "#94a3b8" }}>We are here to help you</span>
+            </div>
+          </div>
+
+          <div style={styles.featureBoxDark}>
+            <span style={{ fontSize: "20px" }}>👥</span>
+            <div>
+              <strong style={{ fontSize: "12px", color: "#fff", display: "block" }}>Trusted Platform</strong>
+              <span style={{ fontSize: "10px", color: "#94a3b8" }}>Thousands of users trust us</span>
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER BRAND BAR */}
+        <footer style={styles.footerBar}>
+          <p style={styles.footerTagline}>
+            Chhote nivesh, badi kamai ka sapna, ab hoga sach! <strong style={{ color: "#22c55e" }}>SAVE MONEY</strong> ke saath! 💚
+          </p>
+          <div style={styles.footerCopyRow}>
+            <span>© 2026 SAVE MONEY. All Rights Reserved.</span>
+            <span>Made with ❤️ for your better future</span>
+          </div>
+        </footer>
       </div>
 
-      {/* ----------------- MODALS ----------------- */}
+      {/* ----------------- MODALS (DARK THEMED) ----------------- */}
 
       {/* 1. AMOUNT PRESETS MODAL */}
       {showAmountModal && (
         <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
+          <div style={styles.modalCardDark}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, fontSize: "18px" }}>Select Investment Amount</h3>
-              <button style={styles.closeBtn} onClick={() => setShowAmountModal(false)}>✕</button>
+              <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Select Investment Amount</h3>
+              <button style={styles.closeBtnDark} onClick={() => setShowAmountModal(false)}>✕</button>
             </div>
-            <p style={{ fontSize: "12px", color: "#64748b", marginTop: 0, marginBottom: "16px" }}>
+            <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: 0, marginBottom: "16px" }}>
               Choose one of the plan presets below:
             </p>
 
@@ -1133,18 +1220,18 @@ export default function OneTime() {
       {/* 2. ADD FUND MODAL */}
       {showAddFundModal && (
         <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
+          <div style={styles.modalCardDark}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, fontSize: "18px" }}>Add Investment Fund</h3>
-              <button style={styles.closeBtn} onClick={() => setShowAddFundModal(false)}>✕</button>
+              <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Add Investment Fund</h3>
+              <button style={styles.closeBtnDark} onClick={() => setShowAddFundModal(false)}>✕</button>
             </div>
 
-            <p style={{ fontSize: "13px", color: "#475569", margin: "0 0 12px 0" }}>
-              Send <strong style={{ color: "#16a34a" }}>₹{amount.toLocaleString("en-IN")}</strong> to company wallet & upload payment proof:
+            <p style={{ fontSize: "13px", color: "#cbd5e1", margin: "0 0 12px 0" }}>
+              Send <strong style={{ color: "#22c55e" }}>₹{amount.toLocaleString("en-IN")}</strong> to company wallet & upload payment proof:
             </p>
 
-            <div style={styles.walletBox}>
-              <small style={{ color: "#64748b", fontWeight: "bold" }}>Company Wallet Address:</small>
+            <div style={styles.walletBoxDark}>
+              <small style={{ color: "#94a3b8", fontWeight: "bold" }}>Company Wallet Address:</small>
               <div style={styles.walletAddrRow}>
                 <span style={styles.walletText}>{COMPANY_WALLET_ADDRESS}</span>
                 <button style={styles.copyBtn} onClick={handleCopyWallet}>Copy</button>
@@ -1153,9 +1240,9 @@ export default function OneTime() {
 
             <form onSubmit={handleDepositSubmit} style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
               <div>
-                <label style={styles.label}>Transaction ID / UTR No.*</label>
+                <label style={styles.labelDark}>Transaction ID / UTR No.*</label>
                 <input
-                  style={styles.inputModal}
+                  style={styles.inputModalDark}
                   placeholder="Enter 12-digit UTR or Txn Hash"
                   value={txnId}
                   onChange={(e) => setTxnId(e.target.value)}
@@ -1164,17 +1251,17 @@ export default function OneTime() {
               </div>
 
               <div>
-                <label style={styles.label}>Payment Screenshot Proof*</label>
+                <label style={styles.labelDark}>Payment Screenshot Proof*</label>
                 <input
                   type="file"
                   accept="image/*"
-                  style={styles.fileInput}
+                  style={styles.fileInputDark}
                   onChange={(e) => setScreenshot(e.target.files[0])}
                   required
                 />
               </div>
 
-              <button type="submit" style={styles.submitBtn} disabled={depositing}>
+              <button type="submit" style={styles.submitBtnDark} disabled={depositing}>
                 {depositing ? "Uploading Proof..." : "Submit Deposit Proof"}
               </button>
             </form>
@@ -1185,42 +1272,42 @@ export default function OneTime() {
       {/* 3. ADD BANK ACCOUNT MODAL */}
       {showBankModal && (
         <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
+          <div style={styles.modalCardDark}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, fontSize: "18px" }}>Add Bank Details</h3>
-              <button style={styles.closeBtn} onClick={() => setShowBankModal(false)}>✕</button>
+              <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Add Bank Details</h3>
+              <button style={styles.closeBtnDark} onClick={() => setShowBankModal(false)}>✕</button>
             </div>
 
             <form onSubmit={handleSaveBankDetails} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <input
-                style={styles.inputModal}
+                style={styles.inputModalDark}
                 placeholder="Account Holder Name"
                 value={bankForm.holderName}
                 onChange={(e) => setBankForm({ ...bankForm, holderName: e.target.value })}
                 required
               />
               <input
-                style={styles.inputModal}
+                style={styles.inputModalDark}
                 placeholder="Bank Name"
                 value={bankForm.bankName}
                 onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })}
                 required
               />
               <input
-                style={styles.inputModal}
+                style={styles.inputModalDark}
                 placeholder="Account Number"
                 value={bankForm.accountNumber}
                 onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value })}
                 required
               />
               <input
-                style={styles.inputModal}
+                style={styles.inputModalDark}
                 placeholder="IFSC Code"
                 value={bankForm.ifsc}
                 onChange={(e) => setBankForm({ ...bankForm, ifsc: e.target.value })}
                 required
               />
-              <button type="submit" style={styles.submitBtn}>
+              <button type="submit" style={styles.submitBtnDark}>
                 Save Bank Account
               </button>
             </form>
@@ -1231,17 +1318,18 @@ export default function OneTime() {
       {/* 4. WITHDRAWAL MODAL */}
       {showWithdrawModal && (
         <div style={styles.modalOverlay}>
-          <div style={styles.modalCard}>
+          <div style={styles.modalCardDark}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, fontSize: "18px" }}>Withdraw Funds</h3>
-              <button style={styles.closeBtn} onClick={() => setShowWithdrawModal(false)}>✕</button>
+              <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Withdraw Funds</h3>
+              <button style={styles.closeBtnDark} onClick={() => setShowWithdrawModal(false)}>✕</button>
             </div>
 
             <div
               style={{
-                ...styles.withdrawBalanceInfo,
-                background: currentWalletBalance < selectedWithdrawAmount ? "#fee2e2" : "#e0f2fe",
-                color: currentWalletBalance < selectedWithdrawAmount ? "#991b1b" : "#0369a1"
+                ...styles.withdrawBalanceInfoDark,
+                background: currentWalletBalance < selectedWithdrawAmount ? "rgba(239, 68, 68, 0.15)" : "rgba(34, 197, 94, 0.15)",
+                color: currentWalletBalance < selectedWithdrawAmount ? "#f87171" : "#4ade80",
+                border: currentWalletBalance < selectedWithdrawAmount ? "1px solid #991b1b" : "1px solid #166534"
               }}
             >
               <span>Available Wallet Balance:</span>
@@ -1249,12 +1337,12 @@ export default function OneTime() {
             </div>
 
             {currentWalletBalance < selectedWithdrawAmount && (
-              <div style={styles.balanceAlertBox}>
+              <div style={styles.balanceAlertBoxDark}>
                 ⚠️ You don't have enough balance to withdraw ₹{selectedWithdrawAmount.toLocaleString("en-IN")}.
               </div>
             )}
 
-            <p style={{ fontSize: "13px", color: "#64748b", margin: "12px 0 6px" }}>
+            <p style={{ fontSize: "13px", color: "#94a3b8", margin: "12px 0 6px" }}>
               Select Pre-filled Withdrawal Amount:
             </p>
 
@@ -1264,8 +1352,8 @@ export default function OneTime() {
                   key={amt}
                   type="button"
                   style={{
-                    ...styles.withdrawPresetBtn,
-                    ...(selectedWithdrawAmount === amt ? styles.withdrawPresetActive : {})
+                    ...styles.withdrawPresetBtnDark,
+                    ...(selectedWithdrawAmount === amt ? styles.withdrawPresetActiveDark : {})
                   }}
                   onClick={() => setSelectedWithdrawAmount(amt)}
                 >
@@ -1276,9 +1364,9 @@ export default function OneTime() {
 
             <button
               style={{
-                ...styles.submitBtn,
+                ...styles.submitBtnDark,
                 marginTop: "18px",
-                background: currentWalletBalance < selectedWithdrawAmount ? "#94a3b8" : "#16a34a"
+                background: currentWalletBalance < selectedWithdrawAmount ? "#475569" : "#16a34a"
               }}
               onClick={handleWithdrawSubmit}
               disabled={withdrawing || currentWalletBalance < selectedWithdrawAmount}
@@ -1292,46 +1380,53 @@ export default function OneTime() {
   );
 }
 
-const getStatusStyle = (status) => {
+const getStatusStyleDark = (status) => {
   const s = (status || "").toLowerCase();
   if (s === "success" || s === "active" || s === "approved" || s === "accepted") {
-    return { background: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" };
+    return { background: "rgba(34, 197, 94, 0.2)", color: "#4ade80", border: "1px solid rgba(34, 197, 94, 0.4)" };
   }
   if (s === "pending") {
-    return { background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" };
+    return { background: "rgba(234, 179, 8, 0.2)", color: "#facc15", border: "1px solid rgba(234, 179, 8, 0.4)" };
   }
   if (s === "rejected" || s === "cancelled" || s === "failed") {
-    return { background: "#fee2e2", color: "#991b1b", border: "1px solid #fca5a5" };
+    return { background: "rgba(239, 68, 68, 0.2)", color: "#f87171", border: "1px solid rgba(239, 68, 68, 0.4)" };
   }
-  return { background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1" };
+  return { background: "rgba(148, 163, 184, 0.2)", color: "#cbd5e1", border: "1px solid rgba(148, 163, 184, 0.4)" };
 };
 
 const styles = {
   page: {
     minHeight: "100vh",
     width: "100%",
-    background: "linear-gradient(180deg, #061b3a 0%, #030e21 100%)",
-    padding: "16px",
+    background: "#030a16",
+    padding: "12px",
     fontFamily: "Inter, Arial, sans-serif",
-    color: "#0f172a",
+    color: "#f8fafc",
     boxSizing: "border-box",
     display: "flex",
     justifyContent: "center"
   },
   container: {
     width: "100%",
-    maxWidth: "1100px",
+    maxWidth: "1000px",
     display: "flex",
     flexDirection: "column",
-    gap: "16px"
+    gap: "14px"
   },
   loadingPage: {
     minHeight: "100vh",
-    background: "#061b3a",
-    color: "white",
+    background: "#030a16",
     display: "flex",
     alignItems: "center",
     justifyContent: "center"
+  },
+  spinner: {
+    width: "36px",
+    height: "36px",
+    border: "3px solid rgba(34, 197, 94, 0.2)",
+    borderTop: "3px solid #22c55e",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite"
   },
   toast: {
     position: "fixed",
@@ -1340,10 +1435,574 @@ const styles = {
     color: "white",
     padding: "12px 20px",
     borderRadius: "10px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.6)",
     zIndex: 99999,
     fontWeight: "bold",
-    fontSize: "14px"
+    fontSize: "13px"
+  },
+
+  // HEADER (SCREENSHOT 1 LOOK)
+  header: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "4px 0"
+  },
+  headerLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  },
+  menuButton: {
+    background: "transparent",
+    border: "none",
+    color: "white",
+    fontSize: "24px",
+    cursor: "pointer",
+    padding: "0"
+  },
+  welcomeTitle: {
+    margin: 0,
+    fontSize: "16px",
+    fontWeight: "800",
+    color: "#ffffff"
+  },
+  welcomeSub: {
+    margin: 0,
+    fontSize: "10px",
+    color: "#94a3b8"
+  },
+  profileCircle: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    background: "#0c1f38",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    border: "1px solid #10b981"
+  },
+  profileImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
+  },
+  profileAvatarPlaceholder: {
+    width: "18px",
+    height: "18px",
+    borderRadius: "50%",
+    background: "#10b981"
+  },
+
+  // TOP HERO BANNER (SCREENSHOT 1)
+  topHeroBanner: {
+    background: "linear-gradient(135deg, #062319 0%, #06182e 100%)",
+    borderRadius: "16px",
+    padding: "18px",
+    border: "1px solid rgba(34, 197, 94, 0.2)",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    position: "relative",
+    overflow: "hidden"
+  },
+  heroTextContent: {
+    maxWidth: "65%",
+    zIndex: 2
+  },
+  heroTitle: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "800",
+    color: "#ffffff",
+    lineHeight: "1.3"
+  },
+  heroDesc: {
+    margin: "8px 0 0 0",
+    fontSize: "11px",
+    color: "#94a3b8"
+  },
+  heroImgWrapper: {
+    width: "100px",
+    height: "80px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  heroBannerImage: {
+    maxWidth: "100%",
+    maxHeight: "100%",
+    objectFit: "contain"
+  },
+
+  // 4 STAT CARDS GRID (SCREENSHOT 1)
+  statsGridContainer: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "10px"
+  },
+  darkStatCard: {
+    background: "#081628",
+    borderRadius: "12px",
+    padding: "12px",
+    border: "1px solid rgba(255, 255, 255, 0.06)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    position: "relative",
+    overflow: "hidden",
+    minHeight: "80px"
+  },
+  statCardHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px"
+  },
+  iconBox: {
+    width: "24px",
+    height: "24px",
+    borderRadius: "6px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  statCardTitle: {
+    fontSize: "11px",
+    color: "#94a3b8",
+    fontWeight: "600"
+  },
+  statCardValue: {
+    fontSize: "18px",
+    fontWeight: "900",
+    color: "#ffffff",
+    marginTop: "6px",
+    zIndex: 2
+  },
+  sparkline: {
+    width: "100%",
+    height: "25px",
+    marginTop: "4px"
+  },
+
+  // MAIN INVESTMENT CARD (DARK SCREENSHOT 1)
+  darkMainCard: {
+    background: "#081628",
+    borderRadius: "16px",
+    padding: "18px",
+    border: "1px solid rgba(255, 255, 255, 0.06)"
+  },
+  darkCardTitle: {
+    margin: "0 0 16px 0",
+    fontSize: "15px",
+    fontWeight: "800",
+    color: "#ffffff"
+  },
+
+  // ACTIVE RUNNING CARD (DARK)
+  activeInvestCardDark: {
+    background: "#040d1a",
+    borderRadius: "12px",
+    padding: "14px",
+    marginBottom: "16px",
+    border: "1px solid #16a34a"
+  },
+  activeHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "12px",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
+    paddingBottom: "8px"
+  },
+  activeBadgeGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px"
+  },
+  activePulse: {
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%",
+    background: "#22c55e",
+    boxShadow: "0 0 8px #22c55e"
+  },
+  activeTitle: {
+    fontSize: "11px",
+    letterSpacing: "0.5px",
+    color: "#22c55e"
+  },
+  activeStatusTagDark: {
+    fontSize: "10px",
+    background: "rgba(34, 197, 94, 0.2)",
+    color: "#4ade80",
+    padding: "3px 8px",
+    borderRadius: "12px",
+    fontWeight: "bold"
+  },
+  activeStatsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "10px"
+  },
+  activeStatItem: {
+    display: "flex",
+    flexDirection: "column"
+  },
+  activeLabel: {
+    fontSize: "10px",
+    color: "#64748b"
+  },
+  activeValue: {
+    fontSize: "13px",
+    fontWeight: "bold",
+    color: "#f8fafc",
+    marginTop: "2px"
+  },
+
+  // FORM FIELDS
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "12px",
+    marginBottom: "14px"
+  },
+  fieldGroup: {
+    display: "flex",
+    flexDirection: "column"
+  },
+  labelDark: {
+    fontSize: "11px",
+    fontWeight: "700",
+    marginBottom: "6px",
+    color: "#cbd5e1"
+  },
+  selectDark: {
+    height: "42px",
+    borderRadius: "8px",
+    border: "1px solid #1e293b",
+    background: "#0f2138",
+    color: "#ffffff",
+    padding: "0 10px",
+    fontSize: "13px"
+  },
+  lockedInputDark: {
+    opacity: 0.6,
+    cursor: "not-allowed"
+  },
+  frequencyToggleDark: {
+    display: "flex",
+    gap: "6px",
+    height: "42px"
+  },
+  freqBtnDark: {
+    flex: 1,
+    borderRadius: "8px",
+    border: "1px solid #1e293b",
+    background: "#0f2138",
+    color: "#94a3b8",
+    fontSize: "13px",
+    fontWeight: "bold",
+    cursor: "pointer"
+  },
+  freqBtnActiveDark: {
+    background: "#16a34a",
+    color: "#ffffff",
+    borderColor: "#16a34a"
+  },
+  amountInputWrapDark: {
+    height: "42px",
+    borderRadius: "8px",
+    border: "1px solid #1e293b",
+    background: "#0f2138",
+    padding: "0 10px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    cursor: "pointer"
+  },
+  amountInputDark: {
+    border: "none",
+    background: "transparent",
+    fontSize: "14px",
+    fontWeight: "bold",
+    color: "#ffffff",
+    outline: "none",
+    width: "60%"
+  },
+  changeBadgeDark: {
+    fontSize: "10px",
+    color: "#38bdf8",
+    fontWeight: "bold"
+  },
+  lockedBadgeDark: {
+    fontSize: "10px",
+    color: "#ef4444",
+    fontWeight: "bold"
+  },
+  helpTextDark: {
+    color: "#64748b",
+    fontSize: "9px",
+    marginTop: "4px"
+  },
+
+  // RETURN BOX (SCREENSHOT 1)
+  returnContainerDark: {
+    background: "#dcfce7",
+    borderRadius: "12px",
+    padding: "16px",
+    textAlign: "center",
+    margin: "14px 0",
+    color: "#166534"
+  },
+  returnCardContent: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "12px"
+  },
+  returnBoxBagIcon: {
+    fontSize: "28px"
+  },
+  returnCardTitleDark: {
+    fontSize: "12px",
+    fontWeight: "700"
+  },
+  returnCardValueDark: {
+    fontSize: "24px",
+    fontWeight: "900",
+    display: "block"
+  },
+  returnCardNoteDark: {
+    fontSize: "10px",
+    opacity: 0.85
+  },
+
+  // BREAKDOWN GRID
+  breakdownGridDark: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    background: "#040d1a",
+    borderRadius: "10px",
+    border: "1px solid rgba(255, 255, 255, 0.06)",
+    margin: "14px 0",
+    overflow: "hidden"
+  },
+  breakBoxDark: {
+    padding: "10px",
+    textAlign: "center",
+    borderRight: "1px solid rgba(255, 255, 255, 0.06)"
+  },
+  breakLabelDark: {
+    display: "block",
+    fontSize: "10px",
+    color: "#64748b",
+    marginBottom: "2px"
+  },
+  breakValueDark: {
+    fontSize: "13px",
+    fontWeight: "bold",
+    color: "#ffffff"
+  },
+
+  // ACTION BUTTONS
+  actionGridTriple: {
+    display: "grid",
+    gridTemplateColumns: "2fr 1fr 1fr",
+    gap: "10px"
+  },
+  startInvestBtnDark: {
+    height: "44px",
+    borderRadius: "10px",
+    border: "none",
+    background: "#86efac",
+    color: "#052e16",
+    fontSize: "13px",
+    fontWeight: "bold",
+    cursor: "pointer"
+  },
+  disabledBtnDark: {
+    background: "#dcfce7",
+    color: "#166534",
+    opacity: 0.8,
+    cursor: "not-allowed"
+  },
+  addInvestBtnDark: {
+    height: "44px",
+    borderRadius: "10px",
+    border: "none",
+    background: "#2563eb",
+    color: "white",
+    fontSize: "13px",
+    fontWeight: "bold",
+    cursor: "pointer"
+  },
+  withdrawBtnDark: {
+    height: "44px",
+    borderRadius: "10px",
+    border: "none",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    color: "white",
+    fontSize: "13px",
+    fontWeight: "bold",
+    cursor: "pointer"
+  },
+
+  // HISTORY SECTION
+  darkHistoryCard: {
+    background: "#081628",
+    borderRadius: "16px",
+    padding: "16px",
+    border: "1px solid rgba(255, 255, 255, 0.06)"
+  },
+  historyHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "12px"
+  },
+  refreshBtnDark: {
+    color: "#22c55e",
+    fontSize: "11px",
+    fontWeight: "bold",
+    cursor: "pointer"
+  },
+  tableWrapper: {
+    overflowX: "auto"
+  },
+  tableDark: {
+    width: "100%",
+    borderCollapse: "collapse",
+    fontSize: "11px"
+  },
+  thDark: {
+    background: "#040d1a",
+    padding: "8px 10px",
+    color: "#64748b",
+    textAlign: "left",
+    fontWeight: "600"
+  },
+  trDark: {
+    borderBottom: "1px solid rgba(255, 255, 255, 0.04)"
+  },
+  tdDark: {
+    padding: "10px",
+    color: "#f8fafc"
+  },
+  emptyTdDark: {
+    textAlign: "center",
+    padding: "20px",
+    color: "#64748b"
+  },
+  badgeDailyDark: {
+    background: "rgba(34, 197, 94, 0.15)",
+    color: "#4ade80",
+    padding: "2px 6px",
+    borderRadius: "6px",
+    fontSize: "10px",
+    fontWeight: "bold"
+  },
+  statusBadgeDark: {
+    padding: "2px 8px",
+    borderRadius: "10px",
+    fontSize: "10px",
+    fontWeight: "bold",
+    display: "inline-block"
+  },
+  viewAllFooter: {
+    textAlign: "center",
+    marginTop: "12px",
+    paddingTop: "8px",
+    borderTop: "1px solid rgba(255,255,255,0.04)"
+  },
+  viewAllLink: {
+    color: "#22c55e",
+    fontSize: "11px",
+    fontWeight: "bold",
+    cursor: "pointer"
+  },
+
+  // TRUST BANNER (SCREENSHOT 1)
+  trustBannerDark: {
+    background: "linear-gradient(135deg, #051a13 0%, #081728 100%)",
+    borderRadius: "16px",
+    padding: "18px",
+    border: "1px solid rgba(34, 197, 94, 0.2)",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "16px",
+    alignItems: "center"
+  },
+  trustLeftContent: {
+    display: "flex",
+    flexDirection: "column"
+  },
+  trustIllustrations: {
+    width: "100%",
+    height: "70px"
+  },
+  trustImg: {
+    maxHeight: "100%",
+    objectFit: "contain"
+  },
+  trustRightList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px"
+  },
+  trustItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  },
+  trustIcon: {
+    fontSize: "18px",
+    color: "#22c55e"
+  },
+  trustTitle: {
+    fontSize: "12px",
+    color: "#ffffff",
+    display: "block"
+  },
+  trustSub: {
+    fontSize: "10px",
+    color: "#64748b"
+  },
+
+  // FOOTER FEATURES GRID
+  footerFeaturesGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "10px"
+  },
+  featureBoxDark: {
+    background: "#081628",
+    borderRadius: "12px",
+    padding: "12px",
+    border: "1px solid rgba(255, 255, 255, 0.06)",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  },
+
+  // FOOTER BAR
+  footerBar: {
+    textAlign: "center",
+    padding: "16px 0",
+    borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+    marginTop: "8px"
+  },
+  footerTagline: {
+    fontSize: "12px",
+    color: "#94a3b8",
+    margin: "0 0 6px 0"
+  },
+  footerCopyRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: "10px",
+    color: "#475569"
   },
 
   // SIDEBAR DRAWER STYLES
@@ -1469,59 +2128,19 @@ const styles = {
     fontSize: "13px",
     letterSpacing: "0.3px"
   },
-
-  drawerNavDashboard: {
-    background: "rgba(59, 130, 246, 0.2)",
-    border: "1px solid rgba(59, 130, 246, 0.4)"
-  },
-  drawerNavMyInvestment: {
-    background: "rgba(16, 185, 129, 0.2)",
-    border: "1px solid rgba(16, 185, 129, 0.4)"
-  },
-  drawerNavSaveMoney: {
-    background: "rgba(245, 158, 11, 0.2)",
-    border: "1px solid rgba(245, 158, 11, 0.4)"
-  },
-  drawerNavOneTime: {
-    background: "rgba(168, 85, 247, 0.2)",
-    border: "1px solid rgba(168, 85, 247, 0.4)"
-  },
-  drawerNavPlan: {
-    background: "rgba(6, 182, 212, 0.2)",
-    border: "1px solid rgba(6, 182, 212, 0.4)"
-  },
-  drawerNavAddFund: {
-    background: "rgba(20, 184, 166, 0.2)",
-    border: "1px solid rgba(20, 184, 166, 0.4)"
-  },
-  drawerNavRefer: {
-    background: "rgba(236, 72, 153, 0.2)",
-    border: "1px solid rgba(236, 72, 153, 0.4)"
-  },
-  drawerNavWithdraw: {
-    background: "rgba(249, 115, 22, 0.2)",
-    border: "1px solid rgba(249, 115, 22, 0.4)"
-  },
-  drawerNavDailyReward: {
-    background: "rgba(244, 63, 94, 0.2)",
-    border: "1px solid rgba(244, 63, 94, 0.4)"
-  },
-  drawerNavInvestmentAssistant: {
-    background: "rgba(2, 132, 199, 0.2)",
-    border: "1px solid rgba(2, 132, 199, 0.4)"
-  },
-  drawerNavSupport: {
-    background: "rgba(99, 102, 241, 0.2)",
-    border: "1px solid rgba(99, 102, 241, 0.4)"
-  },
-  drawerNavProfile: {
-    background: "rgba(236, 72, 153, 0.2)",
-    border: "1px solid rgba(236, 72, 153, 0.4)"
-  },
-  drawerNavLogout: {
-    background: "rgba(239, 68, 68, 0.2)",
-    border: "1px solid rgba(239, 68, 68, 0.4)"
-  },
+  drawerNavDashboard: { background: "rgba(59, 130, 246, 0.2)", border: "1px solid rgba(59, 130, 246, 0.4)" },
+  drawerNavMyInvestment: { background: "rgba(16, 185, 129, 0.2)", border: "1px solid rgba(16, 185, 129, 0.4)" },
+  drawerNavSaveMoney: { background: "rgba(245, 158, 11, 0.2)", border: "1px solid rgba(245, 158, 11, 0.4)" },
+  drawerNavOneTime: { background: "rgba(168, 85, 247, 0.2)", border: "1px solid rgba(168, 85, 247, 0.4)" },
+  drawerNavPlan: { background: "rgba(6, 182, 212, 0.2)", border: "1px solid rgba(6, 182, 212, 0.4)" },
+  drawerNavAddFund: { background: "rgba(20, 184, 166, 0.2)", border: "1px solid rgba(20, 184, 166, 0.4)" },
+  drawerNavRefer: { background: "rgba(236, 72, 153, 0.2)", border: "1px solid rgba(236, 72, 153, 0.4)" },
+  drawerNavWithdraw: { background: "rgba(249, 115, 22, 0.2)", border: "1px solid rgba(249, 115, 22, 0.4)" },
+  drawerNavDailyReward: { background: "rgba(244, 63, 94, 0.2)", border: "1px solid rgba(244, 63, 94, 0.4)" },
+  drawerNavInvestmentAssistant: { background: "rgba(2, 132, 199, 0.2)", border: "1px solid rgba(2, 132, 199, 0.4)" },
+  drawerNavSupport: { background: "rgba(99, 102, 241, 0.2)", border: "1px solid rgba(99, 102, 241, 0.4)" },
+  drawerNavProfile: { background: "rgba(236, 72, 153, 0.2)", border: "1px solid rgba(236, 72, 153, 0.4)" },
+  drawerNavLogout: { background: "rgba(239, 68, 68, 0.2)", border: "1px solid rgba(239, 68, 68, 0.4)" },
 
   treePlantOnlyWrapper: {
     flex: 1,
@@ -1543,502 +2162,26 @@ const styles = {
     borderRadius: "16px"
   },
 
-  menuButton: {
-    background: "transparent",
-    border: "none",
-    color: "white",
-    fontSize: "26px",
-    cursor: "pointer",
-    marginRight: "6px",
-    display: "flex",
-    alignItems: "center"
-  },
-
-  // BANNERS STYLES
-  bannerWrapper: {
-    width: "100%",
-    borderRadius: "16px",
-    overflow: "hidden",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.3)"
-  },
-  bannerImage: {
-    width: "100%",
-    height: "auto",
-    maxHeight: "180px",
-    objectFit: "cover",
-    display: "block"
-  },
-
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    color: "white"
-  },
-  brand: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px"
-  },
-  logoImg: {
-    width: "42px",
-    height: "42px",
-    borderRadius: "10px"
-  },
-  brandTitle: {
-    margin: 0,
-    fontSize: "20px",
-    fontWeight: "900"
-  },
-  brandSubtitle: {
-    margin: 0,
-    fontSize: "11px",
-    opacity: 0.8
-  },
-  welcomeBox: {
-    textAlign: "center"
-  },
-  welcomeTitle: {
-    fontSize: "16px",
-    display: "block"
-  },
-  welcomeSub: {
-    fontSize: "11px",
-    opacity: 0.75
-  },
-  headerRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px"
-  },
-  notifIconContainer: {
-    position: "relative",
-    cursor: "pointer"
-  },
-  notifBadge: {
-    position: "absolute",
-    top: "-5px",
-    right: "-5px",
-    background: "#ef4444",
-    color: "white",
-    borderRadius: "50%",
-    width: "18px",
-    height: "18px",
-    fontSize: "10px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "bold"
-  },
-  profileCircle: {
-    width: "42px",
-    height: "42px",
-    borderRadius: "50%",
-    background: "#ffffff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    border: "2px solid #22c55e"
-  },
-  profileImg: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover"
-  },
-  summaryCard: {
-    background: "linear-gradient(100deg, #1d4ed8, #16a34a)",
-    borderRadius: "16px",
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    padding: "16px",
-    color: "white",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.3)"
-  },
-  statBox: {
-    textAlign: "center",
-    borderRight: "1px solid rgba(255,255,255,0.2)",
-    padding: "6px"
-  },
-  statIcon: {
-    fontSize: "20px",
-    display: "block"
-  },
-  statTitle: {
-    fontSize: "11px",
-    opacity: 0.9
-  },
-  statValue: {
-    display: "block",
-    fontSize: "18px",
-    fontWeight: "800",
-    marginTop: "2px"
-  },
-  mainCard: {
-    background: "white",
-    borderRadius: "18px",
-    padding: "20px",
-    boxShadow: "0 8px 25px rgba(0,0,0,0.15)"
-  },
-  activeInvestCard: {
-    background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-    borderRadius: "14px",
-    padding: "18px",
-    marginBottom: "20px",
-    border: "1px solid #22c55e",
-    boxShadow: "0 0 15px rgba(34, 197, 94, 0.2)",
-    color: "white"
-  },
-  activeHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "14px",
-    borderBottom: "1px solid rgba(255,255,255,0.1)",
-    paddingBottom: "10px"
-  },
-  activeBadgeGroup: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px"
-  },
-  activePulse: {
-    width: "10px",
-    height: "10px",
-    borderRadius: "50%",
-    background: "#22c55e",
-    boxShadow: "0 0 8px #22c55e"
-  },
-  activeTitle: {
-    fontSize: "13px",
-    letterSpacing: "0.5px",
-    color: "#22c55e"
-  },
-  activeStatusTag: {
-    fontSize: "11px",
-    background: "rgba(34, 197, 94, 0.15)",
-    color: "#4ade80",
-    padding: "4px 10px",
-    borderRadius: "20px",
-    fontWeight: "bold",
-    border: "1px solid rgba(34, 197, 94, 0.3)"
-  },
-  activeStatsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-    gap: "12px"
-  },
-  activeStatItem: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px"
-  },
-  activeLabel: {
-    fontSize: "11px",
-    color: "#94a3b8"
-  },
-  activeValue: {
-    fontSize: "15px",
-    fontWeight: "bold",
-    color: "#f8fafc"
-  },
-  cardTitle: {
-    margin: "0 0 16px 0",
-    fontSize: "18px",
-    fontWeight: "800"
-  },
-  titleLine: {
-    width: "35px",
-    height: "3px",
-    background: "#16a34a",
-    marginTop: "4px",
-    borderRadius: "2px"
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "14px",
-    marginBottom: "16px"
-  },
-  fieldGroup: {
-    display: "flex",
-    flexDirection: "column"
-  },
-  label: {
-    fontSize: "12px",
-    fontWeight: "700",
-    marginBottom: "6px",
-    color: "#334155"
-  },
-  select: {
-    height: "46px",
-    borderRadius: "10px",
-    border: "1px solid #cbd5e1",
-    padding: "0 10px",
-    fontSize: "14px"
-  },
-  lockedInput: {
-    background: "#f1f5f9",
-    color: "#64748b",
-    cursor: "not-allowed"
-  },
-  frequencyToggle: {
-    display: "flex",
-    gap: "8px",
-    height: "46px"
-  },
-  freqBtn: {
-    flex: 1,
-    borderRadius: "10px",
-    border: "1px solid #cbd5e1",
-    background: "#f8fafc",
-    fontSize: "14px",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-  freqBtnActive: {
-    background: "#16a34a",
-    color: "white",
-    borderColor: "#16a34a"
-  },
-  lockedBtn: {
-    opacity: 0.65,
-    cursor: "not-allowed"
-  },
-  amountInputWrap: {
-    height: "46px",
-    borderRadius: "10px",
-    border: "1px solid #cbd5e1",
-    padding: "0 12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    cursor: "pointer",
-    background: "#f8fafc"
-  },
-  lockedInputWrap: {
-    background: "#f1f5f9",
-    cursor: "not-allowed",
-    borderColor: "#cbd5e1"
-  },
-  amountInput: {
-    border: "none",
-    background: "transparent",
-    fontSize: "15px",
-    fontWeight: "bold",
-    outline: "none",
-    width: "60%",
-    cursor: "inherit"
-  },
-  changeBadge: {
-    fontSize: "11px",
-    color: "#1d4ed8",
-    fontWeight: "bold",
-    background: "#eff6ff",
-    padding: "4px 8px",
-    borderRadius: "6px"
-  },
-  lockedBadge: {
-    fontSize: "11px",
-    color: "#ef4444",
-    fontWeight: "bold",
-    background: "#fee2e2",
-    padding: "4px 8px",
-    borderRadius: "6px"
-  },
-  helpText: {
-    color: "#64748b",
-    fontSize: "10px",
-    marginTop: "4px"
-  },
-  returnGrid: {
-    margin: "12px 0"
-  },
-  dailyReturnCard: {
-    background: "#f0fdf4",
-    border: "1px solid #bbf7d0",
-    borderRadius: "12px",
-    padding: "16px",
-    textAlign: "center"
-  },
-  weeklyReturnCard: {
-    background: "#eff6ff",
-    border: "1px solid #bfdbfe",
-    borderRadius: "12px",
-    padding: "16px",
-    textAlign: "center"
-  },
-  returnCardTitle: {
-    fontSize: "14px",
-    fontWeight: "700",
-    color: "#16a34a",
-    marginBottom: "4px"
-  },
-  returnCardValue: {
-    fontSize: "26px",
-    fontWeight: "800",
-    color: "#16a34a"
-  },
-  returnCardNote: {
-    display: "block",
-    fontSize: "11px",
-    color: "#64748b",
-    marginTop: "2px"
-  },
-  breakdownGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    border: "1px solid #e2e8f0",
-    borderRadius: "12px",
-    overflow: "hidden",
-    margin: "16px 0"
-  },
-  breakBox: {
-    padding: "12px",
-    textAlign: "center",
-    borderRight: "1px solid #e2e8f0"
-  },
-  breakLabel: {
-    display: "block",
-    fontSize: "11px",
-    color: "#64748b",
-    marginBottom: "2px"
-  },
-  breakValue: {
-    fontSize: "14px",
-    fontWeight: "bold"
-  },
-  actionGridTriple: {
-    display: "grid",
-    gridTemplateColumns: "2fr 1fr 1fr",
-    gap: "12px"
-  },
-  startInvestBtn: {
-    height: "50px",
-    borderRadius: "12px",
-    border: "none",
-    background: "linear-gradient(135deg, #16a34a, #15803d)",
-    color: "white",
-    fontSize: "15px",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-  disabledBtn: {
-    background: "#94a3b8",
-    cursor: "not-allowed",
-    opacity: 0.7
-  },
-  addInvestBtn: {
-    height: "50px",
-    borderRadius: "12px",
-    border: "none",
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "white",
-    fontSize: "15px",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-  withdrawBtn: {
-    height: "50px",
-    borderRadius: "12px",
-    border: "none",
-    background: "linear-gradient(135deg, #0f172a, #1e293b)",
-    color: "white",
-    fontSize: "15px",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-  historyCard: {
-    background: "white",
-    borderRadius: "18px",
-    padding: "18px",
-    boxShadow: "0 8px 25px rgba(0,0,0,0.15)"
-  },
-  historyHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "12px"
-  },
-  viewAllBtn: {
-    color: "#16a34a",
-    fontWeight: "bold",
-    fontSize: "13px",
-    cursor: "pointer"
-  },
-  tableWrapper: {
-    overflowX: "auto"
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    textAlign: "left",
-    fontSize: "12px"
-  },
-  th: {
-    background: "#f8fafc",
-    padding: "10px",
-    borderBottom: "1px solid #e2e8f0",
-    color: "#475569"
-  },
-  td: {
-    padding: "10px",
-    borderBottom: "1px solid #f1f5f9"
-  },
-  emptyTd: {
-    textAlign: "center",
-    padding: "24px",
-    color: "#94a3b8"
-  },
-  badgeDaily: {
-    background: "#dcfce7",
-    color: "#15803d",
-    padding: "3px 8px",
-    borderRadius: "10px",
-    fontSize: "10px",
-    fontWeight: "bold"
-  },
-  badgeWeekly: {
-    background: "#dbeafe",
-    color: "#1d4ed8",
-    padding: "3px 8px",
-    borderRadius: "10px",
-    fontSize: "10px",
-    fontWeight: "bold"
-  },
-  statusBadge: {
-    padding: "3px 8px",
-    borderRadius: "10px",
-    fontSize: "10px",
-    fontWeight: "bold",
-    display: "inline-block"
-  },
-  trustBanner: {
-    background: "#ffffff",
-    borderRadius: "16px",
-    padding: "16px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
+  // MODAL STYLES (DARK)
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(0, 0, 0, 0.7)",
-    backdropFilter: "blur(4px)",
+    background: "rgba(0, 0, 0, 0.8)",
+    backdropFilter: "blur(6px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 99999,
     padding: "16px"
   },
-  modalCard: {
-    background: "white",
-    borderRadius: "20px",
+  modalCardDark: {
+    background: "#081628",
+    borderRadius: "18px",
     padding: "20px",
     width: "100%",
     maxWidth: "400px",
-    boxShadow: "0 25px 50px rgba(0,0,0,0.3)"
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    boxShadow: "0 25px 50px rgba(0,0,0,0.6)"
   },
   modalHeader: {
     display: "flex",
@@ -2046,51 +2189,39 @@ const styles = {
     alignItems: "center",
     marginBottom: "12px"
   },
-  closeBtn: {
+  closeBtnDark: {
     border: "none",
-    background: "#f1f5f9",
+    background: "#0f2138",
+    color: "#fff",
     borderRadius: "50%",
     width: "28px",
     height: "28px",
-    cursor: "pointer",
-    fontWeight: "bold"
+    cursor: "pointer"
   },
   presetGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "12px"
+    gap: "10px"
   },
   presetCard: {
-    borderRadius: "14px",
-    padding: "14px",
+    borderRadius: "12px",
+    padding: "12px",
     color: "white",
     cursor: "pointer",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 6px 15px rgba(0,0,0,0.15)"
+    justifyContent: "center"
   },
-  presetBadge: {
-    fontSize: "10px",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    opacity: 0.9,
-    fontWeight: "bold"
-  },
-  presetVal: {
-    fontSize: "18px",
-    fontWeight: "900",
-    margin: "4px 0"
-  },
-  presetLabel: {
-    fontSize: "11px",
-    opacity: 0.85
-  },
-  walletBox: {
-    background: "#f1f5f9",
+  presetBadge: { fontSize: "9px", textTransform: "uppercase", fontWeight: "bold" },
+  presetVal: { fontSize: "16px", fontWeight: "900", margin: "2px 0" },
+  presetLabel: { fontSize: "10px", opacity: 0.8 },
+
+  walletBoxDark: {
+    background: "#040d1a",
     padding: "12px",
-    borderRadius: "10px"
+    borderRadius: "8px",
+    border: "1px solid #1e293b"
   },
   walletAddrRow: {
     display: "flex",
@@ -2099,78 +2230,71 @@ const styles = {
     gap: "8px",
     marginTop: "4px"
   },
-  walletText: {
-    fontSize: "11px",
-    wordBreak: "break-all",
-    fontWeight: "bold"
-  },
+  walletText: { fontSize: "11px", wordBreak: "break-all", color: "#fff" },
   copyBtn: {
     background: "#16a34a",
     color: "white",
     border: "none",
-    padding: "5px 10px",
+    padding: "4px 8px",
     borderRadius: "6px",
     cursor: "pointer",
-    fontSize: "11px",
-    fontWeight: "bold"
+    fontSize: "11px"
   },
-  inputModal: {
+  inputModalDark: {
     width: "100%",
-    height: "44px",
-    borderRadius: "10px",
-    border: "1px solid #cbd5e1",
-    padding: "0 12px",
-    fontSize: "13px",
+    height: "42px",
+    borderRadius: "8px",
+    border: "1px solid #1e293b",
+    background: "#0f2138",
+    color: "#fff",
+    padding: "0 10px",
+    fontSize: "12px",
     boxSizing: "border-box"
   },
-  fileInput: {
-    width: "100%",
-    fontSize: "12px"
-  },
-  submitBtn: {
-    height: "46px",
-    borderRadius: "10px",
+  fileInputDark: { width: "100%", fontSize: "11px", color: "#94a3b8" },
+  submitBtnDark: {
+    height: "42px",
+    borderRadius: "8px",
     border: "none",
     background: "#16a34a",
     color: "white",
     fontWeight: "bold",
-    fontSize: "14px",
+    fontSize: "13px",
     cursor: "pointer",
     width: "100%"
   },
-  withdrawBalanceInfo: {
+  withdrawBalanceInfoDark: {
     padding: "10px",
-    borderRadius: "10px",
+    borderRadius: "8px",
     display: "flex",
     justifyContent: "space-between",
-    fontSize: "13px"
+    fontSize: "12px"
   },
-  balanceAlertBox: {
-    background: "#fee2e2",
-    color: "#991b1b",
-    fontSize: "12px",
-    padding: "8px 10px",
-    borderRadius: "8px",
-    marginTop: "8px",
-    fontWeight: "bold"
+  balanceAlertBoxDark: {
+    background: "rgba(239, 68, 68, 0.15)",
+    color: "#f87171",
+    fontSize: "11px",
+    padding: "8px",
+    borderRadius: "6px",
+    marginTop: "8px"
   },
   withdrawPresetGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
     gap: "8px"
   },
-  withdrawPresetBtn: {
-    padding: "10px",
-    borderRadius: "10px",
-    border: "1px solid #cbd5e1",
-    background: "white",
+  withdrawPresetBtnDark: {
+    padding: "8px",
+    borderRadius: "8px",
+    border: "1px solid #1e293b",
+    background: "#0f2138",
+    color: "#fff",
     fontWeight: "bold",
     cursor: "pointer",
-    fontSize: "13px"
+    fontSize: "12px"
   },
-  withdrawPresetActive: {
-    background: "#1d4ed8",
-    color: "white",
-    borderColor: "#1d4ed8"
+  withdrawPresetActiveDark: {
+    background: "#2563eb",
+    borderColor: "#2563eb"
   }
 };
