@@ -1305,7 +1305,7 @@ const styles = {
   },
   treePlantOnlyImg: {
     width: "90%",
-    height: "75%",
+    height: "65%",
     objectFit: "95%",
     borderRadius: "16px"
   },
