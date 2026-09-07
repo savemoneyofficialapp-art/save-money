@@ -432,7 +432,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* SIDEBAR NAV BUTTONS - LARGER & GLOSSY COLORFUL */}
+          {/* SIDEBAR NAV BUTTONS - DIAMOND CUT & WATER TRANSPARENT */}
           <div style={styles.drawerNavList}>
             {/* 1. Dashboard */}
             <button 
@@ -1264,30 +1264,36 @@ const styles = {
   drawerNavList: {
     display: "flex",
     flexDirection: "column",
-    gap: "5px",
+    gap: "6px",
     flexShrink: 0,
     overflowY: "auto",
     maxHeight: "calc(100vh - 200px)"
   },
+  
+  // 💎 DIAMOND CUT & WATER TRANSPARENT DRAWER BUTTONS
   drawerNavItem: {
     display: "flex",
     alignItems: "center",
     gap: "10px",
-    padding: "7px 12px",
-    border: "1px solid rgba(255, 255, 255, 0.22)",
-    borderRadius: "12px",
+    padding: "8px 14px",
+    background: "rgba(255, 255, 255, 0.12)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    clipPath: "polygon(12px 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0% 50%)",
     color: "#ffffff",
     fontSize: "13px",
     fontWeight: "700",
     cursor: "pointer",
     textAlign: "left",
     transition: "all 0.25s ease",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.45)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
     textShadow: "0 1px 2px rgba(0,0,0,0.5)"
   },
   drawerNavItemActive: {
-    border: "2px solid #ffffff",
-    boxShadow: "0 0 16px rgba(255, 255, 255, 0.5)",
+    background: "rgba(255, 255, 255, 0.25)",
+    border: "1px solid #ffffff",
+    boxShadow: "0 0 16px rgba(255, 255, 255, 0.4)",
     fontWeight: "800"
   },
   drawerNavIcon: {
@@ -1302,45 +1308,58 @@ const styles = {
     letterSpacing: "0.3px"
   },
 
-  // GLOSSY COLORFUL GRADIENTS FOR DRAWER BUTTONS
+  // WATER TRANSPARENT ACCENTS FOR DRAWER BUTTONS
   drawerNavDashboard: {
-    background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)"
+    background: "rgba(59, 130, 246, 0.2)",
+    border: "1px solid rgba(59, 130, 246, 0.4)"
   },
   drawerNavMyInvestment: {
-    background: "linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)"
+    background: "rgba(16, 185, 129, 0.2)",
+    border: "1px solid rgba(16, 185, 129, 0.4)"
   },
   drawerNavSaveMoney: {
-    background: "linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)"
+    background: "rgba(245, 158, 11, 0.2)",
+    border: "1px solid rgba(245, 158, 11, 0.4)"
   },
   drawerNavOneTime: {
-    background: "linear-gradient(135deg, #a855f7 0%, #7e22ce 50%, #6b21a8 100%)"
+    background: "rgba(168, 85, 247, 0.2)",
+    border: "1px solid rgba(168, 85, 247, 0.4)"
   },
   drawerNavPlan: {
-    background: "linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%)"
+    background: "rgba(6, 182, 212, 0.2)",
+    border: "1px solid rgba(6, 182, 212, 0.4)"
   },
   drawerNavAddFund: {
-    background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%)"
+    background: "rgba(20, 184, 166, 0.2)",
+    border: "1px solid rgba(20, 184, 166, 0.4)"
   },
   drawerNavRefer: {
-    background: "linear-gradient(135deg, #ec4899 0%, #d946ef 50%, #a855f7 100%)"
+    background: "rgba(236, 72, 153, 0.2)",
+    border: "1px solid rgba(236, 72, 153, 0.4)"
   },
   drawerNavWithdraw: {
-    background: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%)"
+    background: "rgba(249, 115, 22, 0.2)",
+    border: "1px solid rgba(249, 115, 22, 0.4)"
   },
   drawerNavDailyReward: {
-    background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 50%, #be123c 100%)"
+    background: "rgba(244, 63, 94, 0.2)",
+    border: "1px solid rgba(244, 63, 94, 0.4)"
   },
   drawerNavInvestmentAssistant: {
-    background: "linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #075985 100%)"
+    background: "rgba(2, 132, 199, 0.2)",
+    border: "1px solid rgba(2, 132, 199, 0.4)"
   },
   drawerNavSupport: {
-    background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #3730a3 100%)"
+    background: "rgba(99, 102, 241, 0.2)",
+    border: "1px solid rgba(99, 102, 241, 0.4)"
   },
   drawerNavProfile: {
-    background: "linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%)"
+    background: "rgba(236, 72, 153, 0.2)",
+    border: "1px solid rgba(236, 72, 153, 0.4)"
   },
   drawerNavLogout: {
-    background: "linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%)"
+    background: "rgba(239, 68, 68, 0.2)",
+    border: "1px solid rgba(239, 68, 68, 0.4)"
   },
 
   // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM
@@ -1393,13 +1412,15 @@ const styles = {
     position: "absolute",
     top: "12px",
     right: "12px",
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    border: "none",
-    background: "#1e293b",
+    width: "34px",
+    height: "34px",
+    background: "rgba(255, 255, 255, 0.15)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    border: "1px solid rgba(255, 255, 255, 0.3)",
+    clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
     color: "#ffffff",
-    fontSize: "16px",
+    fontSize: "14px",
     fontWeight: "bold",
     cursor: "pointer",
     display: "flex",
@@ -1417,9 +1438,11 @@ const styles = {
   popupDownloadBtn: {
     width: "100%",
     padding: "12px",
-    border: "none",
-    borderRadius: "14px",
-    background: "linear-gradient(135deg, #22c55e, #16a34a)",
+    border: "1px solid rgba(34, 197, 94, 0.4)",
+    background: "rgba(34, 197, 94, 0.2)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    clipPath: "polygon(14px 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0% 50%)",
     color: "#ffffff",
     fontWeight: "800",
     fontSize: "15px",
@@ -1428,7 +1451,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     gap: "8px",
-    boxShadow: "0 4px 14px rgba(34, 197, 94, 0.35)"
+    boxShadow: "0 4px 14px rgba(0, 0, 0, 0.3)"
   },
 
   statusOverlayBg: {
@@ -1524,13 +1547,15 @@ const styles = {
   logoutBtn: {
     height: "42px",
     padding: "0 18px",
-    border: "none",
-    borderRadius: "14px",
-    background: "linear-gradient(135deg,#ef4444,#dc2626)",
+    border: "1px solid rgba(239, 68, 68, 0.4)",
+    background: "rgba(239, 68, 68, 0.2)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    clipPath: "polygon(10px 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0% 50%)",
     color: "white",
     fontWeight: "800",
     fontSize: "14px",
-    boxShadow: "0 4px 14px rgba(239,68,68,0.35)",
+    boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
     cursor: "pointer"
   },
 
@@ -1800,10 +1825,14 @@ const styles = {
     boxShadow: "inset 0 0 35px rgba(59,130,246,0.25)"
   },
 
+  // 💎 DIAMOND CUT & WATER TRANSPARENT MAIN ACTION BUTTONS
   actionButton: {
     position: "relative",
-    border: "none",
-    borderRadius: "20px",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    background: "rgba(255, 255, 255, 0.12)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    clipPath: "polygon(14px 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0% 50%)",
     minHeight: "120px",
     color: "white",
     padding: "14px",
@@ -1821,12 +1850,14 @@ const styles = {
     width: "46px",
     height: "46px",
     borderRadius: "16px",
-    background: "rgba(255,255,255,0.28)",
+    background: "rgba(255,255,255,0.22)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontSize: "28px",
-    boxShadow: "inset 0 0 12px rgba(255,255,255,0.25)"
+    boxShadow: "inset 0 0 12px rgba(255,255,255,0.2)"
   },
 
   actionTextBox: {
@@ -1854,44 +1885,57 @@ const styles = {
     width: "70px",
     height: "70px",
     borderRadius: "50%",
-    background: "rgba(255,255,255,0.17)"
+    background: "rgba(255,255,255,0.15)"
   },
 
+  // WATER TRANSPARENT COLOR TINTS FOR ACTION BUTTONS
   actionInvest: {
-    background: "linear-gradient(135deg,#00ff75,#00c853,#008f45)"
+    background: "rgba(0, 255, 117, 0.15)",
+    border: "1px solid rgba(0, 255, 117, 0.35)"
   },
   actionMyInvestment: {
-    background: "linear-gradient(135deg,#00b4ff,#2563eb,#003cff)"
+    background: "rgba(0, 180, 255, 0.15)",
+    border: "1px solid rgba(0, 180, 255, 0.35)"
   },
   actionWallet: {
-    background: "linear-gradient(135deg,#a855f7,#d946ef,#ff00d4)"
+    background: "rgba(217, 70, 239, 0.15)",
+    border: "1px solid rgba(217, 70, 239, 0.35)"
   },
   actionWithdraw: {
-    background: "linear-gradient(135deg,#ff6b00,#ff9f00,#ffd000)"
+    background: "rgba(255, 107, 0, 0.15)",
+    border: "1px solid rgba(255, 107, 0, 0.35)"
   },
   actionRefer: {
-    background: "linear-gradient(135deg,#ff007a,#ff2bd6,#b000ff)"
+    background: "rgba(255, 0, 122, 0.15)",
+    border: "1px solid rgba(255, 0, 122, 0.35)"
   },
   actionTransaction: {
-    background: "linear-gradient(135deg,#00e5ff,#00c8ff,#00ffd5)"
+    background: "rgba(0, 229, 255, 0.15)",
+    border: "1px solid rgba(0, 229, 255, 0.35)"
   },
   actionKyc: {
-    background: "linear-gradient(135deg,#00f5ff,#0284c7,#005eff)"
+    background: "rgba(0, 245, 255, 0.15)",
+    border: "1px solid rgba(0, 245, 255, 0.35)"
   },
   actionReward: {
-    background: "linear-gradient(135deg,#7c3aed,#a855f7,#e879f9)"
+    background: "rgba(168, 85, 247, 0.15)",
+    border: "1px solid rgba(168, 85, 247, 0.35)"
   },
   actionBank: {
-    background: "linear-gradient(135deg,#ff8c00,#ffb703,#ffdd00)"
+    background: "rgba(255, 183, 3, 0.15)",
+    border: "1px solid rgba(255, 183, 3, 0.35)"
   },
   actionPlan: {
-    background: "linear-gradient(135deg,#2979ff,#00b0ff,#00e5ff)"
+    background: "rgba(0, 176, 255, 0.15)",
+    border: "1px solid rgba(0, 176, 255, 0.35)"
   },
   actionNotification: {
-    background: "linear-gradient(135deg,#ff1744,#ff006e,#ff5c8d)"
+    background: "rgba(255, 23, 68, 0.15)",
+    border: "1px solid rgba(255, 23, 68, 0.35)"
   },
   actionSupport: {
-    background: "linear-gradient(135deg,#00ff75,#00e676,#00c853)"
+    background: "rgba(0, 255, 117, 0.15)",
+    border: "1px solid rgba(0, 255, 117, 0.35)"
   },
 
   promoBanner: {
@@ -1912,13 +1956,15 @@ const styles = {
 
   promoButton: {
     marginTop: "12px",
-    border: "none",
-    borderRadius: "12px",
-    padding: "10px 16px",
-    background: "#facc15",
-    color: "#020617",
+    border: "1px solid rgba(250, 204, 21, 0.5)",
+    background: "rgba(250, 204, 21, 0.2)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    clipPath: "polygon(10px 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0% 50%)",
+    color: "#ffffff",
     fontWeight: "900",
-    cursor: "pointer"
+    cursor: "pointer",
+    padding: "10px 18px"
   },
 
   promoIcon: {
@@ -1966,8 +2012,11 @@ const styles = {
     marginLeft: "-16px",
     marginTop: "20px",
     padding: "15px",
-    border: "none",
-    background: "linear-gradient(90deg,#06b6d4,#14f1c4)",
+    border: "1px solid rgba(6, 182, 212, 0.4)",
+    background: "rgba(6, 182, 212, 0.2)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    clipPath: "polygon(15px 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 15px 100%, 0% 50%)",
     color: "white",
     fontWeight: "900",
     fontSize: "15px",
