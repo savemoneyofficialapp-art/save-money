@@ -432,13 +432,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* SIDEBAR GLOSSY COLORFUL LARGER NAV BUTTONS */}
+          {/* SIDEBAR NAV BUTTONS - LARGER & GLOSSY COLORFUL */}
           <div style={styles.drawerNavList}>
-            {/* 1. Dashboard - Glossy Blue */}
+            {/* 1. Dashboard */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossyDashboard,
+                ...styles.drawerNavDashboard,
                 ...(location.pathname === "/home" ? styles.drawerNavItemActive : {})
               }} 
               onClick={() => { go("/home"); setIsDrawerOpen(false); }}
@@ -447,11 +447,11 @@ export default function Home() {
               <span style={styles.drawerNavText}>Dashboard</span>
             </button>
 
-            {/* 2. My Investment - Glossy Emerald */}
+            {/* 2. My Investment */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossyInvestment,
+                ...styles.drawerNavMyInvestment,
                 ...(location.pathname === "/my-investment" ? styles.drawerNavItemActive : {})
               }} 
               onClick={() => { go("/my-investment"); setIsDrawerOpen(false); }}
@@ -460,11 +460,11 @@ export default function Home() {
               <span style={styles.drawerNavText}>My Investment</span>
             </button>
 
-            {/* 3. Save Money - Glossy Amber */}
+            {/* 3. Save Money */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossySaveMoney,
+                ...styles.drawerNavSaveMoney,
                 ...(location.pathname === "/save-money" ? styles.drawerNavItemActive : {})
               }} 
               onClick={() => { go("/save-money"); setIsDrawerOpen(false); }}
@@ -473,11 +473,11 @@ export default function Home() {
               <span style={styles.drawerNavText}>Save Money</span>
             </button>
 
-            {/* 4. One Time - Glossy Purple */}
+            {/* 4. One Time */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossyOneTime,
+                ...styles.drawerNavOneTime,
                 ...(location.pathname === "/onetime" ? styles.drawerNavItemActive : {})
               }} 
               onClick={() => { go("/onetime"); setIsDrawerOpen(false); }}
@@ -486,11 +486,11 @@ export default function Home() {
               <span style={styles.drawerNavText}>One Time</span>
             </button>
 
-            {/* 5. PLAN (PDF Download) - Glossy Pink/Rose */}
+            {/* 5. PLAN (PDF Download) */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossyPlan
+                ...styles.drawerNavPlan
               }} 
               onClick={() => { handleDownloadPlan(); setIsDrawerOpen(false); }}
               disabled={isDownloadingPlan}
@@ -499,11 +499,11 @@ export default function Home() {
               <span style={styles.drawerNavText}>{isDownloadingPlan ? "Downloading..." : "Plan PDF"}</span>
             </button>
 
-            {/* 6. Add Fund - Glossy Teal */}
+            {/* Add Fund */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossyAddFund
+                ...styles.drawerNavAddFund
               }} 
               onClick={() => { go("/wallet"); setIsDrawerOpen(false); }}
             >
@@ -511,11 +511,11 @@ export default function Home() {
               <span style={styles.drawerNavText}>Add Fund</span>
             </button>
 
-            {/* 7. Withdraw - Glossy Orange */}
+            {/* Withdraw */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossyWithdraw
+                ...styles.drawerNavWithdraw
               }} 
               onClick={() => { go("/withdraw"); setIsDrawerOpen(false); }}
             >
@@ -523,11 +523,11 @@ export default function Home() {
               <span style={styles.drawerNavText}>Withdraw</span>
             </button>
 
-            {/* 8. Support - Glossy Indigo */}
+            {/* Support */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossySupport
+                ...styles.drawerNavSupport
               }} 
               onClick={() => { go("/support"); setIsDrawerOpen(false); }}
             >
@@ -535,11 +535,11 @@ export default function Home() {
               <span style={styles.drawerNavText}>Support</span>
             </button>
 
-            {/* 9. Profile - Glossy Cyan */}
+            {/* Profile */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossyProfile
+                ...styles.drawerNavProfile
               }} 
               onClick={() => { go("/kyc"); setIsDrawerOpen(false); }}
             >
@@ -547,11 +547,11 @@ export default function Home() {
               <span style={styles.drawerNavText}>Profile</span>
             </button>
 
-            {/* 10. Logout - Glossy Red */}
+            {/* Logout */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.glossyLogout
+                ...styles.drawerNavLogout
               }} 
               onClick={() => { setIsDrawerOpen(false); handleLogout(); }}
             >
@@ -560,7 +560,7 @@ export default function Home() {
             </button>
           </div>
 
-          {/* 👇 ONLY TREE PLANT IMAGE AT THE BOTTOM */}
+          {/* 👇 ONLY TREE PLANT IMAGE AT THE BOTTOM (NO GREEN BACKGROUND BOX) */}
           <div style={styles.treePlantOnlyWrapper}>
             <img 
               src="/tree plant.png" 
@@ -1139,45 +1139,15 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#030712",
-    color: "#f8fafc",
-    fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
-    paddingBottom: "80px",
-    position: "relative"
-  },
-  loadingPage: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#030712",
-    color: "#fff"
-  },
-  loadingCard: {
-    textAlign: "center",
-    padding: "30px",
-    background: "#0f172a",
-    borderRadius: "20px",
-    border: "1px solid #1e293b",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
-  },
-  loadingLogoImg: {
-    width: "60px",
-    height: "60px",
-    objectFit: "contain"
-  },
-
-  // 👇 SLIDE BAR / DRAWER STYLES
+  // 👇 SLIDE BAR / DRAWER STYLES (UPDATED WITH LARGER & GLOSSY COLORFUL BUTTONS)
   drawerOverlay: {
     position: "fixed",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    background: "rgba(0, 0, 0, 0.8)",
-    backdropFilter: "blur(8px)",
+    background: "rgba(0, 0, 0, 0.75)",
+    backdropFilter: "blur(6px)",
     zIndex: 100002,
     display: "flex",
     justifyContent: "flex-start",
@@ -1188,14 +1158,14 @@ const styles = {
     top: 0,
     bottom: 0,
     left: 0,
-    background: "#070d18",
-    width: "280px",
+    background: "#08101e",
+    width: "270px",
     height: "100%",
-    padding: "22px 16px 20px 16px",
+    padding: "20px 14px 20px 14px",
     display: "flex",
     flexDirection: "column",
-    boxShadow: "12px 0 35px rgba(0,0,0,0.9)",
-    borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+    boxShadow: "10px 0 30px rgba(0,0,0,0.85)",
+    borderRight: "1px solid #1e293b",
     transform: "translateX(-100%)",
     transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     overflowY: "auto",
@@ -1206,9 +1176,9 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: "20px",
-    paddingBottom: "18px",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.1)"
+    marginBottom: "18px",
+    paddingBottom: "16px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
   },
   drawerBrand: {
     display: "flex",
@@ -1217,27 +1187,27 @@ const styles = {
     gap: "8px"
   },
   drawerLogoWrapper: {
-    width: "56px",
-    height: "56px",
+    width: "52px",
+    height: "52px",
     borderRadius: "50%",
     background: "radial-gradient(circle, #03251a 0%, #064e3b 100%)",
     border: "2px solid #22c55e",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 0 20px rgba(34, 197, 94, 0.4)"
+    boxShadow: "0 0 16px rgba(34, 197, 94, 0.35)"
   },
   drawerLogoImg: {
-    width: "36px",
-    height: "36px",
+    width: "34px",
+    height: "34px",
     objectFit: "contain"
   },
   drawerLogoText: {
     margin: 0,
-    fontSize: "18px",
+    fontSize: "17px",
     fontWeight: "900",
     color: "#ffffff",
-    letterSpacing: "1px",
+    letterSpacing: "0.8px",
     textAlign: "center"
   },
   drawerLogoSubtext: {
@@ -1252,124 +1222,98 @@ const styles = {
     flexDirection: "column",
     gap: "12px"
   },
-
-  // 👇 BASE BUTTON STYLE (LARGER SIZE & GLOSSY TOUCH)
   drawerNavItem: {
     display: "flex",
     alignItems: "center",
-    gap: "15px",
+    gap: "14px",
     padding: "14px 18px",
-    minHeight: "52px",
+    border: "1px solid rgba(255, 255, 255, 0.22)",
     borderRadius: "16px",
     color: "#ffffff",
     fontSize: "15px",
     fontWeight: "700",
     cursor: "pointer",
     textAlign: "left",
-    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-    position: "relative",
-    overflow: "hidden",
-    backdropFilter: "blur(10px)",
-    textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
-    letterSpacing: "0.3px"
+    transition: "all 0.25s ease",
+    boxShadow: "0 6px 16px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.4)",
+    textShadow: "0 1px 2px rgba(0,0,0,0.5)"
   },
   drawerNavItemActive: {
-    outline: "2px solid #ffffff",
-    outlineOffset: "2px",
-    transform: "scale(1.02)"
+    border: "2px solid #ffffff",
+    boxShadow: "0 0 20px rgba(255, 255, 255, 0.5), inset 0 1px 2px rgba(255,255,255,0.8)",
+    transform: "scale(1.02)",
+    fontWeight: "800"
   },
   drawerNavIcon: {
     fontSize: "22px",
-    width: "28px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.4))"
+    width: "26px",
+    display: "inline-block",
+    textAlign: "center"
   },
   drawerNavText: {
     flex: 1,
     fontSize: "15px",
-    fontWeight: "700",
     letterSpacing: "0.4px"
   },
 
-  // 👇 INDIVIDUAL GLOSSY COLORFUL STYLES
-  glossyDashboard: {
-    background: "linear-gradient(135deg, rgba(30, 58, 138, 0.95) 0%, rgba(59, 130, 246, 0.95) 100%)",
-    border: "1px solid rgba(147, 197, 253, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(37, 99, 235, 0.4)"
+  // GLOSSY COLORFUL GRADIENTS FOR DRAWER BUTTONS
+  drawerNavDashboard: {
+    background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)"
   },
-  glossyInvestment: {
-    background: "linear-gradient(135deg, rgba(6, 78, 59, 0.95) 0%, rgba(16, 185, 129, 0.95) 100%)",
-    border: "1px solid rgba(110, 231, 183, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(16, 185, 129, 0.4)"
+  drawerNavMyInvestment: {
+    background: "linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)"
   },
-  glossySaveMoney: {
-    background: "linear-gradient(135deg, rgba(120, 53, 15, 0.95) 0%, rgba(245, 158, 11, 0.95) 100%)",
-    border: "1px solid rgba(252, 211, 77, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(245, 158, 11, 0.4)"
+  drawerNavSaveMoney: {
+    background: "linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)"
   },
-  glossyOneTime: {
-    background: "linear-gradient(135deg, rgba(88, 28, 135, 0.95) 0%, rgba(168, 85, 247, 0.95) 100%)",
-    border: "1px solid rgba(216, 180, 254, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(168, 85, 247, 0.4)"
+  drawerNavOneTime: {
+    background: "linear-gradient(135deg, #a855f7 0%, #7e22ce 50%, #6b21a8 100%)"
   },
-  glossyPlan: {
-    background: "linear-gradient(135deg, rgba(131, 24, 67, 0.95) 0%, rgba(236, 72, 153, 0.95) 100%)",
-    border: "1px solid rgba(249, 168, 212, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(236, 72, 153, 0.4)"
+  drawerNavPlan: {
+    background: "linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%)"
   },
-  glossyAddFund: {
-    background: "linear-gradient(135deg, rgba(19, 78, 74, 0.95) 0%, rgba(20, 184, 166, 0.95) 100%)",
-    border: "1px solid rgba(153, 246, 228, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(20, 184, 166, 0.4)"
+  drawerNavAddFund: {
+    background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%)"
   },
-  glossyWithdraw: {
-    background: "linear-gradient(135deg, rgba(124, 45, 18, 0.95) 0%, rgba(249, 115, 22, 0.95) 100%)",
-    border: "1px solid rgba(253, 186, 116, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(249, 115, 22, 0.4)"
+  drawerNavWithdraw: {
+    background: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%)"
   },
-  glossySupport: {
-    background: "linear-gradient(135deg, rgba(67, 56, 202, 0.95) 0%, rgba(99, 102, 241, 0.95) 100%)",
-    border: "1px solid rgba(199, 210, 254, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(99, 102, 241, 0.4)"
+  drawerNavSupport: {
+    background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #3730a3 100%)"
   },
-  glossyProfile: {
-    background: "linear-gradient(135deg, rgba(14, 116, 144, 0.95) 0%, rgba(6, 182, 212, 0.95) 100%)",
-    border: "1px solid rgba(165, 243, 252, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(6, 182, 212, 0.4)"
+  drawerNavProfile: {
+    background: "linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%)"
   },
-  glossyLogout: {
-    background: "linear-gradient(135deg, rgba(153, 27, 27, 0.95) 0%, rgba(239, 68, 68, 0.95) 100%)",
-    border: "1px solid rgba(254, 202, 202, 0.5)",
-    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 6px 16px rgba(239, 68, 68, 0.4)"
+  drawerNavLogout: {
+    background: "linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%)"
   },
-
+  
+  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM
   treePlantOnlyWrapper: {
     marginTop: "auto",
-    paddingTop: "20px",
-    paddingBottom: "40px",
+    paddingTop: "15px",
+    paddingBottom: "50px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    background: "transparent"
+    background: "transparent",
+    border: "none"
   },
   treePlantOnlyImg: {
-    width: "220px",
-    maxHeight: "220px",
+    width: "300px",
+    height: "1600px",
     objectFit: "contain",
     filter: "drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5))"
   },
 
-  // POPUP MODAL
   popupOverlay: {
     position: "fixed",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    background: "rgba(2, 6, 23, 0.8)",
+    background: "rgba(2, 6, 23, 0.75)",
     backdropFilter: "blur(6px)",
     zIndex: 100001,
     display: "flex",
@@ -1384,7 +1328,7 @@ const styles = {
     maxWidth: "420px",
     width: "100%",
     position: "relative",
-    boxShadow: "0 25px 60px rgba(0,0,0,0.7)",
+    boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
     border: "1px solid #1e293b",
     textAlign: "center"
   },
@@ -1396,476 +1340,619 @@ const styles = {
     height: "32px",
     borderRadius: "50%",
     border: "none",
-    background: "rgba(255,255,255,0.1)",
-    color: "#fff",
+    background: "#1e293b",
+    color: "#ffffff",
     fontSize: "16px",
+    fontWeight: "bold",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    zIndex: 2
   },
   popupImage: {
     width: "100%",
-    height: "auto",
+    maxHeight: "260px",
+    objectFit: "cover",
     borderRadius: "16px",
-    marginBottom: "16px"
+    marginBottom: "14px"
   },
   popupDownloadBtn: {
     width: "100%",
     padding: "12px",
-    borderRadius: "12px",
     border: "none",
-    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer"
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #22c55e, #16a34a)",
+    color: "#ffffff",
+    fontWeight: "800",
+    fontSize: "15px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    boxShadow: "0 4px 14px rgba(34, 197, 94, 0.35)"
   },
 
   statusOverlayBg: {
     position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(0, 0, 0, 0.7)",
-    zIndex: 100005,
+    inset: 0,
+    background: "rgba(2, 6, 23, 0.65)",
+    backdropFilter: "blur(8px)",
+    zIndex: 100000,
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    padding: "20px"
+    justifyContent: "center"
   },
   statusOverlayCard: {
     background: "#0f172a",
-    borderRadius: "16px",
-    padding: "24px",
-    maxWidth: "360px",
-    width: "100%",
+    padding: "24px 34px",
+    borderRadius: "24px",
     textAlign: "center",
-    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.8)",
+    boxShadow: "0 30px 70px rgba(0,0,0,0.5)",
     border: "1px solid #1e293b",
+    maxWidth: "380px",
+    width: "85%",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "12px"
+    gap: "14px"
   },
   statusOverlayIcon: {
-    width: "50px",
-    height: "50px",
+    width: "58px",
+    height: "58px",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "24px",
+    fontSize: "28px",
     fontWeight: "bold"
   },
   statusOverlayText: {
+    fontSize: "18px",
+    color: "#ffffff",
     margin: 0,
-    fontSize: "15px",
-    color: "#f8fafc",
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: "1.4"
   },
 
-  topHeader: {
+  page: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(180deg,#020617 0%,#031026 45%,#020617 100%)",
+    color: "white",
+    padding: "0 16px 160px",
+    fontFamily: "Arial, sans-serif"
+  },
+
+  loadingPage: {
+    minHeight: "100vh",
+    background: "#020617",
+    color: "white",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: "16px 20px",
-    background: "#0f172a",
-    borderBottom: "1px solid #1e293b",
-    position: "sticky",
-    top: 0,
-    zIndex: 1000
+    justifyContent: "center"
   },
+
+  loadingCard: {
+    background: "#0f172a",
+    padding: "30px",
+    borderRadius: "24px",
+    textAlign: "center",
+    border: "1px solid #1e40af",
+    boxShadow: "0 0 35px rgba(34,197,94,0.25)"
+  },
+
+  topHeader: {
+    height: "64px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+
   menuButton: {
     background: "transparent",
     border: "none",
-    color: "#fff",
-    fontSize: "24px",
-    cursor: "pointer"
-  },
-  headerTitle: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: "700",
-    color: "#38bdf8"
-  },
-  notificationButton: {
-    background: "rgba(255, 255, 255, 0.05)",
-    border: "1px solid #334155",
-    color: "#fff",
-    padding: "8px 12px",
-    borderRadius: "10px",
-    cursor: "pointer",
-    position: "relative"
-  },
-  notificationBadge: {
-    position: "absolute",
-    top: "-4px",
-    right: "-4px",
-    background: "#ef4444",
-    color: "#fff",
-    borderRadius: "50%",
-    padding: "2px 6px",
-    fontSize: "10px",
-    fontWeight: "bold"
-  },
-  logoutBtn: {
-    background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-    color: "#fff",
-    border: "none",
-    padding: "8px 14px",
-    borderRadius: "10px",
-    fontWeight: "700",
-    fontSize: "12px",
+    color: "white",
+    fontSize: "30px",
     cursor: "pointer"
   },
 
-  heroWrapper: {
-    padding: "20px",
-    position: "relative",
-    background: "linear-gradient(180deg, #0f172a 0%, #030712 100%)",
-    borderBottom: "1px solid #1e293b",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    textAlign: "center"
+  headerTitle: {
+    margin: 0,
+    fontSize: "19px",
+    fontWeight: "800"
   },
+
+  logoutBtn: {
+    height: "42px",
+    padding: "0 18px",
+    border: "none",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg,#ef4444,#dc2626)",
+    color: "white",
+    fontWeight: "800",
+    fontSize: "14px",
+    boxShadow: "0 4px 14px rgba(239,68,68,0.35)",
+    cursor: "pointer"
+  },
+
+  notificationButton: {
+    position: "relative",
+    background: "transparent",
+    border: "none",
+    color: "white",
+    fontSize: "25px",
+    cursor: "pointer"
+  },
+
+  notificationBadge: {
+    position: "absolute",
+    top: "-6px",
+    right: "-6px",
+    background: "#ff1744",
+    color: "white",
+    width: "21px",
+    height: "21px",
+    borderRadius: "50%",
+    fontSize: "11px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "bold"
+  },
+
+  heroWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: "16px",
+    borderRadius: "24px",
+    overflow: "hidden",
+    background:
+      "radial-gradient(circle at 90% 0%,#22ff88 0%,transparent 34%),linear-gradient(135deg,#06152d,#043858,#08c96b)",
+    border: "1px solid rgba(34,255,136,0.55)",
+    boxShadow: "0 0 38px rgba(34,255,136,0.23)"
+  },
+
   heroGlow: {
     position: "absolute",
-    top: 0,
-    width: "150px",
-    height: "150px",
-    background: "radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%)",
+    inset: 0,
+    background:
+      "linear-gradient(90deg,rgba(255,255,255,0.08),transparent,rgba(255,255,255,0.08))",
     pointerEvents: "none"
   },
+
   profilePhotoCircle: {
-    width: "80px",
-    height: "80px",
+    width: "82px",
+    height: "82px",
     borderRadius: "50%",
-    background: "#1e293b",
-    border: "3px solid #38bdf8",
+    background: "#334155",
+    border: "3px solid #e0f2fe",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    boxShadow: "0 0 20px rgba(56, 189, 248, 0.3)"
+    zIndex: 2,
+    boxShadow: "0 0 16px rgba(255,255,255,0.35)"
   },
+
   profilePhoto: {
     width: "100%",
     height: "100%",
     objectFit: "cover"
   },
+
   defaultProfileIcon: {
-    fontSize: "36px"
+    fontSize: "43px"
   },
+
   heroUserInfo: {
-    marginTop: "12px"
+    flex: 1,
+    zIndex: 2
   },
+
   heroWelcome: {
     margin: 0,
-    fontSize: "13px",
-    color: "#94a3b8"
+    fontSize: "15px",
+    fontWeight: "800"
   },
+
   heroNameRow: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    gap: "6px",
-    marginTop: "4px"
+    gap: "7px"
   },
+
   heroName: {
-    margin: 0,
-    fontSize: "22px",
-    fontWeight: "800",
-    color: "#fff"
+    margin: "4px 0",
+    fontSize: "25px",
+    fontWeight: "900",
+    lineHeight: "30px"
   },
+
   verifiedBadge: {
-    background: "#22c55e",
-    color: "#fff",
+    width: "22px",
+    height: "22px",
     borderRadius: "50%",
-    width: "18px",
-    height: "18px",
-    display: "inline-flex",
+    background: "#2563eb",
+    display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "10px",
+    fontSize: "12px",
     fontWeight: "bold"
   },
+
   heroSubtitle: {
-    margin: "4px 0 0 0",
+    margin: 0,
     fontSize: "12px",
-    color: "#22c55e",
-    fontWeight: "600"
+    color: "#dcfce7",
+    fontWeight: "700"
   },
+
   heroWalletCard: {
-    marginTop: "16px",
-    background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
-    padding: "16px 24px",
-    borderRadius: "16px",
-    border: "1px solid #334155",
-    width: "100%",
-    maxWidth: "320px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-    position: "relative"
+    minWidth: "105px",
+    borderRadius: "18px",
+    padding: "12px",
+    background: "linear-gradient(135deg,#16ff75,#00b96b)",
+    boxShadow: "0 12px 25px rgba(0,0,0,0.35)",
+    zIndex: 2
   },
 
   latestCard: {
-    margin: "16px 20px",
-    padding: "12px 16px",
-    background: "linear-gradient(135deg, #1e1b4b 0%, #311042 100%)",
-    borderRadius: "14px",
-    border: "1px solid #4c1d95"
+    marginTop: "14px",
+    borderRadius: "20px",
+    padding: "16px",
+    background: "linear-gradient(135deg,#ffb703,#fb8500,#ff006e)",
+    border: "2px solid #ffd166",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: "0 0 25px rgba(255,183,3,0.45)"
   },
+
   latestLeft: {
     display: "flex",
     alignItems: "center",
-    gap: "12px"
+    gap: "12px",
+    flex: 1,
+    minWidth: 0
   },
+
   latestIcon: {
-    fontSize: "20px"
+    fontSize: "30px",
+    flexShrink: 0
   },
+
   latestTextBox: {
     flex: 1,
+    minWidth: 0,
     overflow: "hidden"
   },
+
   marqueeWrapper: {
+    width: "100%",
     overflow: "hidden",
-    whiteSpace: "nowrap"
+    whiteSpace: "nowrap",
+    boxSizing: "border-box"
   },
+
   marqueeText: {
     display: "inline-block",
-    margin: 0,
+    paddingLeft: "100%",
+    animation: "marquee 15s linear infinite",
     fontSize: "13px",
-    color: "#ddd6fe"
+    fontWeight: "700",
+    color: "#fff"
   },
 
   statsGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "repeat(4,1fr)",
     gap: "12px",
-    padding: "0 20px 20px 20px"
+    marginTop: "16px"
   },
+
   statCard: {
-    padding: "16px",
-    borderRadius: "16px",
     position: "relative",
+    minHeight: "120px",
+    borderRadius: "20px",
+    padding: "14px",
     overflow: "hidden",
-    border: "1px solid rgba(255,255,255,0.08)"
+    boxShadow: "0 10px 25px rgba(0,0,0,0.45)"
   },
+
   statBlue: {
-    background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)"
+    background: "linear-gradient(135deg,#2f63ff,#061b91)"
   },
+
   statGreen: {
-    background: "linear-gradient(135deg, #0f172a 0%, #065f46 100%)"
+    background: "linear-gradient(135deg,#00f58a,#006b45)"
   },
+
   statPurple: {
-    background: "linear-gradient(135deg, #0f172a 0%, #581c87 100%)"
+    background: "linear-gradient(135deg,#9b35ff,#4c057a)"
   },
+
   statOrange: {
-    background: "linear-gradient(135deg, #0f172a 0%, #7c2d12 100%)"
+    background: "linear-gradient(135deg,#ff8a00,#c2410c)"
   },
+
   statIconWrap: {
-    marginBottom: "8px"
+    fontSize: "29px"
   },
+
   statIcon: {
-    fontSize: "20px"
+    fontSize: "29px"
   },
+
   statTitle: {
-    margin: 0,
-    fontSize: "12px",
-    color: "#94a3b8"
+    margin: "10px 0 4px",
+    color: "rgba(255,255,255,0.9)",
+    fontSize: "13px",
+    fontWeight: "700"
   },
+
   statValue: {
-    margin: "4px 0 0 0",
-    fontSize: "18px",
-    fontWeight: "800",
-    color: "#fff"
+    margin: 0,
+    fontSize: "22px",
+    fontWeight: "900"
   },
+
   statGlow: {
     position: "absolute",
-    right: "-10px",
-    bottom: "-10px",
-    width: "50px",
-    height: "50px",
-    background: "rgba(255,255,255,0.05)",
-    borderRadius: "50%"
+    right: "-20px",
+    top: "-20px",
+    width: "75px",
+    height: "75px",
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.18)"
   },
-
-  actionPanel: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    padding: "0 20px 20px 20px"
-  },
-  actionButton: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    padding: "14px",
-    borderRadius: "14px",
-    border: "1px solid rgba(255,255,255,0.08)",
-    cursor: "pointer",
-    textAlign: "left",
-    position: "relative",
-    overflow: "hidden"
-  },
-  actionIconCircle: {
-    fontSize: "22px"
-  },
-  actionTextBox: {
-    flex: 1
-  },
-  actionTitle: {
-    margin: 0,
-    fontSize: "13px",
-    fontWeight: "700",
-    color: "#fff"
-  },
-  actionSubtitle: {
-    margin: "2px 0 0 0",
-    fontSize: "10px",
-    color: "#94a3b8"
-  },
-  actionShine: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "1px",
-    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)"
-  },
-
-  actionInvest: { background: "#0f172a" },
-  actionMyInvestment: { background: "#0f172a" },
-  actionWallet: { background: "#0f172a" },
-  actionWithdraw: { background: "#0f172a" },
-  actionRefer: { background: "#0f172a" },
-  actionTransaction: { background: "#0f172a" },
-  actionKyc: { background: "#0f172a" },
-  actionReward: { background: "#0f172a" },
-  actionBank: { background: "#0f172a" },
-  actionPlan: { background: "#0f172a" },
-  actionNotification: { background: "#0f172a" },
-  actionSupport: { background: "#0f172a" },
 
   sectionTitleWrap: {
+    margin: "25px 0 13px",
     display: "flex",
     alignItems: "center",
-    gap: "12px",
-    padding: "10px 20px"
+    justifyContent: "center",
+    gap: "10px"
   },
+
   sectionLine: {
-    flex: 1,
-    height: "1px",
-    background: "#1e293b"
+    width: "70px",
+    height: "3px",
+    borderRadius: "10px",
+    background: "linear-gradient(90deg,transparent,#38bdf8,#facc15,transparent)"
   },
+
   sectionTitleText: {
     margin: 0,
-    fontSize: "12px",
-    fontWeight: "800",
+    fontSize: "19px",
+    fontWeight: "900",
     letterSpacing: "1px"
   },
 
-  promoBanner: {
-    margin: "10px 20px 20px 20px",
-    padding: "20px",
+  actionPanel: {
+    background: "linear-gradient(180deg,#061936,#07101e)",
+    border: "2px solid #1d4ed8",
+    borderRadius: "26px",
+    padding: "14px",
+    display: "grid",
+    gridTemplateColumns: "repeat(3,1fr)",
+    gap: "14px",
+    boxShadow: "inset 0 0 35px rgba(59,130,246,0.25)"
+  },
+
+  actionButton: {
+    position: "relative",
+    border: "none",
     borderRadius: "20px",
-    background: "linear-gradient(135deg, #4c1d95 0%, #1e1b4b 100%)",
+    minHeight: "120px",
+    color: "white",
+    padding: "14px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    overflow: "hidden",
+    boxShadow: "0 10px 26px rgba(0,0,0,0.45)",
+    cursor: "pointer"
+  },
+
+  actionIconCircle: {
+    width: "46px",
+    height: "46px",
+    borderRadius: "16px",
+    background: "rgba(255,255,255,0.28)",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    border: "1px solid #6d28d9"
+    justifyContent: "center",
+    fontSize: "28px",
+    boxShadow: "inset 0 0 12px rgba(255,255,255,0.25)"
   },
+
+  actionTextBox: {
+    textAlign: "center",
+    zIndex: 2
+  },
+
+  actionTitle: {
+    margin: 0,
+    fontSize: "14px",
+    fontWeight: "900"
+  },
+
+  actionSubtitle: {
+    margin: "4px 0 0",
+    fontSize: "11px",
+    color: "rgba(255,255,255,0.92)",
+    fontWeight: "700"
+  },
+
+  actionShine: {
+    position: "absolute",
+    right: "-22px",
+    top: "-22px",
+    width: "70px",
+    height: "70px",
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.17)"
+  },
+
+  actionInvest: {
+    background: "linear-gradient(135deg,#00ff75,#00c853,#008f45)"
+  },
+  actionMyInvestment: {
+    background: "linear-gradient(135deg,#00b4ff,#2563eb,#003cff)"
+  },
+  actionWallet: {
+    background: "linear-gradient(135deg,#a855f7,#d946ef,#ff00d4)"
+  },
+  actionWithdraw: {
+    background: "linear-gradient(135deg,#ff6b00,#ff9f00,#ffd000)"
+  },
+  actionRefer: {
+    background: "linear-gradient(135deg,#ff007a,#ff2bd6,#b000ff)"
+  },
+  actionTransaction: {
+    background: "linear-gradient(135deg,#00e5ff,#00c8ff,#00ffd5)"
+  },
+  actionKyc: {
+    background: "linear-gradient(135deg,#00f5ff,#0284c7,#005eff)"
+  },
+  actionReward: {
+    background: "linear-gradient(135deg,#7c3aed,#a855f7,#e879f9)"
+  },
+  actionBank: {
+    background: "linear-gradient(135deg,#ff8c00,#ffb703,#ffdd00)"
+  },
+  actionPlan: {
+    background: "linear-gradient(135deg,#2979ff,#00b0ff,#00e5ff)"
+  },
+  actionNotification: {
+    background: "linear-gradient(135deg,#ff1744,#ff006e,#ff5c8d)"
+  },
+  actionSupport: {
+    background: "linear-gradient(135deg,#00ff75,#00e676,#00c853)"
+  },
+
+  promoBanner: {
+    marginTop: "18px",
+    borderRadius: "23px",
+    padding: "20px",
+    background:
+      "linear-gradient(135deg,#4c1d95,#8b00ff,#9d00ff)",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: "0 10px 28px rgba(126,34,206,0.35)"
+  },
+
   promoContent: {
     flex: 1
   },
+
   promoButton: {
     marginTop: "12px",
-    background: "#38bdf8",
-    color: "#0f172a",
     border: "none",
-    padding: "8px 16px",
-    borderRadius: "10px",
-    fontWeight: "800",
-    fontSize: "12px",
+    borderRadius: "12px",
+    padding: "10px 16px",
+    background: "#facc15",
+    color: "#020617",
+    fontWeight: "900",
     cursor: "pointer"
   },
+
   promoIcon: {
-    fontSize: "40px"
+    fontSize: "55px"
   },
 
   trustPanel: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "repeat(4,1fr)",
     gap: "10px",
-    padding: "0 20px 20px 20px"
-  },
-  trustMiniCard: {
-    background: "#0f172a",
+    marginTop: "14px",
+    background: "#071831",
+    borderRadius: "22px",
     padding: "12px",
-    borderRadius: "12px",
-    border: "1px solid #1e293b",
+    border: "2px solid #1e40af"
+  },
+
+  trustMiniCard: {
     display: "flex",
     alignItems: "center",
-    gap: "10px"
+    gap: "9px",
+    fontSize: "12px",
+    background: "rgba(15,23,42,0.65)",
+    borderRadius: "15px",
+    padding: "10px"
   },
+
   trustIconCircle: {
-    fontSize: "18px"
+    fontSize: "24px"
   },
+
   trustTitle: {
     margin: 0,
-    fontSize: "12px",
-    fontWeight: "700",
-    color: "#fff"
+    fontSize: "13px"
   },
+
   trustSubtitle: {
-    margin: 0,
-    fontSize: "10px",
-    color: "#64748b"
+    margin: "3px 0 0",
+    color: "#94a3b8",
+    fontSize: "11px"
   },
 
   aboutStrip: {
-    width: "calc(100% - 40px)",
-    margin: "0 20px 20px 20px",
-    padding: "14px",
-    background: "#0f172a",
-    border: "1px solid #1e293b",
-    borderRadius: "12px",
-    color: "#38bdf8",
-    fontWeight: "700",
-    fontSize: "14px",
+    width: "calc(100% + 32px)",
+    marginLeft: "-16px",
+    marginTop: "20px",
+    padding: "15px",
+    border: "none",
+    background: "linear-gradient(90deg,#06b6d4,#14f1c4)",
+    color: "white",
+    fontWeight: "900",
+    fontSize: "15px",
     cursor: "pointer"
   },
 
   helpText: {
     textAlign: "center",
-    fontSize: "14px",
-    fontWeight: "800",
-    color: "#22c55e",
-    margin: "0 0 20px 0"
+    color: "#22ff73",
+    fontSize: "22px",
+    fontWeight: "900",
+    marginTop: "22px"
   },
 
   footer: {
-    padding: "20px",
     textAlign: "center",
-    background: "#0a0f1d",
-    borderTop: "1px solid #1e293b"
+    padding: "24px 4px",
+    color: "#87CEEB"
   },
+
   footerLinks: {
     display: "flex",
     flexWrap: "wrap",
-    justifyContent: "center",
     gap: "10px",
-    margin: "15px 0"
+    justifyContent: "center",
+    marginBottom: "12px"
   },
+
   footerLinkBtn: {
     background: "transparent",
     border: "none",
-    color: "#64748b",
+    color: "#38bdf8",
     fontSize: "12px",
+    fontWeight: "700",
     cursor: "pointer"
+  },
+
+  loadingLogoImg: {
+    width: "80px",
+    height: "80px",
+    objectFit: "contain",
+    borderRadius: "16px"
   },
 
   bottomNav: {
@@ -1873,32 +1960,48 @@ const styles = {
     bottom: 0,
     left: 0,
     right: 0,
-    height: "65px",
-    background: "#0f172a",
-    borderTop: "1px solid #1e293b",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-around",
-    zIndex: 1000
+    height: "62px",
+    background: "#020817",
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
+    borderTop: "1px solid #1e40af",
+    zIndex: 999
   },
+
   bottomNavItem: {
-    background: "transparent",
     border: "none",
-    color: "#64748b",
+    background: "transparent",
+    color: "#94a3b8",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "4px",
+    justifyContent: "center",
+    fontSize: "12px",
     cursor: "pointer"
   },
+
   bottomNavItemActive: {
-    color: "#38bdf8"
+    background: "#0f2a5c",
+    color: "white"
   },
+
   bottomNavIcon: {
-    fontSize: "20px"
+    fontSize: "21px"
   },
+
   bottomNavText: {
-    fontSize: "11px",
-    fontWeight: "600"
+    fontSize: "10px",
+    marginTop: "3px"
   }
 };
+
+const styleSheet = document.styleSheets[0];
+const keyframes = `
+@keyframes marquee {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+`;
+try {
+  styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+} catch (e) {}
