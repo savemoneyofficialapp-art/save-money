@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { API } from "../config";
 
 export default function OneTime() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
 
-  // ----------------- STATES -----------------
+  // ----------------- SIDEBAR & PLAN STATES -----------------
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDownloadingPlan, setIsDownloadingPlan] = useState(false);
+
+  // ----------------- DASHBOARD STATES -----------------
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(true);
   const [oneTimerNotifications, setOneTimerNotifications] = useState([]);
@@ -92,15 +98,49 @@ export default function OneTime() {
     loadDashboardData();
   }, []);
 
+  // ----------------- PLAN PDF DOWNLOAD -----------------
+  const handleDownloadPlan = () => {
+    if (isDownloadingPlan) return;
+    setIsDownloadingPlan(true);
+
+    setTimeout(() => {
+      const link = document.createElement("a");
+      link.href = "/SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      link.download = "SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setIsDownloadingPlan(false);
+    }, 1200);
+  };
+
+  // ----------------- LOGOUT HANDLER -----------------
+  const handleLogout = async () => {
+    try {
+      if (email) {
+        await fetch(`${API}/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email })
+        });
+      }
+    } catch (err) {
+      console.log("Logout backend error:", err);
+    } finally {
+      localStorage.clear();
+      navigate("/login");
+      window.location.reload();
+    }
+  };
+
   // ----------------- AUTO-SYNC ACTIVE INVESTMENT TO FORM FIELDS -----------------
   useEffect(() => {
     if (activeInvestment) {
-      // 1. Sync Amount
       if (activeInvestment.amount) {
         setAmount(Number(activeInvestment.amount));
       }
 
-      // 2. Sync Duration & Rate
       let days = 15;
       if (typeof activeInvestment.duration === "number") {
         days = activeInvestment.duration;
@@ -123,12 +163,10 @@ export default function OneTime() {
         }
       }
 
-      // 3. Sync Frequency
       if (activeInvestment.frequency) {
         setFrequency(activeInvestment.frequency.toLowerCase());
       }
     } else {
-      // Reset form to defaults when no active investment exists
       setTenure(15);
       setRate(0.6);
       setFrequency("daily");
@@ -153,15 +191,13 @@ export default function OneTime() {
         setUser(data.user || {});
         setOneTimerNotifications(data.oneTimerNotifications || []);
 
-        // Combine all transaction sources into one single history array
-        // 🛑 UPDATED: onetimeHistory সাপোর্ট সহ সেফ ডাটা রিডিং
-const rawHistory = Array.isArray(data.history)
-  ? data.history
-  : Array.isArray(data.onetimeHistory)
-  ? data.onetimeHistory
-  : Array.isArray(data.user?.onetimeHistory)
-  ? data.user.onetimeHistory
-  : [];
+        const rawHistory = Array.isArray(data.history)
+          ? data.history
+          : Array.isArray(data.onetimeHistory)
+          ? data.onetimeHistory
+          : Array.isArray(data.user?.onetimeHistory)
+          ? data.user.onetimeHistory
+          : [];
 
         const rawDeposits = Array.isArray(data.deposits)
           ? data.deposits.map((d) => ({ ...d, type: "Add Fund" }))
@@ -175,7 +211,6 @@ const rawHistory = Array.isArray(data.history)
 
         const combined = [...rawHistory, ...rawDeposits, ...rawWithdrawals, ...rawInvestments];
 
-        // Deduplicate items by ID
         const uniqueMap = new Map();
         combined.forEach((item) => {
           const key = item._id || `${item.type}-${item.createdAt || item.startDate}`;
@@ -192,11 +227,9 @@ const rawHistory = Array.isArray(data.history)
 
         setHistory(sortedHistory);
 
-        // Exact OneTime Earnings calculation from backend stats or user data
-const exactOneTimeEarnings = Number(
-  data.stats?.totalEarnings ?? data.user?.oneTimeTotalEarnings ?? data.user?.totalEarnings ?? 0
-);
-
+        const exactOneTimeEarnings = Number(
+          data.stats?.totalEarnings ?? data.user?.oneTimeTotalEarnings ?? data.user?.totalEarnings ?? 0
+        );
 
         let calculatedInv = 0;
         let calculatedWd = 0;
@@ -220,7 +253,6 @@ const exactOneTimeEarnings = Number(
           availableBalance: Number(data.user?.otbalance || data.user?.otBalance || 0)
         });
 
-        // Active Investment Detection
         const active = data.activeInvestment || sortedHistory.find(
           (item) => (item.type === "OneTimeInvestment" || item.type === "Investment" || !item.type) && item.status === "Active"
         );
@@ -458,6 +490,228 @@ const exactOneTimeEarnings = Number(
 
   return (
     <div style={styles.page}>
+
+      {/* 👇 SIDEBAR DRAWER (FROM HOME.JS) */}
+      <div 
+        style={{
+          ...styles.drawerOverlay,
+          opacity: isDrawerOpen ? 1 : 0,
+          visibility: isDrawerOpen ? "visible" : "hidden"
+        }} 
+        onClick={() => setIsDrawerOpen(false)}
+      >
+        <div 
+          style={{
+            ...styles.drawerContainer,
+            transform: isDrawerOpen ? "translateX(0)" : "translateX(-100%)"
+          }} 
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* LOGO & BRANDING */}
+          <div style={styles.drawerHeader}>
+            <div style={styles.drawerBrand}>
+              <div style={styles.drawerLogoWrapper}>
+                <img 
+                  src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
+                  alt="SM Logo" 
+                  style={styles.drawerLogoImg} 
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
+                <span style={styles.drawerLogoSubtext}>Invest Small, Earn Big</span>
+              </div>
+            </div>
+          </div>
+
+          {/* SIDEBAR NAV BUTTONS */}
+          <div style={styles.drawerNavList}>
+            {/* 1. Dashboard */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavDashboard,
+                ...(location.pathname === "/home" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/home"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🏠</span>
+              <span style={styles.drawerNavText}>Dashboard</span>
+            </button>
+
+            {/* 2. My Investment */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavMyInvestment,
+                ...(location.pathname === "/my-investment" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/my-investment"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>📈</span>
+              <span style={styles.drawerNavText}>My Investment</span>
+            </button>
+
+            {/* 3. Save Money */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavSaveMoney,
+                ...(location.pathname === "/save-money" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/save-money"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>💰</span>
+              <span style={styles.drawerNavText}>Save Money</span>
+            </button>
+
+            {/* 4. One Time */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavOneTime,
+                ...(location.pathname === "/one-time" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/one-time"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>⚡</span>
+              <span style={styles.drawerNavText}>One Time</span>
+            </button>
+
+            {/* 5. PLAN (PDF Download) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavPlan
+              }} 
+              onClick={() => { handleDownloadPlan(); setIsDrawerOpen(false); }}
+              disabled={isDownloadingPlan}
+            >
+              <span style={styles.drawerNavIcon}>{isDownloadingPlan ? "⏳" : "📋"}</span>
+              <span style={styles.drawerNavText}>{isDownloadingPlan ? "Downloading..." : "Plan PDF"}</span>
+            </button>
+
+            {/* Add Fund */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavAddFund,
+                ...(location.pathname === "/wallet" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/wallet"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🌐</span>
+              <span style={styles.drawerNavText}>Add Fund</span>
+            </button>
+
+            {/* Refer */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavRefer,
+                ...(location.pathname === "/refer" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/refer"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👥</span>
+              <span style={styles.drawerNavText}>Refer & Earn</span>
+            </button>
+
+            {/* Withdraw */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavWithdraw,
+                ...(location.pathname === "/withdraw" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/withdraw"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>➔</span>
+              <span style={styles.drawerNavText}>Withdraw</span>
+            </button>
+
+            {/* Daily Reward */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavDailyReward,
+                ...(location.pathname === "/daily-reward" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/daily-reward"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🎁</span>
+              <span style={styles.drawerNavText}>Daily Reward</span>
+            </button>
+
+            {/* Investment Assistance */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavInvestmentAssistant,
+                ...(location.pathname === "/investment-assistant" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/investment-assistant"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>📊</span>
+              <span style={styles.drawerNavText}>Investment Assistance</span>
+            </button>
+
+            {/* Support */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavSupport,
+                ...(location.pathname === "/support" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/support"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🎧</span>
+              <span style={styles.drawerNavText}>Support</span>
+            </button>
+
+            {/* Profile */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavProfile,
+                ...(location.pathname === "/kyc" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { navigate("/kyc"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👤</span>
+              <span style={styles.drawerNavText}>Profile</span>
+            </button>
+
+            {/* Logout */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavLogout
+              }} 
+              onClick={() => { setIsDrawerOpen(false); handleLogout(); }}
+            >
+              <span style={styles.drawerNavIcon}>🚪</span>
+              <span style={styles.drawerNavText}>Logout</span>
+            </button>
+          </div>
+
+          {/* PLANT IMAGE AT BOTTOM OF DRAWER */}
+          <div style={styles.treePlantOnlyWrapper}>
+            <img 
+              src="/tree plant.png" 
+              alt="Tree Plant" 
+              style={styles.treePlantOnlyImg}
+              onError={(e) => {
+                if (e.target.src.includes('.png')) {
+                  e.target.src = '/tree plant.jpg';
+                }
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       <div style={styles.container}>
         {/* Toast Alert */}
         {toast.show && (
@@ -469,6 +723,14 @@ const exactOneTimeEarnings = Number(
         {/* HEADER */}
         <header style={styles.header}>
           <div style={styles.brand}>
+            {/* Hamburger Menu Button */}
+            <button 
+              style={styles.menuButton}
+              onClick={() => setIsDrawerOpen(true)}
+            >
+              ☰
+            </button>
+
             <img
               src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"}
               alt="Logo"
@@ -505,6 +767,16 @@ const exactOneTimeEarnings = Number(
             </div>
           </div>
         </header>
+
+        {/* TOP IMAGE BANNER (chhote nivesh.png) */}
+        <div style={styles.bannerWrapper}>
+          <img 
+            src="/chhote nivesh.png" 
+            alt="Chhote Nivesh" 
+            style={styles.bannerImage}
+            onError={(e) => (e.target.style.display = "none")}
+          />
+        </div>
 
         {/* TOP STATS CARD */}
         <section style={styles.summaryCard}>
@@ -794,6 +1066,16 @@ const exactOneTimeEarnings = Number(
           </div>
         </section>
 
+        {/* BOTTOM IMAGE BANNER (small invest.png) */}
+        <div style={styles.bannerWrapper}>
+          <img 
+            src="/small invest.png" 
+            alt="Small Invest" 
+            style={styles.bannerImage}
+            onError={(e) => (e.target.style.display = "none")}
+          />
+        </div>
+
         {/* TRUST BANNER */}
         <section style={styles.trustBanner}>
           <div>
@@ -1063,6 +1345,230 @@ const styles = {
     fontWeight: "bold",
     fontSize: "14px"
   },
+
+  // SIDEBAR DRAWER STYLES
+  drawerOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0, 0, 0, 0.75)",
+    backdropFilter: "blur(6px)",
+    zIndex: 100002,
+    display: "flex",
+    justifyContent: "flex-start",
+    transition: "opacity 0.3s ease, visibility 0.3s ease"
+  },
+  drawerContainer: {
+    position: "fixed",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    background: "#08101e",
+    width: "240px",
+    height: "100vh",
+    padding: "12px 10px",
+    display: "flex",
+    flexDirection: "column",
+    boxShadow: "10px 0 30px rgba(0,0,0,0.85)",
+    borderRight: "1px solid #1e293b",
+    transform: "translateX(-100%)",
+    transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    overflow: "hidden",
+    zIndex: 100003
+  },
+  drawerHeader: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "8px",
+    paddingBottom: "8px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+    flexShrink: 0
+  },
+  drawerBrand: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "4px"
+  },
+  drawerLogoWrapper: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "50%",
+    background: "radial-gradient(circle, #03251a 0%, #064e3b 100%)",
+    border: "2px solid #22c55e",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 0 12px rgba(34, 197, 94, 0.35)"
+  },
+  drawerLogoImg: {
+    width: "28px",
+    height: "28px",
+    objectFit: "contain"
+  },
+  drawerLogoText: {
+    margin: 0,
+    fontSize: "15px",
+    fontWeight: "900",
+    color: "#ffffff",
+    letterSpacing: "0.8px",
+    textAlign: "center"
+  },
+  drawerLogoSubtext: {
+    fontSize: "10px",
+    color: "#a7f3d0",
+    fontWeight: "600",
+    marginTop: "1px",
+    textAlign: "center"
+  },
+  drawerNavList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    flexShrink: 0,
+    overflowY: "auto",
+    maxHeight: "calc(100vh - 200px)"
+  },
+  drawerNavItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "8px 14px",
+    background: "rgba(255, 255, 255, 0.12)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    clipPath: "polygon(12px 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0% 50%)",
+    color: "#ffffff",
+    fontSize: "13px",
+    fontWeight: "700",
+    cursor: "pointer",
+    textAlign: "left",
+    transition: "all 0.25s ease",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+    textShadow: "0 1px 2px rgba(0,0,0,0.5)"
+  },
+  drawerNavItemActive: {
+    background: "rgba(255, 255, 255, 0.25)",
+    border: "1px solid #ffffff",
+    boxShadow: "0 0 16px rgba(255, 255, 255, 0.4)",
+    fontWeight: "800"
+  },
+  drawerNavIcon: {
+    fontSize: "18px",
+    width: "22px",
+    display: "inline-block",
+    textAlign: "center"
+  },
+  drawerNavText: {
+    flex: 1,
+    fontSize: "13px",
+    letterSpacing: "0.3px"
+  },
+
+  drawerNavDashboard: {
+    background: "rgba(59, 130, 246, 0.2)",
+    border: "1px solid rgba(59, 130, 246, 0.4)"
+  },
+  drawerNavMyInvestment: {
+    background: "rgba(16, 185, 129, 0.2)",
+    border: "1px solid rgba(16, 185, 129, 0.4)"
+  },
+  drawerNavSaveMoney: {
+    background: "rgba(245, 158, 11, 0.2)",
+    border: "1px solid rgba(245, 158, 11, 0.4)"
+  },
+  drawerNavOneTime: {
+    background: "rgba(168, 85, 247, 0.2)",
+    border: "1px solid rgba(168, 85, 247, 0.4)"
+  },
+  drawerNavPlan: {
+    background: "rgba(6, 182, 212, 0.2)",
+    border: "1px solid rgba(6, 182, 212, 0.4)"
+  },
+  drawerNavAddFund: {
+    background: "rgba(20, 184, 166, 0.2)",
+    border: "1px solid rgba(20, 184, 166, 0.4)"
+  },
+  drawerNavRefer: {
+    background: "rgba(236, 72, 153, 0.2)",
+    border: "1px solid rgba(236, 72, 153, 0.4)"
+  },
+  drawerNavWithdraw: {
+    background: "rgba(249, 115, 22, 0.2)",
+    border: "1px solid rgba(249, 115, 22, 0.4)"
+  },
+  drawerNavDailyReward: {
+    background: "rgba(244, 63, 94, 0.2)",
+    border: "1px solid rgba(244, 63, 94, 0.4)"
+  },
+  drawerNavInvestmentAssistant: {
+    background: "rgba(2, 132, 199, 0.2)",
+    border: "1px solid rgba(2, 132, 199, 0.4)"
+  },
+  drawerNavSupport: {
+    background: "rgba(99, 102, 241, 0.2)",
+    border: "1px solid rgba(99, 102, 241, 0.4)"
+  },
+  drawerNavProfile: {
+    background: "rgba(236, 72, 153, 0.2)",
+    border: "1px solid rgba(236, 72, 153, 0.4)"
+  },
+  drawerNavLogout: {
+    background: "rgba(239, 68, 68, 0.2)",
+    border: "1px solid rgba(239, 68, 68, 0.4)"
+  },
+
+  treePlantOnlyWrapper: {
+    flex: 1,
+    minHeight: 0,
+    marginTop: "10px",
+    marginBottom: "4px",
+    width: "100%",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    borderRadius: "16px",
+    boxShadow: "0 6px 18px rgba(0, 0, 0, 0.4)"
+  },
+  treePlantOnlyImg: {
+    width: "90%",
+    height: "65%",
+    objectFit: "cover",
+    borderRadius: "16px"
+  },
+
+  menuButton: {
+    background: "transparent",
+    border: "none",
+    color: "white",
+    fontSize: "26px",
+    cursor: "pointer",
+    marginRight: "6px",
+    display: "flex",
+    alignItems: "center"
+  },
+
+  // BANNERS STYLES
+  bannerWrapper: {
+    width: "100%",
+    borderRadius: "16px",
+    overflow: "hidden",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.3)"
+  },
+  bannerImage: {
+    width: "100%",
+    height: "auto",
+    maxHeight: "180px",
+    objectFit: "cover",
+    display: "block"
+  },
+
   header: {
     display: "flex",
     alignItems: "center",
