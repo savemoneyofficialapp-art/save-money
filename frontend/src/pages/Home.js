@@ -560,7 +560,7 @@ export default function Home() {
             </button>
           </div>
 
-          {/* 👇 ONLY TREE PLANT IMAGE AT THE BOTTOM (NO GREEN BACKGROUND BOX) */}
+          {/* 👇 PLANT IMAGE CONTAINER AT THE BOTTOM */}
           <div style={styles.treePlantOnlyWrapper}>
             <img 
               src="/tree plant.png" 
@@ -1139,7 +1139,7 @@ function BottomNavItem({ icon, title, active, onClick }) {
 }
 
 const styles = {
-  // 👇 SLIDE BAR / DRAWER STYLES (UPDATED WITH LARGER & GLOSSY COLORFUL BUTTONS)
+  // 👇 SLIDE BAR / DRAWER STYLES
   drawerOverlay: {
     position: "fixed",
     top: 0,
@@ -1288,11 +1288,11 @@ const styles = {
     background: "linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%)"
   },
   
-  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM
+  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM (UPDATED FIX)
   treePlantOnlyWrapper: {
     marginTop: "auto",
-    paddingTop: "15px",
-    paddingBottom: "50px",
+    paddingTop: "20px",
+    paddingBottom: "30px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -1301,10 +1301,12 @@ const styles = {
     border: "none"
   },
   treePlantOnlyImg: {
-    width: "300px",
-    height: "2000px",
+    width: "100%",
+    height: "auto",
+    maxHeight: "180px",
     objectFit: "contain",
-    filter: "drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5))"
+    borderRadius: "12px",
+    filter: "drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5))"
   },
 
   popupOverlay: {
