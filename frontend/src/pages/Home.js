@@ -1292,7 +1292,7 @@ const styles = {
   treePlantOnlyWrapper: {
     marginTop: "auto",
     paddingTop: "15px",
-    paddingBottom: "20px",
+    paddingBottom: "50px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
