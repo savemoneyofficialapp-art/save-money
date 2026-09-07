@@ -485,7 +485,7 @@ export default function OneTime() {
       <div style={styles.loadingPage}>
         <div style={{ textAlign: "center" }}>
           <div style={styles.spinner}></div>
-          <h3 style={{ color: "#22c55e", marginTop: "12px" }}>Loading Dashboard...</h3>
+          <h3 style={{ color: "#22c55e", marginTop: "12px", fontSize: "16px" }}>Loading Dashboard...</h3>
         </div>
       </div>
     );
@@ -494,7 +494,7 @@ export default function OneTime() {
   return (
     <div style={styles.page}>
 
-      {/* 👇 SIDEBAR DRAWER (FROM HOME.JS) */}
+      {/* 👇 SIDEBAR DRAWER */}
       <div 
         style={{
           ...styles.drawerOverlay,
@@ -723,7 +723,7 @@ export default function OneTime() {
           </div>
         )}
 
-        {/* HEADER (MATCHING SCREENSHOT 1) */}
+        {/* HEADER */}
         <header style={styles.header}>
           <div style={styles.headerLeft}>
             <button 
@@ -749,13 +749,13 @@ export default function OneTime() {
           </div>
         </header>
 
-        {/* TOP HERO BANNER (MATCHING SCREENSHOT 1 DARK GREEN CAROUSEL) */}
+        {/* TOP HERO BANNER (ENLARGED BANNER IMAGE & LARGER CLEAR TEXT) */}
         <div style={styles.topHeroBanner}>
           <div style={styles.heroTextContent}>
             <h2 style={styles.heroTitle}>
               Chhote nivesh se <br />
               <span style={{ color: "#facc15" }}>badi kamai ka safar,</span> <br />
-              <span style={{ fontSize: "14px", fontWeight: "600", color: "#e2e8f0" }}>har mahine ka plan, hamesha</span>
+              <span style={{ fontSize: "15px", fontWeight: "700", color: "#f1f5f9" }}>har mahine ka plan, hamesha</span>
             </h2>
             <p style={styles.heroDesc}>
               Invest small amounts monthly to get big returns together
@@ -773,13 +773,13 @@ export default function OneTime() {
           </div>
         </div>
 
-        {/* 4 STAT CARDS GRID (SCREENSHOT 1 STYLE WITH SPARKLINE GRAPHS) */}
+        {/* 4 STAT CARDS GRID */}
         <section style={styles.statsGridContainer}>
           {/* 1. Total Invested */}
           <div style={styles.darkStatCard}>
             <div style={styles.statCardHeader}>
               <div style={{ ...styles.iconBox, background: "rgba(34, 197, 94, 0.15)" }}>
-                <span style={{ color: "#22c55e", fontSize: "14px" }}>💼</span>
+                <span style={{ color: "#22c55e", fontSize: "16px" }}>💼</span>
               </div>
               <span style={styles.statCardTitle}>Total Invested</span>
             </div>
@@ -795,7 +795,7 @@ export default function OneTime() {
           <div style={styles.darkStatCard}>
             <div style={styles.statCardHeader}>
               <div style={{ ...styles.iconBox, background: "rgba(56, 189, 248, 0.15)" }}>
-                <span style={{ color: "#38bdf8", fontSize: "14px" }}>💵</span>
+                <span style={{ color: "#38bdf8", fontSize: "16px" }}>💵</span>
               </div>
               <span style={styles.statCardTitle}>Total Earnings</span>
             </div>
@@ -811,7 +811,7 @@ export default function OneTime() {
           <div style={styles.darkStatCard}>
             <div style={styles.statCardHeader}>
               <div style={{ ...styles.iconBox, background: "rgba(168, 85, 247, 0.15)" }}>
-                <span style={{ color: "#a855f7", fontSize: "14px" }}>💸</span>
+                <span style={{ color: "#a855f7", fontSize: "16px" }}>💸</span>
               </div>
               <span style={styles.statCardTitle}>Total Withdraw</span>
             </div>
@@ -827,7 +827,7 @@ export default function OneTime() {
           <div style={styles.darkStatCard}>
             <div style={styles.statCardHeader}>
               <div style={{ ...styles.iconBox, background: "rgba(234, 179, 8, 0.15)" }}>
-                <span style={{ color: "#eab308", fontSize: "14px" }}>🪙</span>
+                <span style={{ color: "#eab308", fontSize: "16px" }}>🪙</span>
               </div>
               <span style={styles.statCardTitle}>Available Balance</span>
             </div>
@@ -840,7 +840,7 @@ export default function OneTime() {
           </div>
         </section>
 
-        {/* MAKE NEW INVESTMENT PANEL (DARK THEME - SCREENSHOT 1) */}
+        {/* MAKE NEW INVESTMENT PANEL */}
         <section style={styles.darkMainCard}>
           <h2 style={styles.darkCardTitle}>Make a New Investment</h2>
 
@@ -878,7 +878,7 @@ export default function OneTime() {
             </div>
           )}
 
-          {/* FORM FIELDS - DARK STYLED */}
+          {/* FORM FIELDS */}
           <div style={styles.formGrid}>
             <div style={styles.fieldGroup}>
               <label style={styles.labelDark}>
@@ -939,7 +939,7 @@ export default function OneTime() {
                 style={styles.amountInputWrapDark} 
                 onClick={() => !activeInvestment && setShowAmountModal(true)}
               >
-                <span style={{ fontSize: "14px", fontWeight: "bold", color: "#22c55e" }}>₹</span>
+                <span style={{ fontSize: "16px", fontWeight: "bold", color: "#22c55e" }}>₹</span>
                 <input style={styles.amountInputDark} type="text" readOnly value={amount.toLocaleString("en-IN")} />
                 <span style={activeInvestment ? styles.lockedBadgeDark : styles.changeBadgeDark}>
                   {activeInvestment ? "🔒 Locked" : "Change ⚙️"}
@@ -951,7 +951,7 @@ export default function OneTime() {
             </div>
           </div>
 
-          {/* RETURN HIGHLIGHT BOX (SCREENSHOT 1 MINT/GREEN CONTAINER) */}
+          {/* RETURN HIGHLIGHT BOX */}
           <div style={styles.returnContainerDark}>
             <div style={styles.returnCardContent}>
               <span style={styles.returnBoxBagIcon}>💰</span>
@@ -989,7 +989,7 @@ export default function OneTime() {
             </div>
           </div>
 
-          {/* ACTION BUTTONS (SCREENSHOT 1) */}
+          {/* ACTION BUTTONS */}
           <div style={styles.actionGridTriple}>
             <button 
               style={{
@@ -1012,10 +1012,10 @@ export default function OneTime() {
           </div>
         </section>
 
-        {/* HISTORY TABLE (SCREENSHOT 1 DARK TABLE WITH STATUSES) */}
+        {/* HISTORY TABLE */}
         <section style={styles.darkHistoryCard}>
           <div style={styles.historyHeader}>
-            <h2 style={{ margin: 0, fontSize: "15px", color: "#f8fafc" }}>Investment & Transaction History</h2>
+            <h2 style={{ margin: 0, fontSize: "17px", color: "#f8fafc", fontWeight: "700" }}>Investment & Transaction History</h2>
             <span style={styles.refreshBtnDark} onClick={loadDashboardData}>🔄 Refresh</span>
           </div>
 
@@ -1058,9 +1058,9 @@ export default function OneTime() {
                         <td style={styles.tdDark}>₹ {Number(item.amount || 0).toLocaleString("en-IN")}</td>
                         <td style={styles.tdDark}>
                           {isDeposit ? (
-                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>UTR: {item.transactionId || "N/A"}</span>
+                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>UTR: {item.transactionId || "N/A"}</span>
                           ) : isWithdraw ? (
-                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>Bank Request</span>
+                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>Bank Request</span>
                           ) : (
                             <span style={styles.badgeDailyDark}>
                               {item.frequency || "Daily"}
@@ -1072,7 +1072,7 @@ export default function OneTime() {
                             {displayStatus}
                           </span>
                           {isRejected && (item.rejectReason || item.reason) && (
-                            <div style={{ fontSize: "10px", color: "#f87171", marginTop: "3px" }}>
+                            <div style={{ fontSize: "11px", color: "#f87171", marginTop: "3px" }}>
                               Reason: {item.rejectReason || item.reason}
                             </div>
                           )}
@@ -1093,14 +1093,14 @@ export default function OneTime() {
           </div>
         </section>
 
-        {/* TRUST BANNER (MATCHING SCREENSHOT 1) */}
+        {/* TRUST BANNER (ENLARGED BOTTOM IMAGE & CLEAR TEXT) */}
         <section style={styles.trustBannerDark}>
           <div style={styles.trustLeftContent}>
-            <h3 style={{ margin: "0 0 6px 0", fontSize: "16px", color: "#ffffff" }}>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", color: "#ffffff", fontWeight: "800" }}>
               Invest Small, <br />
               <span style={{ color: "#4ade80" }}>Earn Big Returns Together</span>
             </h3>
-            <p style={{ margin: "0 0 14px 0", opacity: 0.8, fontSize: "12px", color: "#94a3b8" }}>
+            <p style={{ margin: "0 0 14px 0", opacity: 0.9, fontSize: "13px", color: "#cbd5e1" }}>
               Start investing today and secure your future.
             </p>
             <div style={styles.trustIllustrations}>
@@ -1140,29 +1140,29 @@ export default function OneTime() {
           </div>
         </section>
 
-        {/* FOOTER FEATURES GRID (SCREENSHOT 1 BOTTOM CARDS) */}
+        {/* FOOTER FEATURES GRID */}
         <div style={styles.footerFeaturesGrid}>
           <div style={styles.featureBoxDark}>
-            <span style={{ fontSize: "20px" }}>📈</span>
+            <span style={{ fontSize: "24px" }}>📈</span>
             <div>
-              <strong style={{ fontSize: "12px", color: "#fff", display: "block" }}>High Returns</strong>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>Better returns on your investments</span>
+              <strong style={{ fontSize: "14px", color: "#fff", display: "block" }}>High Returns</strong>
+              <span style={{ fontSize: "12px", color: "#94a3b8" }}>Better returns on your investments</span>
             </div>
           </div>
 
           <div style={styles.featureBoxDark}>
-            <span style={{ fontSize: "20px" }}>🎧</span>
+            <span style={{ fontSize: "24px" }}>🎧</span>
             <div>
-              <strong style={{ fontSize: "12px", color: "#fff", display: "block" }}>24/7 Support</strong>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>We are here to help you</span>
+              <strong style={{ fontSize: "14px", color: "#fff", display: "block" }}>24/7 Support</strong>
+              <span style={{ fontSize: "12px", color: "#94a3b8" }}>We are here to help you</span>
             </div>
           </div>
 
           <div style={styles.featureBoxDark}>
-            <span style={{ fontSize: "20px" }}>👥</span>
+            <span style={{ fontSize: "24px" }}>👥</span>
             <div>
-              <strong style={{ fontSize: "12px", color: "#fff", display: "block" }}>Trusted Platform</strong>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>Thousands of users trust us</span>
+              <strong style={{ fontSize: "14px", color: "#fff", display: "block" }}>Trusted Platform</strong>
+              <span style={{ fontSize: "12px", color: "#94a3b8" }}>Thousands of users trust us</span>
             </div>
           </div>
         </div>
@@ -1186,10 +1186,10 @@ export default function OneTime() {
         <div style={styles.modalOverlay}>
           <div style={styles.modalCardDark}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Select Investment Amount</h3>
+              <h3 style={{ margin: 0, fontSize: "20px", color: "#fff" }}>Select Investment Amount</h3>
               <button style={styles.closeBtnDark} onClick={() => setShowAmountModal(false)}>✕</button>
             </div>
-            <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: 0, marginBottom: "16px" }}>
+            <p style={{ fontSize: "13px", color: "#94a3b8", marginTop: 0, marginBottom: "16px" }}>
               Choose one of the plan presets below:
             </p>
 
@@ -1222,16 +1222,16 @@ export default function OneTime() {
         <div style={styles.modalOverlay}>
           <div style={styles.modalCardDark}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Add Investment Fund</h3>
+              <h3 style={{ margin: 0, fontSize: "20px", color: "#fff" }}>Add Investment Fund</h3>
               <button style={styles.closeBtnDark} onClick={() => setShowAddFundModal(false)}>✕</button>
             </div>
 
-            <p style={{ fontSize: "13px", color: "#cbd5e1", margin: "0 0 12px 0" }}>
+            <p style={{ fontSize: "14px", color: "#cbd5e1", margin: "0 0 12px 0" }}>
               Send <strong style={{ color: "#22c55e" }}>₹{amount.toLocaleString("en-IN")}</strong> to company wallet & upload payment proof:
             </p>
 
             <div style={styles.walletBoxDark}>
-              <small style={{ color: "#94a3b8", fontWeight: "bold" }}>Company Wallet Address:</small>
+              <small style={{ color: "#94a3b8", fontWeight: "bold", fontSize: "12px" }}>Company Wallet Address:</small>
               <div style={styles.walletAddrRow}>
                 <span style={styles.walletText}>{COMPANY_WALLET_ADDRESS}</span>
                 <button style={styles.copyBtn} onClick={handleCopyWallet}>Copy</button>
@@ -1274,7 +1274,7 @@ export default function OneTime() {
         <div style={styles.modalOverlay}>
           <div style={styles.modalCardDark}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Add Bank Details</h3>
+              <h3 style={{ margin: 0, fontSize: "20px", color: "#fff" }}>Add Bank Details</h3>
               <button style={styles.closeBtnDark} onClick={() => setShowBankModal(false)}>✕</button>
             </div>
 
@@ -1320,7 +1320,7 @@ export default function OneTime() {
         <div style={styles.modalOverlay}>
           <div style={styles.modalCardDark}>
             <div style={styles.modalHeader}>
-              <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Withdraw Funds</h3>
+              <h3 style={{ margin: 0, fontSize: "20px", color: "#fff" }}>Withdraw Funds</h3>
               <button style={styles.closeBtnDark} onClick={() => setShowWithdrawModal(false)}>✕</button>
             </div>
 
@@ -1342,7 +1342,7 @@ export default function OneTime() {
               </div>
             )}
 
-            <p style={{ fontSize: "13px", color: "#94a3b8", margin: "12px 0 6px" }}>
+            <p style={{ fontSize: "14px", color: "#94a3b8", margin: "12px 0 6px" }}>
               Select Pre-filled Withdrawal Amount:
             </p>
 
@@ -1399,8 +1399,8 @@ const styles = {
     minHeight: "100vh",
     width: "100%",
     background: "#030a16",
-    padding: "12px",
-    fontFamily: "Inter, Arial, sans-serif",
+    padding: "16px",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
     color: "#f8fafc",
     boxSizing: "border-box",
     display: "flex",
@@ -1411,7 +1411,7 @@ const styles = {
     maxWidth: "1000px",
     display: "flex",
     flexDirection: "column",
-    gap: "14px"
+    gap: "18px"
   },
   loadingPage: {
     minHeight: "100vh",
@@ -1421,8 +1421,8 @@ const styles = {
     justifyContent: "center"
   },
   spinner: {
-    width: "36px",
-    height: "36px",
+    width: "40px",
+    height: "40px",
     border: "3px solid rgba(34, 197, 94, 0.2)",
     borderTop: "3px solid #22c55e",
     borderRadius: "50%",
@@ -1438,50 +1438,50 @@ const styles = {
     boxShadow: "0 10px 25px rgba(0,0,0,0.6)",
     zIndex: 99999,
     fontWeight: "bold",
-    fontSize: "13px"
+    fontSize: "14px"
   },
 
-  // HEADER (SCREENSHOT 1 LOOK)
+  // HEADER
   header: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "4px 0"
+    padding: "6px 0"
   },
   headerLeft: {
     display: "flex",
     alignItems: "center",
-    gap: "10px"
+    gap: "12px"
   },
   menuButton: {
     background: "transparent",
     border: "none",
     color: "white",
-    fontSize: "24px",
+    fontSize: "26px",
     cursor: "pointer",
     padding: "0"
   },
   welcomeTitle: {
     margin: 0,
-    fontSize: "16px",
+    fontSize: "19px",
     fontWeight: "800",
     color: "#ffffff"
   },
   welcomeSub: {
     margin: 0,
-    fontSize: "10px",
+    fontSize: "12px",
     color: "#94a3b8"
   },
   profileCircle: {
-    width: "36px",
-    height: "36px",
+    width: "42px",
+    height: "42px",
     borderRadius: "50%",
     background: "#0c1f38",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    border: "1px solid #10b981"
+    border: "2px solid #10b981"
   },
   profileImg: {
     width: "100%",
@@ -1489,46 +1489,49 @@ const styles = {
     objectFit: "cover"
   },
   profileAvatarPlaceholder: {
-    width: "18px",
-    height: "18px",
+    width: "22px",
+    height: "22px",
     borderRadius: "50%",
     background: "#10b981"
   },
 
-  // TOP HERO BANNER (SCREENSHOT 1)
+  // TOP HERO BANNER (LARGER & HIGH VISIBILITY)
   topHeroBanner: {
     background: "linear-gradient(135deg, #062319 0%, #06182e 100%)",
     borderRadius: "16px",
-    padding: "18px",
-    border: "1px solid rgba(34, 197, 94, 0.2)",
+    padding: "22px 26px",
+    border: "1px solid rgba(34, 197, 94, 0.3)",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     position: "relative",
-    overflow: "hidden"
+    overflow: "hidden",
+    minHeight: "140px",
+    gap: "20px"
   },
   heroTextContent: {
-    maxWidth: "65%",
+    flex: 1,
     zIndex: 2
   },
   heroTitle: {
     margin: 0,
-    fontSize: "18px",
+    fontSize: "22px",
     fontWeight: "800",
     color: "#ffffff",
-    lineHeight: "1.3"
+    lineHeight: "1.35"
   },
   heroDesc: {
-    margin: "8px 0 0 0",
-    fontSize: "11px",
-    color: "#94a3b8"
+    margin: "10px 0 0 0",
+    fontSize: "13px",
+    color: "#cbd5e1"
   },
   heroImgWrapper: {
-    width: "100px",
-    height: "80px",
+    width: "180px",
+    height: "120px",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    flexShrink: 0
   },
   heroBannerImage: {
     maxWidth: "100%",
@@ -1536,47 +1539,47 @@ const styles = {
     objectFit: "contain"
   },
 
-  // 4 STAT CARDS GRID (SCREENSHOT 1)
+  // 4 STAT CARDS GRID
   statsGridContainer: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "10px"
+    gap: "12px"
   },
   darkStatCard: {
     background: "#081628",
-    borderRadius: "12px",
-    padding: "12px",
-    border: "1px solid rgba(255, 255, 255, 0.06)",
+    borderRadius: "14px",
+    padding: "14px 16px",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
     position: "relative",
     overflow: "hidden",
-    minHeight: "80px"
+    minHeight: "90px"
   },
   statCardHeader: {
     display: "flex",
     alignItems: "center",
-    gap: "6px"
+    gap: "8px"
   },
   iconBox: {
-    width: "24px",
-    height: "24px",
-    borderRadius: "6px",
+    width: "28px",
+    height: "28px",
+    borderRadius: "8px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center"
   },
   statCardTitle: {
-    fontSize: "11px",
+    fontSize: "13px",
     color: "#94a3b8",
     fontWeight: "600"
   },
   statCardValue: {
-    fontSize: "18px",
+    fontSize: "21px",
     fontWeight: "900",
     color: "#ffffff",
-    marginTop: "6px",
+    marginTop: "8px",
     zIndex: 2
   },
   sparkline: {
@@ -1585,35 +1588,35 @@ const styles = {
     marginTop: "4px"
   },
 
-  // MAIN INVESTMENT CARD (DARK SCREENSHOT 1)
+  // MAIN INVESTMENT CARD
   darkMainCard: {
     background: "#081628",
     borderRadius: "16px",
-    padding: "18px",
-    border: "1px solid rgba(255, 255, 255, 0.06)"
+    padding: "20px",
+    border: "1px solid rgba(255, 255, 255, 0.08)"
   },
   darkCardTitle: {
-    margin: "0 0 16px 0",
-    fontSize: "15px",
+    margin: "0 0 18px 0",
+    fontSize: "17px",
     fontWeight: "800",
     color: "#ffffff"
   },
 
-  // ACTIVE RUNNING CARD (DARK)
+  // ACTIVE RUNNING CARD
   activeInvestCardDark: {
     background: "#040d1a",
-    borderRadius: "12px",
-    padding: "14px",
-    marginBottom: "16px",
+    borderRadius: "14px",
+    padding: "16px",
+    marginBottom: "18px",
     border: "1px solid #16a34a"
   },
   activeHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "12px",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
-    paddingBottom: "8px"
+    marginBottom: "14px",
+    borderBottom: "1px solid rgba(255,255,255,0.08)",
+    paddingBottom: "10px"
   },
   activeBadgeGroup: {
     display: "flex",
@@ -1621,70 +1624,71 @@ const styles = {
     gap: "8px"
   },
   activePulse: {
-    width: "8px",
-    height: "8px",
+    width: "10px",
+    height: "10px",
     borderRadius: "50%",
     background: "#22c55e",
-    boxShadow: "0 0 8px #22c55e"
+    boxShadow: "0 0 10px #22c55e"
   },
   activeTitle: {
-    fontSize: "11px",
+    fontSize: "13px",
     letterSpacing: "0.5px",
     color: "#22c55e"
   },
   activeStatusTagDark: {
-    fontSize: "10px",
+    fontSize: "12px",
     background: "rgba(34, 197, 94, 0.2)",
     color: "#4ade80",
-    padding: "3px 8px",
+    padding: "4px 10px",
     borderRadius: "12px",
     fontWeight: "bold"
   },
   activeStatsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "10px"
+    gap: "12px"
   },
   activeStatItem: {
     display: "flex",
     flexDirection: "column"
   },
   activeLabel: {
-    fontSize: "10px",
-    color: "#64748b"
+    fontSize: "12px",
+    color: "#94a3b8"
   },
   activeValue: {
-    fontSize: "13px",
+    fontSize: "15px",
     fontWeight: "bold",
     color: "#f8fafc",
-    marginTop: "2px"
+    marginTop: "4px"
   },
 
   // FORM FIELDS
   formGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "12px",
-    marginBottom: "14px"
+    gap: "14px",
+    marginBottom: "16px"
   },
   fieldGroup: {
     display: "flex",
     flexDirection: "column"
   },
   labelDark: {
-    fontSize: "11px",
+    fontSize: "13px",
     fontWeight: "700",
-    marginBottom: "6px",
+    marginBottom: "8px",
     color: "#cbd5e1"
   },
   selectDark: {
-    height: "42px",
-    borderRadius: "8px",
+    height: "46px",
+    borderRadius: "10px",
     border: "1px solid #1e293b",
     background: "#0f2138",
     color: "#ffffff",
-    padding: "0 10px",
-    fontSize: "13px"
+    padding: "0 12px",
+    fontSize: "14px",
+    fontWeight: "600"
   },
   lockedInputDark: {
     opacity: 0.6,
@@ -1692,16 +1696,16 @@ const styles = {
   },
   frequencyToggleDark: {
     display: "flex",
-    gap: "6px",
-    height: "42px"
+    gap: "8px",
+    height: "46px"
   },
   freqBtnDark: {
     flex: 1,
-    borderRadius: "8px",
+    borderRadius: "10px",
     border: "1px solid #1e293b",
     background: "#0f2138",
-    color: "#94a3b8",
-    fontSize: "13px",
+    color: "#cbd5e1",
+    fontSize: "14px",
     fontWeight: "bold",
     cursor: "pointer"
   },
@@ -1711,11 +1715,11 @@ const styles = {
     borderColor: "#16a34a"
   },
   amountInputWrapDark: {
-    height: "42px",
-    borderRadius: "8px",
+    height: "46px",
+    borderRadius: "10px",
     border: "1px solid #1e293b",
     background: "#0f2138",
-    padding: "0 10px",
+    padding: "0 12px",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1724,58 +1728,58 @@ const styles = {
   amountInputDark: {
     border: "none",
     background: "transparent",
-    fontSize: "14px",
+    fontSize: "16px",
     fontWeight: "bold",
     color: "#ffffff",
     outline: "none",
     width: "60%"
   },
   changeBadgeDark: {
-    fontSize: "10px",
+    fontSize: "12px",
     color: "#38bdf8",
     fontWeight: "bold"
   },
   lockedBadgeDark: {
-    fontSize: "10px",
+    fontSize: "12px",
     color: "#ef4444",
     fontWeight: "bold"
   },
   helpTextDark: {
-    color: "#64748b",
-    fontSize: "9px",
-    marginTop: "4px"
+    color: "#94a3b8",
+    fontSize: "11px",
+    marginTop: "6px"
   },
 
-  // RETURN BOX (SCREENSHOT 1)
+  // RETURN BOX
   returnContainerDark: {
     background: "#dcfce7",
-    borderRadius: "12px",
-    padding: "16px",
+    borderRadius: "14px",
+    padding: "18px",
     textAlign: "center",
-    margin: "14px 0",
+    margin: "16px 0",
     color: "#166534"
   },
   returnCardContent: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "12px"
+    gap: "14px"
   },
   returnBoxBagIcon: {
-    fontSize: "28px"
+    fontSize: "32px"
   },
   returnCardTitleDark: {
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: "700"
   },
   returnCardValueDark: {
-    fontSize: "24px",
+    fontSize: "28px",
     fontWeight: "900",
     display: "block"
   },
   returnCardNoteDark: {
-    fontSize: "10px",
-    opacity: 0.85
+    fontSize: "12px",
+    opacity: 0.9
   },
 
   // BREAKDOWN GRID
@@ -1783,24 +1787,24 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
     background: "#040d1a",
-    borderRadius: "10px",
-    border: "1px solid rgba(255, 255, 255, 0.06)",
-    margin: "14px 0",
+    borderRadius: "12px",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    margin: "16px 0",
     overflow: "hidden"
   },
   breakBoxDark: {
-    padding: "10px",
+    padding: "12px",
     textAlign: "center",
-    borderRight: "1px solid rgba(255, 255, 255, 0.06)"
+    borderRight: "1px solid rgba(255, 255, 255, 0.08)"
   },
   breakLabelDark: {
     display: "block",
-    fontSize: "10px",
-    color: "#64748b",
-    marginBottom: "2px"
+    fontSize: "12px",
+    color: "#94a3b8",
+    marginBottom: "4px"
   },
   breakValueDark: {
-    fontSize: "13px",
+    fontSize: "15px",
     fontWeight: "bold",
     color: "#ffffff"
   },
@@ -1809,15 +1813,15 @@ const styles = {
   actionGridTriple: {
     display: "grid",
     gridTemplateColumns: "2fr 1fr 1fr",
-    gap: "10px"
+    gap: "12px"
   },
   startInvestBtnDark: {
-    height: "44px",
+    height: "48px",
     borderRadius: "10px",
     border: "none",
     background: "#86efac",
     color: "#052e16",
-    fontSize: "13px",
+    fontSize: "15px",
     fontWeight: "bold",
     cursor: "pointer"
   },
@@ -1828,23 +1832,22 @@ const styles = {
     cursor: "not-allowed"
   },
   addInvestBtnDark: {
-    height: "44px",
+    height: "48px",
     borderRadius: "10px",
     border: "none",
     background: "#2563eb",
     color: "white",
-    fontSize: "13px",
+    fontSize: "15px",
     fontWeight: "bold",
     cursor: "pointer"
   },
   withdrawBtnDark: {
-    height: "44px",
+    height: "48px",
     borderRadius: "10px",
-    border: "none",
     background: "#0f172a",
     border: "1px solid #334155",
     color: "white",
-    fontSize: "13px",
+    fontSize: "15px",
     fontWeight: "bold",
     cursor: "pointer"
   },
@@ -1853,18 +1856,18 @@ const styles = {
   darkHistoryCard: {
     background: "#081628",
     borderRadius: "16px",
-    padding: "16px",
-    border: "1px solid rgba(255, 255, 255, 0.06)"
+    padding: "18px",
+    border: "1px solid rgba(255, 255, 255, 0.08)"
   },
   historyHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "12px"
+    marginBottom: "14px"
   },
   refreshBtnDark: {
     color: "#22c55e",
-    fontSize: "11px",
+    fontSize: "13px",
     fontWeight: "bold",
     cursor: "pointer"
   },
@@ -1874,64 +1877,64 @@ const styles = {
   tableDark: {
     width: "100%",
     borderCollapse: "collapse",
-    fontSize: "11px"
+    fontSize: "13px"
   },
   thDark: {
     background: "#040d1a",
-    padding: "8px 10px",
-    color: "#64748b",
+    padding: "12px 14px",
+    color: "#94a3b8",
     textAlign: "left",
-    fontWeight: "600"
+    fontWeight: "700"
   },
   trDark: {
-    borderBottom: "1px solid rgba(255, 255, 255, 0.04)"
+    borderBottom: "1px solid rgba(255, 255, 255, 0.06)"
   },
   tdDark: {
-    padding: "10px",
+    padding: "12px 14px",
     color: "#f8fafc"
   },
   emptyTdDark: {
     textAlign: "center",
-    padding: "20px",
-    color: "#64748b"
+    padding: "24px",
+    color: "#94a3b8"
   },
   badgeDailyDark: {
     background: "rgba(34, 197, 94, 0.15)",
     color: "#4ade80",
-    padding: "2px 6px",
+    padding: "3px 8px",
     borderRadius: "6px",
-    fontSize: "10px",
+    fontSize: "12px",
     fontWeight: "bold"
   },
   statusBadgeDark: {
-    padding: "2px 8px",
+    padding: "4px 10px",
     borderRadius: "10px",
-    fontSize: "10px",
+    fontSize: "12px",
     fontWeight: "bold",
     display: "inline-block"
   },
   viewAllFooter: {
     textAlign: "center",
-    marginTop: "12px",
-    paddingTop: "8px",
-    borderTop: "1px solid rgba(255,255,255,0.04)"
+    marginTop: "14px",
+    paddingTop: "10px",
+    borderTop: "1px solid rgba(255,255,255,0.06)"
   },
   viewAllLink: {
     color: "#22c55e",
-    fontSize: "11px",
+    fontSize: "13px",
     fontWeight: "bold",
     cursor: "pointer"
   },
 
-  // TRUST BANNER (SCREENSHOT 1)
+  // TRUST BANNER (ENLARGED BOTTOM BANNER & IMAGE)
   trustBannerDark: {
     background: "linear-gradient(135deg, #051a13 0%, #081728 100%)",
     borderRadius: "16px",
-    padding: "18px",
-    border: "1px solid rgba(34, 197, 94, 0.2)",
+    padding: "22px 26px",
+    border: "1px solid rgba(34, 197, 94, 0.3)",
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
+    gap: "20px",
     alignItems: "center"
   },
   trustLeftContent: {
@@ -1940,69 +1943,72 @@ const styles = {
   },
   trustIllustrations: {
     width: "100%",
-    height: "70px"
+    height: "120px",
+    marginTop: "10px"
   },
   trustImg: {
     maxHeight: "100%",
+    maxWidth: "100%",
     objectFit: "contain"
   },
   trustRightList: {
     display: "flex",
     flexDirection: "column",
-    gap: "10px"
+    gap: "14px"
   },
   trustItem: {
     display: "flex",
     alignItems: "center",
-    gap: "10px"
+    gap: "12px"
   },
   trustIcon: {
-    fontSize: "18px",
+    fontSize: "22px",
     color: "#22c55e"
   },
   trustTitle: {
-    fontSize: "12px",
+    fontSize: "14px",
     color: "#ffffff",
-    display: "block"
+    display: "block",
+    fontWeight: "700"
   },
   trustSub: {
-    fontSize: "10px",
-    color: "#64748b"
+    fontSize: "12px",
+    color: "#94a3b8"
   },
 
   // FOOTER FEATURES GRID
   footerFeaturesGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "10px"
+    gap: "12px"
   },
   featureBoxDark: {
     background: "#081628",
     borderRadius: "12px",
-    padding: "12px",
-    border: "1px solid rgba(255, 255, 255, 0.06)",
+    padding: "14px",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
     display: "flex",
     alignItems: "center",
-    gap: "10px"
+    gap: "12px"
   },
 
   // FOOTER BAR
   footerBar: {
     textAlign: "center",
-    padding: "16px 0",
-    borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-    marginTop: "8px"
+    padding: "18px 0",
+    borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+    marginTop: "10px"
   },
   footerTagline: {
-    fontSize: "12px",
-    color: "#94a3b8",
-    margin: "0 0 6px 0"
+    fontSize: "14px",
+    color: "#cbd5e1",
+    margin: "0 0 8px 0"
   },
   footerCopyRow: {
     display: "flex",
     justifyContent: "space-between",
-    fontSize: "10px",
-    color: "#475569"
+    fontSize: "12px",
+    color: "#64748b"
   },
 
   // SIDEBAR DRAWER STYLES
@@ -2025,9 +2031,9 @@ const styles = {
     bottom: 0,
     left: 0,
     background: "#08101e",
-    width: "240px",
+    width: "250px",
     height: "100vh",
-    padding: "12px 10px",
+    padding: "14px 12px",
     display: "flex",
     flexDirection: "column",
     boxShadow: "10px 0 30px rgba(0,0,0,0.85)",
@@ -2042,20 +2048,20 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: "8px",
-    paddingBottom: "8px",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+    marginBottom: "10px",
+    paddingBottom: "10px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
     flexShrink: 0
   },
   drawerBrand: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "4px"
+    gap: "6px"
   },
   drawerLogoWrapper: {
-    width: "44px",
-    height: "44px",
+    width: "48px",
+    height: "48px",
     borderRadius: "50%",
     background: "radial-gradient(circle, #03251a 0%, #064e3b 100%)",
     border: "2px solid #22c55e",
@@ -2065,45 +2071,45 @@ const styles = {
     boxShadow: "0 0 12px rgba(34, 197, 94, 0.35)"
   },
   drawerLogoImg: {
-    width: "28px",
-    height: "28px",
+    width: "30px",
+    height: "30px",
     objectFit: "contain"
   },
   drawerLogoText: {
     margin: 0,
-    fontSize: "15px",
+    fontSize: "16px",
     fontWeight: "900",
     color: "#ffffff",
     letterSpacing: "0.8px",
     textAlign: "center"
   },
   drawerLogoSubtext: {
-    fontSize: "10px",
+    fontSize: "11px",
     color: "#a7f3d0",
     fontWeight: "600",
-    marginTop: "1px",
+    marginTop: "2px",
     textAlign: "center"
   },
   drawerNavList: {
     display: "flex",
     flexDirection: "column",
-    gap: "6px",
+    gap: "8px",
     flexShrink: 0,
     overflowY: "auto",
-    maxHeight: "calc(100vh - 200px)"
+    maxHeight: "calc(100vh - 210px)"
   },
   drawerNavItem: {
     display: "flex",
     alignItems: "center",
-    gap: "10px",
-    padding: "8px 14px",
+    gap: "12px",
+    padding: "10px 16px",
     background: "rgba(255, 255, 255, 0.12)",
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
     border: "1px solid rgba(255, 255, 255, 0.25)",
     clipPath: "polygon(12px 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0% 50%)",
     color: "#ffffff",
-    fontSize: "13px",
+    fontSize: "14px",
     fontWeight: "700",
     cursor: "pointer",
     textAlign: "left",
@@ -2118,14 +2124,14 @@ const styles = {
     fontWeight: "800"
   },
   drawerNavIcon: {
-    fontSize: "18px",
-    width: "22px",
+    fontSize: "20px",
+    width: "24px",
     display: "inline-block",
     textAlign: "center"
   },
   drawerNavText: {
     flex: 1,
-    fontSize: "13px",
+    fontSize: "14px",
     letterSpacing: "0.3px"
   },
   drawerNavDashboard: { background: "rgba(59, 130, 246, 0.2)", border: "1px solid rgba(59, 130, 246, 0.4)" },
@@ -2145,7 +2151,7 @@ const styles = {
   treePlantOnlyWrapper: {
     flex: 1,
     minHeight: 0,
-    marginTop: "10px",
+    marginTop: "12px",
     marginBottom: "4px",
     width: "100%",
     display: "flex",
@@ -2157,12 +2163,12 @@ const styles = {
   },
   treePlantOnlyImg: {
     width: "90%",
-    height: "65%",
-    objectFit: "cover",
+    height: "70%",
+    objectFit: "95%",
     borderRadius: "16px"
   },
 
-  // MODAL STYLES (DARK)
+  // MODAL STYLES
   modalOverlay: {
     position: "fixed",
     inset: 0,
@@ -2177,9 +2183,9 @@ const styles = {
   modalCardDark: {
     background: "#081628",
     borderRadius: "18px",
-    padding: "20px",
+    padding: "22px",
     width: "100%",
-    maxWidth: "400px",
+    maxWidth: "420px",
     border: "1px solid rgba(255, 255, 255, 0.1)",
     boxShadow: "0 25px 50px rgba(0,0,0,0.6)"
   },
@@ -2187,25 +2193,26 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "12px"
+    marginBottom: "14px"
   },
   closeBtnDark: {
     border: "none",
     background: "#0f2138",
     color: "#fff",
     borderRadius: "50%",
-    width: "28px",
-    height: "28px",
-    cursor: "pointer"
+    width: "32px",
+    height: "32px",
+    cursor: "pointer",
+    fontSize: "14px"
   },
   presetGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "10px"
+    gap: "12px"
   },
   presetCard: {
     borderRadius: "12px",
-    padding: "12px",
+    padding: "14px",
     color: "white",
     cursor: "pointer",
     display: "flex",
@@ -2213,14 +2220,14 @@ const styles = {
     alignItems: "center",
     justifyContent: "center"
   },
-  presetBadge: { fontSize: "9px", textTransform: "uppercase", fontWeight: "bold" },
-  presetVal: { fontSize: "16px", fontWeight: "900", margin: "2px 0" },
-  presetLabel: { fontSize: "10px", opacity: 0.8 },
+  presetBadge: { fontSize: "11px", textTransform: "uppercase", fontWeight: "bold" },
+  presetVal: { fontSize: "18px", fontWeight: "900", margin: "4px 0" },
+  presetLabel: { fontSize: "12px", opacity: 0.85 },
 
   walletBoxDark: {
     background: "#040d1a",
-    padding: "12px",
-    borderRadius: "8px",
+    padding: "14px",
+    borderRadius: "10px",
     border: "1px solid #1e293b"
   },
   walletAddrRow: {
@@ -2228,70 +2235,71 @@ const styles = {
     alignItems: "center",
     justifyContent: "space-between",
     gap: "8px",
-    marginTop: "4px"
+    marginTop: "6px"
   },
-  walletText: { fontSize: "11px", wordBreak: "break-all", color: "#fff" },
+  walletText: { fontSize: "12px", wordBreak: "break-all", color: "#fff" },
   copyBtn: {
     background: "#16a34a",
     color: "white",
     border: "none",
-    padding: "4px 8px",
+    padding: "6px 10px",
     borderRadius: "6px",
     cursor: "pointer",
-    fontSize: "11px"
+    fontSize: "12px",
+    fontWeight: "bold"
   },
   inputModalDark: {
     width: "100%",
-    height: "42px",
-    borderRadius: "8px",
+    height: "46px",
+    borderRadius: "10px",
     border: "1px solid #1e293b",
     background: "#0f2138",
     color: "#fff",
-    padding: "0 10px",
-    fontSize: "12px",
+    padding: "0 12px",
+    fontSize: "14px",
     boxSizing: "border-box"
   },
-  fileInputDark: { width: "100%", fontSize: "11px", color: "#94a3b8" },
+  fileInputDark: { width: "100%", fontSize: "13px", color: "#cbd5e1" },
   submitBtnDark: {
-    height: "42px",
-    borderRadius: "8px",
+    height: "46px",
+    borderRadius: "10px",
     border: "none",
     background: "#16a34a",
     color: "white",
     fontWeight: "bold",
-    fontSize: "13px",
+    fontSize: "15px",
     cursor: "pointer",
     width: "100%"
   },
   withdrawBalanceInfoDark: {
-    padding: "10px",
-    borderRadius: "8px",
+    padding: "12px",
+    borderRadius: "10px",
     display: "flex",
     justifyContent: "space-between",
-    fontSize: "12px"
+    fontSize: "13px"
   },
   balanceAlertBoxDark: {
     background: "rgba(239, 68, 68, 0.15)",
     color: "#f87171",
-    fontSize: "11px",
-    padding: "8px",
-    borderRadius: "6px",
+    fontSize: "12px",
+    padding: "10px",
+    borderRadius: "8px",
     marginTop: "8px"
   },
   withdrawPresetGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "8px"
+    gap: "10px"
   },
   withdrawPresetBtnDark: {
-    padding: "8px",
-    borderRadius: "8px",
+    padding: "10px",
+    borderRadius: "10px",
     border: "1px solid #1e293b",
     background: "#0f2138",
     color: "#fff",
     fontWeight: "bold",
     cursor: "pointer",
-    fontSize: "12px"
+    fontSize: "13px"
   },
   withdrawPresetActiveDark: {
     background: "#2563eb",
