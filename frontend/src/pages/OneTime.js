@@ -2020,7 +2020,7 @@ const styles = {
     bottom: 0,
     left: 0,
     background: "#08101e",
-    width: "250px",
+    width: "240px",
     height: "100vh",
     padding: "14px 12px",
     display: "flex",
@@ -2153,7 +2153,7 @@ const styles = {
   treePlantOnlyImg: {
     width: "90%",
     height: "70%",
-    objectFit: "cover",
+    objectFit: "95%",
     borderRadius: "16px"
   },
 
