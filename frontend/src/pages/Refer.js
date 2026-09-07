@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import html2canvas from "html2canvas"; 
 import { API } from "../config";
 
 export default function Refer() {
   const navigate = useNavigate();
+  const location = useLocation();
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
 
@@ -14,7 +15,7 @@ export default function Refer() {
   const [history, setHistory] = useState([]);
   const [bonusHistory, setBonusHistory] = useState([]);
   const [performance, setPerformance] = useState({});
-  const [team, setTeam] = useState({}); 
+  const [team, setTeam] = useState({});
   const [royalty, setRoyalty] = useState({});
   const [treeData, setTreeData] = useState({});
   const [bonusModal, setBonusModal] = useState(null);
@@ -24,9 +25,9 @@ export default function Refer() {
   const [referBonus, setReferBonus] = useState({});
   const [performanceFilter, setPerformanceFilter] = useState("thisMonth");
   
-  // হোম পেজের মতো সাইডবার ড্রয়ার ও পুশ নোটিফিকেশন স্টেট
+  // ড্রয়ার ওপেন/ক্লোজ স্টেট ও ডাউনলোডিং অ্যানিমেশন স্টেট
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
+  const [isDownloadingPlan, setIsDownloadingPlan] = useState(false);
 
   // ট্রানসাকশান ডিটেইলস পপআপের জন্য স্টেট
   const [selectedTx, setSelectedTx] = useState(null);
@@ -85,66 +86,7 @@ export default function Refer() {
     }, 2200);
   };
 
-  // ব্রাউজার পুশ নোটিফিকেশন সাবস্ক্রাইব করার ফাংশন
-  const registerPushNotification = async () => {
-    if (!("serviceWorker" in navigator) && !("PushManager" in window)) {
-      return;
-    }
-    
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      
-      const permissionResult = await Notification.requestPermission();
-      if (permissionResult !== "granted") {
-        return;
-      }
-
-      const keyRes = await fetch(`${API}/get-vapid-key`);
-      const keyData = await keyRes.json();
-      const publicVapidKey = keyData.publicKey;
-
-      if (!publicVapidKey) return;
-
-      const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
-
-      let subscription = await registration.pushManager.getSubscription();
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: convertedVapidKey
-        });
-      }
-
-      const currentEmail = localStorage.getItem("email");
-      if (!currentEmail) return;
-
-      const subscriptionData = JSON.parse(JSON.stringify(subscription));
-
-      await fetch(`${API}/save-push-subscription`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token
-        },
-        body: JSON.stringify({ email: currentEmail, subscription: subscriptionData })
-      });
-    } catch (error) {
-      console.log("Push subscription error:", error);
-    }
-  };
-
-  function urlBase64ToUint8Array(base64String) {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  }
-
-  // অ্যামাউন্টকে কথায় রূপান্তর করার হেল্পার ফাংশন (Dynamic Number to Words)
+  // অ্যামাউন্টকে কথায় রূপান্তর করার হেল্পার ফাংশন
   const numberToWords = (num) => {
     if (!num) return "Zero Only";
     const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
@@ -167,35 +109,31 @@ export default function Refer() {
     return words ? `Rupees ${words} Only` : "Rupees Zero Only";
   };
 
+  // নেভিগেশন ও প্ল্যান ডাউনলোডের লজিক
+  const go = (path) => navigate(path);
+
+  const handleDownloadPlan = () => {
+    if (isDownloadingPlan) return;
+    setIsDownloadingPlan(true);
+
+    setTimeout(() => {
+      const link = document.createElement("a");
+      link.href = "/SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      link.download = "SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setIsDownloadingPlan(false);
+    }, 1200);
+  };
+
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }, [bonusModal]);
 
   useEffect(() => {
     loadReferData();
-    loadNotifications();
-    registerPushNotification();
   }, []);
-
-  const loadNotifications = async () => {
-    try {
-      const res = await fetch(`${API}/get-notifications`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token
-        },
-        body: JSON.stringify({ email })
-      });
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        const unread = data.filter((n) => !n.read).length;
-        setNotificationCount(unread);
-      }
-    } catch (err) {
-      console.log("Notification count error:", err);
-    }
-  };
 
   const loadReferData = async (month = "", year = new Date().getFullYear()) => {
     try {
@@ -210,16 +148,6 @@ export default function Refer() {
       });
 
       const data = await res.json();
-
-      if (data?.msg === "Token expired or invalid") {
-        triggerStatusOverlay("error", "You are logout please login again");
-        setTimeout(() => {
-          localStorage.clear();
-          navigate("/login");
-          window.location.reload();
-        }, 2500);
-        return;
-      }
 
       if (data.success) {
         setUser(data.user || {});
@@ -238,7 +166,6 @@ export default function Refer() {
     }
   };
 
-  // টিম হিস্ট্রি ফিল্টার করার লজিক
   const getFilteredTeamHistory = () => {
     const teamHistoryList = team.history || [];
     const now = new Date();
@@ -269,7 +196,6 @@ export default function Refer() {
     });
   };
 
-  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল মেম্বার কাউন্ট
   const getDynamicLevelCounts = () => {
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const filteredHistory = getFilteredTeamHistory();
@@ -294,7 +220,6 @@ export default function Refer() {
     return counts;
   };
 
-  // ফিল্টার অনুযায়ী ডাইনামিক লেভেল ইনকাম
   const getDynamicLevelIncomes = () => {
     const incomes = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     const filteredHistory = getFilteredTeamHistory();
@@ -490,6 +415,67 @@ export default function Refer() {
   return (
     <div style={styles.page}>
       
+      {/* 👇 SIDEBAR DRAWER (Added from Home) */}
+      <div style={{
+        ...styles.drawerOverlay,
+        opacity: isDrawerOpen ? 1 : 0,
+        visibility: isDrawerOpen ? "visible" : "hidden"
+      }} onClick={() => setIsDrawerOpen(false)}>
+        <div style={{
+          ...styles.drawerContainer,
+          transform: isDrawerOpen ? "translateX(0)" : "translateX(-100%)"
+        }} onClick={(e) => e.stopPropagation()}>
+          
+          <div style={styles.drawerHeader}>
+            <div style={styles.drawerBrand}>
+              <div style={styles.drawerLogoWrapper}>
+                <img 
+                  src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
+                  alt="SM Logo" 
+                  style={styles.drawerLogoImg} 
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
+                <span style={styles.drawerLogoSubtext}>Invest Small, Earn Big</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.drawerNavList}>
+            <button style={{...styles.drawerNavItem, ...(location.pathname === "/home" ? styles.drawerNavItemActive : {})}} onClick={() => { go("/home"); setIsDrawerOpen(false); }}>
+              <span style={styles.drawerNavIcon}>🏠</span><span style={styles.drawerNavText}>Dashboard</span>
+            </button>
+            <button style={{...styles.drawerNavItem, ...(location.pathname === "/my-investment" ? styles.drawerNavItemActive : {})}} onClick={() => { go("/my-investment"); setIsDrawerOpen(false); }}>
+              <span style={styles.drawerNavIcon}>📈</span><span style={styles.drawerNavText}>My Investment</span>
+            </button>
+            <button style={{...styles.drawerNavItem, ...(location.pathname === "/save-money" ? styles.drawerNavItemActive : {})}} onClick={() => { go("/save-money"); setIsDrawerOpen(false); }}>
+              <span style={styles.drawerNavIcon}>💰</span><span style={styles.drawerNavText}>Save Money</span>
+            </button>
+            <button style={{...styles.drawerNavItem, ...(location.pathname === "/one-time" ? styles.drawerNavItemActive : {})}} onClick={() => { go("/one-time"); setIsDrawerOpen(false); }}>
+              <span style={styles.drawerNavIcon}>⚡</span><span style={styles.drawerNavText}>One Time</span>
+            </button>
+            <button style={styles.drawerNavItem} onClick={() => { handleDownloadPlan(); setIsDrawerOpen(false); }} disabled={isDownloadingPlan}>
+              <span style={styles.drawerNavIcon}>{isDownloadingPlan ? "⏳" : "📋"}</span><span style={styles.drawerNavText}>{isDownloadingPlan ? "Downloading..." : "Plan PDF"}</span>
+            </button>
+            <button style={{...styles.drawerNavItem, ...(location.pathname === "/wallet" ? styles.drawerNavItemActive : {})}} onClick={() => { go("/wallet"); setIsDrawerOpen(false); }}>
+              <span style={styles.drawerNavIcon}>🌐</span><span style={styles.drawerNavText}>Add Fund</span>
+            </button>
+            <button style={{...styles.drawerNavItem, ...(location.pathname === "/refer" ? styles.drawerNavItemActive : {})}} onClick={() => { go("/refer"); setIsDrawerOpen(false); }}>
+              <span style={styles.drawerNavIcon}>👥</span><span style={styles.drawerNavText}>Refer & Earn</span>
+            </button>
+            <button style={{...styles.drawerNavItem, ...(location.pathname === "/withdraw" ? styles.drawerNavItemActive : {})}} onClick={() => { go("/withdraw"); setIsDrawerOpen(false); }}>
+              <span style={styles.drawerNavIcon}>➔</span><span style={styles.drawerNavText}>Withdraw</span>
+            </button>
+            <button style={{...styles.drawerNavItem, ...(location.pathname === "/daily-reward" ? styles.drawerNavItemActive : {})}} onClick={() => { go("/daily-reward"); setIsDrawerOpen(false); }}>
+              <span style={styles.drawerNavIcon}>🎁</span><span style={styles.drawerNavText}>Daily Reward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* 👆 SIDEBAR DRAWER END */}
+
       {/* প্রিমিয়াম গ্লসি ইনফো মেসেজ টোস্ট ওভারলে */}
       {statusOverlay.show && (
         <div style={styles.statusOverlayBg}>
@@ -509,78 +495,10 @@ export default function Refer() {
         </div>
       )}
 
-      {/* হোম পেজের মতো হুবহু সাইডবার মেনু বাটন (বাঁদিকে) */}
+      {/* Navigation Buttons */}
       <button style={styles.menuBtn} onClick={() => setIsDrawerOpen(true)}>☰</button>
-      
-      {/* হোম পেজের মতো হুবহু নোটিফিকেশন বেল বাটন (ডানদিকে) */}
-      <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>
-        🔔
-        {notificationCount > 0 && <span style={styles.badgeCount}>{notificationCount}</span>}
-      </button>
-
-      {/* হোম পেজের মতো হুবহু সাইডবার ড্রয়ার ও ব্যাকড্রপ ওভারলে */}
-      {isDrawerOpen && (
-        <div style={styles.drawerBackdrop} onClick={() => setIsDrawerOpen(false)}>
-          <div style={styles.drawerContainer} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.drawerHeader}>
-              <div style={styles.drawerProfileInfo}>
-                <img 
-                  src={profilePhoto || "https://i.pravatar.cc/160?img=12"} 
-                  alt="Profile" 
-                  style={styles.drawerAvatar} 
-                />
-                <div>
-                  <h3 style={styles.drawerName}>{user?.name || "Save Money User"}</h3>
-                  <p style={styles.drawerEmail}>{user?.email || email}</p>
-                </div>
-              </div>
-              <button style={styles.drawerCloseBtn} onClick={() => setIsDrawerOpen(false)}>✕</button>
-            </div>
-
-            <div style={styles.drawerMenuLinks}>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/home"); }}>
-                <span>🏠</span> Home
-              </div>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/deposit"); }}>
-                <span>💳</span> Add Money
-              </div>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/withdraw"); }}>
-                <span>💸</span> Withdraw
-              </div>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/transfer"); }}>
-                <span>🔄</span> Wallet Transfer
-              </div>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/history"); }}>
-                <span>📜</span> History
-              </div>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/refer"); }}>
-                <span>🎁</span> Refer & Earn
-              </div>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/profile"); }}>
-                <span>👤</span> Profile Settings
-              </div>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/support"); }}>
-                <span>🎧</span> Support / Help
-              </div>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/notices"); }}>
-                <span>📢</span> Notices & Updates
-              </div>
-              <div style={styles.drawerItem} onClick={() => { setIsDrawerOpen(false); navigate("/about"); }}>
-                <span>ℹ️</span> About Us
-              </div>
-            </div>
-
-            <div style={styles.drawerFooter}>
-              <button style={styles.drawerLogoutBtn} onClick={() => {
-                localStorage.clear();
-                navigate("/login");
-              }}>
-                🚪 Logout Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <button style={styles.backBtn} onClick={() => navigate(-1)}>←</button>
+      <button style={styles.bellBtn} onClick={() => navigate("/notifications")}>🔔</button>
 
       <header style={styles.header}>
         <p style={styles.welcome}>Welcome to</p>
@@ -762,7 +680,7 @@ export default function Refer() {
       </section>
 
 
-      {/* 📸 রসিদ ইমেজ মোডাল পপআপ (ডাইনামিক অ্যামাউন্ট ওয়ার্ডস এবং ক্লিয়ার সোর্স সহ) */}
+      {/* 📸 রসিদ ইমেজ মোডাল পপআপ */}
       {selectedTx && (
         <div style={styles.modalOverlay} onClick={() => setSelectedTx(null)}>
           <div style={styles.txDetailsCard} onClick={(e) => e.stopPropagation()}>
@@ -781,17 +699,14 @@ export default function Refer() {
                 <h1 style={styles.txDetailMainAmount}>
                   {money(selectedTx.amount)} <span style={styles.verifiedCheck}>✓</span>
                 </h1>
-                {/* ডাইনামিক কথায় অ্যামাউন্ট */}
                 <p style={{ margin: "4px 0", color: "#666", textTransform: "capitalize", fontSize: "13px" }}>
                   {numberToWords(selectedTx.amount)}
                 </p>
-                {/* স্পষ্টভাবে কিসের থেকে টাকাটা পাওয়া গেল তা এখানে দেখানো হলো */}
                 <div style={styles.moneyReceivedTag}>
                   💵 {selectedTx.bonusType || "Money Received"} {selectedTx.level ? `(Level ${selectedTx.level})` : ""}
                 </div>
               </div>
 
-              {/* বোনাস সোর্স বা মাধ্যম ডিটেইলস */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: "1px dashed #e2e8f0" }}>
                 <div>
                   <p style={styles.sectionLabel}>Income Source</p>
@@ -841,9 +756,7 @@ export default function Refer() {
         </div>
       )}
 
-      {/* ==========================================================
-          IMAGE 1: PERFORMANCE BONUS MODAL
-          ========================================================== */}
+      {/* PERFORMANCE BONUS MODAL */}
       {bonusModal === "performance" && (
         <NewModal onClose={() => setBonusModal(null)}>
           <div style={styles.modalHeaderRow}>
@@ -972,9 +885,7 @@ export default function Refer() {
         </NewModal>
       )}
 
-      {/* ==========================================================
-          IMAGE 2: TEAM BONUS MODAL
-          ========================================================== */}
+      {/* TEAM BONUS MODAL */}
       {bonusModal === "team" && (
         <NewModal onClose={() => setBonusModal(null)}>
           <div style={styles.modalHeaderRow}>
@@ -1124,9 +1035,7 @@ export default function Refer() {
         </NewModal>
       )}
 
-      {/* ==========================================================
-          IMAGE 3: REFER BONUS MODAL
-          ========================================================== */}
+      {/* REFER BONUS MODAL */}
       {bonusModal === "refer" && (
         <NewModal onClose={() => setBonusModal(null)}>
           <div style={styles.modalHeaderRow}>
@@ -1315,7 +1224,7 @@ export default function Refer() {
         </NewModal>
       )}
 
-      {/* --- Royalty Modal --- */}
+      {/* Royalty Modal */}
       {bonusModal === "royalty" && (
         <Modal onClose={() => setBonusModal(null)}>
           <h2>👑 Royalty Bonus</h2>
@@ -1330,7 +1239,7 @@ export default function Refer() {
         </Modal>
       )}
 
-      {/* --- পেন্ডিং রেফারাল সাব-মডাল --- */}
+      {/* পেন্ডিং রেফারাল সাব-মডাল */}
       {showPendingModal && (
         <div style={styles.subModalOverlay} onClick={() => setShowPendingModal(false)}>
           <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -1355,7 +1264,7 @@ export default function Refer() {
         </div>
       )}
 
-      {/* --- আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল --- */}
+      {/* আজকে জয়েন হওয়া মেম্বারদের সাব-মডাল */}
       {showTodayJoinModal && (
         <div style={styles.subModalOverlay} onClick={() => setShowTodayJoinModal(false)}>
           <div style={styles.modalBox} onClick={(e) => e.stopPropagation()}>
@@ -1405,6 +1314,26 @@ function Modal({ children, onClose }) {
 }
 
 const styles = {
+  // --- নতুন Drawer ও Menu Button এর স্টাইল ---
+  drawerOverlay: {
+    position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 100000, transition: "opacity 0.3s"
+  },
+  drawerContainer: {
+    position: "fixed", top: 0, left: 0, bottom: 0, width: "280px", backgroundColor: "#fff", zIndex: 100001, transition: "transform 0.3s ease-in-out", padding: "20px", overflowY: "auto", boxShadow: "4px 0 15px rgba(0,0,0,0.1)"
+  },
+  drawerHeader: { marginBottom: "20px", textAlign: "center" },
+  drawerBrand: { display: "flex", flexDirection: "column", alignItems: "center" },
+  drawerLogoWrapper: { marginBottom: "10px" },
+  drawerLogoImg: { width: "80px", borderRadius: "20px" },
+  drawerLogoText: { fontSize: "20px", fontWeight: "bold", margin: "0" },
+  drawerLogoSubtext: { fontSize: "12px", color: "#666" },
+  drawerNavList: { display: "flex", flexDirection: "column", gap: "10px" },
+  drawerNavItem: { display: "flex", alignItems: "center", gap: "15px", padding: "12px 15px", borderRadius: "12px", border: "none", backgroundColor: "transparent", cursor: "pointer", transition: "all 0.2s" },
+  drawerNavItemActive: { backgroundColor: "#f0e7ff", color: "#7b20ff", fontWeight: "bold" },
+  drawerNavIcon: { fontSize: "20px" },
+  drawerNavText: { fontSize: "16px" },
+  menuBtn: { position: "absolute", top: 24, left: 90, width: 54, height: 54, border: "none", borderRadius: 16, background: "white", boxShadow: "0 12px 30px rgba(137,84,255,.22)", fontSize: 24, cursor: "pointer", display: "grid", placeItems: "center" },
+  // --- আপনার আগের রেফার পেজের স্টাইল ---
   newModalOverlayOverlay: {
     position: "fixed",
     inset: 0,
@@ -1641,24 +1570,8 @@ const styles = {
   loadingBox: { background: "white", padding: 35, borderRadius: 30, textAlign: "center", boxShadow: "0 20px 45px rgba(124,58,237,.18)" },
   loadingIcon: { fontSize: 70 },
   page: { minHeight: "100vh", padding: 28, background: "linear-gradient(135deg,#fffaff,#f8f3ff,#ffffff)", fontFamily: "Arial, sans-serif", color: "#111542", position: "relative" },
-  menuBtn: { position: "absolute", top: 24, left: 24, width: 54, height: 54, border: "none", borderRadius: 16, background: "white", boxShadow: "0 12px 30px rgba(137,84,255,.22)", fontSize: 26, cursor: "pointer", display: "grid", placeItems: "center", zIndex: 10 },
-  bellBtn: { position: "absolute", top: 24, right: 24, width: 58, height: 58, border: "none", borderRadius: 18, background: "white", boxShadow: "0 12px 30px rgba(137,84,255,.22)", fontSize: 25, cursor: "pointer", display: "grid", placeItems: "center", zIndex: 10 },
-  badgeCount: { position: "absolute", top: 8, right: 8, background: "#ef4444", color: "#fff", fontSize: "11px", fontWeight: "bold", padding: "2px 6px", borderRadius: "50%" },
-  
-  // সাইডবার ড্রয়ারের স্টাইল (হোম পেজের সাথে ১০০% মিল রেখে)
-  drawerBackdrop: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(5px)", zIndex: 99999, display: "flex", justifyContent: "flex-start" },
-  drawerContainer: { width: "300px", maxWidth: "80vw", height: "100%", background: "#ffffff", display: "flex", flexDirection: "column", boxShadow: "5px 0 25px rgba(0,0,0,0.15)", animation: "slideRight 0.3s ease" },
-  drawerHeader: { padding: "24px 20px", background: "linear-gradient(135deg, #7c3aed, #9333ea)", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "space-between" },
-  drawerProfileInfo: { display: "flex", alignItems: "center", gap: "12px", overflow: "hidden" },
-  drawerAvatar: { width: "50px", height: "50px", borderRadius: "50%", border: "2px solid #ffffff", objectFit: "cover" },
-  drawerName: { margin: 0, fontSize: "16px", fontWeight: "700", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  drawerEmail: { margin: "2px 0 0", fontSize: "12px", opacity: 0.85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  drawerCloseBtn: { background: "none", border: "none", color: "#ffffff", fontSize: "20px", cursor: "pointer" },
-  drawerMenuLinks: { flex: 1, overflowY: "auto", padding: "16px 12px", display: "flex", flexDirection: "column", gap: "6px" },
-  drawerItem: { display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", borderRadius: "12px", fontSize: "15px", fontWeight: "600", color: "#334155", cursor: "pointer", transition: "background 0.2s" },
-  drawerFooter: { padding: "16px 20px", borderTop: "1px solid #f1f5f9" },
-  drawerLogoutBtn: { width: "100%", padding: "12px", borderRadius: "12px", border: "none", background: "#fef2f2", color: "#dc2626", fontWeight: "700", fontSize: "15px", cursor: "pointer" },
-
+  backBtn: { position: "absolute", top: 24, left: 24, width: 54, height: 54, border: "none", borderRadius: 16, background: "white", boxShadow: "0 12px 30px rgba(137,84,255,.22)", fontSize: 30, cursor: "pointer" },
+  bellBtn: { position: "absolute", top: 24, right: 24, width: 58, height: 58, border: "none", borderRadius: 18, background: "white", boxShadow: "0 12px 30px rgba(137,84,255,.22)", fontSize: 25, cursor: "pointer" },
   header: { textAlign: "center" },
   welcome: { margin: 0, fontSize: 22 },
   mainTitle: { margin: "2px 0 0", fontSize: 58, fontWeight: 900, background: "linear-gradient(90deg,#1463ff,#8b20ff,#ff1685)", WebkitBackgroundClip: "text", color: "transparent" },
