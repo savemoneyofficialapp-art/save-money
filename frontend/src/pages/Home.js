@@ -1992,7 +1992,7 @@ const styles = {
     display: "flex",
     flexWrap: "wrap",
     gap: "10px",
-    justify.content: "center",
+    justifyContent: "center",
     marginBottom: "12px"
   },
 
