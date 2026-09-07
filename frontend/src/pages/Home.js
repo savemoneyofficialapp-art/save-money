@@ -1238,8 +1238,8 @@ const styles = {
   // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM
   treePlantOnlyWrapper: {
     marginTop: "auto", // pushes it to the bottom space
-    paddingTop: "24px",
-    paddingBottom: "10px",
+    paddingTop: "15px",
+    paddingBottom: "20px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -1248,8 +1248,8 @@ const styles = {
     border: "none"
   },
   treePlantOnlyImg: {
-    width: "130px",
-    height: "130px",
+    width: "160px",
+    height: "250px",
     objectFit: "contain",
     filter: "drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5))"
   },
