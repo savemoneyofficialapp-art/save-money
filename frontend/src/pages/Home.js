@@ -1248,8 +1248,8 @@ const styles = {
     border: "none"
   },
   treePlantOnlyImg: {
-    width: "350px",
-    height: "700px",
+    width: "500px",
+    height: "1100px",
     objectFit: "contain",
     filter: "drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5))"
   },
