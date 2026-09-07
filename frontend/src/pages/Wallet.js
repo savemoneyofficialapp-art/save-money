@@ -5,8 +5,14 @@ import html2canvas from "html2canvas";
 import { API } from "../config";
 
 export default function Wallet() {
+export default function Wallet() {
+  const navigate = useNavigate(); // <-- এটি যোগ করুন
+  const location = useLocation(); // <-- এটি যোগ করুন
+  const go = navigate;            // <-- এটি যোগ করুন (যাতে সাইডবারের go() কাজ করে)
+
   const email = localStorage.getItem("email") || "";
   const token = localStorage.getItem("token") || "";
+
 
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
