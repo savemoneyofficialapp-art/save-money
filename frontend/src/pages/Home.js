@@ -561,18 +561,19 @@ export default function Home() {
           </div>
 
           {/* 👇 PLANT IMAGE CONTAINER AT THE BOTTOM */}
-          <div style={styles.treePlantOnlyWrapper}>
-            <img 
-              src="/tree plant.png" 
-              alt="Tree Plant" 
-              style={styles.treePlantOnlyImg}
-              onError={(e) => {
-                if (e.target.src.includes('.png')) {
-                  e.target.src = '/tree plant.jpg';
-                }
-              }}
-            />
-          </div>
+<div style={styles.treePlantOnlyWrapper}>
+  <img 
+    src="/tree plant.png" 
+    alt="Tree Plant" 
+    style={styles.treePlantOnlyImg}
+    onError={(e) => {
+      if (e.target.src.includes('.png')) {
+        e.target.src = '/tree plant.jpg';
+      }
+    }}
+  />
+</div>
+
 
         </div>
       </div>
@@ -1288,25 +1289,26 @@ const styles = {
     background: "linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%)"
   },
   
-  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM (UPDATED FIX)
+  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM (FULL RED MARKED AREA COVER)
   treePlantOnlyWrapper: {
-    marginTop: "auto",
-    paddingTop: "20px",
-    paddingBottom: "30px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+    flex: 1, // লাল বক্সের পুরো খালি জায়গাটি নিবে
+    marginTop: "16px",
+    marginBottom: "10px",
     width: "100%",
-    background: "transparent",
-    border: "none"
+    minHeight: "250px", // প্রয়োজন অনুযায়ী অটো বড় হবে
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "16px",
+    overflow: "hidden",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.5)",
+    border: "1px solid rgba(255, 255, 255, 0.1)"
   },
   treePlantOnlyImg: {
     width: "100%",
-    height: "auto",
-    maxHeight: "180px",
-    objectFit: "contain",
-    borderRadius: "12px",
-    filter: "drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5))"
+    height: "100%",
+    objectFit: "cover", // পুরো খালি জায়গা পারফেক্টলি কভার করবে
+    borderRadius: "16px"
   },
 
   popupOverlay: {
