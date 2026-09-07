@@ -94,6 +94,26 @@ export default function Refer() {
     );
   }, [user]);
 
+    const handleLogout = async () => {
+    try {
+      if (email) {
+        await fetch(`${API}/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: email })
+        });
+      }
+    } catch (err) {
+      console.log("Logout backend error:", err);
+    } finally {
+      localStorage.clear();
+      navigate("/login");
+      window.location.reload();
+    }
+  };
+
   // যেকোনো ট্রানসাকশান বা হিস্ট্রি অবজেক্ট থেকে ডাইনামিক ফটো বের করার ফাংশন
   const getDynamicUserPhoto = (item) => {
     const rawPath = item?.fromPhoto || item?.photo || item?.profilePhoto || item?.selfiePhoto || "";
