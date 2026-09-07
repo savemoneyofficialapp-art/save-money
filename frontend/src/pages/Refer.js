@@ -1503,7 +1503,7 @@ const styles = {
     top: 0,
     left: 0,
     bottom: 0,
-    width: "290px",
+    width: "240px",
     background: "linear-gradient(135deg, #1a0b36 0%, #0d061d 100%)",
     boxShadow: "10px 0 30px rgba(0,0,0,0.5)",
     padding: "24px 18px",
