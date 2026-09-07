@@ -1297,7 +1297,7 @@ export default function Wallet() {
             </div>
           </div>
         )}
-
+      </div>
       </div>
     </div>
   );
