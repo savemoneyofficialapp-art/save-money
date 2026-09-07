@@ -1154,6 +1154,7 @@ const styles = {
     justifyContent: "flex-start",
     transition: "opacity 0.3s ease, visibility 0.3s ease"
   },
+    // 👇 SLIDE BAR / DRAWER STYLES (NON-SCROLLABLE & FULL IMAGE FIT)
   drawerContainer: {
     position: "fixed",
     top: 0,
@@ -1161,15 +1162,15 @@ const styles = {
     left: 0,
     background: "#08101e",
     width: "270px",
-    height: "100%",
-    padding: "20px 14px 20px 14px",
+    height: "100vh", // পুরো স্ক্রিনের হাইট নিবে
+    padding: "12px 10px",
     display: "flex",
     flexDirection: "column",
     boxShadow: "10px 0 30px rgba(0,0,0,0.85)",
     borderRight: "1px solid #1e293b",
     transform: "translateX(-100%)",
     transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    overflowY: "auto",
+    overflow: "hidden", // ❌ স্ক্রোল সম্পূর্ণ বন্ধ করা হলো (Non-scrollable)
     zIndex: 100003
   },
   drawerHeader: {
@@ -1177,84 +1178,85 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: "18px",
-    paddingBottom: "16px",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
+    marginBottom: "8px",
+    paddingBottom: "8px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+    flexShrink: 0
   },
   drawerBrand: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "8px"
+    gap: "4px"
   },
   drawerLogoWrapper: {
-    width: "52px",
-    height: "52px",
+    width: "44px",
+    height: "44px",
     borderRadius: "50%",
     background: "radial-gradient(circle, #03251a 0%, #064e3b 100%)",
     border: "2px solid #22c55e",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 0 16px rgba(34, 197, 94, 0.35)"
+    boxShadow: "0 0 12px rgba(34, 197, 94, 0.35)"
   },
   drawerLogoImg: {
-    width: "34px",
-    height: "34px",
+    width: "28px",
+    height: "28px",
     objectFit: "contain"
   },
   drawerLogoText: {
     margin: 0,
-    fontSize: "17px",
+    fontSize: "15px",
     fontWeight: "900",
     color: "#ffffff",
     letterSpacing: "0.8px",
     textAlign: "center"
   },
   drawerLogoSubtext: {
-    fontSize: "11px",
+    fontSize: "10px",
     color: "#a7f3d0",
     fontWeight: "600",
-    marginTop: "2px",
+    marginTop: "1px",
     textAlign: "center"
   },
   drawerNavList: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px"
+    gap: "5px", // প্যাডিং ও গ্যাপ কমানো হয়েছে যাতে ১০০% স্ক্রিনে ফিট হয়
+    flexShrink: 0
   },
   drawerNavItem: {
     display: "flex",
     alignItems: "center",
-    gap: "14px",
-    padding: "14px 18px",
+    gap: "10px",
+    padding: "7px 12px", // সব বাটন স্ক্রিনে এটে যাওয়ার জন্য রেসপন্সিভ হাইট
     border: "1px solid rgba(255, 255, 255, 0.22)",
-    borderRadius: "16px",
+    borderRadius: "12px",
     color: "#ffffff",
-    fontSize: "15px",
+    fontSize: "13px",
     fontWeight: "700",
     cursor: "pointer",
     textAlign: "left",
     transition: "all 0.25s ease",
-    boxShadow: "0 6px 16px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.4)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.45)",
     textShadow: "0 1px 2px rgba(0,0,0,0.5)"
   },
   drawerNavItemActive: {
     border: "2px solid #ffffff",
-    boxShadow: "0 0 20px rgba(255, 255, 255, 0.5), inset 0 1px 2px rgba(255,255,255,0.8)",
-    transform: "scale(1.02)",
+    boxShadow: "0 0 16px rgba(255, 255, 255, 0.5)",
     fontWeight: "800"
   },
   drawerNavIcon: {
-    fontSize: "22px",
-    width: "26px",
+    fontSize: "18px",
+    width: "22px",
     display: "inline-block",
     textAlign: "center"
   },
   drawerNavText: {
     flex: 1,
-    fontSize: "15px",
-    letterSpacing: "0.4px"
+    fontSize: "13px",
+    letterSpacing: "0.3px"
   },
 
   // GLOSSY COLORFUL GRADIENTS FOR DRAWER BUTTONS
@@ -1289,26 +1291,24 @@ const styles = {
     background: "linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%)"
   },
   
-  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM (FULL RED MARKED AREA COVER)
+
+  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM (IMAGE FIT & NO-CROP)
   treePlantOnlyWrapper: {
-    flex: 1, // লাল বক্সের পুরো খালি জায়গাটি নিবে
-    marginTop: "16px",
-    marginBottom: "10px",
+    flex: 1, // বাকি জায়গাটি নিবে
+    minHeight: 0, // ইমেজের সাইজ অনুযায়ী ফ্লেক্স কন্টেইনার অ্যাডজাস্ট হতে সাহায্য করবে
+    marginTop: "8px",
     width: "100%",
-    minHeight: "250px", // প্রয়োজন অনুযায়ী অটো বড় হবে
     display: "flex",
-    alignItems: "center",
     justifyContent: "center",
-    borderRadius: "16px",
+    alignItems: "center",
     overflow: "hidden",
-    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.5)",
-    border: "1px solid rgba(255, 255, 255, 0.1)"
+    borderRadius: "12px"
   },
   treePlantOnlyImg: {
-    width: "95%",
-    height: "80%",
-    objectFit: "cover", // পুরো খালি জায়গা পারফেক্টলি কভার করবে
-    borderRadius: "16px"
+    width: "100%",
+    height: "100%",
+    objectFit: "contain", // ❌ ফটো কেটে যাওয়া বন্ধ করবে (পুরো ফটো সুন্দরভাবে ভেসে উঠবে)
+    borderRadius: "12px"
   },
 
   popupOverlay: {
