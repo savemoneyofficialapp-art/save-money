@@ -1305,8 +1305,8 @@ const styles = {
     border: "1px solid rgba(255, 255, 255, 0.1)"
   },
   treePlantOnlyImg: {
-    width: "100%",
-    height: "100%",
+    width: "95%",
+    height: "80%",
     objectFit: "cover", // পুরো খালি জায়গা পারফেক্টলি কভার করবে
     borderRadius: "16px"
   },
