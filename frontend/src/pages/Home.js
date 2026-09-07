@@ -1159,7 +1159,7 @@ const styles = {
     bottom: 0,
     left: 0,
     background: "#08101e",
-    width: "200px",
+    width: "270px",
     height: "100vh",
     padding: "12px 10px",
     display: "flex",
