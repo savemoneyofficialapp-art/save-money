@@ -1161,7 +1161,7 @@ const styles = {
     bottom: 0,
     left: 0,
     background: "#08101e",
-    width: "270px",
+    width: "200px",
     height: "100vh", // পুরো স্ক্রিনের হাইট নিবে
     padding: "12px 10px",
     display: "flex",
