@@ -12,6 +12,7 @@ export default function OneTime() {
   // ----------------- SIDEBAR & PLAN STATES -----------------
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDownloadingPlan, setIsDownloadingPlan] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false); // New state for viewing all history
 
   // ----------------- DASHBOARD STATES -----------------
   const [user, setUser] = useState({});
@@ -478,7 +479,7 @@ export default function OneTime() {
     return file.startsWith("http") ? file : `${API}/uploads/${file}`;
   };
 
-  const profilePhoto = fileUrl(user?.photo || user?.profilePhoto || "");
+  const profilePhoto = fileUrl(user?.photo || user?.profilePhoto || user?.avatar || "");
 
   if (loading) {
     return (
@@ -490,6 +491,9 @@ export default function OneTime() {
       </div>
     );
   }
+
+  // Determine history display limit (5 items unless View All is clicked)
+  const displayedHistory = showAllHistory ? history : history.slice(0, 5);
 
   return (
     <div style={styles.page}>
@@ -530,7 +534,6 @@ export default function OneTime() {
 
           {/* SIDEBAR NAV BUTTONS */}
           <div style={styles.drawerNavList}>
-            {/* 1. Dashboard */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -543,7 +546,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>Dashboard</span>
             </button>
 
-            {/* 2. My Investment */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -556,7 +558,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>My Investment</span>
             </button>
 
-            {/* 3. Save Money */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -569,7 +570,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>Save Money</span>
             </button>
 
-            {/* 4. One Time */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -582,7 +582,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>One Time</span>
             </button>
 
-            {/* 5. PLAN (PDF Download) */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -595,7 +594,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>{isDownloadingPlan ? "Downloading..." : "Plan PDF"}</span>
             </button>
 
-            {/* Add Fund */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -608,7 +606,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>Add Fund</span>
             </button>
 
-            {/* Refer */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -621,7 +618,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>Refer & Earn</span>
             </button>
 
-            {/* Withdraw */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -634,7 +630,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>Withdraw</span>
             </button>
 
-            {/* Daily Reward */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -647,7 +642,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>Daily Reward</span>
             </button>
 
-            {/* Investment Assistance */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -660,7 +654,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>Investment Assistance</span>
             </button>
 
-            {/* Support */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -673,7 +666,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>Support</span>
             </button>
 
-            {/* Profile */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -686,7 +678,6 @@ export default function OneTime() {
               <span style={styles.drawerNavText}>Profile</span>
             </button>
 
-            {/* Logout */}
             <button 
               style={{
                 ...styles.drawerNavItem,
@@ -699,7 +690,6 @@ export default function OneTime() {
             </button>
           </div>
 
-          {/* PLANT IMAGE AT BOTTOM OF DRAWER */}
           <div style={styles.treePlantOnlyWrapper}>
             <img 
               src="/tree plant.png" 
@@ -740,16 +730,21 @@ export default function OneTime() {
             </div>
           </div>
 
-          <div style={styles.profileCircle}>
+          {/* PROFILE PHOTO UPDATE */}
+          <div style={styles.profileCircle} onClick={() => navigate("/kyc")}>
             {profilePhoto ? (
               <img src={profilePhoto} alt="User Profile" style={styles.profileImg} />
             ) : (
-              <div style={styles.profileAvatarPlaceholder}></div>
+              <div style={styles.profileAvatarPlaceholder}>
+                <span style={{ fontSize: "14px", color: "#fff", fontWeight: "bold" }}>
+                  {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                </span>
+              </div>
             )}
           </div>
         </header>
 
-        {/* TOP HERO BANNER (ENLARGED BANNER IMAGE & LARGER CLEAR TEXT) */}
+        {/* TOP HERO BANNER USING chhote nivesh.png */}
         <div style={styles.topHeroBanner}>
           <div style={styles.heroTextContent}>
             <h2 style={styles.heroTitle}>
@@ -775,7 +770,6 @@ export default function OneTime() {
 
         {/* 4 STAT CARDS GRID */}
         <section style={styles.statsGridContainer}>
-          {/* 1. Total Invested */}
           <div style={styles.darkStatCard}>
             <div style={styles.statCardHeader}>
               <div style={{ ...styles.iconBox, background: "rgba(34, 197, 94, 0.15)" }}>
@@ -791,7 +785,6 @@ export default function OneTime() {
             </svg>
           </div>
 
-          {/* 2. Total Earnings */}
           <div style={styles.darkStatCard}>
             <div style={styles.statCardHeader}>
               <div style={{ ...styles.iconBox, background: "rgba(56, 189, 248, 0.15)" }}>
@@ -807,7 +800,6 @@ export default function OneTime() {
             </svg>
           </div>
 
-          {/* 3. Total Withdraw */}
           <div style={styles.darkStatCard}>
             <div style={styles.statCardHeader}>
               <div style={{ ...styles.iconBox, background: "rgba(168, 85, 247, 0.15)" }}>
@@ -823,7 +815,6 @@ export default function OneTime() {
             </svg>
           </div>
 
-          {/* 4. Available Balance */}
           <div style={styles.darkStatCard}>
             <div style={styles.statCardHeader}>
               <div style={{ ...styles.iconBox, background: "rgba(234, 179, 8, 0.15)" }}>
@@ -844,7 +835,6 @@ export default function OneTime() {
         <section style={styles.darkMainCard}>
           <h2 style={styles.darkCardTitle}>Make a New Investment</h2>
 
-          {/* RUNNING ACTIVE INVESTMENT CARD */}
           {activeInvestment && (
             <div style={styles.activeInvestCardDark}>
               <div style={styles.activeHeader}>
@@ -878,7 +868,6 @@ export default function OneTime() {
             </div>
           )}
 
-          {/* FORM FIELDS */}
           <div style={styles.formGrid}>
             <div style={styles.fieldGroup}>
               <label style={styles.labelDark}>
@@ -951,10 +940,10 @@ export default function OneTime() {
             </div>
           </div>
 
-          {/* RETURN HIGHLIGHT BOX */}
+          {/* RETURN HIGHLIGHT BOX WITH COIN IMAGE / ICON ON THE LEFT */}
           <div style={styles.returnContainerDark}>
             <div style={styles.returnCardContent}>
-              <span style={styles.returnBoxBagIcon}>💰</span>
+              <span style={styles.returnBoxBagIcon}>🪙</span>
               <div>
                 <div style={styles.returnCardTitleDark}>
                   You Will Get {frequency === "daily" ? "Daily" : "Weekly"} Return
@@ -969,7 +958,6 @@ export default function OneTime() {
             </div>
           </div>
 
-          {/* BREAKDOWN ROW */}
           <div style={styles.breakdownGridDark}>
             <div style={styles.breakBoxDark}>
               <span style={styles.breakLabelDark}>Investment Amount</span>
@@ -989,7 +977,6 @@ export default function OneTime() {
             </div>
           </div>
 
-          {/* ACTION BUTTONS */}
           <div style={styles.actionGridTriple}>
             <button 
               style={{
@@ -1012,7 +999,7 @@ export default function OneTime() {
           </div>
         </section>
 
-        {/* HISTORY TABLE */}
+        {/* HISTORY TABLE LIMITED TO 5 ITEMS */}
         <section style={styles.darkHistoryCard}>
           <div style={styles.historyHeader}>
             <h2 style={{ margin: 0, fontSize: "17px", color: "#f8fafc", fontWeight: "700" }}>Investment & Transaction History</h2>
@@ -1032,12 +1019,12 @@ export default function OneTime() {
                 </tr>
               </thead>
               <tbody>
-                {history.length === 0 ? (
+                {displayedHistory.length === 0 ? (
                   <tr>
                     <td colSpan="6" style={styles.emptyTdDark}>No history found</td>
                   </tr>
                 ) : (
-                  history.map((item, idx) => {
+                  displayedHistory.map((item, idx) => {
                     const itemType = (item.type || "").toLowerCase();
                     const isDeposit = itemType.includes("add fund") || itemType.includes("deposit") || !!item.transactionId;
                     const isWithdraw = itemType.includes("withdraw");
@@ -1089,11 +1076,13 @@ export default function OneTime() {
           </div>
 
           <div style={styles.viewAllFooter}>
-            <span style={styles.viewAllLink}>View All Transactions ➔</span>
+            <span style={styles.viewAllLink} onClick={() => setShowAllHistory(!showAllHistory)}>
+              {showAllHistory ? "Show Less 🔼" : "View All Transactions ➔"}
+            </span>
           </div>
         </section>
 
-        {/* TRUST BANNER (ENLARGED BOTTOM IMAGE & CLEAR TEXT) */}
+        {/* TRUST BANNER USING small invest.png */}
         <section style={styles.trustBannerDark}>
           <div style={styles.trustLeftContent}>
             <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", color: "#ffffff", fontWeight: "800" }}>
@@ -1181,7 +1170,6 @@ export default function OneTime() {
 
       {/* ----------------- MODALS (DARK THEMED) ----------------- */}
 
-      {/* 1. AMOUNT PRESETS MODAL */}
       {showAmountModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCardDark}>
@@ -1217,7 +1205,6 @@ export default function OneTime() {
         </div>
       )}
 
-      {/* 2. ADD FUND MODAL */}
       {showAddFundModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCardDark}>
@@ -1269,7 +1256,6 @@ export default function OneTime() {
         </div>
       )}
 
-      {/* 3. ADD BANK ACCOUNT MODAL */}
       {showBankModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCardDark}>
@@ -1315,7 +1301,6 @@ export default function OneTime() {
         </div>
       )}
 
-      {/* 4. WITHDRAWAL MODAL */}
       {showWithdrawModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCardDark}>
@@ -1481,7 +1466,8 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    border: "2px solid #10b981"
+    border: "2px solid #10b981",
+    cursor: "pointer"
   },
   profileImg: {
     width: "100%",
@@ -1489,13 +1475,16 @@ const styles = {
     objectFit: "cover"
   },
   profileAvatarPlaceholder: {
-    width: "22px",
-    height: "22px",
+    width: "100%",
+    height: "100%",
     borderRadius: "50%",
-    background: "#10b981"
+    background: "#10b981",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
   },
 
-  // TOP HERO BANNER (LARGER & HIGH VISIBILITY)
+  // TOP HERO BANNER
   topHeroBanner: {
     background: "linear-gradient(135deg, #062319 0%, #06182e 100%)",
     borderRadius: "16px",
@@ -1926,7 +1915,7 @@ const styles = {
     cursor: "pointer"
   },
 
-  // TRUST BANNER (ENLARGED BOTTOM BANNER & IMAGE)
+  // TRUST BANNER
   trustBannerDark: {
     background: "linear-gradient(135deg, #051a13 0%, #081728 100%)",
     borderRadius: "16px",
@@ -2164,7 +2153,7 @@ const styles = {
   treePlantOnlyImg: {
     width: "90%",
     height: "70%",
-    objectFit: "95%",
+    objectFit: "cover",
     borderRadius: "16px"
   },
 
