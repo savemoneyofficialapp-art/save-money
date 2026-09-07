@@ -561,19 +561,18 @@ export default function Home() {
           </div>
 
           {/* 👇 PLANT IMAGE CONTAINER AT THE BOTTOM */}
-<div style={styles.treePlantOnlyWrapper}>
-  <img 
-    src="/tree plant.png" 
-    alt="Tree Plant" 
-    style={styles.treePlantOnlyImg}
-    onError={(e) => {
-      if (e.target.src.includes('.png')) {
-        e.target.src = '/tree plant.jpg';
-      }
-    }}
-  />
-</div>
-
+          <div style={styles.treePlantOnlyWrapper}>
+            <img 
+              src="/tree plant.png" 
+              alt="Tree Plant" 
+              style={styles.treePlantOnlyImg}
+              onError={(e) => {
+                if (e.target.src.includes('.png')) {
+                  e.target.src = '/tree plant.jpg';
+                }
+              }}
+            />
+          </div>
 
         </div>
       </div>
@@ -1154,7 +1153,6 @@ const styles = {
     justifyContent: "flex-start",
     transition: "opacity 0.3s ease, visibility 0.3s ease"
   },
-    // 👇 SLIDE BAR / DRAWER STYLES (NON-SCROLLABLE & FULL IMAGE FIT)
   drawerContainer: {
     position: "fixed",
     top: 0,
@@ -1162,7 +1160,7 @@ const styles = {
     left: 0,
     background: "#08101e",
     width: "200px",
-    height: "100vh", // পুরো স্ক্রিনের হাইট নিবে
+    height: "100vh",
     padding: "12px 10px",
     display: "flex",
     flexDirection: "column",
@@ -1170,7 +1168,7 @@ const styles = {
     borderRight: "1px solid #1e293b",
     transform: "translateX(-100%)",
     transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    overflow: "hidden", // ❌ স্ক্রোল সম্পূর্ণ বন্ধ করা হলো (Non-scrollable)
+    overflow: "hidden", // Non-scrollable
     zIndex: 100003
   },
   drawerHeader: {
@@ -1223,14 +1221,14 @@ const styles = {
   drawerNavList: {
     display: "flex",
     flexDirection: "column",
-    gap: "5px", // প্যাডিং ও গ্যাপ কমানো হয়েছে যাতে ১০০% স্ক্রিনে ফিট হয়
+    gap: "5px",
     flexShrink: 0
   },
   drawerNavItem: {
     display: "flex",
     alignItems: "center",
     gap: "10px",
-    padding: "7px 12px", // সব বাটন স্ক্রিনে এটে যাওয়ার জন্য রেসপন্সিভ হাইট
+    padding: "7px 12px",
     border: "1px solid rgba(255, 255, 255, 0.22)",
     borderRadius: "12px",
     color: "#ffffff",
@@ -1290,25 +1288,26 @@ const styles = {
   drawerNavLogout: {
     background: "linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%)"
   },
-  
 
-  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM (IMAGE FIT & NO-CROP)
+  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM (FULL COVER + 4 CORNERS ROUNDED)
   treePlantOnlyWrapper: {
-    flex: 1, // বাকি জায়গাটি নিবে
-    minHeight: 0, // ইমেজের সাইজ অনুযায়ী ফ্লেক্স কন্টেইনার অ্যাডজাস্ট হতে সাহায্য করবে
-    marginTop: "8px",
+    flex: 1,
+    minHeight: 0,
+    marginTop: "10px",
+    marginBottom: "4px",
     width: "100%",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
-    borderRadius: "12px"
+    borderRadius: "16px",
+    boxShadow: "0 6px 18px rgba(0, 0, 0, 0.4)"
   },
   treePlantOnlyImg: {
     width: "100%",
     height: "100%",
-    objectFit: "contain", // ❌ ফটো কেটে যাওয়া বন্ধ করবে (পুরো ফটো সুন্দরভাবে ভেসে উঠবে)
-    borderRadius: "12px"
+    objectFit: "cover",
+    borderRadius: "16px"
   },
 
   popupOverlay: {
@@ -1886,7 +1885,7 @@ const styles = {
   trustMiniCard: {
     display: "flex",
     alignItems: "center",
-    gap: "9px",
+    gap: "99px",
     fontSize: "12px",
     background: "rgba(15,23,42,0.65)",
     borderRadius: "15px",
