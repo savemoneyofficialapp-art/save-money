@@ -489,7 +489,194 @@ export default function Wallet() {
     <div style={styles.page}>
       <div style={styles.app}>
 
-                  <span style={styles.drawerNavText}>Profile</span>
+         
+      {/* 👇 SIDEBAR DRAWER */}
+      <div style={{
+        ...styles.drawerOverlay,
+        opacity: isDrawerOpen ? 1 : 0,
+        visibility: isDrawerOpen ? "visible" : "hidden"
+      }} onClick={() => setIsDrawerOpen(false)}>
+        <div style={{        
+    ...styles.drawerContainer,
+          transform: isDrawerOpen ? "translateX(0)" : "translateX(-100%)"
+        }} onClick={(e) => e.stopPropagation()}>
+          
+          {/* LOGO & BRANDING */}
+          <div style={styles.drawerHeader}>
+            <div style={styles.drawerBrand}>
+              <div style={styles.drawerLogoWrapper}>
+                <img 
+                  src={process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/logo512.png` : "/logo512.png"} 
+                  alt="SM Logo" 
+                  style={styles.drawerLogoImg} 
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <h3 style={styles.drawerLogoText}>SAVE MONEY</h3>
+                <span style={styles.drawerLogoSubtext}>Invest Small, Earn Big</span>
+              </div>
+            </div>
+          </div>
+
+          {/* SIDEBAR NAV BUTTONS - DIAMOND CUT & WATER TRANSPARENT */}
+          <div style={styles.drawerNavList}>
+            {/* 1. Dashboard */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavDashboard,
+                ...(location.pathname === "/home" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/home"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🏠</span>
+              <span style={styles.drawerNavText}>Dashboard</span>
+            </button>
+
+            {/* 2. My Investment */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavMyInvestment,
+                ...(location.pathname === "/my-investment" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/my-investment"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>📈</span>
+              <span style={styles.drawerNavText}>My Investment</span>
+            </button>
+
+            {/* 3. Save Money */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavSaveMoney,
+                ...(location.pathname === "/save-money" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/save-money"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>💰</span>
+              <span style={styles.drawerNavText}>Save Money</span>
+            </button>
+
+            {/* 4. One Time */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavOneTime,
+                ...(location.pathname === "/one-time" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/one-time"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>⚡</span>
+              <span style={styles.drawerNavText}>One Time</span>
+            </button>
+
+            {/* 5. PLAN (PDF Download) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavPlan
+              }} 
+              onClick={() => { handleDownloadPlan(); setIsDrawerOpen(false); }}
+              disabled={isDownloadingPlan}
+            >
+              <span style={styles.drawerNavIcon}>{isDownloadingPlan ? "⏳" : "📋"}</span>
+              <span style={styles.drawerNavText}>{isDownloadingPlan ? "Downloading..." : "Plan PDF"}</span>
+            </button>
+
+            {/* Add Fund */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavAddFund,
+                ...(location.pathname === "/wallet" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/wallet"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🌐</span>
+              <span style={styles.drawerNavText}>Add Fund</span>
+            </button>
+
+            {/* Refer (refer.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavRefer,
+                ...(location.pathname === "/refer" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/refer"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👥</span>
+              <span style={styles.drawerNavText}>Refer & Earn</span>
+            </button>
+
+            {/* Withdraw (withdraw.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavWithdraw,
+                ...(location.pathname === "/withdraw" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/withdraw"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>➔</span>
+              <span style={styles.drawerNavText}>Withdraw</span>
+            </button>
+
+            {/* Daily Reward (dailyreward.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavDailyReward,
+                ...(location.pathname === "/daily-reward" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/daily-reward"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🎁</span>
+              <span style={styles.drawerNavText}>Daily Reward</span>
+            </button>
+
+            {/* Investment Assistance (Investment assistance.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavInvestmentAssistant,
+                ...(location.pathname === "/investment-assistant" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/investment-assistant"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>📊</span>
+              <span style={styles.drawerNavText}>Investment Assistance</span>
+            </button>
+
+            {/* Support */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavSupport,
+                ...(location.pathname === "/support" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/support"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🎧</span>
+              <span style={styles.drawerNavText}>Support</span>
+            </button>
+
+            {/* Profile */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavProfile,
+                ...(location.pathname === "/kyc" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/kyc"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👤</span>
+              <span style={styles.drawerNavText}>Profile</span>
             </button>
 
             {/* Logout */}
@@ -521,6 +708,7 @@ export default function Wallet() {
 
         </div>
       </div>
+
 
 
         {statusOverlay.show && (
