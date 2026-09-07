@@ -478,9 +478,9 @@ export default function Home() {
               style={{
                 ...styles.drawerNavItem,
                 ...styles.drawerNavOneTime,
-                ...(location.pathname === "/onetime" ? styles.drawerNavItemActive : {})
+                ...(location.pathname === "/one-time" ? styles.drawerNavItemActive : {})
               }} 
-              onClick={() => { go("/onetime"); setIsDrawerOpen(false); }}
+              onClick={() => { go("/one-time"); setIsDrawerOpen(false); }}
             >
               <span style={styles.drawerNavIcon}>⚡</span>
               <span style={styles.drawerNavText}>One Time</span>
