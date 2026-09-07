@@ -503,7 +503,8 @@ export default function Home() {
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.drawerNavAddFund
+                ...styles.drawerNavAddFund,
+                ...(location.pathname === "/wallet" ? styles.drawerNavItemActive : {})
               }} 
               onClick={() => { go("/wallet"); setIsDrawerOpen(false); }}
             >
@@ -511,11 +512,25 @@ export default function Home() {
               <span style={styles.drawerNavText}>Add Fund</span>
             </button>
 
-            {/* Withdraw */}
+            {/* Refer (refer.js) */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.drawerNavWithdraw
+                ...styles.drawerNavRefer,
+                ...(location.pathname === "/refer" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/refer"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>👥</span>
+              <span style={styles.drawerNavText}>Refer & Earn</span>
+            </button>
+
+            {/* Withdraw (withdraw.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavWithdraw,
+                ...(location.pathname === "/withdraw" ? styles.drawerNavItemActive : {})
               }} 
               onClick={() => { go("/withdraw"); setIsDrawerOpen(false); }}
             >
@@ -523,11 +538,38 @@ export default function Home() {
               <span style={styles.drawerNavText}>Withdraw</span>
             </button>
 
+            {/* Daily Reward (dailyreward.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavDailyReward,
+                ...(location.pathname === "/daily-reward" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/daily-reward"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>🎁</span>
+              <span style={styles.drawerNavText}>Daily Reward</span>
+            </button>
+
+            {/* Investment Assistance (Investment assistance.js) */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavInvestmentAssistant,
+                ...(location.pathname === "/investment-assistant" ? styles.drawerNavItemActive : {})
+              }} 
+              onClick={() => { go("/investment-assistant"); setIsDrawerOpen(false); }}
+            >
+              <span style={styles.drawerNavIcon}>📊</span>
+              <span style={styles.drawerNavText}>Investment Assistance</span>
+            </button>
+
             {/* Support */}
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.drawerNavSupport
+                ...styles.drawerNavSupport,
+                ...(location.pathname === "/support" ? styles.drawerNavItemActive : {})
               }} 
               onClick={() => { go("/support"); setIsDrawerOpen(false); }}
             >
@@ -539,7 +581,8 @@ export default function Home() {
             <button 
               style={{
                 ...styles.drawerNavItem,
-                ...styles.drawerNavProfile
+                ...styles.drawerNavProfile,
+                ...(location.pathname === "/kyc" ? styles.drawerNavItemActive : {})
               }} 
               onClick={() => { go("/kyc"); setIsDrawerOpen(false); }}
             >
@@ -1168,7 +1211,7 @@ const styles = {
     borderRight: "1px solid #1e293b",
     transform: "translateX(-100%)",
     transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    overflow: "hidden", // Non-scrollable
+    overflow: "hidden",
     zIndex: 100003
   },
   drawerHeader: {
@@ -1222,7 +1265,9 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "5px",
-    flexShrink: 0
+    flexShrink: 0,
+    overflowY: "auto",
+    maxHeight: "calc(100vh - 200px)"
   },
   drawerNavItem: {
     display: "flex",
@@ -1276,8 +1321,17 @@ const styles = {
   drawerNavAddFund: {
     background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%)"
   },
+  drawerNavRefer: {
+    background: "linear-gradient(135deg, #ec4899 0%, #d946ef 50%, #a855f7 100%)"
+  },
   drawerNavWithdraw: {
     background: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%)"
+  },
+  drawerNavDailyReward: {
+    background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 50%, #be123c 100%)"
+  },
+  drawerNavInvestmentAssistant: {
+    background: "linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #075985 100%)"
   },
   drawerNavSupport: {
     background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #3730a3 100%)"
@@ -1289,7 +1343,7 @@ const styles = {
     background: "linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%)"
   },
 
-  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM (FULL COVER + 4 CORNERS ROUNDED)
+  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM
   treePlantOnlyWrapper: {
     flex: 1,
     minHeight: 0,
@@ -1938,7 +1992,7 @@ const styles = {
     display: "flex",
     flexWrap: "wrap",
     gap: "10px",
-    justifyContent: "center",
+    justify.content: "center",
     marginBottom: "12px"
   },
 
