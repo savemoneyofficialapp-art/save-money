@@ -1239,7 +1239,7 @@ const styles = {
   treePlantOnlyWrapper: {
     marginTop: "auto", // pushes it to the bottom space
     paddingTop: "15px",
-    paddingBottom: "150px",
+    paddingBottom: "50px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -1248,7 +1248,7 @@ const styles = {
     border: "none"
   },
   treePlantOnlyImg: {
-    width: "500px",
+    width: "400px",
     height: "1100px",
     objectFit: "contain",
     filter: "drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5))"
