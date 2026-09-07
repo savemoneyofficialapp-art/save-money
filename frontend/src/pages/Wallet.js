@@ -53,6 +53,11 @@ export default function Wallet() {
   const [historyFilter, setHistoryFilter] = useState("all");
   const [showAllHistory, setShowAllHistory] = useState(false);
 
+    // 👇 ড্রয়ার ওপেন/ক্লোজ স্টেট ও ডাউনলোডিং অ্যানিমেশন স্টেট
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDownloadingPlan, setIsDownloadingPlan] = useState(false);
+  
+
   const [selectedTxn, setSelectedTxn] = useState(null);
   const receiptRef = useRef(null);
 
@@ -109,6 +114,24 @@ export default function Wallet() {
       setLoading(false);
     }
   };
+
+    // 👇 PLAN PDF ডাউনলোডের জন্য হ্যান্ডলার
+  const handleDownloadPlan = () => {
+    if (isDownloadingPlan) return;
+    setIsDownloadingPlan(true);
+
+    setTimeout(() => {
+      const link = document.createElement("a");
+      link.href = "/SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      link.download = "SAVE_MONEY_PRIVATE_LIMITED.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setIsDownloadingPlan(false);
+    }, 1200);
+  };
+  
 
   const loadWithdrawStatus = async () => {
     try {
@@ -331,6 +354,26 @@ export default function Wallet() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      if (email) {
+        await fetch(`${API}/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: email })
+        });
+      }
+    } catch (err) {
+      console.log("Logout backend error:", err);
+    } finally {
+      localStorage.clear();
+      navigate("/login");
+      window.location.reload();
+    }
+  };
+
   const sendTransfer = async () => {
     try {
       const res = await fetch(`${API}/wallet-transfer`, {
@@ -446,6 +489,40 @@ export default function Wallet() {
     <div style={styles.page}>
       <div style={styles.app}>
 
+                  <span style={styles.drawerNavText}>Profile</span>
+            </button>
+
+            {/* Logout */}
+            <button 
+              style={{
+                ...styles.drawerNavItem,
+                ...styles.drawerNavLogout
+              }} 
+              onClick={() => { setIsDrawerOpen(false); handleLogout(); }}
+            >
+              <span style={styles.drawerNavIcon}>🚪</span>
+              <span style={styles.drawerNavText}>Logout</span>
+            </button>
+          </div>
+
+          {/* 👇 PLANT IMAGE CONTAINER AT THE BOTTOM */}
+          <div style={styles.treePlantOnlyWrapper}>
+            <img 
+              src="/tree plant.png" 
+              alt="Tree Plant" 
+              style={styles.treePlantOnlyImg}
+              onError={(e) => {
+                if (e.target.src.includes('.png')) {
+                  e.target.src = '/tree plant.jpg';
+                }
+              }}
+            />
+          </div>
+
+        </div>
+      </div>
+
+
         {statusOverlay.show && (
           <div style={styles.statusOverlayBg}>
             <div style={{
@@ -463,6 +540,15 @@ export default function Wallet() {
             </div>
           </div>
         )}
+
+          {/* TOP HEADER */}
+      <div style={styles.topHeader}>
+        <button 
+          style={styles.menuButton}
+          onClick={() => setIsDrawerOpen(true)}
+        >
+          ☰
+        </button>
 
         <header style={styles.header}>
           <div>
@@ -1053,6 +1139,207 @@ function IncomeCard({ icon, title, amount, color }) {
 }
 
 const styles = {
+  // 👇 SLIDE BAR / DRAWER STYLES
+  drawerOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0, 0, 0, 0.75)",
+    backdropFilter: "blur(6px)",
+    zIndex: 100002,
+    display: "flex",
+    justifyContent: "flex-start",
+    transition: "opacity 0.3s ease, visibility 0.3s ease"
+  },
+  drawerContainer: {
+    position: "fixed",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    background: "#08101e",
+    width: "240px",
+    height: "100vh",
+    padding: "12px 10px",
+    display: "flex",
+    flexDirection: "column",
+    boxShadow: "10px 0 30px rgba(0,0,0,0.85)",
+    borderRight: "1px solid #1e293b",
+    transform: "translateX(-100%)",
+    transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    overflow: "hidden",
+    zIndex: 100003
+  },
+  drawerHeader: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "8px",
+    paddingBottom: "8px",
+    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+    flexShrink: 0
+  },
+  drawerBrand: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "4px"
+  },
+  drawerLogoWrapper: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "50%",
+    background: "radial-gradient(circle, #03251a 0%, #064e3b 100%)",
+    border: "2px solid #22c55e",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 0 12px rgba(34, 197, 94, 0.35)"
+  },
+  drawerLogoImg: {
+    width: "28px",
+    height: "28px",
+    objectFit: "contain"
+  },
+  drawerLogoText: {
+    margin: 0,
+    fontSize: "15px",
+    fontWeight: "900",
+    color: "#ffffff",
+    letterSpacing: "0.8px",
+    textAlign: "center"
+  },
+  drawerLogoSubtext: {
+    fontSize: "10px",
+    color: "#a7f3d0",
+    fontWeight: "600",
+    marginTop: "1px",
+    textAlign: "center"
+  },
+  drawerNavList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    flexShrink: 0,
+    overflowY: "auto",
+    maxHeight: "calc(100vh - 200px)"
+  },
+  
+  // 💎 DIAMOND CUT & WATER TRANSPARENT DRAWER BUTTONS
+  drawerNavItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "8px 14px",
+    background: "rgba(255, 255, 255, 0.12)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    clipPath: "polygon(12px 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0% 50%)",
+    color: "#ffffff",
+    fontSize: "13px",
+    fontWeight: "700",
+    cursor: "pointer",
+    textAlign: "left",
+    transition: "all 0.25s ease",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+    textShadow: "0 1px 2px rgba(0,0,0,0.5)"
+  },
+  drawerNavItemActive: {
+    background: "rgba(255, 255, 255, 0.25)",
+    border: "1px solid #ffffff",
+    boxShadow: "0 0 16px rgba(255, 255, 255, 0.4)",
+    fontWeight: "800"
+  },
+  drawerNavIcon: {
+    fontSize: "18px",
+    width: "22px",
+    display: "inline-block",
+    textAlign: "center"
+  },
+  drawerNavText: {
+    flex: 1,
+    fontSize: "13px",
+    letterSpacing: "0.3px"
+  },
+
+  // WATER TRANSPARENT ACCENTS FOR DRAWER BUTTONS
+  drawerNavDashboard: {
+    background: "rgba(59, 130, 246, 0.2)",
+    border: "1px solid rgba(59, 130, 246, 0.4)"
+  },
+  drawerNavMyInvestment: {
+    background: "rgba(16, 185, 129, 0.2)",
+    border: "1px solid rgba(16, 185, 129, 0.4)"
+  },
+  drawerNavSaveMoney: {
+    background: "rgba(245, 158, 11, 0.2)",
+    border: "1px solid rgba(245, 158, 11, 0.4)"
+  },
+  drawerNavOneTime: {
+    background: "rgba(168, 85, 247, 0.2)",
+    border: "1px solid rgba(168, 85, 247, 0.4)"
+  },
+  drawerNavPlan: {
+    background: "rgba(6, 182, 212, 0.2)",
+    border: "1px solid rgba(6, 182, 212, 0.4)"
+  },
+  drawerNavAddFund: {
+    background: "rgba(20, 184, 166, 0.2)",
+    border: "1px solid rgba(20, 184, 166, 0.4)"
+  },
+  drawerNavRefer: {
+    background: "rgba(236, 72, 153, 0.2)",
+    border: "1px solid rgba(236, 72, 153, 0.4)"
+  },
+  drawerNavWithdraw: {
+    background: "rgba(249, 115, 22, 0.2)",
+    border: "1px solid rgba(249, 115, 22, 0.4)"
+  },
+  drawerNavDailyReward: {
+    background: "rgba(244, 63, 94, 0.2)",
+    border: "1px solid rgba(244, 63, 94, 0.4)"
+  },
+  drawerNavInvestmentAssistant: {
+    background: "rgba(2, 132, 199, 0.2)",
+    border: "1px solid rgba(2, 132, 199, 0.4)"
+  },
+  drawerNavSupport: {
+    background: "rgba(99, 102, 241, 0.2)",
+    border: "1px solid rgba(99, 102, 241, 0.4)"
+  },
+  drawerNavProfile: {
+    background: "rgba(236, 72, 153, 0.2)",
+    border: "1px solid rgba(236, 72, 153, 0.4)"
+  },
+  drawerNavLogout: {
+    background: "rgba(239, 68, 68, 0.2)",
+    border: "1px solid rgba(239, 68, 68, 0.4)"
+  },
+
+  // 👇 PLANT IMAGE CONTAINER AT THE BOTTOM
+  treePlantOnlyWrapper: {
+    flex: 1,
+    minHeight: 0,
+    marginTop: "10px",
+    marginBottom: "4px",
+    width: "100%",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    borderRadius: "16px",
+    boxShadow: "0 6px 18px rgba(0, 0, 0, 0.4)"
+  },
+  treePlantOnlyImg: {
+    width: "90%",
+    height: "65%",
+    objectFit: "95%",
+    borderRadius: "16px"
+  },
+  
   p2pMainBtn: {
     minWidth: "120px",
     height: "54px",
