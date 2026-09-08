@@ -231,7 +231,6 @@ export default function OneTime() {
         let calculatedInv = 0;
         let calculatedWd = 0;
 
-        // FIXED: Strictly calculate investments only (ignoring Add Fund/Deposits and rejected/pending statuses)
         sortedHistory.forEach((item) => {
           const t = (item.type || "").toLowerCase();
           const status = (item.status || "").toLowerCase();
@@ -2192,7 +2191,7 @@ const styles = {
   treePlantOnlyImg: {
     width: "90%",
     height: "70%",
-    objectFit: "95%",
+    objectFit: "cover",
     borderRadius: "16px"
   },
 
