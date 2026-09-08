@@ -1082,6 +1082,38 @@ export default function OneTime() {
           </div>
         </section>
 
+        
+        {/* WHY WE RAISE FUNDS / HOW WE INVEST SECTION */}
+        <section style={styles.darkMainCard}>
+          <h2 style={{ ...styles.darkCardTitle, color: "#22c55e", display: "flex", alignItems: "center", gap: "8px" }}>
+            <span>💡</span> Why We Accept Investments & How Your Funds Work
+          </h2>
+          <p style={{ fontSize: "14px", color: "#cbd5e1", lineHeight: "1.6", marginTop: "-8px", marginBottom: "16px" }}>
+            To generate stable, high-yield returns for our investors, we deploy capital into diversified, risk-managed financial channels:
+          </p>
+          <div style={styles.whyInvestGrid}>
+            <div style={styles.whyInvestCard}>
+              <div style={{ fontSize: "28px", marginBottom: "8px" }}>🏦</div>
+              <strong style={{ color: "#ffffff", fontSize: "15px", display: "block", marginBottom: "6px" }}>
+                Loan & Credit Services
+              </strong>
+              <p style={{ color: "#94a3b8", fontSize: "12px", margin: 0, lineHeight: "1.5" }}>
+                We raise funds to provide secured & quick loan solutions including <strong>Personal Loans</strong>, <strong>Salary Advance Loans</strong>, and <strong>Home Loans</strong>.
+              </p>
+            </div>
+
+            <div style={styles.whyInvestCard}>
+              <div style={{ fontSize: "28px", marginBottom: "8px" }}>📊</div>
+              <strong style={{ color: "#ffffff", fontSize: "15px", display: "block", marginBottom: "6px" }}>
+                Strategic Market Investments
+              </strong>
+              <p style={{ color: "#94a3b8", fontSize: "12px", margin: 0, lineHeight: "1.5" }}>
+                We re-invest capital into high-growth financial instruments such as <strong>Stocks</strong>, <strong>Systematic Investment Plans (SIPs)</strong>, and top-performing <strong>Mutual Funds</strong>.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* TRUST BANNER USING small invest.png */}
         <section style={styles.trustBannerDark}>
           <div style={styles.trustLeftContent}>
@@ -1915,6 +1947,18 @@ const styles = {
     cursor: "pointer"
   },
 
+
+  whyInvestGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "14px"
+  },
+  whyInvestCard: {
+    background: "#040d1a",
+    borderRadius: "12px",
+    padding: "16px",
+    border: "1px solid rgba(255, 255, 255, 0.08)"
+  },
   // TRUST BANNER
   trustBannerDark: {
     background: "linear-gradient(135deg, #051a13 0%, #081728 100%)",
