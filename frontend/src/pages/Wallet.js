@@ -4,6 +4,109 @@ import { toast } from "react-toastify";
 import html2canvas from "html2canvas";
 import { API } from "../config";
 
+const DUMMY_P2P_USERS = [
+  { "name": "Aarav Sharma", "walletId": "WAL682410", "mobile": "+91 9718 20381", "balance": 15000 },
+  { "name": "Aditi Rao", "walletId": "WAL295174", "mobile": "+91 8142 90518", "balance": 4500 },
+  { "name": "Aditya Patel", "walletId": "WAL830219", "mobile": "+91 7029 48192", "balance": 22000 },
+  { "name": "Akash Verma", "walletId": "WAL194825", "mobile": "+91 6381 05928", "balance": 5000 },
+  { "name": "Ananya Sen", "walletId": "WAL742018", "mobile": "+91 9472 10845", "balance": 12500 },
+  { "name": "Aniket Chatterjee", "walletId": "WAL381905", "mobile": "+91 8891 30482", "balance": 30000 },
+  { "name": "Anish Das", "walletId": "WAL918234", "mobile": "+91 7402 81935", "balance": 7800 },
+  { "name": "Anjan Roy", "walletId": "WAL472910", "mobile": "+91 9152 74829", "balance": 2500 },
+  { "name": "Ankita Mukherjee", "walletId": "WAL503819", "mobile": "+91 6291 04827", "balance": 45000 },
+  { "name": "Ananya Banerjee", "walletId": "WAL829104", "mobile": "+91 8301 94820", "balance": 18200 },
+  { "name": "Arijit Ghosh", "walletId": "WAL276533", "mobile": "+91 9831 40291", "balance": 25000 },
+  { "name": "Arjun Nair", "walletId": "WAL875356", "mobile": "+91 7980 12394", "balance": 10000 },
+  { "name": "Arnav Gupta", "walletId": "WAL104928", "mobile": "+91 6002 91840", "balance": 50000 },
+  { "name": "Avani Joshi", "walletId": "WAL639102", "mobile": "+91 8720 19384", "balance": 3200 },
+  { "name": "Ayush Choudhury", "walletId": "WAL482019", "mobile": "+91 9123 84729", "balance": 15000 },
+  { "name": "Bipasha Basu", "walletId": "WAL739104", "mobile": "+91 7044 92810", "balance": 22000 },
+  { "name": "Debashis Dutt", "walletId": "WAL920183", "mobile": "+91 8910 28471", "balance": 12500 },
+  { "name": "Deepak Kumar", "walletId": "WAL310492", "mobile": "+91 9433 01829", "balance": 4500 },
+  { "name": "Devraj Saha", "walletId": "WAL849201", "mobile": "+91 6289 10482", "balance": 30000 },
+  { "name": "Diya Mehta", "walletId": "WAL182940", "mobile": "+91 7890 29184", "balance": 7800 },
+  { "name": "Gaurav Malhotra", "walletId": "WAL592018", "mobile": "+91 8240 19284", "balance": 25000 },
+  { "name": "Isha Bhattacharya", "walletId": "WAL204918", "mobile": "+91 9007 28194", "balance": 18200 },
+  { "name": "Ishaan Kapoor", "walletId": "WAL681940", "mobile": "+91 8100 29481", "balance": 50000 },
+  { "name": "Kabir Singh", "walletId": "WAL392014", "mobile": "+91 7003 19284", "balance": 3200 },
+  { "name": "Kavya Reddy", "walletId": "WAL840192", "mobile": "+91 9830 19284", "balance": 15000 },
+  { "name": "Koyel Ghosh", "walletId": "WAL192048", "mobile": "+91 9432 01928", "balance": 45000 },
+  { "name": "Kunal Agarwal", "walletId": "WAL730194", "mobile": "+91 6290 19284", "balance": 10000 },
+  { "name": "Madhav Iyer", "walletId": "WAL402918", "mobile": "+91 8981 02948", "balance": 22000 },
+  { "name": "Manish Saxena", "walletId": "WAL910284", "mobile": "+91 7980 91824", "balance": 5000 },
+  { "name": "Manish Kumar", "walletId": "WAL284019", "mobile": "+91 9874 01928", "balance": 12500 },
+  { "name": "Megha Pillai", "walletId": "WAL601928", "mobile": "+91 8334 01928", "balance": 30000 },
+  { "name": "Mitali Das", "walletId": "WAL394018", "mobile": "+91 9163 01928", "balance": 7800 },
+  { "name": "Mohit Chauhan", "walletId": "WAL820194", "mobile": "+91 7044 01928", "balance": 2500 },
+  { "name": "Neha Deshmukh", "walletId": "WAL102948", "mobile": "+91 8910 01928", "balance": 45000 },
+  { "name": "Nikhil Sen", "walletId": "WAL740192", "mobile": "+91 9831 01928", "balance": 18200 },
+  { "name": "Nisha Jain", "walletId": "WAL491028", "mobile": "+91 6289 01928", "balance": 25000 },
+  { "name": "Nitin Bose", "walletId": "WAL930182", "mobile": "+91 7890 01928", "balance": 10000 },
+  { "name": "Payal Biswas", "walletId": "WAL281940", "mobile": "+91 8240 01928", "balance": 50000 },
+  { "name": "Pooja Hegde", "walletId": "WAL640192", "mobile": "+91 9007 01928", "balance": 3200 },
+  { "name": "Pradeep Sen", "walletId": "WAL381029", "mobile": "+91 8100 01928", "balance": 15000 },
+  { "name": "Pratima Roy", "walletId": "WAL801924", "mobile": "+91 7003 01928", "balance": 22000 },
+  { "name": "Pritam Ghosh", "walletId": "WAL190284", "mobile": "+91 9830 01928", "balance": 12500 },
+  { "name": "Priya Sharma", "walletId": "WAL720194", "mobile": "+91 9432 01928", "balance": 4500 },
+  { "name": "Rahul Mukherjee", "walletId": "WAL410298", "mobile": "+91 6290 01928", "balance": 30000 },
+  { "name": "Rajesh Mudi", "walletId": "WAL902814", "mobile": "+91 8981 01928", "balance": 7800 },
+  { "name": "Rajib Sen", "walletId": "WAL291048", "mobile": "+91 7980 01928", "balance": 25000 },
+  { "name": "Rakesh Sen", "walletId": "WAL602918", "mobile": "+91 9874 01928", "balance": 18200 },
+  { "name": "Riya Chakraborty", "walletId": "WAL310294", "mobile": "+91 8334 01928", "balance": 50000 },
+  { "name": "Rohan Sen", "walletId": "WAL840291", "mobile": "+91 9163 01928", "balance": 3200 },
+  { "name": "Roshni Roy", "walletId": "WAL102849", "mobile": "+91 7044 01928", "balance": 15000 },
+  { "name": "Rupam Sen", "walletId": "WAL790124", "mobile": "+91 8910 01928", "balance": 45000 },
+  { "name": "Sachin Sen", "walletId": "WAL480192", "mobile": "+91 9831 01928", "balance": 10000 },
+  { "name": "Sagarika Basu", "walletId": "WAL920148", "mobile": "+91 6289 01928", "balance": 22000 },
+  { "name": "Sahil Khan", "walletId": "WAL201948", "mobile": "+91 7890 01928", "balance": 5000 },
+  { "name": "Sai Kumar", "walletId": "WAL610294", "mobile": "+91 8240 01928", "balance": 12500 },
+  { "name": "Samir Sen", "walletId": "WAL340192", "mobile": "+91 9007 01928", "balance": 30000 },
+  { "name": "Sanjay Ghosh", "walletId": "WAL890124", "mobile": "+91 8100 01928", "balance": 7800 },
+  { "name": "Sanjoy Sen", "walletId": "WAL120948", "mobile": "+91 7003 01928", "balance": 2500 },
+  { "name": "Sayan Ghosh", "walletId": "WAL780192", "mobile": "+91 9830 01928", "balance": 45000 },
+  { "name": "Sayani Dutta", "walletId": "WAL430192", "mobile": "+91 9432 01928", "balance": 18200 },
+  { "name": "Shikha Roy", "walletId": "WAL901284", "mobile": "+91 6290 01928", "balance": 25000 },
+  { "name": "Shreya Ghoshal", "walletId": "WAL240198", "mobile": "+91 8981 01928", "balance": 10000 },
+  { "name": "Shubham Sen", "walletId": "WAL690124", "mobile": "+91 7980 01928", "balance": 50000 },
+  { "name": "Sneha Roy", "walletId": "WAL320194", "mobile": "+91 9874 01928", "balance": 3200 },
+  { "name": "Sourav Ganguly", "walletId": "WAL810294", "mobile": "+91 8334 01928", "balance": 15000 },
+  { "name": "Srabanti Chatterjee", "walletId": "WAL140298", "mobile": "+91 9163 01928", "balance": 22000 },
+  { "name": "Subhash Sen", "walletId": "WAL701294", "mobile": "+91 7044 01928", "balance": 12500 },
+  { "name": "Subhajit Pal", "walletId": "WAL490128", "mobile": "+91 8910 01928", "balance": 4500 },
+  { "name": "Sudipta Sen", "walletId": "WAL950124", "mobile": "+91 9831 01928", "balance": 30000 },
+  { "name": "Suman Sen", "walletId": "WAL210948", "mobile": "+91 6289 01928", "balance": 7800 },
+  { "name": "Sumit Roy", "walletId": "WAL630194", "mobile": "+91 7890 01928", "balance": 25000 },
+  { "name": "Sunil Sen", "walletId": "WAL370129", "mobile": "+91 8240 01928", "balance": 18200 },
+  { "name": "Surbhi Das", "walletId": "WAL801294", "mobile": "+91 9007 01928", "balance": 50000 },
+  { "name": "Swapan Sen", "walletId": "WAL160294", "mobile": "+91 8100 01928", "balance": 3200 },
+  { "name": "Swarup Sen", "walletId": "WAL720149", "mobile": "+91 7003 01928", "balance": 15000 },
+  { "name": "Tanmay Sen", "walletId": "WAL450129", "mobile": "+91 9830 01928", "balance": 45000 },
+  { "name": "Tanushree Dutta", "walletId": "WAL980124", "mobile": "+91 9432 01928", "balance": 10000 },
+  { "name": "Trisha Sen", "walletId": "WAL230194", "mobile": "+91 6290 01928", "balance": 22000 },
+  { "name": "Tuhin Sen", "walletId": "WAL670129", "mobile": "+91 8981 01928", "balance": 5000 },
+  { "name": "Uday Sen", "walletId": "WAL310924", "mobile": "+91 7980 01928", "balance": 12500 },
+  { "name": "Upasana Sen", "walletId": "WAL860129", "mobile": "+91 9874 01928", "balance": 30000 },
+  { "name": "Utpal Sen", "walletId": "WAL190428", "mobile": "+91 8334 01928", "balance": 7800 },
+  { "name": "Varun Dhawan", "walletId": "WAL740291", "mobile": "+91 9163 01928", "balance": 2500 },
+  { "name": "Vikram Rathore", "walletId": "WAL410928", "mobile": "+91 7044 01928", "balance": 45000 },
+  { "name": "Vikas Dubey", "walletId": "WAL960124", "mobile": "+91 8910 01928", "balance": 18200 },
+  { "name": "Vishal Sen", "walletId": "WAL280194", "mobile": "+91 9831 01928", "balance": 25000 },
+  { "name": "Vivek Oberoi", "walletId": "WAL620194", "mobile": "+91 6289 01928", "balance": 10000 },
+  { "name": "Yash Sen", "walletId": "WAL350129", "mobile": "+91 7890 01928", "balance": 50000 },
+  { "name": "Abhishek Sen", "walletId": "WAL890421", "mobile": "+91 8240 01928", "balance": 3200 },
+  { "name": "Amrita Sen", "walletId": "WAL130924", "mobile": "+91 9007 01928", "balance": 15000 },
+  { "name": "Bikash Sen", "walletId": "WAL710294", "mobile": "+91 8100 01928", "balance": 22000 },
+  { "name": "Chandan Sen", "walletId": "WAL460129", "mobile": "+91 7003 01928", "balance": 12500 },
+  { "name": "Dipankar Sen", "walletId": "WAL920418", "mobile": "+91 9830 01928", "balance": 4500 },
+  { "name": "Goutam Sen", "walletId": "WAL250194", "mobile": "+91 9432 01928", "balance": 30000 },
+  { "name": "Indranil Sen", "walletId": "WAL680129", "mobile": "+91 6290 01928", "balance": 7800 },
+  { "name": "Jitendra Sen", "walletId": "WAL390124", "mobile": "+91 8981 01928", "balance": 25000 },
+  { "name": "Kaushik Sen", "walletId": "WAL810924", "mobile": "+91 7980 01928", "balance": 18200 },
+  { "name": "Manoj Sen", "walletId": "WAL170294", "mobile": "+91 9874 01928", "balance": 50000 },
+  { "name": "Nabaneeta Sen", "walletId": "WAL730928", "mobile": "+91 8334 01928", "balance": 3200 },
+  { "name": "Partha Sen", "walletId": "WAL420194", "mobile": "+91 9163 01928", "balance": 15000 }
+];
+
 export default function Wallet() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -160,12 +263,15 @@ export default function Wallet() {
         headers: { authorization: token || "" }
       });
       const data = await res.json();
-      if (data.success) {
-        setP2pUserList(data.users || []);
+      if (data.success && data.users && data.users.length > 0) {
+        setP2pUserList(data.users);
         if (data.reviews) setReviewsList(data.reviews);
+      } else {
+        setP2pUserList(DUMMY_P2P_USERS);
       }
     } catch (err) {
       console.log("P2P LOAD ERROR:", err);
+      setP2pUserList(DUMMY_P2P_USERS);
     }
   };
 
