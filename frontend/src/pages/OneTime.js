@@ -232,19 +232,20 @@ export default function OneTime() {
         let calculatedWd = 0;
 
         // FIXED: Only accumulate actual investments, strictly EXCLUDING Add Fund / Deposit
-        sortedHistory.forEach((item) => {
-          const t = (item.type || "").toLowerCase();
-          const isAddFund = t.includes("add fund") || t.includes("deposit") || !!item.transactionId;
-          
-          if (!isAddFund && (t.includes("investment") || t === "onetimeinvestment" || (!t && item.status))) {
-            if (item.status === "Active" || item.status === "Completed") {
-              calculatedInv += Number(item.amount || 0);
-            }
-          }
-          if (t === "withdrawal" && (item.status === "Approved" || item.status === "Accepted" || item.status === "Success")) {
-            calculatedWd += Number(item.amount || 0);
-          }
-        });
+sortedHistory.forEach((item) => {
+  const t = (item.type || "").toLowerCase();
+  const isAddFund = t.includes("add fund") || t.includes("deposit");
+
+  if (!isAddFund && (t.includes("investment") || t === "onetimeinvestment" || (t && item.status))) {
+    if (item.status === "Active" || item.status === "Completed") {
+      calculatedInv += Number(item.amount || 0);
+    }
+  }
+  if (t === "withdrawal" && (item.status === "Approved" || item.status === "Accepted" || item.status === "Success")) {
+    calculatedWd += Number(item.amount || 0);
+  }
+});
+
 
         setStats({
           totalInvested: data.stats?.totalInvested ?? calculatedInv,
@@ -298,7 +299,7 @@ export default function OneTime() {
 
   const handleStartInvestment = async () => {
     if (activeInvestment) {
-      triggerToast("আপনার একটি ইনভেস্টমেন্ট বর্তমানে চলমান আছে। সেটি শেষ না হওয়া পর্যন্ত নতুন ইনভেস্ট করা যাবে না।", "error");
+      triggerToast("Your investment is currently ongoing. No new investments can be made until it is finished.", "error");
       return;
     }
 
