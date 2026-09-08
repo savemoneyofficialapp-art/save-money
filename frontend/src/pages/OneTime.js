@@ -231,34 +231,36 @@ export default function OneTime() {
         let calculatedInv = 0;
         let calculatedWd = 0;
 
-        // FIXED: Only accumulate actual investments, strictly EXCLUDING Add Fund / Deposit
-sortedHistory.forEach((item) => {
-  const t = (item.type || "").toLowerCase();
-  const isAddFund = t.includes("add fund") || t.includes("deposit");
+        // FIXED: Strictly calculate investments only (ignoring Add Fund/Deposits and rejected/pending statuses)
+        sortedHistory.forEach((item) => {
+          const t = (item.type || "").toLowerCase();
+          const status = (item.status || "").toLowerCase();
+          
+          const isAddFund = t.includes("add fund") || t.includes("deposit") || t.includes("add money");
+          const isInvestment = t.includes("investment") || t === "onetimeinvestment";
+          const isValidStatus = status === "active" || status === "completed";
 
-  if (!isAddFund && (t.includes("investment") || t === "onetimeinvestment" || (t && item.status))) {
-    if (item.status === "Active" || item.status === "Completed") {
-      calculatedInv += Number(item.amount || 0);
-    }
-  }
-  if (t === "withdrawal" && (item.status === "Approved" || item.status === "Accepted" || item.status === "Success")) {
-    calculatedWd += Number(item.amount || 0);
-  }
-});
+          if (!isAddFund && isInvestment && isValidStatus) {
+            calculatedInv += Number(item.amount || 0);
+          }
 
+          if (t === "withdrawal" && (status === "approved" || status === "accepted" || status === "success")) {
+            calculatedWd += Number(item.amount || 0);
+          }
+        });
 
         setStats({
-          totalInvested: data.stats?.totalInvested ?? calculatedInv,
+          totalInvested: calculatedInv,
           totalEarnings: exactOneTimeEarnings,
-          totalWithdrawn: data.stats?.totalWithdrawn || calculatedWd,
+          totalWithdrawn: calculatedWd,
           availableBalance: Number(data.user?.otbalance || data.user?.otBalance || 0)
         });
 
         const active = data.activeInvestment || sortedHistory.find(
           (item) => {
             const t = (item.type || "").toLowerCase();
-            const isAddFund = t.includes("add fund") || t.includes("deposit") || !!item.transactionId;
-            return !isAddFund && (item.type === "OneTimeInvestment" || item.type === "Investment" || !item.type) && item.status === "Active";
+            const isAddFund = t.includes("add fund") || t.includes("deposit") || t.includes("add money");
+            return !isAddFund && (t.includes("investment") || t === "onetimeinvestment") && (item.status || "").toLowerCase() === "active";
           }
         );
         setActiveInvestment(active || null);
