@@ -2,6 +2,42 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API } from "../config";
 
+// Safe Date Parser for MM/DD/YYYY or any date format
+const parseSafeDate = (dateVal) => {
+  if (!dateVal) return new Date(0);
+  if (dateVal instanceof Date) return isNaN(dateVal) ? new Date(0) : dateVal;
+  
+  if (!isNaN(dateVal) && typeof dateVal !== "string") {
+    return new Date(Number(dateVal));
+  }
+
+  if (typeof dateVal === "string") {
+    // Try standard parsing first
+    const d = new Date(dateVal);
+    if (!isNaN(d.getTime())) return d;
+
+    // Handle MM/DD/YYYY format explicitly
+    const parts = dateVal.split(/[\/\-]/);
+    if (parts.length === 3) {
+      // Assuming MM/DD/YYYY format
+      const month = parseInt(parts[0], 10) - 1;
+      const day = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+      const customDate = new Date(year, month, day);
+      if (!isNaN(customDate.getTime())) return customDate;
+    }
+  }
+
+  const fallback = new Date(dateVal);
+  return isNaN(fallback.getTime()) ? new Date(0) : fallback;
+};
+
+const formatDate = (dateVal) => {
+  const d = parseSafeDate(dateVal);
+  if (isNaN(d.getTime()) || d.getTime() === 0) return "-";
+  return d.toLocaleDateString("en-GB");
+};
+
 export default function OneTime() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -217,8 +253,8 @@ export default function OneTime() {
         });
 
         const sortedHistory = Array.from(uniqueMap.values()).sort((a, b) => {
-          const dateA = new Date(a.createdAt || a.startDate || 0);
-          const dateB = new Date(b.createdAt || b.startDate || 0);
+          const dateA = parseSafeDate(a.createdAt || a.startDate);
+          const dateB = parseSafeDate(b.createdAt || b.startDate);
           return dateB - dateA;
         });
 
@@ -856,7 +892,7 @@ export default function OneTime() {
                 <div style={styles.activeStatItem}>
                   <span style={styles.activeLabel}>Maturity Date</span>
                   <strong style={{ ...styles.activeValue, color: "#38bdf8" }}>
-                    {activeInvestment.maturityDate ? new Date(activeInvestment.maturityDate).toLocaleDateString("en-GB") : "In Progress"}
+                    {activeInvestment.maturityDate ? formatDate(activeInvestment.maturityDate) : "In Progress"}
                   </strong>
                 </div>
               </div>
@@ -1031,7 +1067,7 @@ export default function OneTime() {
                     return (
                       <tr key={item._id || idx} style={styles.trDark}>
                         <td style={styles.tdDark}>
-                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : (item.startDate ? new Date(item.startDate).toLocaleDateString("en-GB") : "-")}
+                          {formatDate(item.createdAt || item.startDate)}
                         </td>
                         <td style={styles.tdDark}>
                           {isDeposit ? "💳 Add Fund" : isWithdraw ? "💸 Withdrawal" : `🚀 ${item.duration || `${item.durationDays || tenure} Days`}`}
@@ -1059,7 +1095,7 @@ export default function OneTime() {
                           )}
                         </td>
                         <td style={styles.tdDark}>
-                          {item.maturityDate ? new Date(item.maturityDate).toLocaleDateString("en-GB") : "-"}
+                          {formatDate(item.maturityDate)}
                         </td>
                       </tr>
                     );
@@ -1364,6 +1400,7 @@ export default function OneTime() {
                     ...styles.withdrawPresetBtnDark,
                     ...(selectedWithdrawAmount === amt ? styles.withdrawPresetActiveDark : {})
                   }}
+                  onChange={() => setSelectedWithdrawAmount(amt)}
                   onClick={() => setSelectedWithdrawAmount(amt)}
                 >
                   ₹{amt.toLocaleString("en-IN")}
@@ -2191,7 +2228,7 @@ const styles = {
   treePlantOnlyImg: {
     width: "90%",
     height: "70%",
-    objectFit: "cover",
+    objectFit: "95%",
     borderRadius: "16px"
   },
 
