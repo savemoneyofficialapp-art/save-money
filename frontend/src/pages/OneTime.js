@@ -231,9 +231,12 @@ export default function OneTime() {
         let calculatedInv = 0;
         let calculatedWd = 0;
 
+        // FIXED: Only accumulate actual investments, strictly EXCLUDING Add Fund / Deposit
         sortedHistory.forEach((item) => {
           const t = (item.type || "").toLowerCase();
-          if (t.includes("investment") || t === "onetimeinvestment") {
+          const isAddFund = t.includes("add fund") || t.includes("deposit") || !!item.transactionId;
+          
+          if (!isAddFund && (t.includes("investment") || t === "onetimeinvestment" || (!t && item.status))) {
             if (item.status === "Active" || item.status === "Completed") {
               calculatedInv += Number(item.amount || 0);
             }
@@ -251,7 +254,11 @@ export default function OneTime() {
         });
 
         const active = data.activeInvestment || sortedHistory.find(
-          (item) => (item.type === "OneTimeInvestment" || item.type === "Investment" || !item.type) && item.status === "Active"
+          (item) => {
+            const t = (item.type || "").toLowerCase();
+            const isAddFund = t.includes("add fund") || t.includes("deposit") || !!item.transactionId;
+            return !isAddFund && (item.type === "OneTimeInvestment" || item.type === "Investment" || !item.type) && item.status === "Active";
+          }
         );
         setActiveInvestment(active || null);
 
@@ -1394,7 +1401,7 @@ const getStatusStyleDark = (status) => {
   return { background: "rgba(148, 163, 184, 0.2)", color: "#cbd5e1", border: "1px solid rgba(148, 163, 184, 0.4)" };
 };
 
-// ----------------- UPDATED ZOOMED & LARGER FONTS STYLES -----------------
+// ----------------- STYLES -----------------
 const styles = {
   page: {
     minHeight: "100vh",
